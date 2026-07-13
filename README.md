@@ -1,2 +1,2 @@
 # etape
-ETAPE permet à chaque professionnel qui le désire de réussir sa transition professionnelle
+ETAPE permet à chaque salarié qui le désire de réussir sa transition professionnelle
