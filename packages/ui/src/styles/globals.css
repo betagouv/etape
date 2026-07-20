@@ -1,0 +1,192 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Scan des apps + du package pour la génération des classes Tailwind. */
+@source "../../../../apps/**/*.{ts,tsx}";
+@source "../**/*.{ts,tsx}";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------ */
+/* Thème ETAPE — dérivé de l'export Figma (Colors-Primitives) */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --radius: 0.75rem; /* Radius M = 12px */
+
+  /* Surfaces & contenu */
+  --background: #ffffff; /* Surface/Base/Default */
+  --foreground: #1b1b1b; /* Content/Primary (Neutral-900) */
+  --card: #ffffff;
+  --card-foreground: #1b1b1b;
+  --popover: #ffffff;
+  --popover-foreground: #1b1b1b;
+
+  /* Actions */
+  --primary: #00796b; /* Action/Primary/Default (Teal-700) */
+  --primary-foreground: #ffffff; /* Content/Inverse */
+  --secondary: #e0f2f1; /* Surface/Base/Secondary (Teal-50) */
+  --secondary-foreground: #00695c; /* Teal-800 */
+  --muted: #fafafa; /* Surface/Base/Grey (Neutral-50) */
+  --muted-foreground: #575757; /* Content/Tertiary (Neutral-600) */
+  --accent: #f4f4f4; /* Surface/State/Hover (Neutral-100) */
+  --accent-foreground: #1b1b1b;
+  --destructive: #b91c1c; /* Status/Danger/Fill (Danger-700) */
+  --destructive-foreground: #ffffff;
+
+  /* Bordures & focus */
+  --border: #d6d6d6; /* Stroke/Light & Divider (Neutral-300) */
+  --input: #d6d6d6;
+  --ring: #00796b; /* Stroke/Focus (Teal-700) */
+
+  /* Statuts (tokens additionnels ETAPE) */
+  --success: #047857; /* Success-700 */
+  --success-foreground: #ffffff;
+  --success-muted: #ecfdf5; /* Success-50 */
+  --warning: #b45309; /* Warning-700 */
+  --warning-foreground: #ffffff;
+  --warning-muted: #fffbeb; /* Warning-50 */
+  --info: #1d4ed8; /* Info-700 */
+  --info-foreground: #ffffff;
+  --info-muted: #eff6ff; /* Info-50 */
+  --destructive-muted: #fef2f2; /* Danger-50 */
+
+  /* Charts */
+  --chart-1: #00897b; /* Teal-600 */
+  --chart-2: #3b82f6; /* Info-500 */
+  --chart-3: #f59e0b; /* Warning-500 */
+  --chart-4: #10b981; /* Success-500 */
+  --chart-5: #ef4444; /* Danger-500 */
+
+  /* Sidebar */
+  --sidebar: #fafafa;
+  --sidebar-foreground: #1b1b1b;
+  --sidebar-primary: #00796b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f4f4;
+  --sidebar-accent-foreground: #1b1b1b;
+  --sidebar-border: #d6d6d6;
+  --sidebar-ring: #00796b;
+}
+
+.dark {
+  /* Surfaces & contenu — niveaux ajustés pour le contraste (bg Neutral-900, card Neutral-800) */
+  --background: #1b1b1b; /* Neutral-900 */
+  --foreground: #fafafa; /* Content/Primary (Neutral-50) */
+  --card: #2b2b2b; /* Surface/Base/Default (Neutral-800) */
+  --card-foreground: #fafafa;
+  --popover: #2b2b2b;
+  --popover-foreground: #fafafa;
+
+  /* Actions */
+  --primary: #26a69a; /* Action/Primary/Default (Teal-400) */
+  --primary-foreground: #1b1b1b; /* Content/Inverse (Neutral-900) */
+  --secondary: #004d40; /* Surface/Base/Secondary (Teal-900) */
+  --secondary-foreground: #e0f2f1; /* Teal-50 */
+  --muted: #2b2b2b; /* Neutral-800 */
+  --muted-foreground: #d6d6d6; /* Content/Tertiary (Neutral-300) */
+  --accent: #434343; /* Neutral-700 (hover contrasté) */
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444; /* Status/Danger/Fill dark (Danger-500) */
+  --destructive-foreground: #1b1b1b;
+
+  /* Bordures & focus */
+  --border: #575757; /* Stroke/Light dark (Neutral-600) */
+  --input: #575757;
+  --ring: #4db6ac; /* Stroke/Focus dark (Teal-300) */
+
+  /* Statuts */
+  --success: #10b981; /* Success-500 (fill) */
+  --success-foreground: #1b1b1b;
+  --success-muted: #064e3b; /* Success-900 */
+  --warning: #f59e0b; /* Warning-500 */
+  --warning-foreground: #1b1b1b;
+  --warning-muted: #78350f; /* Warning-900 */
+  --info: #3b82f6; /* Info-500 */
+  --info-foreground: #1b1b1b;
+  --info-muted: #1e3a8a; /* Info-900 */
+  --destructive-muted: #7f1d1d; /* Danger-900 */
+
+  /* Charts */
+  --chart-1: #26a69a; /* Teal-400 */
+  --chart-2: #93c5fd; /* Info-300 */
+  --chart-3: #fcd34d; /* Warning-300 */
+  --chart-4: #6ee7b7; /* Success-300 */
+  --chart-5: #fca5a5; /* Danger-300 */
+
+  /* Sidebar */
+  --sidebar: #1b1b1b;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #26a69a;
+  --sidebar-primary-foreground: #1b1b1b;
+  --sidebar-accent: #434343;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #575757;
+  --sidebar-ring: #4db6ac;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-muted: var(--info-muted);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Rayons (échelle Figma dérivée de --radius) */
+  --radius-sm: calc(var(--radius) - 4px); /* 8px  — Radius S */
+  --radius-md: calc(var(--radius) - 2px); /* 10px */
+  --radius-lg: var(--radius); /* 12px — Radius M */
+  --radius-xl: calc(var(--radius) + 4px); /* 16px — Radius L */
+
+  /* Typographie */
+  --font-sans: var(--font-open-sans);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
