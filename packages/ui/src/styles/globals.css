@@ -29,27 +29,52 @@
   --secondary-foreground: #00695c; /* Teal-800 */
   --muted: #fafafa; /* Surface/Base/Grey (Neutral-50) */
   --muted-foreground: #575757; /* Content/Tertiary (Neutral-600) */
-  --accent: #f4f4f4; /* Surface/State/Hover (Neutral-100) */
+  --accent: #e8e8e8; /* Surface/State/Hover (Neutral-200) */
   --accent-foreground: #1b1b1b;
   --destructive: #b91c1c; /* Status/Danger/Fill (Danger-700) */
   --destructive-foreground: #ffffff;
 
   /* Bordures & focus */
-  --border: #d6d6d6; /* Stroke/Light & Divider (Neutral-300) */
+  --border: #d6d6d6; /* Stroke/Light (Neutral-300) */
+  --border-strong: #767676; /* Stroke/Default (Neutral-500) */
+  --border-hover: #575757; /* Stroke/Hover (Neutral-600) */
+  --border-active: #00897b; /* Stroke/Active (Teal-600) */
+  --border-disabled: #d6d6d6; /* Stroke/Disabled (Neutral-300) */
+  --divider: #d6d6d6; /* Stroke/Divider (Neutral-300) */
   --input: #d6d6d6;
   --ring: #00796b; /* Stroke/Focus (Teal-700) */
+  --ring-alpha: rgba(0, 121, 107, 0.5); /* Stroke/Focus-Alpha-50 */
 
   /* Statuts (tokens additionnels ETAPE) */
-  --success: #047857; /* Success-700 */
+  --success: #047857; /* Success/Fill (Success-700) */
   --success-foreground: #ffffff;
-  --success-muted: #ecfdf5; /* Success-50 */
-  --warning: #b45309; /* Warning-700 */
+  --success-muted: #ecfdf5; /* Success/Background (Success-50) */
+  --success-border: #047857; /* Success/Border (Success-700) */
+  --success-text: #047857; /* Success/Text (Success-700) */
+  --warning: #b45309; /* Warning/Fill (Warning-700) */
   --warning-foreground: #ffffff;
-  --warning-muted: #fffbeb; /* Warning-50 */
-  --info: #1d4ed8; /* Info-700 */
+  --warning-muted: #fffbeb; /* Warning/Background (Warning-50) */
+  --warning-border: #b45309; /* Warning/Border (Warning-700) */
+  --warning-text: #b45309; /* Warning/Text (Warning-700) */
+  --info: #1d4ed8; /* Info/Fill (Info-700) */
   --info-foreground: #ffffff;
-  --info-muted: #eff6ff; /* Info-50 */
-  --destructive-muted: #fef2f2; /* Danger-50 */
+  --info-muted: #eff6ff; /* Info/Background (Info-50) */
+  --info-border: #1d4ed8; /* Info/Border (Info-700) */
+  --info-text: #1d4ed8; /* Info/Text (Info-700) */
+  --destructive-muted: #fef2f2; /* Danger/Background (Danger-50) */
+  --destructive-border: #b91c1c; /* Danger/Border (Danger-700) */
+  --destructive-text: #b91c1c; /* Danger/Text (Danger-700) */
+  --destructive-border-alpha: rgba(185, 28, 28, 0.5); /* Danger/Border-Alpha-50 */
+
+  /* Contenu accent / liens */
+  --content-accent: #00796b; /* Content/Accent (Teal-700) */
+  --content-accent-hover: #00695c; /* Content/Accent-Hover (Teal-800) */
+
+  /* Overlays (identiques light & dark) */
+  --overlay-black-60: rgba(0, 0, 0, 0.6); /* Surface/Overlay/Black-60 */
+  --overlay-black-10: rgba(0, 0, 0, 0.1); /* Surface/Overlay/Black-10 */
+  --overlay-white-70: rgba(255, 255, 255, 0.7); /* Surface/Overlay/White-70 */
+  --overlay-white-40: rgba(255, 255, 255, 0.4); /* Surface/Overlay/White-40 */
 
   /* Charts */
   --chart-1: #00897b; /* Teal-600 */
@@ -63,7 +88,7 @@
   --sidebar-foreground: #1b1b1b;
   --sidebar-primary: #00796b;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f4f4;
+  --sidebar-accent: #e8e8e8; /* Surface/State/Hover (Neutral-200) */
   --sidebar-accent-foreground: #1b1b1b;
   --sidebar-border: #d6d6d6;
   --sidebar-ring: #00796b;
@@ -91,21 +116,40 @@
   --destructive-foreground: #1b1b1b;
 
   /* Bordures & focus */
-  --border: #575757; /* Stroke/Light dark (Neutral-600) */
+  --border: #575757; /* Stroke/Light (Neutral-600) */
+  --border-strong: #a6a6a6; /* Stroke/Default (Neutral-400) */
+  --border-hover: #d6d6d6; /* Stroke/Hover (Neutral-300) */
+  --border-active: #26a69a; /* Stroke/Active (Teal-400) */
+  --border-disabled: #575757; /* Stroke/Disabled (Neutral-600) */
+  --divider: #575757; /* Stroke/Divider (Neutral-600) */
   --input: #575757;
-  --ring: #4db6ac; /* Stroke/Focus dark (Teal-300) */
+  --ring: #4db6ac; /* Stroke/Focus (Teal-300) */
+  --ring-alpha: rgba(77, 182, 172, 0.5); /* Stroke/Focus-Alpha-50 */
 
   /* Statuts */
-  --success: #10b981; /* Success-500 (fill) */
+  --success: #10b981; /* Success/Fill (Success-500) */
   --success-foreground: #1b1b1b;
-  --success-muted: #064e3b; /* Success-900 */
-  --warning: #f59e0b; /* Warning-500 */
+  --success-muted: #064e3b; /* Success/Background (Success-900) */
+  --success-border: #6ee7b7; /* Success/Border (Success-300) */
+  --success-text: #6ee7b7; /* Success/Text (Success-300) */
+  --warning: #f59e0b; /* Warning/Fill (Warning-500) */
   --warning-foreground: #1b1b1b;
-  --warning-muted: #78350f; /* Warning-900 */
-  --info: #3b82f6; /* Info-500 */
+  --warning-muted: #78350f; /* Warning/Background (Warning-900) */
+  --warning-border: #fcd34d; /* Warning/Border (Warning-300) */
+  --warning-text: #fcd34d; /* Warning/Text (Warning-300) */
+  --info: #3b82f6; /* Info/Fill (Info-500) */
   --info-foreground: #1b1b1b;
-  --info-muted: #1e3a8a; /* Info-900 */
-  --destructive-muted: #7f1d1d; /* Danger-900 */
+  --info-muted: #1e3a8a; /* Info/Background (Info-900) */
+  --info-border: #93c5fd; /* Info/Border (Info-300) */
+  --info-text: #93c5fd; /* Info/Text (Info-300) */
+  --destructive-muted: #7f1d1d; /* Danger/Background (Danger-900) */
+  --destructive-border: #fca5a5; /* Danger/Border (Danger-300) */
+  --destructive-text: #fca5a5; /* Danger/Text (Danger-300) */
+  --destructive-border-alpha: rgba(252, 165, 165, 0.5); /* Danger/Border-Alpha-50 */
+
+  /* Contenu accent / liens */
+  --content-accent: #26a69a; /* Content/Accent (Teal-400) */
+  --content-accent-hover: #4db6ac; /* Content/Accent-Hover (Teal-300) */
 
   /* Charts */
   --chart-1: #26a69a; /* Teal-400 */
@@ -143,19 +187,42 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-muted: var(--destructive-muted);
+  --color-destructive-border: var(--destructive-border);
+  --color-destructive-text: var(--destructive-text);
+  --color-destructive-border-alpha: var(--destructive-border-alpha);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-border-hover: var(--border-hover);
+  --color-border-active: var(--border-active);
+  --color-border-disabled: var(--border-disabled);
+  --color-divider: var(--divider);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-alpha: var(--ring-alpha);
 
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-muted: var(--success-muted);
+  --color-success-border: var(--success-border);
+  --color-success-text: var(--success-text);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-warning-muted: var(--warning-muted);
+  --color-warning-border: var(--warning-border);
+  --color-warning-text: var(--warning-text);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-info-muted: var(--info-muted);
+  --color-info-border: var(--info-border);
+  --color-info-text: var(--info-text);
+
+  --color-content-accent: var(--content-accent);
+  --color-content-accent-hover: var(--content-accent-hover);
+
+  --color-overlay-black-60: var(--overlay-black-60);
+  --color-overlay-black-10: var(--overlay-black-10);
+  --color-overlay-white-70: var(--overlay-white-70);
+  --color-overlay-white-40: var(--overlay-white-40);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
