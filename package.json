@@ -6,13 +6,18 @@
     "apps/*",
     "packages/*"
   ],
+  "prettier": "@etape/prettier-config",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "start": "turbo run start"
+    "start": "turbo run start",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\""
   },
   "devDependencies": {
+    "@etape/prettier-config": "*",
+    "prettier": "^3.9.6",
     "turbo": "^2"
   },
   "packageManager": "npm@10.9.3",

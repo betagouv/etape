@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "prettier": "@etape/prettier-config",
+  "scripts": {
+    "lint": "eslint"
+  },
   "exports": {
     "./globals.css": "./src/styles/globals.css",
     "./lib/*": "./src/lib/*.ts",
@@ -27,8 +31,11 @@
     "react-dom": "^19"
   },
   "devDependencies": {
+    "@etape/eslint-config": "*",
+    "@etape/prettier-config": "*",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -112,7 +112,7 @@ const benefits = [
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-white font-sans text-zinc-900">
+    <div className="flex flex-1 flex-col items-center justify-center bg-white font-sans text-zinc-900">
       <main className="mx-auto flex w-full max-w-4xl flex-col items-center px-6 py-16 text-center">
         {/* Logos partenaires */}
         <div className="flex items-center justify-center gap-8">
@@ -133,7 +133,7 @@ export default function Home() {
         </div>
 
         {/* Titre */}
-        <h1 className="mt-16 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+        <h1 className="mt-16 text-4xl leading-tight font-bold tracking-tight sm:text-5xl">
           Un projet de reconversion ?
           <br />
           Trouvez par où commencer.
@@ -141,10 +141,9 @@ export default function Home() {
 
         {/* Description */}
         <p className="mt-10 max-w-2xl text-lg leading-8 text-zinc-600">
-          Le simulateur recense l&apos;ensemble des dispositifs français de
-          reconversion et d&apos;évolution professionnelle, et vous indique en
-          quelques minutes ceux auxquels vous êtes éligible, puis vous oriente
-          vers le bon organisme.
+          Le simulateur recense l&apos;ensemble des dispositifs français de reconversion et
+          d&apos;évolution professionnelle, et vous indique en quelques minutes ceux auxquels vous
+          êtes éligible, puis vous oriente vers le bon organisme.
         </p>
 
         {/* CTA */}
