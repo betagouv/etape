@@ -16,7 +16,8 @@
 
   /* Surfaces & contenu */
   --background: #ffffff; /* Surface/Base/Default */
-  --foreground: #1b1b1b; /* Content/Primary (Neutral-900) */
+  --foreground: #1b1b1b; /* Content/Base/Primary (Neutral-900) */
+  --content-secondary: #434343; /* Content/Base/Secondary (Neutral-700) */
   --card: #ffffff;
   --card-foreground: #1b1b1b;
   --popover: #ffffff;
@@ -27,6 +28,7 @@
   --primary-foreground: #ffffff; /* Content/Inverse */
   --secondary: #e0f2f1; /* Surface/Base/Secondary (Teal-50) */
   --secondary-foreground: #00695c; /* Teal-800 */
+  --secondary-selected: #b2dfdb; /* Surface/Secondary/Selected (Teal-100) */
   --muted: #fafafa; /* Surface/Base/Grey (Neutral-50) */
   --muted-foreground: #575757; /* Content/Tertiary (Neutral-600) */
   --accent: #e8e8e8; /* Surface/State/Hover (Neutral-200) */
@@ -97,7 +99,8 @@
 .dark {
   /* Surfaces & contenu — niveaux ajustés pour le contraste (bg Neutral-900, card Neutral-800) */
   --background: #1b1b1b; /* Neutral-900 */
-  --foreground: #fafafa; /* Content/Primary (Neutral-50) */
+  --foreground: #fafafa; /* Content/Base/Primary (Neutral-50) */
+  --content-secondary: #e8e8e8; /* Content/Base/Secondary (Neutral-200) */
   --card: #2b2b2b; /* Surface/Base/Default (Neutral-800) */
   --card-foreground: #fafafa;
   --popover: #2b2b2b;
@@ -108,6 +111,7 @@
   --primary-foreground: #1b1b1b; /* Content/Inverse (Neutral-900) */
   --secondary: #004d40; /* Surface/Base/Secondary (Teal-900) */
   --secondary-foreground: #e0f2f1; /* Teal-50 */
+  --secondary-selected: #00695c; /* Surface/Secondary/Selected (Teal-800) */
   --muted: #2b2b2b; /* Neutral-800 */
   --muted-foreground: #d6d6d6; /* Content/Tertiary (Neutral-300) */
   --accent: #434343; /* Neutral-700 (hover contrasté) */
@@ -180,6 +184,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-selected: var(--secondary-selected);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -216,6 +221,7 @@
   --color-info-border: var(--info-border);
   --color-info-text: var(--info-text);
 
+  --color-content-secondary: var(--content-secondary);
   --color-content-accent: var(--content-accent);
   --color-content-accent-hover: var(--content-accent-hover);
 
@@ -240,10 +246,12 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* Rayons (échelle Figma dérivée de --radius) */
+  --radius-xs: 4px; /* Radius XS (Figma) */
   --radius-sm: calc(var(--radius) - 4px); /* 8px  — Radius S */
-  --radius-md: calc(var(--radius) - 2px); /* 10px */
+  --radius-md: calc(var(--radius) - 2px); /* 10px — dérivé shadcn (pas de token Figma) */
   --radius-lg: var(--radius); /* 12px — Radius M */
   --radius-xl: calc(var(--radius) + 4px); /* 16px — Radius L */
+  --radius-full: 9999px; /* Radius Full (Figma) */
 
   /* Typographie */
   --font-sans: var(--font-open-sans);
