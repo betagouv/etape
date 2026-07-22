@@ -1,0 +1,14 @@
+# Dépendances et sorties de build
+node_modules
+.next
+out
+build
+dist
+.turbo
+
+# Lockfiles et artefacts générés
+package-lock.json
+*.tsbuildinfo
+
+# Fichiers spécifiques
+next-env.d.ts

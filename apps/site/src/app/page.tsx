@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 bg-white font-sans text-zinc-900">
+    <div className="flex flex-1 flex-col bg-white font-sans text-zinc-900">
       {/* En-tête : logo seul, sans menu */}
       <header className="border-b border-zinc-200">
         <div className="mx-auto flex h-20 w-full max-w-6xl items-center px-6">
@@ -44,16 +44,15 @@ export default function Home() {
 
           {/* Contenu */}
           <div className="flex flex-col gap-8">
-            <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+            <h1 className="text-4xl leading-tight font-bold tracking-tight sm:text-5xl">
               Un projet de reconversion ?
               <br />
               Trouvez par où commencer.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-zinc-600">
-              Le simulateur recense l&apos;ensemble des dispositifs français de
-              reconversion et d&apos;évolution professionnelle, et vous indique
-              en quelques minutes ceux auxquels vous êtes éligible, puis vous
-              oriente vers le bon organisme.
+              Le simulateur recense l&apos;ensemble des dispositifs français de reconversion et
+              d&apos;évolution professionnelle, et vous indique en quelques minutes ceux auxquels
+              vous êtes éligible, puis vous oriente vers le bon organisme.
             </p>
             <div>
               <a

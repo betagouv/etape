@@ -12,10 +12,10 @@ Monorepo [Turborepo](https://turbo.build/) regroupant plusieurs applications Nex
 
 ### Applications
 
-| Application        | Description                     | Port (dev) |
-| ------------------ | ------------------------------- | ---------- |
-| `apps/site`        | Site vitrine                    | 3000       |
-| `apps/simulateur`  | Simulateur d'éligibilité        | 3001       |
+| Application       | Description              | Port (dev) |
+| ----------------- | ------------------------ | ---------- |
+| `apps/site`       | Site vitrine             | 3000       |
+| `apps/simulateur` | Simulateur d'éligibilité | 3001       |
 
 ### Prérequis
 
