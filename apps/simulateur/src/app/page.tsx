@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+import { ResetFlowOnMount } from "@/questionnaire/components/ResetFlowOnMount";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 
@@ -122,6 +124,8 @@ const benefits = [
 export default function Home() {
   return (
     <div className="bg-background text-foreground flex flex-1 flex-col items-center justify-center">
+      {/* Repart de zéro dès qu'on revient sur l'accueil (Quitter / Retour à l'accueil). */}
+      <ResetFlowOnMount />
       <Container
         asChild
         size="md"
