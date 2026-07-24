@@ -1,5 +1,7 @@
 "use client";
 
+import { ResultsScreen } from "@/resultats/components/ResultsScreen";
+
 import { useFlow } from "../hooks/useFlow";
 import { useFlowNavigation } from "../hooks/useFlowNavigation";
 import type { AnswerValue } from "../domain/types";
@@ -18,6 +20,11 @@ export function FlowShell() {
 
   const setAnswer = (name: string, value: AnswerValue) =>
     dispatch({ type: "SET_ANSWER", name, value });
+
+  // Fin du parcours : écran de résultats (pleine largeur, sans navbar).
+  if (nav.isResults) {
+    return <ResultsScreen answers={state.answers} onEdit={nav.goTo} onRestart={nav.restart} />;
+  }
 
   // Écran terminal : mise en page centrée, sans navbar ni progression.
   if (nav.outcome) {

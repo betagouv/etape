@@ -3,6 +3,8 @@
 // renderer choisit le composant de champ. Ajouter une question = ajouter une
 // entrée ici, pas du JSX.
 
+import type { FlagSet } from "./flags";
+
 /** Types de champs supportés. À étendre au fil des questions. */
 export type FieldType = "radio" | "city" | "checkbox";
 
@@ -12,6 +14,12 @@ export interface Option {
   label: string;
   /** Texte secondaire optionnel affiché sous le libellé. */
   description?: string;
+  /**
+   * Drapeaux ajoutés à l'ensemble du parcours quand cette option est retenue.
+   * Ils pilotent le branchement (`Question.next`) et l'éligibilité (module
+   * `resultats/`). Voir `domain/flags.ts`.
+   */
+  flags?: string[];
   /**
    * (Checkbox) Option exclusive (type "Aucune de ces situations") : la cocher
    * décoche les autres, et cocher une autre la décoche.
@@ -77,10 +85,11 @@ export interface Question {
   subtitle?: string;
   fields: Field[];
   /**
-   * Branchement : à partir des réponses, renvoie l'id de l'étape suivante
-   * (question OU écran terminal), ou `null` pour suivre l'ordre par défaut.
+   * Branchement basé sur les flags accumulés (option courante incluse) :
+   * renvoie l'id de l'étape suivante — une autre question ou le sentinelle
+   * `STEP_RESULTS` (écran de résultats). `null` = suivre l'ordre du tableau.
    */
-  next?: (answers: Answers) => string | null;
+  next?: (flags: FlagSet) => string | null;
 }
 
 /** Action (bouton) d'un écran terminal. */

@@ -1,0 +1,43 @@
+// Modèle de données des résultats.
+//
+// Un dispositif est PERTINENT pour un profil (sinon il n'est pas analysé), puis
+// classé dans l'un des trois onglets de la maquette (Éligible / Sous réserve /
+// Non éligible) à partir du statut de ses critères d'accès.
+
+import type { FlagSet } from "@/questionnaire/domain/flags";
+
+/** Onglet de classement d'un dispositif. */
+export type Tier = "eligible" | "sous-reserve" | "non-eligible";
+
+/**
+ * Statut d'un critère d'accès :
+ *  - `valide`     → rempli d'après les réponses (icône verte)
+ *  - `a-verifier` → conditionnel / non déterminable ici (icône orange)
+ *  - `manquant`   → condition bloquante non remplie (icône rouge)
+ */
+export type CritereStatut = "valide" | "a-verifier" | "manquant";
+
+export interface Critere {
+  label: string;
+  statut: CritereStatut;
+}
+
+/** Un dispositif du catalogue (repris du prototype HTML v2.1). */
+export interface Device {
+  /** Libellé court (badge / sigle). */
+  sigle: string;
+  /** Intitulé complet. */
+  name: string;
+  /** Description courte affichée sur la carte. */
+  description: string;
+  /** Organisme(s) porteur(s) — parfois fonction des flags (ex. CEP). */
+  acteur: string | ((flags: FlagSet) => string);
+  /** Lien « Commencer ma reconversion » (optionnel). */
+  url?: string;
+  /** Le dispositif concerne-t-il ce profil ? Sinon il n'est pas analysé. */
+  relevant: (flags: FlagSet) => boolean;
+  /** Priorité d'affichage au sein d'un onglet (1 = plus haut). */
+  priorite: (flags: FlagSet) => number;
+  /** Critères d'accès décomposés — leur statut détermine l'onglet. */
+  criteres: (flags: FlagSet) => Critere[];
+}
