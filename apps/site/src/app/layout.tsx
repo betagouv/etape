@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
+import { SkipLinks } from "@etape/ui/components/skip-links";
 import "./globals.css";
 
 const openSans = Open_Sans({
@@ -28,6 +29,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <SkipLinks />
           {children}
         </ThemeProvider>
       </body>
