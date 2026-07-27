@@ -5,15 +5,9 @@ import { PencilIcon } from "./icons";
 
 interface AnswersRecapProps {
   answers: Answers;
-  /** Revenir modifier la réponse d'une question. */
   onEdit: (questionId: string) => void;
 }
 
-/**
- * Récapitulatif des réponses. Deux mises en page, conformes aux maquettes :
- * liste empilée sur mobile (node 3210:23331), tableau à partir de md
- * (node 3210:23408).
- */
 export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
   const entries = buildRecap(answers);
 
@@ -23,7 +17,6 @@ export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
         Récapitulatif de vos réponses
       </h2>
 
-      {/* Mobile : une ligne par réponse, question au-dessus, action à droite. */}
       <ul className="flex flex-col md:hidden">
         {entries.map((entry) => (
           <li

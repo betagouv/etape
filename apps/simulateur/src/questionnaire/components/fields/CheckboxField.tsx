@@ -9,9 +9,17 @@ interface CheckboxFieldProps {
   field: CheckboxFieldDef;
   value: string[];
   onChange: (value: string[]) => void;
+  labelledBy?: string;
+  describedBy?: string;
 }
 
-export function CheckboxField({ field, value, onChange }: CheckboxFieldProps) {
+export function CheckboxField({
+  field,
+  value,
+  onChange,
+  labelledBy,
+  describedBy,
+}: CheckboxFieldProps) {
   const isExclusive = (optionValue: string) =>
     field.options.some((option) => option.value === optionValue && option.exclusive);
 
@@ -20,8 +28,6 @@ export function CheckboxField({ field, value, onChange }: CheckboxFieldProps) {
       onChange(value.filter((v) => v !== option.value));
       return;
     }
-    // Cocher une option exclusive vide la sélection ; cocher une option normale
-    // retire les options exclusives.
     if (option.exclusive) {
       onChange([option.value]);
       return;
@@ -30,21 +36,41 @@ export function CheckboxField({ field, value, onChange }: CheckboxFieldProps) {
   }
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div
+      role="group"
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
+      className="flex w-full flex-col gap-6"
+    >
       {field.options.map((option) => {
         const id = `${field.name}-${option.value}`;
+        const labelId = `${id}-label`;
+        const descId = option.description ? `${id}-description` : undefined;
         return (
-          <div key={option.value} className="flex w-full items-start gap-2">
+          <Label
+            key={option.value}
+            htmlFor={id}
+            className="min-h-11 w-full cursor-pointer items-start gap-2 md:min-h-0"
+          >
             <Checkbox
               id={id}
               checked={value.includes(option.value)}
               onCheckedChange={(state) => toggle(option, state === true)}
+              aria-labelledby={labelId}
+              aria-describedby={descId}
               className="border-border-strong size-5"
             />
-            <Label htmlFor={id} className="text-foreground text-sm font-semibold">
-              {option.label}
-            </Label>
-          </div>
+            <span className="flex flex-col gap-1">
+              <span id={labelId} className="text-foreground text-sm font-semibold">
+                {option.label}
+              </span>
+              {option.description && (
+                <span id={descId} className="text-content-secondary text-sm leading-5">
+                  {option.description}
+                </span>
+              )}
+            </span>
+          </Label>
         );
       })}
     </div>

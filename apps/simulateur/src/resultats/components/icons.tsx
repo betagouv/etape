@@ -1,7 +1,3 @@
-// Icônes en SVG inline (convention du projet — cf. app/page.tsx). Tracés issus
-// de la bibliothèque Lucide (24×24, stroke). La couleur suit `currentColor`,
-// la taille est pilotée par `className` (par défaut 16px).
-
 interface IconProps {
   className?: string;
 }
@@ -71,7 +67,6 @@ export function PencilIcon(props: IconProps) {
   );
 }
 
-/** Loupe barrée : état « aucun résultat ». */
 export function SearchXIcon(props: IconProps) {
   return (
     <Svg {...props}>
@@ -92,7 +87,6 @@ export function ArrowUpIcon(props: IconProps) {
   );
 }
 
-/** Icône de « tuile » d'un dispositif (boussole = orientation / reconversion). */
 export function CompassIcon(props: IconProps) {
   return (
     <Svg {...props}>

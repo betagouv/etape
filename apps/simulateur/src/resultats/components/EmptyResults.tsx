@@ -1,9 +1,5 @@
 import { SearchXIcon } from "./icons";
 
-/**
- * État « aucun résultat » d'un onglet (Figma node 3135-24124) : pastille grise
- * avec loupe barrée, titre et explication centrés.
- */
 export function EmptyResults() {
   return (
     <div role="status" className="flex flex-col items-center gap-8 py-12 text-center md:py-16">

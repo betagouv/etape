@@ -10,15 +10,19 @@ interface RadioFieldProps {
   field: RadioFieldDef;
   value: string | undefined;
   onChange: (value: string) => void;
+  labelledBy?: string;
+  describedBy?: string;
 }
 
-export function RadioField({ field, value, onChange }: RadioFieldProps) {
+export function RadioField({ field, value, onChange, labelledBy, describedBy }: RadioFieldProps) {
   const horizontal = field.orientation === "horizontal";
 
   return (
     <RadioGroup
       value={value ?? ""}
       onValueChange={onChange}
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
       className={cn(
         "flex",
         horizontal ? "flex-row flex-wrap gap-x-6 gap-y-4 md:gap-x-8" : "flex-col gap-6",
@@ -26,18 +30,35 @@ export function RadioField({ field, value, onChange }: RadioFieldProps) {
     >
       {field.options.map((option) => {
         const id = `${field.name}-${option.value}`;
+        const labelId = `${id}-label`;
+        const descId = option.description ? `${id}-description` : undefined;
         return (
-          <div key={option.value} className={cn("flex items-start gap-2", !horizontal && "w-full")}>
-            <RadioGroupItem id={id} value={option.value} className="border-border-strong mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <Label htmlFor={id} className="text-foreground text-sm font-semibold">
+          <Label
+            key={option.value}
+            htmlFor={id}
+            className={cn(
+              "min-h-11 cursor-pointer items-start gap-2 md:min-h-0",
+              !horizontal && "w-full",
+            )}
+          >
+            <RadioGroupItem
+              id={id}
+              value={option.value}
+              aria-labelledby={labelId}
+              aria-describedby={descId}
+              className="border-border-strong mt-0.5"
+            />
+            <span className="flex flex-col gap-1">
+              <span id={labelId} className="text-foreground text-sm font-semibold">
                 {option.label}
-              </Label>
+              </span>
               {option.description && (
-                <p className="text-content-secondary text-sm leading-5">{option.description}</p>
+                <span id={descId} className="text-content-secondary text-sm leading-5">
+                  {option.description}
+                </span>
               )}
-            </div>
-          </div>
+            </span>
+          </Label>
         );
       })}
     </RadioGroup>

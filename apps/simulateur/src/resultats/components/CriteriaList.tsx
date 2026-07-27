@@ -1,7 +1,6 @@
 import type { Critere, CritereStatut } from "../domain/types";
 import { CircleAlertIcon, CircleCheckIcon, CircleXIcon } from "./icons";
 
-// Statut → icône + classe de couleur (texte ET icône via currentColor).
 const STATUT_UI: Record<
   CritereStatut,
   { Icon: (props: { className?: string }) => React.ReactNode; color: string }
@@ -11,7 +10,6 @@ const STATUT_UI: Record<
   manquant: { Icon: CircleXIcon, color: "text-destructive-text" },
 };
 
-/** Liste « Critères d'accès » d'un dispositif : icône de statut + libellé. */
 export function CriteriaList({ criteres }: { criteres: Critere[] }) {
   return (
     <div className="flex flex-1 flex-col justify-center gap-3">

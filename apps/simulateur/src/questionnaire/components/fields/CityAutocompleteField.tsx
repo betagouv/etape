@@ -15,7 +15,6 @@ interface CityAutocompleteFieldProps {
   onChange: (value: Commune | null) => void;
 }
 
-// Icône inline (convention du projet : pas de dépendance d'icônes côté app).
 function SearchIcon() {
   return (
     <svg
@@ -42,11 +41,8 @@ export function CityAutocompleteField({ field, value, onChange }: CityAutocomple
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const listboxId = `${field.name}-listbox`;
-  // Le menu ne s'affiche que si aucune commune n'est sélectionnée et que la
-  // saisie est suffisante (conditions dérivées, sans setState dans l'effet).
   const canSearch = !value && debounced.trim().length >= 2;
 
-  // Recherche : les mises à jour d'état se font dans les callbacks async.
   React.useEffect(() => {
     if (!canSearch) return;
     const controller = new AbortController();
@@ -61,7 +57,6 @@ export function CityAutocompleteField({ field, value, onChange }: CityAutocomple
     return () => controller.abort();
   }, [debounced, canSearch]);
 
-  // Fermeture au clic à l'extérieur.
   React.useEffect(() => {
     function onPointerDown(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -102,7 +97,6 @@ export function CityAutocompleteField({ field, value, onChange }: CityAutocomple
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
-            // Toute saisie invalide la sélection précédente.
             if (value) onChange(null);
           }}
           onFocus={() => {

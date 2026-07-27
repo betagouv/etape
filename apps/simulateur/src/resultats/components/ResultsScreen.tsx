@@ -17,19 +17,13 @@ import { RESULTS_TOP_ID, ScrollToTopButton } from "./ScrollToTopButton";
 
 interface ResultsScreenProps {
   answers: Answers;
-  /** Revenir modifier la réponse d'une question. */
   onEdit: (questionId: string) => void;
-  /** Relancer la simulation depuis le début. */
   onRestart: () => void;
 }
 
 const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10";
 const TIER_ORDER: Tier[] = ["eligible", "sous-reserve", "non-eligible"];
 
-/**
- * Écran de résultats (Figma nodes 2015-204 / 2364-5339) : en-tête, onglets de
- * classement, cartes des dispositifs analysés, puis récapitulatif des réponses.
- */
 export function ResultsScreen({ answers, onEdit, onRestart }: ResultsScreenProps) {
   const grouped = useMemo(() => {
     const { flags } = walkFlow(answers);
@@ -47,11 +41,9 @@ export function ResultsScreen({ answers, onEdit, onRestart }: ResultsScreenProps
   const devices = grouped[active];
 
   return (
-    <div className="flex flex-1 flex-col">
-      {/* En-tête */}
+    <main className="flex flex-1 flex-col">
       <header className="border-border bg-background border-b">
         <div className={`${CONTAINER} flex flex-col gap-3 py-4 md:gap-4 md:py-16`}>
-          {/* tabIndex -1 : cible du lien « retour en haut », hors ordre de tabulation. */}
           <h1
             id={RESULTS_TOP_ID}
             tabIndex={-1}
@@ -66,14 +58,12 @@ export function ResultsScreen({ answers, onEdit, onRestart }: ResultsScreenProps
         </div>
       </header>
 
-      {/* Onglets (collants) */}
       <div className="border-border bg-background sticky top-0 z-10 border-b">
         <div className={`${CONTAINER} pt-3 md:pt-4`}>
           <ResultsTabs active={active} counts={counts} onChange={setActive} />
         </div>
       </div>
 
-      {/* Liste des dispositifs */}
       <div className={`${CONTAINER} flex flex-col gap-4 py-12 md:gap-8`}>
         {total === 0 ? (
           <p className="text-content-secondary py-12 text-center text-base">
@@ -88,16 +78,13 @@ export function ResultsScreen({ answers, onEdit, onRestart }: ResultsScreenProps
         )}
       </div>
 
-      {/* Récapitulatif des réponses */}
       <section className="border-border bg-muted border-t">
         <div className={`${CONTAINER} py-12 md:py-14`}>
           <AnswersRecap answers={answers} onEdit={onEdit} />
         </div>
       </section>
 
-      {/* Pied : avertissement + relance */}
       <footer className="border-border border-t">
-        {/* pb-24 : réserve la place du bouton flottant « retour en haut ». */}
         <div
           className={`${CONTAINER} flex flex-col items-center gap-6 pt-8 pb-24 text-center md:pb-8`}
         >
@@ -126,6 +113,6 @@ export function ResultsScreen({ answers, onEdit, onRestart }: ResultsScreenProps
       </footer>
 
       <ScrollToTopButton />
-    </div>
+    </main>
   );
 }

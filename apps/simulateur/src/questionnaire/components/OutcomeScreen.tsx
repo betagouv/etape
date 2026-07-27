@@ -4,13 +4,9 @@ import { Button } from "@etape/ui/components/button";
 
 import type { Outcome } from "../domain/types";
 
-/**
- * Écran terminal du flow : titre + texte + actions, centré, sans navbar.
- * La simulation s'arrête ici (Figma "Desktop - Erreur", node 3504-45562).
- */
 export function OutcomeScreen({ outcome }: { outcome: Outcome }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:px-6">
+    <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:px-6">
       <div className="flex w-full max-w-[600px] flex-col items-center gap-8 md:gap-12">
         <div className="flex w-full flex-col gap-3 text-center md:gap-4">
           <h1 className="text-foreground text-2xl leading-8 font-bold md:text-[28px] md:leading-9">
@@ -40,6 +36,6 @@ export function OutcomeScreen({ outcome }: { outcome: Outcome }) {
           ))}
         </div>
       </div>
-    </div>
+    </main>
   );
 }

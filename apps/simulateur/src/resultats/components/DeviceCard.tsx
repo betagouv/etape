@@ -2,14 +2,8 @@ import type { EvaluatedDevice } from "../domain/eligibility";
 import { CriteriaList } from "./CriteriaList";
 import { CompassIcon, ExternalLinkIcon } from "./icons";
 
-// Entrée universelle vers les dispositifs quand aucun lien spécifique n'existe :
-// le CEP oriente gratuitement vers le bon organisme.
 const DEFAULT_URL = "https://mon-cep.org";
 
-/**
- * Carte d'un dispositif (Figma node 3011:26741) : à gauche l'identité + CTA,
- * à droite les critères d'accès, séparés par un trait vertical (desktop).
- */
 export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
   const { device, acteur, criteres } = evaluated;
   const href = device.url ?? DEFAULT_URL;
@@ -44,7 +38,6 @@ export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
         </a>
       </div>
 
-      {/* Séparateur : vertical en desktop, horizontal en mobile. */}
       <div className="bg-border h-px w-full shrink-0 md:h-auto md:w-px" role="presentation" />
 
       <CriteriaList criteres={criteres} />

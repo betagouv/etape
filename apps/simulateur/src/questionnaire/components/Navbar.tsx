@@ -5,12 +5,7 @@ interface NavbarProps {
   total: number;
 }
 
-/**
- * Barre supérieure du flow (Figma "Navbar", node 2368-6475) :
- * titre + lien "Quitter" + barre de progression 4px.
- */
 export function Navbar({ step, total }: NavbarProps) {
-  // Progression basée sur les questions complétées (0 % sur la 1re question).
   const pct = total > 0 ? Math.max(0, Math.min(100, ((step - 1) / total) * 100)) : 0;
 
   return (
@@ -19,18 +14,20 @@ export function Navbar({ step, total }: NavbarProps) {
         <p className="text-foreground text-base leading-6 font-bold">Simulateur d’éligibilité</p>
         <Link
           href="/"
-          className="text-destructive-text hover:text-destructive text-sm leading-5 font-semibold md:text-base"
+          className="text-destructive-text hover:text-destructive focus-visible:outline-ring rounded-sm text-sm leading-5 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 md:text-base"
         >
-          Quitter
+          Quitter<span className="sr-only"> le simulateur</span>
         </Link>
       </div>
 
       <div
         className="bg-accent h-1 w-full overflow-hidden"
         role="progressbar"
+        aria-label="Progression du questionnaire"
         aria-valuenow={Math.round(pct)}
         aria-valuemin={0}
         aria-valuemax={100}
+        aria-valuetext={total > 0 ? `Question ${step} sur environ ${total}` : undefined}
       >
         <div
           className="bg-primary h-full rounded-full transition-[width]"

@@ -11,11 +11,8 @@ interface ResultsTabsProps {
   onChange: (tier: Tier) => void;
 }
 
-/** Onglets de classement (Figma node 3264:28216) : libellé + compteur. */
 export function ResultsTabs({ active, counts, onChange }: ResultsTabsProps) {
   return (
-    // Les libellés dépassent la largeur d'un mobile : la barre défile
-    // horizontalement, en débordant du padding du conteneur.
     <div
       role="tablist"
       aria-label="Classement des dispositifs"
