@@ -14,9 +14,9 @@ interface QuestionScreenProps {
 /** Rendu d'une question : entête + champs. Purement présentationnel. */
 export function QuestionScreen({ question, stepNumber, answers, setAnswer }: QuestionScreenProps) {
   return (
-    <div className="flex w-full flex-col gap-12">
+    <div className="flex w-full flex-col gap-8 md:gap-12">
       <QuestionHeader step={stepNumber} title={question.title} subtitle={question.subtitle} />
-      <div className="flex w-full flex-col gap-8">
+      <div className="flex w-full flex-col gap-6 md:gap-8">
         {question.fields.map((field) => (
           <FieldRenderer key={field.name} field={field} answers={answers} setAnswer={setAnswer} />
         ))}

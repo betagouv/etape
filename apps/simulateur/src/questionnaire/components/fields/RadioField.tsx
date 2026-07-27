@@ -19,7 +19,10 @@ export function RadioField({ field, value, onChange }: RadioFieldProps) {
     <RadioGroup
       value={value ?? ""}
       onValueChange={onChange}
-      className={cn("flex", horizontal ? "flex-row flex-wrap gap-8" : "flex-col gap-6")}
+      className={cn(
+        "flex",
+        horizontal ? "flex-row flex-wrap gap-x-6 gap-y-4 md:gap-x-8" : "flex-col gap-6",
+      )}
     >
       {field.options.map((option) => {
         const id = `${field.name}-${option.value}`;

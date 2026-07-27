@@ -20,8 +20,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // motion-safe : défilement fluide des liens d'ancre, sauf si l'utilisateur a
+  // demandé à réduire les animations (prefers-reduced-motion).
   return (
-    <html lang="fr" suppressHydrationWarning className={`${openSans.variable} h-full antialiased`}>
+    <html
+      lang="fr"
+      suppressHydrationWarning
+      className={`${openSans.variable} h-full antialiased motion-safe:scroll-smooth`}
+    >
       <body className="flex min-h-full flex-col">
         <ThemeProvider
           attribute="class"

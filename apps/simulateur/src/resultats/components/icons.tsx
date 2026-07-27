@@ -71,6 +71,27 @@ export function PencilIcon(props: IconProps) {
   );
 }
 
+/** Loupe barrée : état « aucun résultat ». */
+export function SearchXIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m13.5 8.5-5 5" />
+      <path d="m8.5 8.5 5 5" />
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </Svg>
+  );
+}
+
+export function ArrowUpIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m5 12 7-7 7 7" />
+      <path d="M12 19V5" />
+    </Svg>
+  );
+}
+
 /** Icône de « tuile » d'un dispositif (boussole = orientation / reconversion). */
 export function CompassIcon(props: IconProps) {
   return (

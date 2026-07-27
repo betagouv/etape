@@ -110,7 +110,7 @@ export function CityAutocompleteField({ field, value, onChange }: CityAutocomple
           }}
           className={cn(
             "border-input bg-background text-foreground placeholder:text-muted-foreground",
-            "focus-visible:border-ring focus-visible:ring-ring/50 min-h-11 w-full rounded-sm border py-3 pr-3 pl-9 text-sm outline-none transition-[color,box-shadow] focus-visible:ring-[3px]",
+            "focus-visible:border-ring focus-visible:ring-ring/50 min-h-11 w-full rounded-sm border py-3 pr-3 pl-9 text-sm transition-[color,box-shadow] outline-none focus-visible:ring-[3px]",
           )}
         />
 

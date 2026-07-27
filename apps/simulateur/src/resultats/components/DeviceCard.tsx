@@ -25,7 +25,9 @@ export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
         </span>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-foreground text-lg leading-7 font-bold">{device.name}</h3>
+          <h3 className="text-foreground text-base leading-6 font-bold md:text-lg md:leading-7">
+            {device.name}
+          </h3>
           <p className="text-muted-foreground text-sm leading-5">{acteur}</p>
           <p className="text-content-secondary mt-1 text-base leading-6">{device.description}</p>
         </div>
@@ -34,7 +36,7 @@ export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-content-accent hover:text-content-accent-hover mt-auto inline-flex items-center gap-3 text-base leading-5 font-semibold"
+          className="text-content-accent hover:text-content-accent-hover mt-auto inline-flex items-center gap-2 text-sm leading-5 font-semibold md:gap-3 md:text-base"
         >
           Commencer ma reconversion
           <ExternalLinkIcon className="size-4" />

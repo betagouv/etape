@@ -34,19 +34,30 @@ export function FlowShell() {
   if (!nav.question) return null;
 
   return (
-    <div className="flex flex-1 flex-col">
+    // Hauteur fixée au viewport : c'est ce qui permet à la zone de contenu de
+    // défiler seule, en gardant la navbar visible et le CTA ancré en bas.
+    <div className="flex h-dvh flex-col">
       <Navbar step={nav.stepNumber} total={nav.total} />
 
-      {/* Zone de contenu : remplit la hauteur sous la navbar, centre la carte. */}
-      <div className="flex flex-1 flex-col items-center">
-        {/* _InnerContent (Figma) : carte 600×836, padding 64px 0, gap-4xl (64px). */}
-        <div className="flex h-[836px] w-[600px] max-w-[600px] flex-col items-center gap-16 py-16">
-          <QuestionScreen
-            question={nav.question}
-            stepNumber={nav.stepNumber}
-            answers={state.answers}
-            setAnswer={setAnswer}
-          />
+      {/*
+       * Zone de contenu : c'est elle qui défile (la navbar reste visible et le CTA
+       * reste ancré en bas de l'écran sur mobile).
+       */}
+      <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
+        {/*
+         * _InnerContent (Figma) : pleine largeur plafonnée à 793px sur mobile/tablette,
+         * carte 600×836 avec padding 64px 0 à partir de md.
+         */}
+        <div className="flex w-full max-w-[793px] flex-1 flex-col md:min-h-[836px] md:max-w-[600px] md:flex-none md:py-16">
+          {/* Padding 16px/24px du bloc Question (Figma) ; nul dans la carte desktop. */}
+          <div className="px-4 py-6 md:p-0">
+            <QuestionScreen
+              question={nav.question}
+              stepNumber={nav.stepNumber}
+              answers={state.answers}
+              setAnswer={setAnswer}
+            />
+          </div>
           <QuestionCta
             isFirst={nav.isFirst}
             canGoNext={nav.canGoNext}

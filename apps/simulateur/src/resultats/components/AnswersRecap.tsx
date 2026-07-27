@@ -9,7 +9,11 @@ interface AnswersRecapProps {
   onEdit: (questionId: string) => void;
 }
 
-/** Récapitulatif des réponses (Figma node 3210:23408) : tableau question / réponse. */
+/**
+ * Récapitulatif des réponses. Deux mises en page, conformes aux maquettes :
+ * liste empilée sur mobile (node 3210:23331), tableau à partir de md
+ * (node 3210:23408).
+ */
 export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
   const entries = buildRecap(answers);
 
@@ -19,7 +23,30 @@ export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
         Récapitulatif de vos réponses
       </h2>
 
-      <table className="w-full border-collapse text-left">
+      {/* Mobile : une ligne par réponse, question au-dessus, action à droite. */}
+      <ul className="flex flex-col md:hidden">
+        {entries.map((entry) => (
+          <li
+            key={entry.questionId}
+            className="border-border flex items-center gap-2 border-b py-3 last:border-b-0"
+          >
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <p className="text-foreground text-sm leading-5 font-bold">{entry.question}</p>
+              <p className="text-foreground text-sm leading-5">{entry.answer}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onEdit(entry.questionId)}
+              aria-label={`Modifier : ${entry.question}`}
+              className="text-content-accent hover:bg-secondary flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm"
+            >
+              <PencilIcon className="size-6" />
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <table className="hidden w-full border-collapse text-left md:table">
         <thead>
           <tr className="border-border border-b">
             <th className="text-muted-foreground py-2 pr-4 text-sm font-semibold">Question</th>

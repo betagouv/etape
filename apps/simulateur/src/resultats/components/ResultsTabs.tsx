@@ -14,10 +14,12 @@ interface ResultsTabsProps {
 /** Onglets de classement (Figma node 3264:28216) : libellé + compteur. */
 export function ResultsTabs({ active, counts, onChange }: ResultsTabsProps) {
   return (
+    // Les libellés dépassent la largeur d'un mobile : la barre défile
+    // horizontalement, en débordant du padding du conteneur.
     <div
       role="tablist"
       aria-label="Classement des dispositifs"
-      className="flex min-h-11 items-center"
+      className="-mx-4 flex min-h-11 items-center overflow-x-auto px-4 md:mx-0 md:overflow-x-visible md:px-0"
     >
       {TIERS.map((tier) => {
         const isActive = tier === active;
@@ -29,7 +31,7 @@ export function ResultsTabs({ active, counts, onChange }: ResultsTabsProps) {
             aria-selected={isActive}
             onClick={() => onChange(tier)}
             className={cn(
-              "flex min-h-11 cursor-pointer items-center justify-center gap-1 p-3 text-base leading-5 font-semibold",
+              "flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-1 p-2 text-sm leading-5 font-semibold whitespace-nowrap md:p-3 md:text-base",
               "border-b-2 transition-colors",
               isActive
                 ? "border-border-active text-foreground"
