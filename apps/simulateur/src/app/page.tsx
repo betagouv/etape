@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { Button } from "@etape/ui/components/button";
+import { Container } from "@etape/ui/components/container";
 
 const benefits = [
   {
@@ -87,7 +89,7 @@ const benefits = [
     ),
   },
   {
-    label: "Tous profils",
+    label: "Sans engagement",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -101,10 +103,8 @@ const benefits = [
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+        <path d="m9 12 2 2 4-4" />
       </svg>
     ),
   },
@@ -112,58 +112,73 @@ const benefits = [
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-white font-sans text-zinc-900">
-      <main className="mx-auto flex w-full max-w-4xl flex-col items-center px-6 py-16 text-center">
-        {/* Logos partenaires */}
-        <div className="flex items-center justify-center gap-8">
-          <Image
-            src="/transitions-pro-logo.svg"
-            alt="Transitions Pro"
-            width={150}
-            height={74}
-            priority
-          />
-          <Image
-            src="/ministere-travail-logo.svg"
-            alt="Ministère du Travail, de l'Emploi et de l'Insertion"
-            width={114}
-            height={90}
-            priority
-          />
-        </div>
+    <div className="bg-background text-foreground flex flex-1 flex-col items-center justify-center">
+      <Container
+        asChild
+        size="md"
+        className="flex flex-col items-center py-16 text-center focus-visible:outline-none"
+      >
+        <main id="contenu" tabIndex={-1}>
+          {/* Logos partenaires */}
+          <div className="flex items-center justify-center gap-8">
+            <Image
+              src="/transitions-pro-logo.svg"
+              alt="Transitions Pro"
+              width={150}
+              height={74}
+              priority
+            />
+            <Image
+              src="/ministere-travail-logo.svg"
+              alt="Ministère du Travail, de l'Emploi et de l'Insertion"
+              width={114}
+              height={90}
+              priority
+            />
+          </div>
 
-        {/* Titre */}
-        <h1 className="mt-16 text-4xl leading-tight font-bold tracking-tight sm:text-5xl">
-          Un projet de reconversion ?
-          <br />
-          Trouvez par où commencer.
-        </h1>
+          {/* Titre */}
+          <h1 className="mt-16 text-4xl leading-tight font-bold tracking-tight sm:text-5xl">
+            En pleine réflexion sur votre vie professionnelle ?
+            <br />
+            Trouvez par où commencer.
+          </h1>
 
-        {/* Description */}
-        <p className="mt-10 max-w-2xl text-lg leading-8 text-zinc-600">
-          Le simulateur recense l&apos;ensemble des dispositifs français de reconversion et
-          d&apos;évolution professionnelle, et vous indique en quelques minutes ceux auxquels vous
-          êtes éligible, puis vous oriente vers le bon organisme.
-        </p>
+          {/* Description */}
+          <p className="text-muted-foreground mt-10 max-w-2xl text-lg leading-8">
+            Le simulateur recense l&apos;ensemble des dispositifs français de reconversion et
+            d&apos;évolution professionnelle, et vous indique en quelques minutes ceux auxquels vous
+            êtes éligible, puis vous oriente vers le bon organisme.
+          </p>
 
-        {/* CTA */}
-        <a
-          href="#"
-          className="mt-12 inline-flex h-14 items-center justify-center rounded-lg bg-[#1b7a5e] px-8 text-lg font-medium text-white transition-colors hover:bg-[#155f49]"
-        >
-          Commencer
-        </a>
+          {/* CTA — inerte : ne lance pas le questionnaire (cf. ticket) */}
+          <Button size="lg" className="mt-12 h-14 px-8 text-lg">
+            C&apos;est parti !
+          </Button>
 
-        {/* Points clés */}
-        <ul className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-zinc-700">
-          {benefits.map((benefit) => (
-            <li key={benefit.label} className="flex items-center gap-2">
-              <span className="text-[#1b7a5e]">{benefit.icon}</span>
-              <span className="text-lg">{benefit.label}</span>
-            </li>
-          ))}
-        </ul>
-      </main>
+          {/* Points clés */}
+          <ul className="text-foreground mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+            {benefits.map((benefit) => (
+              <li key={benefit.label} className="flex items-center gap-2">
+                <span className="text-primary">{benefit.icon}</span>
+                <span className="text-lg">{benefit.label}</span>
+              </li>
+            ))}
+          </ul>
+
+          {/* Mention bas de page */}
+          <p className="text-muted-foreground mt-12 text-sm">
+            Une erreur ou un oubli ?{" "}
+            <a
+              href="#"
+              className="text-primary font-medium underline underline-offset-4 hover:no-underline"
+            >
+              Aidez-nous à l&apos;améliorer
+            </a>
+            .
+          </p>
+        </main>
+      </Container>
     </div>
   );
 }

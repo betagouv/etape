@@ -16,7 +16,11 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-6">
+      <main
+        id="contenu"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-6xl px-6 focus-visible:outline-none"
+      >
         {/* Hero */}
         <section className="grid grid-cols-1 items-center gap-12 py-16 md:grid-cols-2 md:py-24">
           {/* Placeholder image */}
