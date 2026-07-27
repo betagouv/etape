@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
 
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkipLinks } from "@/components/skip-links";
 import { MAIN_CONTENT_ID } from "@/lib/navigation";
@@ -42,6 +43,7 @@ export default function RootLayout({
           <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 focus:outline-none">
             {children}
           </main>
+          <SiteFooter />
         </ThemeProvider>
       </body>
     </html>

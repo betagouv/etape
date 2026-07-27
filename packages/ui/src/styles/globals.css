@@ -69,6 +69,7 @@
   /* Contenu accent / liens */
   --content-accent: #00796b; /* Content/Accent (Teal-700) */
   --content-accent-hover: #00695c; /* Content/Accent-Hover (Teal-800) */
+  --content-secondary: #434343; /* Content/Secondary (Neutral-700) */
 
   /* Overlays (identiques light & dark) */
   --overlay-black-60: rgba(0, 0, 0, 0.6); /* Surface/Overlay/Black-60 */
@@ -150,6 +151,7 @@
   /* Contenu accent / liens */
   --content-accent: #26a69a; /* Content/Accent (Teal-400) */
   --content-accent-hover: #4db6ac; /* Content/Accent-Hover (Teal-300) */
+  --content-secondary: #e8e8e8; /* Content/Secondary (Neutral-200) */
 
   /* Charts */
   --chart-1: #26a69a; /* Teal-400 */
@@ -218,6 +220,7 @@
 
   --color-content-accent: var(--content-accent);
   --color-content-accent-hover: var(--content-accent-hover);
+  --color-content-secondary: var(--content-secondary);
 
   --color-overlay-black-60: var(--overlay-black-60);
   --color-overlay-black-10: var(--overlay-black-10);

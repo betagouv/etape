@@ -6,6 +6,8 @@
  * layout s'y réfèrent, ce qui évite qu'un lien et sa cible divergent.
  */
 
+import { FOOTER_ID } from "@/lib/footer";
+
 /** Identifiant du contenu principal, cible du lien d'évitement « Contenu ». */
 export const MAIN_CONTENT_ID = "contenu";
 
@@ -36,11 +38,13 @@ export const MAIN_NAV: readonly NavItem[] = [
 
 /**
  * Liens d'évitement révélés à la première tabulation, sur le modèle de
- * service-public.fr (Système de design de l'État).
+ * service-public.fr (Système de design de l'État), qui propose « Contenu »,
+ * « Menu » puis « Pied de page ».
  */
 export const SKIP_LINKS: readonly NavItem[] = [
   { label: "Contenu", href: `#${MAIN_CONTENT_ID}` },
   { label: "Menu", href: `#${MAIN_NAV_ID}` },
+  { label: "Pied de page", href: `#${FOOTER_ID}` },
 ];
 
 /**
