@@ -164,9 +164,8 @@ export default function Home() {
             êtes éligible, puis vous oriente vers le bon organisme.
           </p>
 
-          {/* CTA — inerte : ne lance pas le questionnaire (cf. ticket) */}
-          <Button size="lg" className="mt-12 h-14 px-8 text-lg">
-            C&apos;est parti !
+          <Button asChild size="lg" className="mt-12 h-14 px-8 text-lg">
+            <Link href="/questionnaire">C&apos;est parti !</Link>
           </Button>
 
           {/* Points clés */}
