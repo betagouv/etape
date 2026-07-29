@@ -3,9 +3,13 @@ import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 
 // `basePath` ne s'applique pas au `src` de `next/image` : les fichiers de
-// `public/` doivent être préfixés à la main. Dérivé de `next.config.ts` pour
-// que les deux ne puissent pas se désynchroniser.
-const assets = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+// `public/` doivent être préfixés à la main. Dérivé de `next.config.ts`, qui le
+// tient lui-même de `paths.mjs`.
+//
+// Volontairement sans valeur de repli : un préfixe absent doit produire une URL
+// manifestement cassée (`undefined/logo.svg`) plutôt qu'un chemin d'apparence
+// valide (`/logo.svg`) qui passerait le build et ne 404 qu'une fois déployé.
+const assets = process.env.NEXT_PUBLIC_BASE_PATH;
 
 const benefits = [
   {

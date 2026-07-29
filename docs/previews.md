@@ -123,13 +123,33 @@ fonctionner derrière le reverse proxy nginx.
 | `node scripts/vercel-out.mjs`                             | assemble les deux dans `.vercel/output/static/`, écrit `config.json`       |
 | `vercel deploy --prebuilt --archive=tgz --target=preview` | envoie `.vercel/output/` (`--archive` évite un upload fichier par fichier) |
 
-Le simulateur est construit avec `basePath: "/simulateur"` (`apps/simulateur/next.config.ts`),
-ce qui préfixe ses routes et ses assets. Son export reste écrit à plat dans `out/` : c'est le
-script d'assemblage qui le place sous `static/simulateur/`.
+### Où est déclaré le découpage des chemins
+
+**Dans `paths.mjs`, à la racine, et nulle part ailleurs.** Trois consommateurs en dérivent :
+
+| Consommateur                     | Usage                                                    |
+| -------------------------------- | -------------------------------------------------------- |
+| `apps/simulateur/next.config.ts` | `basePath`, et `NEXT_PUBLIC_BASE_PATH` pour les assets   |
+| `apps/site/next.config.ts`       | `NEXT_PUBLIC_SIMULATEUR_PATH`, pour le lien de l'accueil |
+| `scripts/vercel-out.mjs`         | dossier d'assemblage et règles de routage                |
+
+Changer le préfixe se fait donc en un seul endroit. Ne pas réintroduire de littéral `/simulateur`
+ailleurs : c'est exactement ce que ce module existe pour empêcher.
 
 `basePath` ne s'applique pas au `src` de `next/image` : les fichiers de `apps/simulateur/public/`
-doivent être préfixés à la main, via `process.env.NEXT_PUBLIC_BASE_PATH`. **Une image cassée sur
-la preview est presque toujours ce préfixe oublié.**
+doivent être préfixés à la main. **Une image cassée sur la preview est presque toujours ce
+préfixe oublié** — d'où le garde-fou ci-dessous.
+
+### Ce que le script refuse de déployer
+
+`scripts/vercel-out.mjs` s'arrête avant tout assemblage si :
+
+- l'un des deux `out/index.html` est absent — un build n'a pas tourné ;
+- le build du simulateur ne référence pas `/simulateur/_next/` — son `basePath` a sauté.
+
+Ce second cas est le plus coûteux : le build reste vert, le lint passe, et la casse ne se voit
+qu'une fois la preview déployée. Une exécution qui échoue laisse le `.vercel/output/` précédent
+intact, la vérification ayant lieu avant le nettoyage.
 
 Les deux apps ont `trailingSlash: true` et doivent le garder alignées : la résolution des URL
 diffèrerait sinon de part et d'autre de `/simulateur/`.

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { SIMULATEUR_BASE_PATH } from "../../paths.mjs";
 
 const nextConfig: NextConfig = {
   // Génère un export 100 % statique (SSG) dans le dossier `out/`.
@@ -12,6 +13,9 @@ const nextConfig: NextConfig = {
   // Transpile le package UI partagé (source .tsx). Turbopack le fait déjà
   // automatiquement pour les packages workspace ; explicite par sécurité.
   transpilePackages: ["@etape/ui"],
+  // Le simulateur est un build séparé : le site ne peut pas résoudre ses routes,
+  // il a donc besoin du préfixe pour construire ses liens vers lui.
+  env: { NEXT_PUBLIC_SIMULATEUR_PATH: SIMULATEUR_BASE_PATH },
 };
 
 export default nextConfig;

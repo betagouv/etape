@@ -1,13 +1,11 @@
 import type { NextConfig } from "next";
-
-// Le simulateur est servi sous un préfixe de chemin, jamais à la racine :
-// derrière le reverse proxy nginx de production comme sur les previews Vercel.
-// Sans slash final (convention `basePath` de Next).
-const basePath = "/simulateur";
+import { SIMULATEUR_BASE_PATH } from "../../paths.mjs";
 
 const nextConfig: NextConfig = {
-  // Préfixe routes, liens `next/link` et assets `_next/` d'un seul coup.
-  basePath,
+  // Le simulateur est servi sous un préfixe, jamais à la racine : derrière le
+  // reverse proxy nginx de production comme sur les previews Vercel. Préfixe
+  // routes, liens `next/link` et assets `_next/` d'un seul coup.
+  basePath: SIMULATEUR_BASE_PATH,
   // Génère un export 100 % statique (SSG) dans le dossier `out/`.
   output: "export",
   // Émet `out/<route>/index.html` plutôt que `out/<route>.html` : servi tel quel
@@ -20,7 +18,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@etape/ui"],
   // `basePath` ne préfixe pas le `src` de `next/image` ni les URL écrites à la
   // main vers `public/` : on l'expose pour les dériver au lieu de les dupliquer.
-  env: { NEXT_PUBLIC_BASE_PATH: basePath },
+  env: { NEXT_PUBLIC_BASE_PATH: SIMULATEUR_BASE_PATH },
 };
 
 export default nextConfig;
