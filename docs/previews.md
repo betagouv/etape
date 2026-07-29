@@ -12,12 +12,13 @@ Il sera remplacé à ce moment-là.
 
 ### Où trouver le lien
 
-L'adresse est toujours la même : **https://etape-preview.vercel.app**
+Le lien est déposé sur le ticket Notion correspondant, par le dev qui a réalisé le travail.
 
-Elle montre en permanence le dernier état déposé par l'équipe. Autrement dit, il n'y a qu'une
-seule preview à la fois : si le contenu change entre deux visites, c'est qu'un nouveau dépôt a
-eu lieu entre-temps. En cas de doute sur ce que la page est censée montrer, demander à l'équipe
-technique.
+Chaque preview a **sa propre adresse**, de la forme
+`https://etape-preview-xxxxx-uppertech-projects.vercel.app`. Elle est figée : elle montrera
+toujours l'état déposé ce jour-là, même si le travail continue ensuite. Plusieurs previews
+peuvent donc coexister, une par ticket — il faut prendre le lien du ticket qu'on relit, et non
+un lien retrouvé ailleurs.
 
 ### Ce qu'il faut savoir avant de tester
 
@@ -46,27 +47,32 @@ le simulateur sur `/simulateur/`. Le bouton « C'est parti ! » de l'accueil mè
 npm run preview
 ```
 
-La commande construit les deux apps, assemble leurs exports, puis déploie.
-
-⚠️ **Le CLI affiche deux URL, et une seule est partageable :**
+La commande construit les deux apps, assemble leurs exports, puis déploie. L'URL affichée en
+fin d'exécution est celle à coller sur le ticket Notion :
 
 ```
-Production   https://etape-preview-xxxxx-<scope>.vercel.app   ← NE PAS diffuser
-▲ Aliased    https://etape-preview.vercel.app                 ← le lien à donner
+Preview   https://etape-preview-xxxxx-uppertech-projects.vercel.app
 ```
 
-La première est l'URL du déploiement : elle est protégée par Vercel Authentication et renvoie
-sur un écran de connexion Vercel. Une personne extérieure à l'équipe Vercel ne peut pas
-l'ouvrir. **Seul l'alias est public.**
+Le déploiement se fait en `--target=preview` : chaque exécution produit une URL **distincte et
+figée**, sans écraser les previews des autres. Plusieurs relectures peuvent donc être en cours
+en parallèle, une par ticket.
 
-Cet alias est unique et roulant : chaque `npm run preview` le fait pointer sur le nouveau
-déploiement. Il n'y a donc **qu'une preview vivante à la fois** — se concerter avant de déployer
-si quelqu'un d'autre est en train de faire relire son travail.
+### ⚠️ Prérequis : Deployment Protection doit être désactivée
 
-Pour retrouver l'alias d'un déploiement :
+Par défaut, Vercel protège toutes les URL générées par **Vercel Authentication** : une requête
+anonyme est redirigée vers un écran de connexion Vercel.
+
+**Le piège :** un dev qui teste son propre lien le verra fonctionner, parce que son navigateur
+porte le cookie Vercel. Le lien collé sur Notion sera pourtant inutilisable pour toute personne
+n'appartenant pas au scope Vercel — la PO en particulier.
+
+Le réglage se trouve dans Project Settings → Deployment Protection → Vercel Authentication.
+Pour vérifier depuis n'importe quelle machine, sans cookie :
 
 ```bash
-npx vercel inspect <url-du-deploiement>
+curl -sI <url-de-la-preview>/ | head -1
+# 200 → accessible ; 302 vers vercel.com/sso-api → protection encore active
 ```
 
 ### Lier son clone
@@ -78,9 +84,9 @@ vercel login
 vercel link
 ```
 
-Un dev qui a accès à ce scope peut lier son clone au projet existant et partagera donc l'alias
-avec les autres. Sinon, `vercel link` permet de créer son **propre** projet : le déploiement
-fonctionnera de la même manière, avec un alias distinct.
+Un dev qui a accès à ce scope lie son clone au projet existant : les previews de toute l'équipe
+s'y accumulent, chacune avec son URL. Sinon, `vercel link` permet de créer son **propre** projet,
+qu'il faudra alors configurer de la même façon (Deployment Protection désactivée).
 
 `vercel link` crée un dossier `.vercel/` à la racine. Il est ignoré par git — ne jamais le
 committer : `project.json` contient l'`orgId` et le `projectId`.
@@ -111,11 +117,11 @@ Les deux apps sont déployées **ensemble, sur une seule origine**, avec le déc
 de la production. C'est volontaire : cela valide dès maintenant le contrat de préfixe qui devra
 fonctionner derrière le reverse proxy nginx.
 
-| Étape                                    | Effet                                                                      |
-| ---------------------------------------- | -------------------------------------------------------------------------- |
-| `turbo run build`                        | `apps/site/out/` et `apps/simulateur/out/` (exports statiques Next)        |
-| `node scripts/vercel-out.mjs`            | assemble les deux dans `.vercel/output/static/`, écrit `config.json`       |
-| `vercel deploy --prebuilt --archive=tgz` | envoie `.vercel/output/` (`--archive` évite un upload fichier par fichier) |
+| Étape                                                     | Effet                                                                      |
+| --------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `turbo run build`                                         | `apps/site/out/` et `apps/simulateur/out/` (exports statiques Next)        |
+| `node scripts/vercel-out.mjs`                             | assemble les deux dans `.vercel/output/static/`, écrit `config.json`       |
+| `vercel deploy --prebuilt --archive=tgz --target=preview` | envoie `.vercel/output/` (`--archive` évite un upload fichier par fichier) |
 
 Le simulateur est construit avec `basePath: "/simulateur"` (`apps/simulateur/next.config.ts`),
 ce qui préfixe ses routes et ses assets. Son export reste écrit à plat dans `out/` : c'est le
@@ -130,11 +136,12 @@ diffèrerait sinon de part et d'autre de `/simulateur/`.
 
 ### Vérifier une preview
 
-Contrôles sur l'**alias** (les mêmes commandes sur l'URL de déploiement renverraient un 302 vers
-l'écran de connexion Vercel, pas le contenu) :
+À lancer sur l'URL affichée par `npm run preview`, **avant** de la coller sur le ticket. Un `302`
+sur la première ligne signale que Deployment Protection est encore active et que la PO ne pourra
+pas ouvrir le lien.
 
 ```bash
-U=https://etape-preview.vercel.app
+U=<url-de-la-preview>
 curl -sI $U/                                   # 200 + x-robots-tag: noindex, nofollow
 curl -sI $U/simulateur                         # 308 vers /simulateur/
 curl -s  $U/robots.txt                         # Disallow: /
