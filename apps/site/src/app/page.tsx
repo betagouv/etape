@@ -59,8 +59,10 @@ export default function Home() {
               vous êtes éligible, puis vous oriente vers le bon organisme.
             </p>
             <div>
+              {/* Lien inter-apps : `<a>` natif et non `next/link`, le simulateur
+                  étant un build séparé servi sous son propre préfixe. */}
               <a
-                href="#"
+                href="/simulateur/"
                 className="inline-flex h-12 items-center justify-center rounded-lg bg-[#1b7a5e] px-6 text-base font-medium text-white transition-colors hover:bg-[#155f49]"
               >
                 C&apos;est parti !
