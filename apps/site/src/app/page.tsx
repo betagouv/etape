@@ -59,8 +59,12 @@ export default function Home() {
               vous êtes éligible, puis vous oriente vers le bon organisme.
             </p>
             <div>
+              {/* Lien inter-apps : `<a>` natif et non `next/link`, le simulateur
+                  étant un build séparé servi sous son propre préfixe. Celui-ci
+                  vient de `paths.mjs` via `next.config.ts`, pour qu'il n'existe
+                  qu'une seule déclaration du découpage des chemins. */}
               <a
-                href="#"
+                href={`${process.env.NEXT_PUBLIC_SIMULATEUR_PATH}/`}
                 className="inline-flex h-12 items-center justify-center rounded-lg bg-[#1b7a5e] px-6 text-base font-medium text-white transition-colors hover:bg-[#155f49]"
               >
                 C&apos;est parti !

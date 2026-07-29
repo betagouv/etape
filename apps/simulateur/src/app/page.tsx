@@ -2,6 +2,15 @@ import Image from "next/image";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 
+// `basePath` ne s'applique pas au `src` de `next/image` : les fichiers de
+// `public/` doivent être préfixés à la main. Dérivé de `next.config.ts`, qui le
+// tient lui-même de `paths.mjs`.
+//
+// Volontairement sans valeur de repli : un préfixe absent doit produire une URL
+// manifestement cassée (`undefined/logo.svg`) plutôt qu'un chemin d'apparence
+// valide (`/logo.svg`) qui passerait le build et ne 404 qu'une fois déployé.
+const assets = process.env.NEXT_PUBLIC_BASE_PATH;
+
 const benefits = [
   {
     label: "Gratuit",
@@ -122,14 +131,14 @@ export default function Home() {
           {/* Logos partenaires */}
           <div className="flex items-center justify-center gap-8">
             <Image
-              src="/transitions-pro-logo.svg"
+              src={`${assets}/transitions-pro-logo.svg`}
               alt="Transitions Pro"
               width={150}
               height={74}
               priority
             />
             <Image
-              src="/ministere-travail-logo.svg"
+              src={`${assets}/ministere-travail-logo.svg`}
               alt="Ministère du Travail, de l'Emploi et de l'Insertion"
               width={114}
               height={90}
