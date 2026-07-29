@@ -15,7 +15,6 @@ export const STEP_PARAM = "q";
 const stepUrl = {
   push: (id: string) => window.history.pushState(null, "", `?${STEP_PARAM}=${id}`),
   replace: (id: string) => window.history.replaceState(null, "", `?${STEP_PARAM}=${id}`),
-  back: () => window.history.back(),
 };
 
 /** Une étape venant de l'URL n'est honorée que si le parcours réel y mène. */
@@ -50,7 +49,17 @@ export function useFlowNavigation() {
   const indexOnPath = question ? walk.path.indexOf(question.id) : -1;
   const stepNumber = indexOnPath >= 0 ? indexOnPath + 1 : walk.path.length + 1;
 
-  const isFirst = stepNumber <= 1;
+  // Question précédente DANS LE PARCOURS. L'historique navigateur ne la contient
+  // pas forcément : une reprise ou un lien profond arrive directement à l'étape
+  // courante, sans entrée pour celles d'avant.
+  const previousId =
+    indexOnPath > 0
+      ? walk.path[indexOnPath - 1]
+      : indexOnPath < 0 && walk.path.length > 0
+        ? walk.path[walk.path.length - 1]
+        : undefined;
+
+  const isFirst = !previousId;
   const total = question ? stepNumber - 1 + maxDepthFrom(question.id) : walk.path.length;
   const canGoNext = question ? isQuestionComplete(question, state.answers) : false;
   const isLast = !!question && stepAfter(question.id, state.answers) === STEP_RESULTS;
@@ -61,7 +70,7 @@ export function useFlowNavigation() {
   }
 
   function goPrev() {
-    stepUrl.back();
+    if (previousId) stepUrl.push(previousId);
   }
 
   function goTo(id: string) {
