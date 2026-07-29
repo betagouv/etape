@@ -4,6 +4,7 @@ import { Checkbox } from "@etape/ui/components/checkbox";
 import { Label } from "@etape/ui/components/label";
 
 import type { CheckboxField as CheckboxFieldDef, Option } from "../../domain/types";
+import { OptionRow } from "./OptionRow";
 
 interface CheckboxFieldProps {
   field: CheckboxFieldDef;
@@ -21,7 +22,7 @@ export function CheckboxField({
   describedBy,
 }: CheckboxFieldProps) {
   const isExclusive = (optionValue: string) =>
-    field.options.some((option) => option.value === optionValue && option.exclusive);
+    field.options.some((candidate) => candidate.value === optionValue && candidate.exclusive);
 
   function toggle(option: Option, checked: boolean) {
     if (!checked) {
@@ -32,7 +33,7 @@ export function CheckboxField({
       onChange([option.value]);
       return;
     }
-    onChange([...value.filter((v) => !isExclusive(v)), option.value]);
+    onChange([...value.filter((v) => v !== option.value && !isExclusive(v)), option.value]);
   }
 
   return (
@@ -60,16 +61,12 @@ export function CheckboxField({
               aria-describedby={descId}
               className="border-border-strong size-5"
             />
-            <span className="flex flex-col gap-1">
-              <span id={labelId} className="text-foreground text-sm font-semibold">
-                {option.label}
-              </span>
-              {option.description && (
-                <span id={descId} className="text-content-secondary text-sm leading-5">
-                  {option.description}
-                </span>
-              )}
-            </span>
+            <OptionRow
+              labelId={labelId}
+              descId={descId}
+              label={option.label}
+              description={option.description}
+            />
           </Label>
         );
       })}

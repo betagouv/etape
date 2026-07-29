@@ -64,6 +64,7 @@ export interface RadioField extends BaseField {
   orientation?: "horizontal" | "vertical";
 }
 
+/** Aucune question ne l'utilise encore : anticipe une étape de localisation. */
 export interface CityField extends BaseField {
   type: "city";
   placeholder?: string;
@@ -75,6 +76,13 @@ export interface CheckboxField extends BaseField {
 }
 
 export type Field = RadioField | CityField | CheckboxField;
+
+/** Champs porteurs d'options — exclut `city`, qui n'en a pas. */
+export type OptionField = RadioField | CheckboxField;
+
+export function hasOptions(field: Field): field is OptionField {
+  return field.type !== "city";
+}
 
 export interface Question {
   /** Identifiant stable (sert aussi de clé d'étape pour le branchement). */

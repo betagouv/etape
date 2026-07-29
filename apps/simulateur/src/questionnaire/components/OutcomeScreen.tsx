@@ -1,15 +1,25 @@
+import type { RefObject } from "react";
 import Link from "next/link";
 
 import { Button } from "@etape/ui/components/button";
 
 import type { Outcome } from "../domain/types";
 
-export function OutcomeScreen({ outcome }: { outcome: Outcome }) {
+interface OutcomeScreenProps {
+  outcome: Outcome;
+  headingRef?: RefObject<HTMLHeadingElement | null>;
+}
+
+export function OutcomeScreen({ outcome, headingRef }: OutcomeScreenProps) {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:px-6">
       <div className="flex w-full max-w-[600px] flex-col items-center gap-8 md:gap-12">
         <div className="flex w-full flex-col gap-3 text-center md:gap-4">
-          <h1 className="text-foreground text-2xl leading-8 font-bold md:text-[28px] md:leading-9">
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="text-foreground focus-visible:outline-ring rounded-sm text-2xl leading-8 font-bold focus-visible:outline-2 focus-visible:outline-offset-4 md:text-[28px] md:leading-9"
+          >
             {outcome.title}
           </h1>
           {outcome.text && (

@@ -99,14 +99,16 @@ export function stepAfter(currentId: string, answers: Answers): string {
 
 // ─── Profondeur restante (barre de progression) ───────────────────────────
 // Le branchement dépendant des flags, on énumère les cibles possibles d'une
-// question en sondant `next` avec l'ensemble vide puis chaque flag isolé (nos
-// branches ne dépendent que de la PRÉSENCE d'un flag). On en déduit la plus
-// longue continuation par un DFS mémoïsé (le graphe est un DAG).
+// question en sondant `next` avec l'ensemble vide, chaque flag isolé, puis
+// l'ensemble complet (qui couvre les branches exigeant plusieurs flags).
+// On en déduit la plus longue continuation par un DFS mémoïsé (le graphe est un DAG).
 
 function possibleNextIds(question: Question): string[] {
+  const allFlags = Object.values(FLAGS);
   const targets = new Set<string>();
   targets.add(resolveNext(question, new Set()));
-  for (const flag of Object.values(FLAGS)) targets.add(resolveNext(question, new Set([flag])));
+  for (const flag of allFlags) targets.add(resolveNext(question, new Set([flag])));
+  targets.add(resolveNext(question, new Set(allFlags)));
   return [...targets];
 }
 

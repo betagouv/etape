@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type RefObject } from "react";
 
 import { Button } from "@etape/ui/components/button";
+import { Tabs, TabsContent } from "@etape/ui/components/tabs";
 
 import { walkFlow } from "@/questionnaire/domain/flow";
 import type { Answers } from "@/questionnaire/domain/types";
 
-import { evaluateDevices, groupByTier } from "../domain/eligibility";
+import { evaluateDevices, groupByTier, TIERS } from "../domain/eligibility";
 import type { Tier } from "../domain/types";
 import { AnswersRecap } from "./AnswersRecap";
 import { DeviceCard } from "./DeviceCard";
@@ -19,12 +20,12 @@ interface ResultsScreenProps {
   answers: Answers;
   onEdit: (questionId: string) => void;
   onRestart: () => void;
+  headingRef?: RefObject<HTMLHeadingElement | null>;
 }
 
 const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10";
-const TIER_ORDER: Tier[] = ["eligible", "sous-reserve", "non-eligible"];
 
-export function ResultsScreen({ answers, onEdit, onRestart }: ResultsScreenProps) {
+export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: ResultsScreenProps) {
   const grouped = useMemo(() => {
     const { flags } = walkFlow(answers);
     return groupByTier(evaluateDevices(flags));
@@ -36,18 +37,18 @@ export function ResultsScreen({ answers, onEdit, onRestart }: ResultsScreenProps
     "non-eligible": grouped["non-eligible"].length,
   };
   const total = counts.eligible + counts["sous-reserve"] + counts["non-eligible"];
-  const defaultTier = TIER_ORDER.find((tier) => counts[tier] > 0) ?? "eligible";
+  const defaultTier = TIERS.find((tier) => counts[tier] > 0) ?? "eligible";
   const [active, setActive] = useState<Tier>(defaultTier);
-  const devices = grouped[active];
 
   return (
     <main className="flex flex-1 flex-col">
       <header className="border-border bg-background border-b">
         <div className={`${CONTAINER} flex flex-col gap-3 py-4 md:gap-4 md:py-16`}>
           <h1
+            ref={headingRef}
             id={RESULTS_TOP_ID}
             tabIndex={-1}
-            className="text-foreground text-[28px] leading-9 font-bold md:text-[32px] md:leading-10"
+            className="text-foreground focus-visible:outline-ring rounded-sm text-[28px] leading-9 font-bold focus-visible:outline-2 focus-visible:outline-offset-4 md:text-[32px] md:leading-10"
           >
             Résultats
           </h1>
@@ -58,25 +59,41 @@ export function ResultsScreen({ answers, onEdit, onRestart }: ResultsScreenProps
         </div>
       </header>
 
-      <div className="border-border bg-background sticky top-0 z-10 border-b">
-        <div className={`${CONTAINER} pt-3 md:pt-4`}>
-          <ResultsTabs active={active} counts={counts} onChange={setActive} />
-        </div>
-      </div>
-
-      <div className={`${CONTAINER} flex flex-col gap-4 py-12 md:gap-8`}>
-        {total === 0 ? (
+      {total === 0 ? (
+        <div className={`${CONTAINER} flex flex-col gap-4 py-12 md:gap-8`}>
           <p className="text-content-secondary py-12 text-center text-base">
             Aucun dispositif n’a pu être analysé à partir de tes réponses. Essaie de les modifier.
           </p>
-        ) : devices.length === 0 ? (
-          <EmptyResults />
-        ) : (
-          devices.map((evaluated) => (
-            <DeviceCard key={evaluated.device.sigle} evaluated={evaluated} />
-          ))
-        )}
-      </div>
+        </div>
+      ) : (
+        <Tabs
+          value={active}
+          onValueChange={(value) => setActive(value as Tier)}
+          className="flex flex-1 flex-col gap-0"
+        >
+          <div className="border-border bg-background sticky top-0 z-10 border-b">
+            <div className={`${CONTAINER} pt-3 md:pt-4`}>
+              <ResultsTabs counts={counts} />
+            </div>
+          </div>
+
+          {TIERS.map((tier) => (
+            <TabsContent
+              key={tier}
+              value={tier}
+              className={`${CONTAINER} flex flex-col gap-4 py-12 md:gap-8`}
+            >
+              {grouped[tier].length === 0 ? (
+                <EmptyResults />
+              ) : (
+                grouped[tier].map((evaluated) => (
+                  <DeviceCard key={evaluated.device.id} evaluated={evaluated} />
+                ))
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
 
       <section className="border-border bg-muted border-t">
         <div className={`${CONTAINER} py-12 md:py-14`}>

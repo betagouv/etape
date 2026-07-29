@@ -20,7 +20,7 @@ export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
       <ul className="flex flex-col md:hidden">
         {entries.map((entry) => (
           <li
-            key={entry.questionId}
+            key={`${entry.questionId}-${entry.fieldName}`}
             className="border-border flex items-center gap-2 border-b py-3 last:border-b-0"
           >
             <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -51,7 +51,10 @@ export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
         </thead>
         <tbody>
           {entries.map((entry) => (
-            <tr key={entry.questionId} className="border-border border-b align-top">
+            <tr
+              key={`${entry.questionId}-${entry.fieldName}`}
+              className="border-border border-b align-top"
+            >
               <td className="text-content-secondary py-3 pr-4 text-sm leading-5">
                 {entry.question}
               </td>

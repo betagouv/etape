@@ -26,6 +26,7 @@ export default function RootLayout({
     <html
       lang="fr"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`${openSans.variable} h-full antialiased motion-safe:scroll-smooth`}
     >
       <body className="flex min-h-full flex-col">
@@ -36,7 +37,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SkipLinks />
-          {children}
+          <div id="contenu" tabIndex={-1} className="flex flex-1 flex-col">
+            {children}
+          </div>
         </ThemeProvider>
       </body>
     </html>

@@ -1,8 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
-import { ResetFlowOnMount } from "@/questionnaire/components/ResetFlowOnMount";
-import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
+
+import { HomeCta } from "@/questionnaire/components/HomeCta";
 
 // `basePath` ne s'applique pas au `src` de `next/image` : les fichiers de
 // `public/` doivent être préfixés à la main. Dérivé de `next.config.ts`, qui le
@@ -124,14 +123,8 @@ const benefits = [
 export default function Home() {
   return (
     <div className="bg-background text-foreground flex flex-1 flex-col items-center justify-center">
-      {/* Repart de zéro dès qu'on revient sur l'accueil (Quitter / Retour à l'accueil). */}
-      <ResetFlowOnMount />
-      <Container
-        asChild
-        size="md"
-        className="flex flex-col items-center py-16 text-center focus-visible:outline-none"
-      >
-        <main id="contenu" tabIndex={-1}>
+      <Container asChild size="md" className="flex flex-col items-center py-16 text-center">
+        <main>
           {/* Logos partenaires */}
           <div className="flex items-center justify-center gap-8">
             <Image
@@ -164,9 +157,7 @@ export default function Home() {
             êtes éligible, puis vous oriente vers le bon organisme.
           </p>
 
-          <Button asChild size="lg" className="mt-12 h-14 px-8 text-lg">
-            <Link href="/questionnaire">C&apos;est parti !</Link>
-          </Button>
+          <HomeCta />
 
           {/* Points clés */}
           <ul className="text-foreground mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">

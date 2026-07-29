@@ -22,7 +22,7 @@ const critere = (label: string, ok: boolean, dur = false): Critere =>
 export const DEVICES: Device[] = [
   // ── Départ sécurisé de l'emploi ───────────────────────────────────────────
   {
-    sigle: "Démissionnaire",
+    id: "Démissionnaire",
     name: "Dispositif démissionnaire — démission avec droit au chômage (ARE)",
     acteur: "CEP → Transitions Pro → France Travail",
     description:
@@ -40,7 +40,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "Rupture conv.",
+    id: "Rupture conv.",
     name: "Rupture conventionnelle",
     acteur: "Négociation avec l'employeur / DREETS",
     description:
@@ -54,7 +54,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "CSP",
+    id: "CSP",
     name: "Contrat de Sécurisation Professionnelle",
     acteur: "France Travail / Employeur",
     description:
@@ -70,7 +70,7 @@ export const DEVICES: Device[] = [
 
   // ── Entrepreneuriat ─────────────────────────────────────────────────────
   {
-    sigle: "ACRE/ARCE",
+    id: "ACRE/ARCE",
     name: "Aide à la Création ou Reprise d'Entreprise",
     acteur: "France Travail / URSSAF",
     description:
@@ -85,7 +85,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "CAPE",
+    id: "CAPE",
     name: "Contrat d'Appui au Projet d'Entreprise",
     acteur: "Coopératives, associations d'accompagnement",
     description:
@@ -98,7 +98,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "NACRE",
+    id: "NACRE",
     name: "Nouvel Accompagnement pour la Création et Reprise d'Entreprise",
     acteur: "Opérateurs agréés État / BPI France",
     description:
@@ -115,7 +115,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "BGE / CCI / RE",
+    id: "BGE / CCI / RE",
     name: "Réseaux d'accompagnement à l'entrepreneuriat",
     acteur: "BGE, CCI, Réseau Entreprendre, Initiative France",
     description:
@@ -127,7 +127,7 @@ export const DEVICES: Device[] = [
 
   // ── Santé / Handicap / AT-MP ──────────────────────────────────────────────
   {
-    sigle: "PRE",
+    id: "PRE",
     name: "Programme de Retour à l'Emploi",
     acteur: "CPAM (Assurance Maladie)",
     description:
@@ -144,7 +144,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "SRRT",
+    id: "SRRT",
     name: "Stage de Réentraînement au Travail",
     acteur: "CPAM / Centres de Rééducation Professionnelle",
     description:
@@ -157,7 +157,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "CRE",
+    id: "CRE",
     name: "Contrat de Rééducation Professionnelle en Entreprise",
     acteur: "CARSAT / Assurance Maladie",
     description:
@@ -170,7 +170,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "AGEFIPH",
+    id: "AGEFIPH",
     name: "Aides de l'AGEFIPH",
     acteur: "AGEFIPH (secteur privé)",
     description:
@@ -184,7 +184,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "FIPHFP",
+    id: "FIPHFP",
     name: "Aides du FIPHFP",
     acteur: "FIPHFP (fonction publique)",
     description:
@@ -198,7 +198,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "Emploi acc.",
+    id: "Emploi acc.",
     name: "Emploi Accompagné",
     acteur: "MDPH / Opérateurs agréés",
     description:
@@ -213,7 +213,7 @@ export const DEVICES: Device[] = [
 
   // ── Orientation et réflexion ──────────────────────────────────────────────
   {
-    sigle: "CEP",
+    id: "CEP",
     name: "Conseil en Évolution Professionnelle",
     acteur: (f) =>
       f.has(FLAGS.BAC3) ? "APEC" : f.has(FLAGS.JEUNE) ? "Mission Locale" : "France Travail",
@@ -226,7 +226,7 @@ export const DEVICES: Device[] = [
     criteres: () => [valide("Ouvert à toute personne active, gratuitement")],
   },
   {
-    sigle: "Bilan de comp.",
+    id: "Bilan de comp.",
     name: "Bilan de compétences",
     acteur: "Organismes certifiés (finançable via CPF)",
     description:
@@ -236,7 +236,7 @@ export const DEVICES: Device[] = [
     criteres: () => [valide("Ouvert à toute personne active"), valide("Finançable via le CPF")],
   },
   {
-    sigle: "PMSMP",
+    id: "PMSMP",
     name: "Immersion en entreprise",
     acteur: "France Travail / Mission Locale",
     description:
@@ -254,7 +254,7 @@ export const DEVICES: Device[] = [
 
   // ── Formation et financement ──────────────────────────────────────────────
   {
-    sigle: "CPF",
+    id: "CPF",
     name: "Compte Personnel de Formation",
     acteur: "Caisse des Dépôts — moncompteformation.gouv.fr",
     description:
@@ -270,7 +270,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "VAE",
+    id: "VAE",
     name: "Validation des Acquis de l'Expérience",
     acteur: "France VAE — Organismes certificateurs",
     description:
@@ -286,7 +286,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "PTP",
+    id: "PTP",
     name: "Projet de Transition Professionnelle",
     acteur: "Transitions Pro (ex-Fongecif)",
     description:
@@ -307,7 +307,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "Pro-A",
+    id: "Pro-A",
     name: "Reconversion ou Promotion par Alternance",
     acteur: "OPCO (Opérateur de Compétences)",
     description:
@@ -321,7 +321,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "FNE-Formation",
+    id: "FNE-Formation",
     name: "FNE-Formation",
     acteur: "DREETS / OPCO",
     description:
@@ -339,7 +339,7 @@ export const DEVICES: Device[] = [
 
   // ── Demandeurs d'emploi ───────────────────────────────────────────────────
   {
-    sigle: "Prépa Comp.",
+    id: "Prépa Comp.",
     name: "Prépa Compétences",
     acteur: "France Travail",
     description:
@@ -355,7 +355,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "AIF",
+    id: "AIF",
     name: "Aide Individuelle à la Formation",
     acteur: "France Travail",
     description:
@@ -369,7 +369,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "AFPR",
+    id: "AFPR",
     name: "Action de Formation Préalable au Recrutement",
     acteur: "France Travail",
     description:
@@ -382,7 +382,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "POEC",
+    id: "POEC",
     name: "Préparation Opérationnelle à l'Emploi Collective",
     acteur: "France Travail / OPCO",
     description:
@@ -395,7 +395,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "Form. Région",
+    id: "Form. Région",
     name: "Formations régionales gratuites",
     acteur: "Conseil Régional",
     description:
@@ -408,7 +408,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "Contrat Pro",
+    id: "Contrat Pro",
     name: "Contrat de Professionnalisation",
     acteur: "OPCO / Employeur",
     description:
@@ -423,7 +423,7 @@ export const DEVICES: Device[] = [
 
   // ── Jeunes ────────────────────────────────────────────────────────────────
   {
-    sigle: "Mission Locale",
+    id: "Mission Locale",
     name: "Mission Locale + Contrat d'Engagement Jeune",
     acteur: "Mission Locale",
     description:
@@ -436,7 +436,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "EPIDE / E2C",
+    id: "EPIDE / E2C",
     name: "EPIDE et École de la 2e Chance",
     acteur: "EPIDE / Réseau E2C France",
     description:
@@ -449,7 +449,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "Apprentissage",
+    id: "Apprentissage",
     name: "Contrat d'apprentissage",
     acteur: "CFA / OPCO",
     description:
@@ -471,7 +471,7 @@ export const DEVICES: Device[] = [
 
   // ── Fonctionnaires ──────────────────────────────────────────────────────
   {
-    sigle: "CPF-AP",
+    id: "CPF-AP",
     name: "Compte Personnel de Formation — Agents Publics",
     acteur: "Employeur public / Ministère",
     description:
@@ -484,7 +484,7 @@ export const DEVICES: Device[] = [
     ],
   },
   {
-    sigle: "DTP",
+    id: "DTP",
     name: "Dispositif de Transition Professionnelle",
     acteur: "Ministère employeur / DGAFP",
     description:

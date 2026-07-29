@@ -13,7 +13,7 @@ import { QuestionCta } from "./QuestionCta";
 import { QuestionScreen } from "./QuestionScreen";
 
 export function FlowShell() {
-  const { state, dispatch } = useFlow();
+  const { state, hydrated, dispatch } = useFlow();
   const nav = useFlowNavigation();
 
   const setAnswer = (name: string, value: AnswerValue) =>
@@ -34,20 +34,31 @@ export function FlowShell() {
     nav.goNext();
   }
 
+  const screenId = nav.isResults ? "resultats" : (nav.outcome?.id ?? questionId);
+
   useEffect(() => {
     if (!hasRenderedOnce.current) {
       hasRenderedOnce.current = true;
       return;
     }
     headingRef.current?.focus();
-  }, [questionId]);
+  }, [screenId]);
+
+  if (!hydrated) return null;
 
   if (nav.isResults) {
-    return <ResultsScreen answers={state.answers} onEdit={nav.goTo} onRestart={nav.restart} />;
+    return (
+      <ResultsScreen
+        answers={state.answers}
+        onEdit={nav.goTo}
+        onRestart={nav.restart}
+        headingRef={headingRef}
+      />
+    );
   }
 
   if (nav.outcome) {
-    return <OutcomeScreen outcome={nav.outcome} />;
+    return <OutcomeScreen outcome={nav.outcome} headingRef={headingRef} />;
   }
 
   if (!nav.question) return null;

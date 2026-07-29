@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { cn } from "@etape/ui/lib/utils";
 
 import type { RadioField as RadioFieldDef } from "../../domain/types";
+import { OptionRow } from "./OptionRow";
 
 interface RadioFieldProps {
   field: RadioFieldDef;
@@ -48,16 +49,12 @@ export function RadioField({ field, value, onChange, labelledBy, describedBy }: 
               aria-describedby={descId}
               className="border-border-strong mt-0.5"
             />
-            <span className="flex flex-col gap-1">
-              <span id={labelId} className="text-foreground text-sm font-semibold">
-                {option.label}
-              </span>
-              {option.description && (
-                <span id={descId} className="text-content-secondary text-sm leading-5">
-                  {option.description}
-                </span>
-              )}
-            </span>
+            <OptionRow
+              labelId={labelId}
+              descId={descId}
+              label={option.label}
+              description={option.description}
+            />
           </Label>
         );
       })}

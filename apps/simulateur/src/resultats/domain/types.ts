@@ -24,8 +24,8 @@ export interface Critere {
 
 /** Un dispositif du catalogue (repris du prototype HTML v2.1). */
 export interface Device {
-  /** Libellé court (badge / sigle). */
-  sigle: string;
+  /** Identifiant stable du dispositif (sert de clé de rendu). */
+  id: string;
   /** Intitulé complet. */
   name: string;
   /** Description courte affichée sur la carte. */
