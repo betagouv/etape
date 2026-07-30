@@ -14,6 +14,9 @@
 :root {
   --radius: 0.75rem; /* Radius M = 12px */
 
+  /* Pas de `color-scheme` ici : `ThemeProvider` (next-themes) le pose en style
+     inline sur `<html>`, ce qui l'emporterait de toute façon sur cette règle. */
+
   /* Surfaces & contenu */
   --background: #ffffff; /* Surface/Base/Default */
   --foreground: #1b1b1b; /* Content/Primary (Neutral-900) */
@@ -69,6 +72,7 @@
   /* Contenu accent / liens */
   --content-accent: #00796b; /* Content/Accent (Teal-700) */
   --content-accent-hover: #00695c; /* Content/Accent-Hover (Teal-800) */
+  --content-secondary: #434343; /* Content/Secondary (Neutral-700) */
 
   /* Overlays (identiques light & dark) */
   --overlay-black-60: rgba(0, 0, 0, 0.6); /* Surface/Overlay/Black-60 */
@@ -150,6 +154,7 @@
   /* Contenu accent / liens */
   --content-accent: #26a69a; /* Content/Accent (Teal-400) */
   --content-accent-hover: #4db6ac; /* Content/Accent-Hover (Teal-300) */
+  --content-secondary: #d6d6d6; /* Content/Secondary (Neutral-300) */
 
   /* Charts */
   --chart-1: #26a69a; /* Teal-400 */
@@ -167,6 +172,61 @@
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: #575757;
   --sidebar-ring: #4db6ac;
+}
+
+/* ------------------------------------------------------------------ */
+/* Échelle typographique — deux modes, comme dans Figma                */
+/* ------------------------------------------------------------------ */
+/*
+ * Les styles de texte Figma sont *modaux* : `Heading/H1` vaut 28/36 sur le
+ * cadre Mobile et 32/40 sur le cadre Desktop, sous le même nom de token.
+ *
+ * On reproduit ce comportement en CSS plutôt qu'en dupliquant
+ * `text-2xl lg:text-[2rem]` sur chaque titre : les valeurs mobile sont posées
+ * dans `:root`, redéfinies à partir de `lg`, et exposées via `@theme inline`.
+ * Comme `inline` compile en `font-size: var(--type-h1)`, `text-h1` bascule
+ * tout seul au breakpoint — même mécanique que le thème sombre ci-dessus.
+ *
+ * Les espacements (`Gap/*`, `Padding/*`) sont eux aussi modaux, mais ils
+ * tombent déjà sur l'échelle Tailwind : ils restent en utilitaires
+ * responsive (`gap-3 lg:gap-4`), plus lisibles au point d'appel.
+ */
+:root {
+  /* Mode Mobile */
+  --type-display-lg: 2.25rem; /* Display/Large 36 */
+  --type-display-lg-lh: 2.75rem; /* 44 */
+  --type-h1: 1.75rem; /* Heading/H1 28 */
+  --type-h1-lh: 2.25rem; /* 36 */
+  --type-h2: 1.5rem; /* Heading/H2 24 */
+  --type-h2-lh: 2rem; /* 32 */
+  --type-body-lg: 1rem; /* Body/Large 16 */
+  --type-body-lg-lh: 1.5rem; /* 24 */
+  --type-label-lg: 0.875rem; /* Label/Large 14 */
+  --type-label-lg-lh: 1.25rem; /* 20 */
+
+  /* Identiques dans les deux modes */
+  --type-body: 1rem; /* Body/Default 16 */
+  --type-body-lh: 1.5rem; /* 24 */
+  --type-body-sm: 0.875rem; /* Body/Compact & Label/Default 14 */
+  --type-body-sm-lh: 1.25rem; /* 20 */
+  --type-caption: 0.75rem; /* Caption/Default 12 */
+  --type-caption-lh: 1rem; /* 16 */
+}
+
+/* Bascule en mode Desktop — aligné sur le breakpoint `lg` de Tailwind. */
+@media (width >= 64rem) {
+  :root {
+    --type-display-lg: 3rem; /* 48 */
+    --type-display-lg-lh: 3.75rem; /* 60 */
+    --type-h1: 2rem; /* 32 */
+    --type-h1-lh: 2.5rem; /* 40 */
+    --type-h2: 1.75rem; /* 28 */
+    --type-h2-lh: 2.25rem; /* 36 */
+    --type-body-lg: 1.125rem; /* 18 */
+    --type-body-lg-lh: 1.75rem; /* 28 */
+    --type-label-lg: 1rem; /* 16 */
+    --type-label-lg-lh: 1.25rem; /* 20 */
+  }
 }
 
 @theme inline {
@@ -218,6 +278,7 @@
 
   --color-content-accent: var(--content-accent);
   --color-content-accent-hover: var(--content-accent-hover);
+  --color-content-secondary: var(--content-secondary);
 
   --color-overlay-black-60: var(--overlay-black-60);
   --color-overlay-black-10: var(--overlay-black-10);
@@ -247,6 +308,24 @@
 
   /* Typographie */
   --font-sans: var(--font-open-sans);
+
+  /* Styles de texte Figma — responsive par construction (cf. bloc ci-dessus) */
+  --text-display-lg: var(--type-display-lg);
+  --text-display-lg--line-height: var(--type-display-lg-lh);
+  --text-h1: var(--type-h1);
+  --text-h1--line-height: var(--type-h1-lh);
+  --text-h2: var(--type-h2);
+  --text-h2--line-height: var(--type-h2-lh);
+  --text-body-lg: var(--type-body-lg);
+  --text-body-lg--line-height: var(--type-body-lg-lh);
+  --text-body: var(--type-body);
+  --text-body--line-height: var(--type-body-lh);
+  --text-body-sm: var(--type-body-sm);
+  --text-body-sm--line-height: var(--type-body-sm-lh);
+  --text-label-lg: var(--type-label-lg);
+  --text-label-lg--line-height: var(--type-label-lg-lh);
+  --text-caption: var(--type-caption);
+  --text-caption--line-height: var(--type-caption-lh);
 }
 
 @layer base {
