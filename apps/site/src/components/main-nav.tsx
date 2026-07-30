@@ -60,7 +60,12 @@ export function MainNav() {
       // suivrait l'ancre sans déplacer le focus, qui resterait au début de la
       // page — le lien n'éviterait donc rien.
       tabIndex={-1}
-      className="ml-auto focus:outline-none md:ml-0"
+      // La marge automatique pousse la nav contre le bord droit de l'en-tête à
+      // toutes les largeurs : le bouton « Menu » en dessous de `md`, la rangée
+      // de liens au-delà. C'est la disposition du composant `Navbar` de la
+      // maquette, qui fait foi. L'instance posée sur l'écran colle la nav au
+      // logo, mais cette surcharge d'alignement n'était pas voulue.
+      className="ml-auto focus:outline-none"
       onKeyDown={handleKeyDown}
     >
       <button
