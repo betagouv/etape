@@ -38,16 +38,17 @@ export type NavItem = {
 /**
  * Entrées du menu principal, dans leur ordre d'affichage.
  *
- * Limité aux ancres qui existent réellement sur l'accueil. « Les dispositifs »
- * et « FAQ » figurent dans la maquette mais leurs blocs ont été écartés du
- * périmètre : les garder produirait des liens morts, non conformes au RGAA.
+ * Le menu reste celui de la maquette, réduit aux entrées dont la cible existe :
+ * « Les dispositifs » et « FAQ » y figurent mais leurs blocs ont été écartés du
+ * périmètre, et les garder produirait des liens morts, non conformes au RGAA.
  * À rétablir quand les sections ou les pages correspondantes existeront.
+ *
+ * On n'invente pas d'entrée pour autant : les sections « Pour qui » et
+ * « Témoignages » ont bien une ancre, mais le design ne les met pas au menu.
  */
 export const MAIN_NAV: readonly NavItem[] = [
   { label: "Accueil", href: "/" },
   { label: "Comment ça marche", href: "/#comment-ca-marche" },
-  { label: "Pour qui", href: "/#pour-qui" },
-  { label: "Témoignages", href: "/#temoignages" },
 ];
 
 /**
