@@ -169,17 +169,6 @@ export default function Home() {
             ))}
           </ul>
 
-          {/* Mention bas de page */}
-          <p className="text-muted-foreground mt-12 text-sm">
-            Une erreur ou un oubli ?{" "}
-            <a
-              href="#"
-              className="text-primary font-medium underline underline-offset-4 hover:no-underline"
-            >
-              Aidez-nous à l&apos;améliorer
-            </a>
-            .
-          </p>
         </main>
       </Container>
     </div>
