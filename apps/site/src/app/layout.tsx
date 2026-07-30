@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
+import { SkipLinks } from "@etape/ui/components/skip-links";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { SkipLinks } from "@/components/skip-links";
-import { MAIN_CONTENT_ID } from "@/lib/navigation";
+import { MAIN_CONTENT_ID, SKIP_LINKS } from "@/lib/navigation";
 import "./globals.css";
 
 const openSans = Open_Sans({
@@ -33,7 +33,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SkipLinks />
+          <SkipLinks links={SKIP_LINKS} />
           <SiteHeader />
           {/*
             `tabIndex={-1}` rend le contenu principal focusable par programme :

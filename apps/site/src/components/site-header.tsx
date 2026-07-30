@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { Container } from "@etape/ui/components/container";
 import { cn } from "@etape/ui/lib/utils";
 
-import { Container } from "@/components/container";
 import { MainNav } from "@/components/main-nav";
 import { FOCUS_RING } from "@/lib/styles";
 

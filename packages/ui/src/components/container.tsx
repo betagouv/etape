@@ -13,13 +13,19 @@ import { cn } from "@etape/ui/lib/utils";
  *
  * Utiliser `asChild` pour projeter ces styles sur un élément sémantique
  * (ex. `<main>`, `<section>`, `<header>`).
+ *
+ * Les gouttières se resserrent sur petit écran pour laisser respirer le
+ * contenu. La marge de 96 px (`Padding/5XL`) n'est portée que par `lg` : elle
+ * vient de la maquette Figma, qui centre un contenu de 1088 px dans une
+ * fenêtre de 1280 px. Appliquée aux tailles plus étroites, elle rognerait le
+ * contenu au lieu d'écarter le conteneur des bords.
  */
-const containerVariants = cva("mx-auto w-full px-6 sm:px-8", {
+const containerVariants = cva("mx-auto w-full px-4 sm:px-6", {
   variants: {
     size: {
       sm: "max-w-2xl",
       md: "max-w-4xl",
-      lg: "max-w-6xl",
+      lg: "max-w-7xl xl:px-24",
       full: "max-w-none",
     },
   },

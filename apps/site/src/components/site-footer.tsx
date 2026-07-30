@@ -1,8 +1,8 @@
 import * as React from "react";
 
+import { Container } from "@etape/ui/components/container";
 import { cn } from "@etape/ui/lib/utils";
 
-import { Container } from "@/components/container";
 import {
   DISCLAIMER,
   FOOTER_ID,
@@ -72,7 +72,13 @@ function FooterLinkList({ links }: { links: readonly FooterLink[] }) {
  */
 export function SiteFooter() {
   return (
-    <footer id={FOOTER_ID} className="bg-muted border-border border-t">
+    <footer
+      id={FOOTER_ID}
+      // Cible du lien d'évitement « Pied de page » : cf. `MainNav`, le focus ne
+      // suit pas l'ancre sans cet attribut.
+      tabIndex={-1}
+      className="bg-muted border-border border-t focus:outline-none"
+    >
       <Container className="xl:px-32">
         <div className="grid gap-8 pt-12 sm:grid-cols-2 lg:grid-cols-4">
           <FooterColumn title={SERVICE_NAME}>

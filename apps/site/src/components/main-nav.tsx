@@ -56,7 +56,11 @@ export function MainNav() {
       ref={navRef}
       id={MAIN_NAV_ID}
       aria-label="Navigation principale"
-      className="ml-auto md:ml-0"
+      // Cible du lien d'évitement « Menu » : sans `tabIndex={-1}`, le navigateur
+      // suivrait l'ancre sans déplacer le focus, qui resterait au début de la
+      // page — le lien n'éviterait donc rien.
+      tabIndex={-1}
+      className="ml-auto focus:outline-none md:ml-0"
       onKeyDown={handleKeyDown}
     >
       <button
