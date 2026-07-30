@@ -7,7 +7,7 @@ export type SkipLink = {
   label: string;
 };
 
-const DEFAULT_LINKS: SkipLink[] = [{ href: "#contenu", label: "Aller au contenu" }];
+const DEFAULT_LINKS: readonly SkipLink[] = [{ href: "#contenu", label: "Aller au contenu" }];
 
 /**
  * Liens d'évitement (accessibilité clavier) — comportement service-public.fr / DSFR.
@@ -22,7 +22,9 @@ export function SkipLinks({
   links = DEFAULT_LINKS,
   className,
 }: {
-  links?: SkipLink[];
+  // `readonly` pour accepter les tableaux déclarés `as const` / `readonly` côté
+  // apps, qui sont la forme naturelle d'une liste de liens figée.
+  links?: readonly SkipLink[];
   className?: string;
 }) {
   return (

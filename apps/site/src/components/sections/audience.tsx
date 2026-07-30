@@ -5,7 +5,7 @@ import { Section } from "@etape/ui/components/section";
 
 import accompagnementImage from "@/assets/accompagnement-equipe.jpg";
 import { audience } from "@/content/home";
-import { SIMULATEUR_URL } from "@/lib/nav";
+import { SIMULATEUR_URL } from "@/lib/navigation";
 
 /**
  * « Pour qui » — le bandeau teal.

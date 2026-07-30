@@ -3,7 +3,7 @@ import { Section } from "@etape/ui/components/section";
 
 import { ReassuranceList } from "@/components/reassurance-list";
 import { finalCta } from "@/content/home";
-import { SIMULATEUR_URL } from "@/lib/nav";
+import { SIMULATEUR_URL } from "@/lib/navigation";
 
 /** Dernière relance avant le pied de page. */
 export function FinalCta() {

@@ -5,7 +5,7 @@ import { Section } from "@etape/ui/components/section";
 
 import heroImage from "@/assets/hero-reflexion.jpg";
 import { hero } from "@/content/home";
-import { SIMULATEUR_URL } from "@/lib/nav";
+import { SIMULATEUR_URL } from "@/lib/navigation";
 
 /**
  * Bloc d'accroche.

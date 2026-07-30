@@ -1,4 +1,4 @@
-import { BackToTop } from "@etape/ui/components/back-to-top";
+import type { Metadata } from "next";
 
 import { Audience } from "@/components/sections/audience";
 import { DidYouKnow } from "@/components/sections/did-you-know";
@@ -8,7 +8,16 @@ import { HowItWorks } from "@/components/sections/how-it-works";
 import { Impact } from "@/components/sections/impact";
 import { Testimonials } from "@/components/sections/testimonials";
 import { Trust } from "@/components/sections/trust";
-import { CONTENT_ID } from "@/lib/nav";
+
+/**
+ * Métadonnées propres à l'accueil. Elles vivent ici et non dans le layout
+ * racine, qui couvre aussi les autres routes du menu.
+ */
+export const metadata: Metadata = {
+  title: "ETAPE — En pleine réflexion sur votre vie professionnelle ?",
+  description:
+    "Le simulateur ETAPE vous aide à identifier les dispositifs, accompagnements et financements qui peuvent soutenir votre projet de reconversion ou d'évolution professionnelle, selon votre situation.",
+};
 
 /**
  * Page d'accueil du site.
@@ -17,29 +26,24 @@ import { CONTENT_ID } from "@/lib/nav";
  * moins les trois blocs écartés par l'US : Couverture (la liste des
  * dispositifs), Partenariat et FAQ.
  *
- * En-tête et pied de page sont hors périmètre : ils sont traités ailleurs. Les
- * sections gardent leurs ancres (`#comment-ca-marche`, `#pour-qui`,
- * `#temoignages`) pour que la navigation puisse s'y raccrocher sans y revenir.
+ * Les repères de page — `<main>`, en-tête, pied de page — sont posés par le
+ * layout racine : cette page ne rend que ses sections. Elles conservent leurs
+ * ancres (`#comment-ca-marche`, `#pour-qui`, `#temoignages`), qui sont les
+ * cibles du menu principal.
  *
- * Server Component : seul `BackToTop` embarque du JavaScript côté client.
+ * Server Component : aucun JavaScript côté client.
  */
 export default function Home() {
   return (
     <>
-      {/* En tête d'arbre : le composant y dépose la sentinelle qui commande son
-          affichage (cf. sa documentation). */}
-      <BackToTop targetId={CONTENT_ID} />
-
-      <main id={CONTENT_ID} tabIndex={-1} className="flex-1 focus-visible:outline-none">
-        <Hero />
-        <HowItWorks />
-        <Trust />
-        <DidYouKnow />
-        <Audience />
-        <Impact />
-        <Testimonials />
-        <FinalCta />
-      </main>
+      <Hero />
+      <HowItWorks />
+      <Trust />
+      <DidYouKnow />
+      <Audience />
+      <Impact />
+      <Testimonials />
+      <FinalCta />
     </>
   );
 }

@@ -1,18 +1,20 @@
 /**
  * Anneau de focus clavier, pour les éléments qui ne passent pas par un composant
- * du design system (liens de navigation, liens de pied de page…).
+ * du design system (liens de navigation, liens d'évitement, liens de pied de
+ * page…).
  *
- * Un seul consommateur aujourd'hui (`SkipLinks`), mais la recette était déjà
- * recopiée à l'identique en trois endroits avant que l'en-tête et le pied de
- * page ne sortent du périmètre : la déclaration unique est là pour qu'ils s'y
- * raccrochent plutôt que de la réinventer.
+ * Une seule déclaration, dans le package : recopiée au point d'appel, la recette
+ * finit par diverger sans que rien ne le signale — et le repère visuel du clavier
+ * doit rester rigoureusement identique d'un élément à l'autre, c'est une exigence
+ * d'accessibilité, pas une préférence esthétique.
  *
- * Volontairement limité au focus : le rayon reste au point d'appel, qui est le
- * seul à savoir quelle forme il a.
+ * `outline` plutôt que `ring` : le tracé suit l'élément sans jamais être rogné
+ * par un ancêtre en `overflow: hidden`, et `outline-offset` le détache assez du
+ * texte pour rester lisible sur fond coloré.
  *
- * Note : `Button` et `Badge` portent une variante plus riche (bordure teintée +
- * anneau semi-opaque, héritée de shadcn). Les aligner changerait leur apparence,
- * on ne les touche donc pas ici.
+ * Note : `Button` et `Badge` gardent la variante `ring` héritée de shadcn. La
+ * frontière est assumée — composants habillés d'un côté, liens nus de l'autre —
+ * et les aligner changerait l'apparence de tous les boutons.
  */
 export const focusRing =
-  "focus-visible:ring-ring focus-visible:ring-[3px] focus-visible:outline-none";
+  "focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2";

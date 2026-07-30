@@ -5,7 +5,7 @@ import { Section } from "@etape/ui/components/section";
 
 import formationImage from "@/assets/formation-collective.jpg";
 import { didYouKnow } from "@/content/home";
-import { SIMULATEUR_URL } from "@/lib/nav";
+import { SIMULATEUR_URL } from "@/lib/navigation";
 
 /**
  * « Le saviez-vous ? » — le chiffre clé.

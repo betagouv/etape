@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
-import { ThemeProvider } from "@etape/ui/components/theme-provider";
+import { BackToTop } from "@etape/ui/components/back-to-top";
 import { SkipLinks } from "@etape/ui/components/skip-links";
-import { CONTENT_ID } from "@/lib/nav";
+import { ThemeProvider } from "@etape/ui/components/theme-provider";
+
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { MAIN_CONTENT_ID, SKIP_LINKS } from "@/lib/navigation";
 import "./globals.css";
 
 const openSans = Open_Sans({
@@ -10,22 +14,15 @@ const openSans = Open_Sans({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "ETAPE — En pleine réflexion sur votre vie professionnelle ?",
-  description:
-    "Le simulateur ETAPE vous aide à identifier les dispositifs, accompagnements et financements qui peuvent soutenir votre projet de reconversion ou d'évolution professionnelle, selon votre situation.",
-};
-
 /**
- * Liens d'évitement, calqués sur service-public.gouv.fr (« Contenu », « Menu »,
- * « Recherche », « Pied de page »).
- *
- * Réduit à « Contenu » pour l'instant : les repères « Menu » et « Pied de page »
- * appartiennent à l'en-tête et au pied de page, hors périmètre ici. Les ajouter
- * sans leur cible produirait des liens morts. À compléter en même temps qu'eux —
- * c'est ce qui rendra le critère d'acceptation entièrement vérifiable.
+ * Métadonnées par défaut du site. Chaque page précise les siennes — l'accueil le
+ * fait dans `page.tsx`.
  */
-const SKIP_LINKS = [{ href: `#${CONTENT_ID}`, label: "Contenu" }];
+export const metadata: Metadata = {
+  title: "ETAPE",
+  description:
+    "ETAPE permet à chaque salarié qui le désire de réussir sa transition professionnelle.",
+};
 
 export default function RootLayout({
   children,
@@ -42,7 +39,19 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SkipLinks links={SKIP_LINKS} />
-          {children}
+          {/* Placé haut dans l'arbre : le composant y dépose la sentinelle qui
+              commande son affichage, positionnée par rapport à ce point. */}
+          <BackToTop targetId={MAIN_CONTENT_ID} />
+          <SiteHeader />
+          {/*
+            `tabIndex={-1}` rend le contenu principal focusable par programme :
+            sans lui, certains navigateurs suivent le lien d'évitement sans
+            déplacer le focus, qui resterait alors au début de la page.
+          */}
+          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 focus:outline-none">
+            {children}
+          </main>
+          <SiteFooter />
         </ThemeProvider>
       </body>
     </html>
