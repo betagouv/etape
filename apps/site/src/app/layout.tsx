@@ -14,10 +14,6 @@ const openSans = Open_Sans({
   subsets: ["latin"],
 });
 
-/**
- * Métadonnées par défaut du site. Chaque page précise les siennes — l'accueil le
- * fait dans `page.tsx`.
- */
 export const metadata: Metadata = {
   title: "ETAPE",
   description:
@@ -39,8 +35,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SkipLinks links={SKIP_LINKS} />
-          {/* Placé haut dans l'arbre : le composant y dépose la sentinelle qui
-              commande son affichage, positionnée par rapport à ce point. */}
+          {/* Doit rester haut dans l'arbre : cf. `BackToTop`. */}
           <BackToTop targetId={MAIN_CONTENT_ID} />
           <SiteHeader />
           {/*

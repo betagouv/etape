@@ -17,8 +17,6 @@ import { MainNav } from "@/components/main-nav";
 export function SiteHeader() {
   return (
     <header className="border-divider bg-background relative border-b">
-      {/* Palier `xl` : l'en-tête est la seule bande en `Padding/5XL` (96px) — le
-          logo est à x=96 dans la maquette, contre x=128 pour le contenu. */}
       <Container size="xl" className="flex items-center gap-4 py-4">
         <Link href="/" className={cn("shrink-0 rounded-sm", focusRing)}>
           {/*

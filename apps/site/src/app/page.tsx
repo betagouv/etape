@@ -9,10 +9,6 @@ import { Impact } from "@/components/sections/impact";
 import { Testimonials } from "@/components/sections/testimonials";
 import { Trust } from "@/components/sections/trust";
 
-/**
- * Métadonnées propres à l'accueil. Elles vivent ici et non dans le layout
- * racine, qui couvre aussi les autres routes du menu.
- */
 export const metadata: Metadata = {
   title: "ETAPE — En pleine réflexion sur votre vie professionnelle ?",
   description:
@@ -20,18 +16,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * Page d'accueil du site.
- *
- * Reprend la maquette « Desktop - Home » / « Mobile - Home » de SIMULATEUR v2,
- * moins les trois blocs écartés par l'US : Couverture (la liste des
- * dispositifs), Partenariat et FAQ.
- *
- * Les repères de page — `<main>`, en-tête, pied de page — sont posés par le
- * layout racine : cette page ne rend que ses sections. Elles conservent leurs
- * ancres (`#comment-ca-marche`, `#pour-qui`, `#temoignages`), qui sont les
- * cibles du menu principal.
- *
- * Server Component : aucun JavaScript côté client.
+ * Maquette « Desktop / Mobile - Home » de SIMULATEUR v2, moins les blocs écartés
+ * par l'US : Couverture (liste des dispositifs), Partenariat et FAQ.
  */
 export default function Home() {
   return (

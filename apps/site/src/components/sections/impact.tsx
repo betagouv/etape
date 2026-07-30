@@ -3,13 +3,6 @@ import { Section, SectionHeader } from "@etape/ui/components/section";
 
 import { impact } from "@/content/home";
 
-/**
- * « Mesurer notre impact » — les indicateurs clés.
- *
- * Chaque indicateur se lit « 160 000 → reconversions financées → description » :
- * l'ordre du DOM suit l'ordre de lecture, la valeur mise en avant visuellement
- * n'étant qu'une question de taille de police.
- */
 export function Impact() {
   return (
     <Section aria-labelledby="titre-impact">

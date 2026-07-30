@@ -33,12 +33,6 @@ function FooterColumn({ title, children }: { title: string; children: React.Reac
 
 /** Lien du pied de page, utilisable seul ou au sein d'une liste. */
 function FooterAnchor({ link }: { link: FooterLink }) {
-  // Sans destination, on rend un libellé inerte plutôt qu'un `href="#"` : un
-  // lien mort n'est pas conforme au RGAA et trompe la navigation au clavier.
-  if (!link.href) {
-    return <span className="text-content-secondary text-sm">{link.label}</span>;
-  }
-
   return (
     <a
       href={link.href}
@@ -85,9 +79,6 @@ export function SiteFooter() {
       tabIndex={-1}
       className="bg-muted border-border border-t focus:outline-none"
     >
-      {/* Palier `lg` : les colonnes du pied de page démarrent à x=128 dans la
-          maquette, comme les sections. La gouttière est portée par le
-          `Container`, plus besoin de la surcharger ici. */}
       <Container>
         <div className="grid gap-8 pt-12 sm:grid-cols-2 lg:grid-cols-4">
           <FooterColumn title={SERVICE_NAME}>

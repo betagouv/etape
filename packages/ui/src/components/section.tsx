@@ -4,32 +4,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@etape/ui/lib/utils";
 import { Container, type ContainerSize } from "@etape/ui/components/container";
 
-/**
- * Bande de contenu pleine largeur.
- *
- * C'est la brique répétée par toutes les sections des maquettes ETAPE : un fond
- * qui va d'un bord à l'autre, un rythme vertical constant (`Padding/4XL` :
- * 48px en mobile, 64px en desktop) et un contenu borné et centré.
- *
- * Le fond est porté par le `<section>`, la largeur par un `Container` interne :
- * ces deux responsabilités ne peuvent pas tenir sur le même élément.
- *
- * Server Component : aucun JavaScript côté client.
- */
+/** Bande de contenu pleine largeur : fond bord à bord, contenu borné et centré. */
 const sectionVariants = cva("py-12 lg:py-16", {
   variants: {
     surface: {
       default: "bg-background text-foreground",
-      /** `Surface/Base/Grey` — sections en léger retrait (réassurance, footer). */
       grey: "bg-muted text-foreground",
-      /**
-       * `Surface/Base/Secondary` — le bandeau « Le saviez-vous ». Le contenu
-       * reste en `Content/Primary` et non en `--secondary-foreground` : le fond
-       * teal très clair ne justifie pas de teinter le texte, et la maquette ne
-       * le fait pas.
-       */
+      /** Le contenu reste en `Content/Primary` : la maquette ne le teinte pas. */
       secondary: "bg-secondary text-foreground",
-      /** `Surface/Base/Primary` — le bandeau « Pour qui ». */
       primary: "bg-primary text-primary-foreground",
     },
   },
@@ -47,17 +29,15 @@ function Section({
   ...props
 }: React.ComponentProps<"section"> &
   VariantProps<typeof sectionVariants> & {
-    /** Largeur du contenu, déléguée à `Container`. */
     width?: ContainerSize;
-    /** Classes portées par le conteneur interne, pas par la bande. */
     containerClassName?: string;
   }) {
   return (
     <section
       data-slot="section"
       data-surface={surface}
-      // Décale l'ancrage des liens internes : sans quoi un en-tête collant
-      // recouvrirait le haut de la section une fois l'ancre suivie.
+      // Sans ce décalage, l'en-tête collant recouvre le haut de la section
+      // quand on suit une ancre.
       className={cn(sectionVariants({ surface }), "scroll-mt-20", className)}
       {...props}
     >
@@ -69,12 +49,8 @@ function Section({
 }
 
 /**
- * En-tête de section : chapô, titre, sous-texte.
- *
- * Le chapô (« EN 3 ÉTAPES », « POUR QUI ? ») est un paragraphe et jamais un
- * titre : il n'ouvre pas de niveau dans le plan du document. Le `<h2>` porte
- * l'`id` que la section référence via `aria-labelledby`, ce qui donne son nom
- * accessible au repère sans dupliquer le texte.
+ * En-tête de section. Le chapô est un `<p>` et jamais un titre : il n'ouvre pas
+ * de niveau dans le plan du document.
  */
 function SectionHeader({
   caption,

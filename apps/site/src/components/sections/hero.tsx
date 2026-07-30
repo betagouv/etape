@@ -7,26 +7,13 @@ import heroImage from "@/assets/hero-reflexion.jpg";
 import { hero } from "@/content/home";
 import { SIMULATEUR_URL } from "@/lib/navigation";
 
-/**
- * Bloc d'accroche.
- *
- * L'image est purement illustrative : `alt=""` la retire de la restitution
- * vocale plutôt que d'imposer une description qui n'apporte rien (RGAA 1.2).
- * C'est le seul visuel au-dessus de la ligne de flottaison, donc le seul à
- * porter `preload` (`priority` est déprécié depuis Next 16).
- */
 export function Hero() {
   return (
     <Section
       aria-labelledby="titre-accroche"
-      // Répartition de la maquette : image 520 + `Gap/4XL` (64) + texte 600,
-      // soit les 1184 de contenu de la section.
-      //
-      // Elle n'est appliquée qu'à partir de `xl` : c'est le palier où la largeur
-      // de contenu est déjà plafonnée à 1184 (le `max-width` du conteneur mord
-      // dès 1248px), donc le seul où les 520px tombent juste. Entre `lg` et
-      // `xl`, la largeur est encore fluide et deux colonnes égales évitent
-      // d'écraser la colonne de texte.
+      // Les 520/600 de la maquette ne tombent juste qu'à partir de `xl`, palier
+      // où la largeur de contenu est déjà plafonnée à 1184. En dessous elle est
+      // fluide, d'où deux colonnes égales.
       containerClassName="lg:grid lg:grid-cols-2 lg:gap-16 xl:grid-cols-[32.5rem_minmax(0,1fr)]"
     >
       <div className="mb-8 aspect-square overflow-hidden rounded-xl lg:mb-0">
@@ -35,15 +22,13 @@ export function Hero() {
           alt=""
           sizes="(min-width: 1280px) 520px, (min-width: 1024px) 50vw, 100vw"
           className="size-full object-cover"
+          // `priority` est déprécié depuis Next 16.
           preload
         />
       </div>
 
       <div className="flex flex-col items-start gap-6 lg:justify-center lg:gap-8">
         <h1 id="titre-accroche" className="text-h1 font-bold">
-          {/* Un `block` par ligne plutôt qu'un `<br />` : le retour suit la
-              maquette en desktop et disparaît de lui-même quand le titre se
-              réagence sur mobile. */}
           {hero.titleLines.map((line) => (
             <span key={line} className="block">
               {line}

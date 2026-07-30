@@ -7,19 +7,12 @@ import accompagnementImage from "@/assets/accompagnement-equipe.jpg";
 import { audience } from "@/content/home";
 import { SIMULATEUR_URL } from "@/lib/navigation";
 
-/**
- * « Pour qui » — le bandeau teal.
- *
- * Sur cette surface, le texte hérite de `--primary-foreground` : rien ne doit
- * réintroduire une couleur de contenu, sous peine de casser le contraste.
- */
 export function Audience() {
   return (
     <Section
       id="pour-qui"
       surface="primary"
       aria-labelledby="titre-pour-qui"
-      /** Mêmes gouttière et proportions que « Le saviez-vous », mais inversées. */
       width="md"
       containerClassName="lg:grid lg:grid-cols-5 lg:items-center lg:gap-8"
     >
@@ -33,9 +26,8 @@ export function Audience() {
       </div>
 
       <div className="mt-8 flex flex-col items-start gap-6 lg:col-span-3 lg:mt-0">
-        {/* Pas de chapô « POUR QUI ? » : le calque existe dans la maquette mais
-            y est rendu invisible (teal sur teal). L'afficher ajouterait un
-            élément que le design ne montre pas. */}
+        {/* Le chapô « POUR QUI ? » existe dans la maquette mais y est invisible
+            (teal sur teal) : ne pas le réintroduire. */}
         <h2 id="titre-pour-qui" className="text-h2 font-bold">
           {audience.title}
         </h2>

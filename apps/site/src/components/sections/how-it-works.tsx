@@ -2,13 +2,6 @@ import { Section, SectionHeader } from "@etape/ui/components/section";
 
 import { howItWorks } from "@/content/home";
 
-/**
- * « Comment ça marche » — les trois étapes du parcours.
- *
- * Les étapes sont sans habillage de carte (ni fond ni bordure dans les deux
- * maquettes) : ce sont des blocs simples, pas des `Card`. La liste est ordonnée
- * (`<ol>`) parce que la séquence porte du sens.
- */
 export function HowItWorks() {
   return (
     <Section id="comment-ca-marche" aria-labelledby="titre-comment-ca-marche">

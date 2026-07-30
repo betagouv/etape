@@ -15,33 +15,19 @@ import { cn } from "@etape/ui/lib/utils";
  * (ex. `<main>`, `<section>`, `<header>`).
  */
 /*
- * Modèle de largeur — dérivé de la façon dont les maquettes sont construites.
+ * Les cotes Figma sont des conséquences, pas des cibles : les maquettes font
+ * 1440 de large et chaque bloc applique une gouttière prise dans les tokens de
+ * padding. Mesuré sur « Desktop - Home » — l'en-tête est volontairement plus
+ * large que le reste (logo à x=96, contenu des sections à x=128) :
  *
- * Les cotes Figma ne sont pas des largeurs cibles, ce sont des conséquences :
- * les maquettes sont dessinées pour 1440px, et chaque bloc applique une
- * gouttière prise dans les tokens de padding. Mesuré sur le cadre
- * « Desktop - Home » :
+ *   en-tête                  1440 − 2 × `Padding/5XL` (96)  = 1248
+ *   sections et pied de page 1440 − 2 × `Padding/6XL` (128) = 1184
+ *   bandes teal              1440 − 2 × `Padding/8XL` (256) =  928
  *
- *   en-tête                  1440 − 2 × `Padding/5XL` (96)  = 1248 de contenu
- *   sections et pied de page 1440 − 2 × `Padding/6XL` (128) = 1184 de contenu
- *   bandes « saviez-vous » / « pour qui »
- *                            1440 − 2 × `Padding/8XL` (256) =  928 de contenu
- *   mobile                    390 − 2 × `Padding/XL`  (16)  =  358 de contenu
- *
- * L'en-tête est donc volontairement un peu plus large que le reste : sur
- * l'instance `Navbar` de la page, le logo est à x=96 et le bloc de droite
- * s'arrête à 1344, là où les colonnes du pied de page et les `_InnerContent` des
- * sections commencent à x=128. Deux paliers distincts sont nécessaires.
- *
- * On borne à la résolution de référence : en dessous de 1440 la largeur est
- * fluide, à 1440 le rendu est exactement celui de la maquette, au-delà on ne
- * grandit plus — pour ne pas produire de longueurs de ligne que le design n'a
- * jamais validées (le chapô de « Mesurer notre impact » dépasserait les 200
- * caractères sur un écran large).
- *
- * `max-width` s'appliquant à la boîte de bordure, chaque palier vaut
- * « contenu de référence + 2 gouttières de 32px ». C'est ce décalage qui fait
- * qu'à 1440 la marge effective retombe sur celle du token.
+ * `max-width` s'appliquant à la boîte de bordure, chaque palier vaut « contenu
+ * + 2 gouttières de 32px » : c'est ce décalage qui fait qu'à 1440 la marge
+ * effective retombe sur celle du token. On plafonne là, pour ne pas produire de
+ * longueurs de ligne que le design n'a jamais validées.
  */
 const containerVariants = cva("mx-auto w-full px-4 sm:px-6 lg:px-8", {
   variants: {

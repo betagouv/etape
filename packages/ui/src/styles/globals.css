@@ -14,9 +14,6 @@
 :root {
   --radius: 0.75rem; /* Radius M = 12px */
 
-  /* Pas de `color-scheme` ici : `ThemeProvider` (next-themes) le pose en style
-     inline sur `<html>`, ce qui l'emporterait de toute façon sur cette règle. */
-
   /* Surfaces & contenu */
   --background: #ffffff; /* Surface/Base/Default */
   --foreground: #1b1b1b; /* Content/Primary (Neutral-900) */
@@ -178,18 +175,10 @@
 /* Échelle typographique — deux modes, comme dans Figma                */
 /* ------------------------------------------------------------------ */
 /*
- * Les styles de texte Figma sont *modaux* : `Heading/H1` vaut 28/36 sur le
- * cadre Mobile et 32/40 sur le cadre Desktop, sous le même nom de token.
- *
- * On reproduit ce comportement en CSS plutôt qu'en dupliquant
- * `text-2xl lg:text-[2rem]` sur chaque titre : les valeurs mobile sont posées
- * dans `:root`, redéfinies à partir de `lg`, et exposées via `@theme inline`.
- * Comme `inline` compile en `font-size: var(--type-h1)`, `text-h1` bascule
- * tout seul au breakpoint — même mécanique que le thème sombre ci-dessus.
- *
- * Les espacements (`Gap/*`, `Padding/*`) sont eux aussi modaux, mais ils
- * tombent déjà sur l'échelle Tailwind : ils restent en utilitaires
- * responsive (`gap-3 lg:gap-4`), plus lisibles au point d'appel.
+ * Les styles de texte Figma sont modaux : `Heading/H1` vaut 28/36 en mobile et
+ * 32/40 en desktop, sous le même nom. Les valeurs mobile sont posées dans
+ * `:root`, redéfinies à `lg`, et exposées via `@theme inline` — qui compile en
+ * `font-size: var(--type-h1)`, si bien que `text-h1` bascule seul au breakpoint.
  */
 :root {
   /* Mode Mobile */

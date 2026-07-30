@@ -10,33 +10,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-/**
- * Contenu éditorial de la page d'accueil.
- *
- * Tout le texte est regroupé ici, hors du JSX : la règle « pas d'ajout de texte
- * aux composants » de l'US reste vérifiable d'un coup d'œil, la relecture métier
- * ne demande pas de lire du balisage, et les tableaux sont des constantes de
- * module — créées une fois, pas à chaque rendu.
- *
- * Les libellés reprennent la maquette au mot près. Certains chiffres et
- * témoignages sont des valeurs de maquette : cf. la note en fin de fichier.
- */
-
-/* ------------------------------------------------------------------ */
-/* Hero                                                                */
-/* ------------------------------------------------------------------ */
+/** Contenu éditorial de la page d'accueil. Les libellés reprennent la maquette au mot près. */
 
 export const hero = {
-  /** Une ligne par tableau : la maquette coupe le titre après le point d'interrogation. */
   titleLines: ["En pleine réflexion sur votre vie professionnelle ?", "Trouvez par où commencer."],
   subtext:
     "Vous envisagez une reconversion, une évolution professionnelle, une formation ou simplement une réflexion, mais vous ne savez pas par où commencer ? Le simulateur ETAPE vous aide à identifier les dispositifs, accompagnements et financements qui peuvent soutenir votre projet, selon votre situation.",
   cta: "C'est parti !",
 };
-
-/* ------------------------------------------------------------------ */
-/* Comment ça marche                                                   */
-/* ------------------------------------------------------------------ */
 
 export type Step = {
   icon: LucideIcon;
@@ -70,10 +51,6 @@ export const howItWorks = {
   ] satisfies Step[],
 };
 
-/* ------------------------------------------------------------------ */
-/* Réassurance                                                         */
-/* ------------------------------------------------------------------ */
-
 export type ReassuranceItem = {
   icon: LucideIcon;
   label: string;
@@ -82,7 +59,6 @@ export type ReassuranceItem = {
 export const trust = {
   caption: "Pourquoi nous faire confiance ?",
   title: "Une démarche simple et sécurisée",
-  /** « Tous profils » remplacé par « Sans engagement » (US). */
   items: [
     { icon: Euro, label: "Gratuit" },
     { icon: EyeOff, label: "Anonyme" },
@@ -92,22 +68,13 @@ export const trust = {
   ] satisfies ReassuranceItem[],
 };
 
-/* ------------------------------------------------------------------ */
-/* Le saviez-vous                                                      */
-/* ------------------------------------------------------------------ */
-
 export const didYouKnow = {
   caption: "Le saviez-vous ?",
-  /** La maquette met « 24 000 personnes » en exergue au milieu de la phrase. */
   sentenceBefore: "Chaque année,",
   highlight: "24 000 personnes",
   sentenceAfter: ["changent de métier grâce à", "un dispositif financé."],
   cta: "Suis-je éligible ?",
 };
-
-/* ------------------------------------------------------------------ */
-/* Pour qui                                                            */
-/* ------------------------------------------------------------------ */
 
 export const audience = {
   caption: "Pour qui ?",
@@ -116,10 +83,6 @@ export const audience = {
     "Le simulateur s'adresse à toute personne qui souhaite évoluer ou se reconvertir — votre situation est prise en compte dès les premières questions.",
   cta: "Commencer la simulation",
 };
-
-/* ------------------------------------------------------------------ */
-/* Mesurer notre impact                                                */
-/* ------------------------------------------------------------------ */
 
 export type Stat = {
   value: string;
@@ -156,10 +119,6 @@ export const impact = {
   ] satisfies Stat[],
 };
 
-/* ------------------------------------------------------------------ */
-/* Témoignages                                                         */
-/* ------------------------------------------------------------------ */
-
 export type Testimonial = {
   name: string;
   role: string;
@@ -171,7 +130,6 @@ export const testimonials = {
   title: "Ils ont franchi le pas",
   subtext:
     "Le simulateur s'adresse à toute personne qui souhaite évoluer ou se reconvertir — votre situation est prise en compte dès les premières questions.",
-  /** Les guillemets français sont posés par le composant, pas stockés ici. */
   items: [
     {
       name: "Marie",
@@ -194,16 +152,10 @@ export const testimonials = {
   ] satisfies Testimonial[],
 };
 
-/* ------------------------------------------------------------------ */
-/* CTA final                                                           */
-/* ------------------------------------------------------------------ */
-
 export const finalCta = {
   title: "Prêt à découvrir vos dispositifs ?",
   subtext: "Quelques minutes suffisent pour y voir clair sur vos droits et vos options.",
-  /** « Lancer le simulateur » remplacé par « C'est parti ! » (US). */
   cta: "C'est parti !",
-  /** Même liste que `trust.items`, aux libellés près : la maquette dit « 5 minutes » ici. */
   items: [
     { icon: Euro, label: "Gratuit" },
     { icon: EyeOff, label: "Anonyme" },
@@ -214,18 +166,6 @@ export const finalCta = {
 };
 
 /*
- * Le contenu du pied de page (colonnes « Liens utiles » / « Légal » / « Mise à
- * jour », mention « Simulateur informatif… ») n'est pas repris ici : l'en-tête et
- * le pied de page sont traités ailleurs, et dupliquer leur copie dans ce module
- * ferait diverger les deux sources.
- */
-
-/*
- * À VALIDER AVANT MISE EN PRODUCTION
- *
- * Les chiffres de `impact.stats` (160 000 reconversions, 98 % de satisfaction,
- * 54 000+ simulations, 5+ dispositifs) et les trois `testimonials.items`
- * proviennent de la maquette. Sur un service public, ils doivent être sourcés ou
- * remplacés par des données réelles. Ils sont isolés ici pour être remplaçables
- * sans toucher au balisage.
+ * À SOURCER AVANT MISE EN PRODUCTION : les chiffres d'`impact.stats` et les trois
+ * `testimonials.items` proviennent de la maquette, pas de données réelles.
  */

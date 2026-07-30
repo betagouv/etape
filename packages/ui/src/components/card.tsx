@@ -8,11 +8,6 @@ const cardVariants = cva("flex flex-col py-6", {
   variants: {
     variant: {
       default: "bg-card text-card-foreground gap-6 rounded-xl border shadow-sm",
-      /**
-       * Carte posée à plat sur la page : `Surface/Base/Grey` + `Radius/S`, sans
-       * bordure ni ombre. C'est l'habillage des cartes statistiques et
-       * témoignages des maquettes ETAPE.
-       */
       muted: "bg-muted text-card-foreground gap-3 rounded-sm lg:gap-4",
     },
   },
@@ -28,7 +23,6 @@ function Card({
   ...props
 }: React.ComponentProps<"div"> &
   VariantProps<typeof cardVariants> & {
-    /** Projette l'habillage sur un élément sémantique (`<figure>`, `<article>`…). */
     asChild?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : "div";
