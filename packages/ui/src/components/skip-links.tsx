@@ -1,4 +1,5 @@
 import { cn } from "@etape/ui/lib/utils";
+import { focusRing } from "@etape/ui/lib/focus";
 
 export type SkipLink = {
   /** Ancre cible, ex. "#contenu" (doit correspondre à un id focusable dans la page). */
@@ -31,7 +32,10 @@ export function SkipLinks({
           <li key={link.href}>
             <a
               href={link.href}
-              className="bg-background text-primary focus-visible:ring-ring inline-block rounded-md border px-4 py-2 text-sm font-medium underline underline-offset-4 shadow-sm focus-visible:ring-[3px] focus-visible:outline-none"
+              className={cn(
+                "bg-background text-primary inline-block rounded-md border px-4 py-2 text-sm font-medium underline underline-offset-4 shadow-sm",
+                focusRing,
+              )}
             >
               {link.label}
             </a>
