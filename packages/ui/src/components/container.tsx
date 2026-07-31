@@ -13,19 +13,33 @@ import { cn } from "@etape/ui/lib/utils";
  *
  * Utiliser `asChild` pour projeter ces styles sur un élément sémantique
  * (ex. `<main>`, `<section>`, `<header>`).
- *
- * Les gouttières se resserrent sur petit écran pour laisser respirer le
- * contenu. La marge de 96 px (`Padding/5XL`) n'est portée que par `lg` : elle
- * vient de la maquette Figma, qui centre un contenu de 1088 px dans une
- * fenêtre de 1280 px. Appliquée aux tailles plus étroites, elle rognerait le
- * contenu au lieu d'écarter le conteneur des bords.
  */
-const containerVariants = cva("mx-auto w-full px-4 sm:px-6", {
+/*
+ * Les cotes Figma sont des conséquences, pas des cibles : les maquettes font
+ * 1440 de large et chaque bloc applique une gouttière prise dans les tokens de
+ * padding. Mesuré sur « Desktop - Home » — l'en-tête est volontairement plus
+ * large que le reste (logo à x=96, contenu des sections à x=128) :
+ *
+ *   en-tête                  1440 − 2 × `Padding/5XL` (96)  = 1248
+ *   sections et pied de page 1440 − 2 × `Padding/6XL` (128) = 1184
+ *   bandes teal              1440 − 2 × `Padding/8XL` (256) =  928
+ *
+ * `max-width` s'appliquant à la boîte de bordure, chaque palier vaut « contenu
+ * + 2 gouttières de 32px » : c'est ce décalage qui fait qu'à 1440 la marge
+ * effective retombe sur celle du token. On plafonne là, pour ne pas produire de
+ * longueurs de ligne que le design n'a jamais validées.
+ */
+const containerVariants = cva("mx-auto w-full px-4 sm:px-6 lg:px-8", {
   variants: {
     size: {
+      /** Largeur de lecture, sans équivalent dans les maquettes. */
       sm: "max-w-2xl",
-      md: "max-w-4xl",
-      lg: "max-w-7xl xl:px-24",
+      /** 928 de contenu — sections en `Padding/8XL`. */
+      md: "max-w-[62rem]",
+      /** 1184 de contenu — sections et pied de page, en `Padding/6XL`. */
+      lg: "max-w-[78rem]",
+      /** 1248 de contenu — en-tête seul, en `Padding/5XL`. */
+      xl: "max-w-[82rem]",
       full: "max-w-none",
     },
   },
@@ -49,5 +63,8 @@ function Container({
     <Comp data-slot="container" className={cn(containerVariants({ size }), className)} {...props} />
   );
 }
+
+/** Largeurs de contenu disponibles, pour les composants qui délèguent à `Container`. */
+export type ContainerSize = NonNullable<VariantProps<typeof containerVariants>["size"]>;
 
 export { Container, containerVariants };

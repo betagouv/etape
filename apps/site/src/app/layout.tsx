@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
+import { BackToTop } from "@etape/ui/components/back-to-top";
 import { SkipLinks } from "@etape/ui/components/skip-links";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
 
@@ -34,6 +35,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SkipLinks links={SKIP_LINKS} />
+          {/* Doit rester haut dans l'arbre : cf. `BackToTop`. */}
+          <BackToTop targetId={MAIN_CONTENT_ID} />
           <SiteHeader />
           {/*
             `tabIndex={-1}` rend le contenu principal focusable par programme :

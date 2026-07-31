@@ -66,4 +66,4 @@ export const SERVICE_DESCRIPTION =
 
 /** Avertissement de bas de page, imposé par le ticket. */
 export const DISCLAIMER =
-  "Les résultats affichés par ce simulateur sont fournis à titre informatif uniquement";
+  "Simulateur informatif - Aucun avis officiel. La Commission Paritaire de votre région reste seule décisionnaire.";

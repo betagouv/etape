@@ -1,9 +1,8 @@
 import * as React from "react";
 import Link from "next/link";
 
+import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
-
-import { FOCUS_RING } from "@/lib/styles";
 
 /**
  * Entrée de la navigation principale — pendant en code du composant
@@ -26,7 +25,7 @@ export function NavLink({
       aria-current={isCurrent ? "page" : undefined}
       className={cn(
         "inline-block rounded-sm py-2 leading-6 transition-colors",
-        FOCUS_RING,
+        focusRing,
         isCurrent
           ? "text-content-accent font-bold"
           : "text-foreground hover:text-content-accent hover:underline hover:underline-offset-4",

@@ -2,10 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Container } from "@etape/ui/components/container";
+import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 
 import { MainNav } from "@/components/main-nav";
-import { FOCUS_RING } from "@/lib/styles";
 
 /**
  * En-tête commun à toutes les pages du site : le logo Transitions Pro, qui
@@ -17,8 +17,8 @@ import { FOCUS_RING } from "@/lib/styles";
 export function SiteHeader() {
   return (
     <header className="border-divider bg-background relative border-b">
-      <Container className="flex items-center gap-4 py-4">
-        <Link href="/" className={cn("shrink-0 rounded-sm", FOCUS_RING)}>
+      <Container size="xl" className="flex items-center gap-4 py-4">
+        <Link href="/" className={cn("shrink-0 rounded-sm", focusRing)}>
           {/*
             Le logo est le seul contenu du lien : son texte alternatif fait donc
             office de nom accessible pour ce lien, et doit décrire la

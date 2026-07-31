@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { Container } from "@etape/ui/components/container";
+import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 
 import {
@@ -15,7 +16,6 @@ import {
   USEFUL_LINKS,
   type FooterLink,
 } from "@/lib/footer";
-import { FOCUS_RING } from "@/lib/styles";
 
 /**
  * Colonne du pied de page. Le titre est un vrai niveau de titre : il permet aux
@@ -41,7 +41,7 @@ function FooterAnchor({ link }: { link: FooterLink }) {
       {...(link.isExternal ? { target: "_blank", rel: "noreferrer" } : {})}
       className={cn(
         "text-content-secondary hover:text-content-accent rounded-sm text-sm hover:underline hover:underline-offset-4",
-        FOCUS_RING,
+        focusRing,
       )}
     >
       {link.label}
@@ -79,7 +79,7 @@ export function SiteFooter() {
       tabIndex={-1}
       className="bg-muted border-border border-t focus:outline-none"
     >
-      <Container className="xl:px-32">
+      <Container>
         <div className="grid gap-8 pt-12 sm:grid-cols-2 lg:grid-cols-4">
           <FooterColumn title={SERVICE_NAME}>
             <p className="text-content-secondary text-sm">{SERVICE_DESCRIPTION}</p>

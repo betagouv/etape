@@ -4,11 +4,11 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
+import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 
 import { NavLink } from "@/components/nav-link";
 import { MAIN_NAV, MAIN_NAV_ID, isCurrentPage } from "@/lib/navigation";
-import { FOCUS_RING } from "@/lib/styles";
 
 /**
  * Navigation principale du site.
@@ -76,7 +76,7 @@ export function MainNav() {
         onClick={() => setIsOpen((open) => !open)}
         className={cn(
           "text-foreground hover:bg-accent inline-flex items-center gap-2 rounded-md px-3 py-2 font-medium md:hidden",
-          FOCUS_RING,
+          focusRing,
         )}
       >
         {isOpen ? (

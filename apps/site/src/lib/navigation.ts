@@ -8,6 +8,17 @@
 
 import { FOOTER_ID } from "@/lib/footer";
 
+/**
+ * Le simulateur est un build séparé, servi sous son propre préfixe : le site ne
+ * peut pas résoudre ses routes et a besoin du préfixe pour construire ses liens.
+ * Celui-ci vient de `paths.mjs` via `next.config.ts`, seule déclaration du
+ * découpage des chemins.
+ *
+ * Volontairement sans valeur de repli : un préfixe absent doit produire une URL
+ * manifestement cassée plutôt qu'un chemin d'apparence valide.
+ */
+export const SIMULATEUR_URL = `${process.env.NEXT_PUBLIC_SIMULATEUR_PATH}/`;
+
 /** Identifiant du contenu principal, cible du lien d'évitement « Contenu ». */
 export const MAIN_CONTENT_ID = "contenu";
 
@@ -27,13 +38,17 @@ export type NavItem = {
 /**
  * Entrées du menu principal, dans leur ordre d'affichage.
  *
- * « Les dispositifs » figure dans la maquette mais reste volontairement absent
- * tant que la page correspondante n'existe pas (demande explicite du ticket).
+ * Le menu reste celui de la maquette, réduit aux entrées dont la cible existe :
+ * « Les dispositifs » et « FAQ » y figurent mais leurs blocs ont été écartés du
+ * périmètre, et les garder produirait des liens morts, non conformes au RGAA.
+ * À rétablir quand les sections ou les pages correspondantes existeront.
+ *
+ * On n'invente pas d'entrée pour autant : les sections « Pour qui » et
+ * « Témoignages » ont bien une ancre, mais le design ne les met pas au menu.
  */
 export const MAIN_NAV: readonly NavItem[] = [
   { label: "Accueil", href: "/" },
   { label: "Comment ça marche", href: "/#comment-ca-marche" },
-  { label: "FAQ", href: "/#faq" },
 ];
 
 /**
