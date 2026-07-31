@@ -1,6 +1,7 @@
 import Image from "next/image";
-import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
+
+import { HomeCta } from "@/questionnaire/components/HomeCta";
 
 // `basePath` ne s'applique pas au `src` de `next/image` : les fichiers de
 // `public/` doivent être préfixés à la main. Dérivé de `next.config.ts`, qui le
@@ -122,12 +123,8 @@ const benefits = [
 export default function Home() {
   return (
     <div className="bg-background text-foreground flex flex-1 flex-col items-center justify-center">
-      <Container
-        asChild
-        size="md"
-        className="flex flex-col items-center py-16 text-center focus-visible:outline-none"
-      >
-        <main id="contenu" tabIndex={-1}>
+      <Container asChild size="md" className="flex flex-col items-center py-16 text-center">
+        <main>
           {/* Logos partenaires */}
           <div className="flex items-center justify-center gap-8">
             <Image
@@ -160,10 +157,7 @@ export default function Home() {
             êtes éligible, puis vous oriente vers le bon organisme.
           </p>
 
-          {/* CTA — inerte : ne lance pas le questionnaire (cf. ticket) */}
-          <Button size="lg" className="mt-12 h-14 px-8 text-lg">
-            C&apos;est parti !
-          </Button>
+          <HomeCta />
 
           {/* Points clés */}
           <ul className="text-foreground mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
@@ -175,17 +169,6 @@ export default function Home() {
             ))}
           </ul>
 
-          {/* Mention bas de page */}
-          <p className="text-muted-foreground mt-12 text-sm">
-            Une erreur ou un oubli ?{" "}
-            <a
-              href="#"
-              className="text-primary font-medium underline underline-offset-4 hover:no-underline"
-            >
-              Aidez-nous à l&apos;améliorer
-            </a>
-            .
-          </p>
         </main>
       </Container>
     </div>
