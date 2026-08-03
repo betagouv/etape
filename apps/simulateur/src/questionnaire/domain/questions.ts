@@ -12,7 +12,13 @@ import type { Outcome, Question } from "./types";
 /** Sentinelle : fin du questionnaire → écran de résultats (module `resultats/`). */
 export const STEP_RESULTS = "resultats";
 
-// Champs (une entrée par question). Servent de clé dans la map des réponses.
+// Champs. Servent de clé dans la map des réponses. Une entrée par question,
+// sauf les deux questions de localisation qui portent chacune un radio
+// (France / hors de France) et une ville conditionnelle.
+export const FIELD_LIEU_TRAVAIL = "lieuTravail";
+export const FIELD_VILLE_TRAVAIL = "villeTravail";
+export const FIELD_RESIDENCE = "residence";
+export const FIELD_VILLE_RESIDENCE = "villeResidence";
 export const FIELD_MOTIVATION = "motivation";
 export const FIELD_ENTREPRENEUR_FT = "entrepreneurFranceTravail";
 export const FIELD_METIER_IDEE = "metierIdee";
@@ -27,6 +33,8 @@ export const FIELD_SANTE = "sante";
 export const FIELD_DIPLOME = "diplome";
 
 // Identifiants d'étapes (= id de question) référencés par le branchement.
+const Q_LIEU_TRAVAIL = "lieu-travail";
+const Q_RESIDENCE = "residence";
 const Q_MOTIVATION = "motivation";
 const Q_ENTREPRENEUR_FT = "entrepreneur-france-travail";
 const Q_METIER_IDEE = "metier-idee";
@@ -40,8 +48,76 @@ const Q_ANCIENNETE_SALARIALE = "anciennete-salariale";
 const Q_SANTE = "sante-handicap";
 const Q_DIPLOME = "diplome";
 
+// Valeurs partagées par les deux questions de localisation.
+const LOC_FRANCE = "france";
+const LOC_HORS_FRANCE = "hors-france";
+
+/** Écran terminal : réside ET travaille hors de France. */
+export const OUTCOME_HORS_FRANCE = "hors-france";
+
 /** Séquence ordonnée des questions du flow. */
 export const questions: Question[] = [
+  {
+    id: Q_LIEU_TRAVAIL,
+    title: "Où travaillez-vous ?",
+    fields: [
+      {
+        type: "radio",
+        name: FIELD_LIEU_TRAVAIL,
+        required: true,
+        orientation: "horizontal",
+        options: [
+          { value: LOC_FRANCE, label: "En France" },
+          {
+            value: LOC_HORS_FRANCE,
+            label: "Hors de France",
+            flags: [FLAGS.TRAVAIL_HORS_FRANCE],
+          },
+        ],
+      },
+      {
+        type: "city",
+        name: FIELD_VILLE_TRAVAIL,
+        label: "Ville",
+        required: true,
+        placeholder: "Exemple : Lyon",
+        visibleWhen: (answers) => answers[FIELD_LIEU_TRAVAIL] === LOC_FRANCE,
+      },
+    ],
+  },
+  {
+    id: Q_RESIDENCE,
+    title: "Où habitez-vous ?",
+    // La simulation ne s'arrête que si les DEUX lieux sont hors de France.
+    next: (flags) =>
+      flags.has(FLAGS.TRAVAIL_HORS_FRANCE) && flags.has(FLAGS.RESIDENCE_HORS_FRANCE)
+        ? OUTCOME_HORS_FRANCE
+        : null,
+    fields: [
+      {
+        type: "radio",
+        name: FIELD_RESIDENCE,
+        required: true,
+        orientation: "horizontal",
+        options: [
+          { value: LOC_FRANCE, label: "En France" },
+          {
+            value: LOC_HORS_FRANCE,
+            label: "Hors de France",
+            flags: [FLAGS.RESIDENCE_HORS_FRANCE],
+          },
+        ],
+      },
+      {
+        type: "city",
+        name: FIELD_VILLE_RESIDENCE,
+        label: "Ville",
+        required: true,
+        placeholder: "Exemple : Lyon",
+        visibleWhen: (answers) => answers[FIELD_RESIDENCE] === LOC_FRANCE,
+      },
+    ],
+  },
   {
     id: Q_MOTIVATION,
     title: "Quelle est ta situation actuelle ?",
@@ -355,8 +431,18 @@ export const questions: Question[] = [
   },
 ];
 
-/** Écrans terminaux du flow (dead-ends), indexés par id. Aucun pour l'instant. */
-export const outcomes: Record<string, Outcome> = {};
+/** Écrans terminaux du flow (dead-ends), indexés par id. */
+export const outcomes: Record<string, Outcome> = {
+  [OUTCOME_HORS_FRANCE]: {
+    id: OUTCOME_HORS_FRANCE,
+    title: "Vous indiquez résider et travailler hors de France.",
+    text: "Le simulateur ne couvre pas les dispositifs pour les situations 100% hors France. La simulation s'arrête ici.",
+    actions: [
+      { label: "Retour à l'accueil", href: "/", variant: "primary" },
+      { label: "Découvrir les dispositifs", href: "#", variant: "secondary" },
+    ],
+  },
+};
 
 export function findQuestion(id: string): Question | undefined {
   return questions.find((question) => question.id === id);
