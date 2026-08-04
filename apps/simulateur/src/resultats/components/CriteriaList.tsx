@@ -1,10 +1,8 @@
-import type { Critere, CritereStatut } from "../domain/types";
-import { CircleAlertIcon, CircleCheckIcon, CircleXIcon } from "./icons";
+import { CircleAlertIcon, CircleCheckIcon, CircleXIcon, type LucideIcon } from "lucide-react";
 
-const STATUT_UI: Record<
-  CritereStatut,
-  { Icon: (props: { className?: string }) => React.ReactNode; color: string }
-> = {
+import type { Critere, CritereStatut } from "../domain/types";
+
+const STATUT_UI: Record<CritereStatut, { Icon: LucideIcon; color: string }> = {
   valide: { Icon: CircleCheckIcon, color: "text-success-text" },
   "a-verifier": { Icon: CircleAlertIcon, color: "text-warning-text" },
   manquant: { Icon: CircleXIcon, color: "text-destructive-text" },
@@ -20,7 +18,7 @@ export function CriteriaList({ criteres }: { criteres: Critere[] }) {
           return (
             <li key={`${critere.label}-${index}`} className={`flex items-start gap-2 ${color}`}>
               <span className="flex shrink-0 py-0.5">
-                <Icon className="size-4" />
+                <Icon aria-hidden="true" className="size-4" />
               </span>
               <span className="text-sm leading-5">{critere.label}</span>
             </li>

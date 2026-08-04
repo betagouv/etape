@@ -40,6 +40,8 @@ export function FieldRenderer({
           field={field}
           value={(answers[field.name] as Commune | undefined) ?? undefined}
           onChange={(value) => setAnswer(field.name, value)}
+          labelledBy={labelledBy}
+          describedBy={describedBy}
         />
       );
     case "checkbox":

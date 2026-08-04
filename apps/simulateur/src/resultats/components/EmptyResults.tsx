@@ -1,4 +1,4 @@
-import { SearchXIcon } from "./icons";
+import { SearchXIcon } from "lucide-react";
 
 export function EmptyResults() {
   return (
@@ -7,7 +7,7 @@ export function EmptyResults() {
         aria-hidden="true"
         className="bg-muted text-foreground flex items-center justify-center rounded-full p-4"
       >
-        <SearchXIcon className="size-8" />
+        <SearchXIcon aria-hidden="true" className="size-8" />
       </span>
 
       <div className="flex max-w-[672px] flex-col items-center gap-4">
