@@ -70,7 +70,14 @@ function AccordionTrigger({
           // à `none`, ce qui neutralise silencieusement l'anneau de `focusRing`.
           // `cursor-pointer` est explicite : le preflight de Tailwind v4 laisse
           // aux boutons le curseur par défaut du navigateur, soit la flèche.
-          "text-body-sm flex flex-1 cursor-pointer items-center justify-between gap-4 rounded-sm py-4 text-left font-semibold hover:underline disabled:pointer-events-none disabled:opacity-50",
+          // `min-w-0` et `wrap-anywhere` : sans eux, un mot insécable long fixe
+          // la largeur minimale du déclencheur, qui déborde alors de sa carte et
+          // fait défiler la page horizontalement — un échec du critère
+          // « redimensionnement du contenu » (WCAG 1.4.10). `wrap-anywhere` et
+          // non `break-words` : `overflow-wrap: break-word` casse le mot à
+          // l'affichage mais laisse la largeur min-content inchangée, si bien
+          // que l'élément flex refuse toujours de rétrécir.
+          "text-body-sm flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-4 rounded-sm py-4 text-left font-semibold wrap-anywhere hover:underline disabled:pointer-events-none disabled:opacity-50",
           // Le chevron n'expose pas `data-state` : la rotation est pilotée
           // depuis le déclencheur, qui le porte.
           "[&[data-state=open]>svg]:rotate-180",
@@ -110,7 +117,9 @@ function AccordionContent({
         extrémités. Ici il reste droit, et n'existe que quand un contenu est
         déplié, ce qui est exactement sa condition d'affichage dans la maquette.
       */}
-      <div className={cn("text-body-sm border-border border-t py-4", className)}>{children}</div>
+      <div className={cn("text-body-sm border-border border-t py-4 wrap-anywhere", className)}>
+        {children}
+      </div>
     </AccordionPrimitive.Content>
   );
 }
