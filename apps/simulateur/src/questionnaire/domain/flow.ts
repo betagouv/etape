@@ -80,6 +80,15 @@ export function walkFlow(answers: Answers): FlowWalk {
 }
 
 /**
+ * Le parcours s'arrête-t-il sur un écran terminal (outcome) ?
+ * Un tel parcours n'est pas reprenable : les réponses ne mènent nulle part
+ * ailleurs qu'à ce cul-de-sac, autant les effacer.
+ */
+export function endsOnOutcome(answers: Answers): boolean {
+  return findOutcome(walkFlow(answers).next) !== undefined;
+}
+
+/**
  * Étape immédiatement après `currentId`, une fois celle-ci répondue.
  * Rejoue le chemin pour disposer des flags corrects au point de branchement.
  */
