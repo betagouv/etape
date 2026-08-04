@@ -9,11 +9,11 @@ const ENDPOINT = "https://geo.api.gouv.fr/communes";
  * trop courte. Lève en cas d'échec réseau (à gérer par l'appelant).
  */
 export async function searchCommunes(query: string, signal?: AbortSignal): Promise<Commune[]> {
-  const q = query.trim();
-  if (q.length < 2) return [];
+  const trimmedQuery = query.trim();
+  if (trimmedQuery.length < 2) return [];
 
   const params = new URLSearchParams({
-    nom: q,
+    nom: trimmedQuery,
     fields: "nom,code,codesPostaux,departement",
     boost: "population",
     limit: "7",

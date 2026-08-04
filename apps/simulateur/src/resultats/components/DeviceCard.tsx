@@ -1,6 +1,7 @@
+import { CompassIcon, ExternalLinkIcon } from "lucide-react";
+
 import type { EvaluatedDevice } from "../domain/eligibility";
 import { CriteriaList } from "./CriteriaList";
-import { CompassIcon, ExternalLinkIcon } from "./icons";
 
 const DEFAULT_URL = "https://mon-cep.org";
 
@@ -15,7 +16,7 @@ export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
           aria-hidden="true"
           className="bg-secondary text-primary flex size-14 shrink-0 items-center justify-center rounded-xl"
         >
-          <CompassIcon className="size-7" />
+          <CompassIcon aria-hidden="true" className="size-7" />
         </span>
 
         <div className="flex flex-col gap-2">
@@ -33,7 +34,7 @@ export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
           className="text-content-accent hover:text-content-accent-hover mt-auto inline-flex items-center gap-2 text-sm leading-5 font-semibold md:gap-3 md:text-base"
         >
           Commencer ma reconversion
-          <ExternalLinkIcon className="size-4" />
+          <ExternalLinkIcon aria-hidden="true" className="size-4" />
           <span className="sr-only">(nouvelle fenêtre)</span>
         </a>
       </div>
