@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Audience } from "@/components/sections/audience";
 import { DidYouKnow } from "@/components/sections/did-you-know";
+import { Faq } from "@/components/sections/faq";
 import { FinalCta } from "@/components/sections/final-cta";
 import { Hero } from "@/components/sections/hero";
 import { HowItWorks } from "@/components/sections/how-it-works";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 
 /**
  * Maquette « Desktop / Mobile - Home » de SIMULATEUR v2, moins les blocs écartés
- * par l'US : Couverture (liste des dispositifs), Partenariat et FAQ.
+ * par l'US : Couverture (liste des dispositifs) et Partenariat.
  */
 export default function Home() {
   return (
@@ -29,6 +30,7 @@ export default function Home() {
       <Audience />
       <Impact />
       <Testimonials />
+      <Faq />
       <FinalCta />
     </>
   );
