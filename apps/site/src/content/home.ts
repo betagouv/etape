@@ -4,9 +4,9 @@ import {
   FolderX,
   MessageCircleQuestion,
   SearchCheck,
-  ShieldCheck,
   Signpost,
   Timer,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -64,7 +64,7 @@ export const trust = {
     { icon: EyeOff, label: "Anonyme" },
     { icon: FolderX, label: "Sans dossier" },
     { icon: Timer, label: "Environ 5 min" },
-    { icon: ShieldCheck, label: "Tous profils" },
+    { icon: Users, label: "Tous profils" },
   ] satisfies ReassuranceItem[],
 };
 
@@ -219,7 +219,7 @@ export const finalCta = {
     { icon: EyeOff, label: "Anonyme" },
     { icon: FolderX, label: "Sans dossier" },
     { icon: Timer, label: "5 minutes" },
-    { icon: ShieldCheck, label: "Tous profils" },
+    { icon: Users, label: "Tous profils" },
   ] satisfies ReassuranceItem[],
 };
 
