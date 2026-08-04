@@ -11,7 +11,7 @@
 
 import { isFieldVisible } from "./conditions";
 import { FLAGS } from "./flags";
-import { findQuestion, nextQuestionId, questions, STEP_RESULTS } from "./questions";
+import { findOutcome, findQuestion, nextQuestionId, questions, STEP_RESULTS } from "./questions";
 import type { Answers, Field, Question } from "./types";
 import { isQuestionComplete } from "./validation";
 
@@ -50,8 +50,8 @@ export interface FlowWalk {
   /** Ids des questions effectivement sur le chemin, dans l'ordre. */
   path: string[];
   /**
-   * Étape suivante à afficher : id d'une question NON encore répondue, ou
-   * `STEP_RESULTS` si le chemin est complet.
+   * Étape suivante à afficher : id d'une question NON encore répondue, id d'un
+   * écran terminal (outcome), ou `STEP_RESULTS` si le chemin est complet.
    */
   next: string;
 }
@@ -68,6 +68,7 @@ export function walkFlow(answers: Answers): FlowWalk {
   // Borne anti-boucle : le graphe est un DAG, mais on se protège.
   for (let guard = 0; guard <= questions.length + 1; guard++) {
     if (id === STEP_RESULTS) return { flags, path, next: STEP_RESULTS };
+    if (findOutcome(id)) return { flags, path, next: id };
     const question = findQuestion(id);
     if (!question) return { flags, path, next: STEP_RESULTS };
     if (!isQuestionComplete(question, answers)) return { flags, path, next: id };
@@ -76,6 +77,15 @@ export function walkFlow(answers: Answers): FlowWalk {
     id = resolveNext(question, flags);
   }
   return { flags, path, next: STEP_RESULTS };
+}
+
+/**
+ * Le parcours s'arrête-t-il sur un écran terminal (outcome) ?
+ * Un tel parcours n'est pas reprenable : les réponses ne mènent nulle part
+ * ailleurs qu'à ce cul-de-sac, autant les effacer.
+ */
+export function endsOnOutcome(answers: Answers): boolean {
+  return findOutcome(walkFlow(answers).next) !== undefined;
 }
 
 /**

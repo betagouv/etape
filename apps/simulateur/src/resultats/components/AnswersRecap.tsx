@@ -1,7 +1,8 @@
+import { PenLineIcon } from "lucide-react";
+
 import type { Answers } from "@/questionnaire/domain/types";
 
 import { buildRecap } from "../domain/recap";
-import { PencilIcon } from "./icons";
 
 interface AnswersRecapProps {
   answers: Answers;
@@ -33,7 +34,7 @@ export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
               aria-label={`Modifier : ${entry.question}`}
               className="text-content-accent hover:bg-secondary flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm"
             >
-              <PencilIcon className="size-6" />
+              <PenLineIcon aria-hidden="true" className="size-6" />
             </button>
           </li>
         ))}
@@ -53,7 +54,7 @@ export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
           {entries.map((entry) => (
             <tr
               key={`${entry.questionId}-${entry.fieldName}`}
-              className="border-border border-b align-top"
+              className="border-border border-b align-top last:border-b-0"
             >
               <td className="text-content-secondary py-3 pr-4 text-sm leading-5">
                 {entry.question}
@@ -68,7 +69,7 @@ export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
                   aria-label={`Modifier : ${entry.question}`}
                   className="text-muted-foreground hover:text-primary flex cursor-pointer items-center justify-center p-1"
                 >
-                  <PencilIcon className="size-4" />
+                  <PenLineIcon aria-hidden="true" className="size-4" />
                 </button>
               </td>
             </tr>

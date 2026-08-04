@@ -9,6 +9,11 @@
 // dispositifs (`resultats/domain/*`) sans créer de cycle d'import.
 
 export const FLAGS = {
+  /** Travaille hors de France. */
+  TRAVAIL_HORS_FRANCE: "TRAVAIL_HORS_FRANCE",
+  /** Réside hors de France. */
+  RESIDENCE_HORS_FRANCE: "RESIDENCE_HORS_FRANCE",
+
   /** Reconversion contrainte (santé, économique…) plutôt que choisie. */
   CONTRAINT: "CONTRAINT",
   /** Projet de création / reprise d'entreprise. */
