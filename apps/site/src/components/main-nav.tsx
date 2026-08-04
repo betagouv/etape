@@ -75,7 +75,7 @@ export function MainNav() {
         aria-controls={panelId}
         onClick={() => setIsOpen((open) => !open)}
         className={cn(
-          "text-foreground hover:bg-accent inline-flex items-center gap-2 rounded-md px-3 py-2 font-medium md:hidden",
+          "text-foreground hover:bg-accent inline-flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 font-medium md:hidden",
           focusRing,
         )}
       >
