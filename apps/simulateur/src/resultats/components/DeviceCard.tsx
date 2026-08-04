@@ -6,8 +6,8 @@ import { CriteriaList } from "./CriteriaList";
 const DEFAULT_URL = "https://mon-cep.org";
 
 export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
-  const { device, acteur, url, criteres } = evaluated;
-  const href = url ?? DEFAULT_URL;
+  const { device, acteur, liens, criteres } = evaluated;
+  const links = liens.length > 0 ? liens : [{ url: DEFAULT_URL }];
 
   return (
     <article className="border-border bg-card flex flex-col gap-6 rounded-sm border p-6 md:flex-row md:gap-8 md:p-8">
@@ -27,16 +27,22 @@ export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
           <p className="text-content-secondary mt-1 text-base leading-6">{device.description}</p>
         </div>
 
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-content-accent hover:text-content-accent-hover mt-auto inline-flex items-center gap-2 text-sm leading-5 font-semibold md:gap-3 md:text-base"
-        >
-          Commencer ma reconversion
-          <ExternalLinkIcon aria-hidden="true" className="size-4" />
-          <span className="sr-only">(nouvelle fenêtre)</span>
-        </a>
+        {/* Un dispositif qui se décline porte un lien par variante (ex. CPF-AP). */}
+        <div className="mt-auto flex flex-col items-start gap-2 md:gap-3">
+          {links.map(({ url, precision }) => (
+            <a
+              key={`${precision ?? ""}${url}`}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-content-accent hover:text-content-accent-hover inline-flex items-center gap-2 text-sm leading-5 font-semibold md:gap-3 md:text-base"
+            >
+              Commencer ma reconversion{precision ? ` (${precision})` : ""}
+              <ExternalLinkIcon aria-hidden="true" className="size-4" />
+              <span className="sr-only">(nouvelle fenêtre)</span>
+            </a>
+          ))}
+        </div>
       </div>
 
       <div className="bg-border h-px w-full shrink-0 md:h-auto md:w-px" role="presentation" />

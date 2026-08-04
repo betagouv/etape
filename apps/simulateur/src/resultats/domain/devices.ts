@@ -417,7 +417,21 @@ export const DEVICES: Device[] = [
     acteur: "Employeur public / Ministère",
     description:
       "Équivalent du CPF pour les agents publics : droits cumulés sur la carrière pour formations certifiantes, bilans ou VAE.",
-    url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F18090",
+    // Le questionnaire ne demande pas le versant : on propose les trois fiches.
+    url: [
+      {
+        url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F18090",
+        precision: "État",
+      },
+      {
+        url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F3040",
+        precision: "territoriale",
+      },
+      {
+        url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F3080",
+        precision: "hospitalière",
+      },
+    ],
     priorite: () => 2,
     criteres: (f) => [
       critere("Être agent·e public (titulaire ou contractuel)", f.has(FLAGS.FONCTIONNAIRE), true),

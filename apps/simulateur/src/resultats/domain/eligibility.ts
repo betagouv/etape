@@ -7,7 +7,7 @@ import type { FlagSet } from "@/questionnaire/domain/flags";
 import type { RegionCode } from "@/questionnaire/domain/regions";
 
 import { DEVICES } from "./devices";
-import type { Critere, Device, Tier } from "./types";
+import type { Critere, Device, DeviceLink, Tier } from "./types";
 
 /** Ordre des onglets (du plus favorable au moins favorable). */
 export const TIERS = ["eligible", "sous-reserve", "non-eligible"] as const;
@@ -26,11 +26,22 @@ export function tierFromCriteres(criteres: Critere[]): Tier {
 export interface EvaluatedDevice {
   device: Device;
   acteur: string;
-  /** Lien résolu — régionalisé pour les dispositifs qui le sont (ex. CEP). */
-  url?: string;
+  /** Liens résolus (0, 1 ou plusieurs) — voir `resolveLinks`. */
+  liens: DeviceLink[];
   criteres: Critere[];
   tier: Tier;
   priorite: number;
+}
+
+/**
+ * Normalise le lien d'un dispositif en liste prête à l'affichage : URL simple,
+ * lien régionalisé (résolu ici), ou déclinaison déjà multi-liens.
+ */
+function resolveLinks(url: Device["url"], region: RegionCode | null): DeviceLink[] {
+  if (!url) return [];
+  if (typeof url === "string") return [{ url }];
+  if (typeof url === "function") return [{ url: url(region) }];
+  return url;
 }
 
 /** Évalue tout le catalogue pour ce profil, trié par priorité. */
@@ -40,7 +51,7 @@ export function evaluateDevices(flags: FlagSet, region: RegionCode | null): Eval
     return {
       device,
       acteur: typeof device.acteur === "function" ? device.acteur(flags) : device.acteur,
-      url: typeof device.url === "function" ? device.url(region) : device.url,
+      liens: resolveLinks(device.url, region),
       criteres,
       tier: tierFromCriteres(criteres),
       priorite: device.priorite(flags),

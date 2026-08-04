@@ -25,6 +25,16 @@ export interface Critere {
   statut: CritereStatut;
 }
 
+/** Lien « Commencer ma reconversion » d'une carte de dispositif. */
+export interface DeviceLink {
+  url: string;
+  /**
+   * Précision affichée entre parenthèses, qui distingue les liens d'un
+   * dispositif qui se décline (ex. CPF-AP : « État », « territoriale »…).
+   */
+  precision?: string;
+}
+
 /** Un dispositif du catalogue (repris du prototype HTML v2.1). */
 export interface Device {
   /** Identifiant stable du dispositif (sert de clé de rendu). */
@@ -36,10 +46,12 @@ export interface Device {
   /** Organisme(s) porteur(s) — parfois fonction des flags (ex. CEP). */
   acteur: string | ((flags: FlagSet) => string);
   /**
-   * Lien « Commencer ma reconversion » (optionnel). Fonction de la région quand
-   * le réseau est régionalisé (ex. CEP → portails Avenir Actifs).
+   * Lien « Commencer ma reconversion » (optionnel) : une URL, une fonction de la
+   * région quand le réseau est régionalisé (ex. CEP → portails Avenir Actifs),
+   * ou plusieurs liens précisés quand le dispositif se décline (ex. CPF-AP → un
+   * lien par versant de la fonction publique).
    */
-  url?: string | ((region: RegionCode | null) => string);
+  url?: string | DeviceLink[] | ((region: RegionCode | null) => string);
   /** Priorité d'affichage au sein d'un onglet (1 = plus haut). */
   priorite: (flags: FlagSet) => number;
   /**
