@@ -1,5 +1,7 @@
-// Moteur d'éligibilité : filtre les dispositifs pertinents pour un profil, puis
-// les classe dans un des trois onglets à partir du statut de leurs critères.
+// Moteur d'éligibilité : évalue TOUT le catalogue pour un profil, puis classe
+// chaque dispositif dans un des trois onglets à partir du statut de ses
+// critères. Aucun dispositif n'est écarté en silence : celui dont une condition
+// d'entrée n'est pas remplie remonte dans « Non éligible », motif à l'appui.
 
 import type { FlagSet } from "@/questionnaire/domain/flags";
 
@@ -28,20 +30,18 @@ export interface EvaluatedDevice {
   priorite: number;
 }
 
-/** Évalue tous les dispositifs pertinents pour ce profil, triés par priorité. */
+/** Évalue tout le catalogue pour ce profil, trié par priorité. */
 export function evaluateDevices(flags: FlagSet): EvaluatedDevice[] {
-  return DEVICES.filter((device) => device.relevant(flags))
-    .map((device) => {
-      const criteres = device.criteres(flags);
-      return {
-        device,
-        acteur: typeof device.acteur === "function" ? device.acteur(flags) : device.acteur,
-        criteres,
-        tier: tierFromCriteres(criteres),
-        priorite: device.priorite(flags),
-      };
-    })
-    .sort((a, b) => a.priorite - b.priorite);
+  return DEVICES.map((device) => {
+    const criteres = device.criteres(flags);
+    return {
+      device,
+      acteur: typeof device.acteur === "function" ? device.acteur(flags) : device.acteur,
+      criteres,
+      tier: tierFromCriteres(criteres),
+      priorite: device.priorite(flags),
+    };
+  }).sort((a, b) => a.priorite - b.priorite);
 }
 
 /** Regroupe les dispositifs évalués par onglet, en conservant l'ordre de tri. */

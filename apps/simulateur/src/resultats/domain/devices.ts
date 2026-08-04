@@ -2,6 +2,11 @@
 // et liens conservés). Chaque condition du prototype est décomposée en
 // « critères d'accès » individuels dont le statut classe le dispositif dans un
 // des trois onglets (voir `eligibility.ts`).
+//
+// Tout le catalogue est affiché à chaque simulation : la condition d'ENTRÉE d'un
+// dispositif (être en CDI, avoir une RQTH, être inscrit·e à France Travail…) est
+// donc elle-même un critère bloquant. Un dispositif hors cible remonte ainsi en
+// « Non éligible » avec le motif, au lieu d'être écarté silencieusement.
 
 import { FLAGS } from "@/questionnaire/domain/flags";
 
@@ -28,7 +33,6 @@ export const DEVICES: Device[] = [
     description:
       "Démissionnez en conservant vos allocations chômage pour mener un projet réel et sérieux de reconversion ou de création d'entreprise.",
     url: "https://demission-reconversion.gouv.fr",
-    relevant: (f) => f.has(FLAGS.DEMISSION) || f.has(FLAGS.CDI),
     priorite: (f) => (f.has(FLAGS.DEM_5ANS) ? 1 : 3),
     criteres: (f) => [
       critere("Être en CDI dans le secteur privé", f.has(FLAGS.CDI), true),
@@ -46,7 +50,6 @@ export const DEVICES: Device[] = [
     description:
       "Départ négocié d'un commun accord avec l'employeur : indemnité de rupture et droit à l'ARE, sans condition d'ancienneté.",
     url: "https://www.service-public.gouv.fr/particuliers/vosdroits/N19806",
-    relevant: (f) => f.has(FLAGS.DEMISSION) || f.has(FLAGS.MENACE) || f.has(FLAGS.CDI),
     priorite: () => 2,
     criteres: (f) => [
       critere("Être en CDI", f.has(FLAGS.CDI), true),
@@ -61,7 +64,6 @@ export const DEVICES: Device[] = [
     description:
       "En cas de licenciement économique : accompagnement renforcé de 12 mois et allocation majorée (~75 % du brut).",
     url: "https://www.service-public.fr/particuliers/vosdroits/F13819",
-    relevant: (f) => f.has(FLAGS.MENACE) || f.has(FLAGS.SALARIE),
     priorite: (f) => (f.has(FLAGS.MENACE) ? 1 : 4),
     criteres: (f) => [
       critere("Licenciement économique en cours ou annoncé", f.has(FLAGS.MENACE), true),
@@ -78,10 +80,13 @@ export const DEVICES: Device[] = [
     description:
       "ACRE : exonération partielle de charges la 1re année. ARCE : 60 % de vos droits ARE versés en capital pour démarrer.",
     url: "https://www.service-public.fr/particuliers/vosdroits/F15252",
-    relevant: (f) => f.has(FLAGS.ENTREPRENEUR),
     priorite: (f) => (f.has(FLAGS.DE_ENTREPRENEUR) ? 1 : 2),
     criteres: (f) => [
-      valide("Porter un projet de création ou de reprise d'entreprise"),
+      critere(
+        "Porter un projet de création ou de reprise d'entreprise",
+        f.has(FLAGS.ENTREPRENEUR),
+        true,
+      ),
       f.has(FLAGS.DE_ENTREPRENEUR)
         ? valide("Être demandeur·euse d'emploi indemnisé·e (pour l'ARCE)")
         : aVerifier("ARCE réservée aux demandeurs d'emploi indemnisés"),
@@ -94,10 +99,9 @@ export const DEVICES: Device[] = [
     description:
       "Testez votre projet en conservant votre couverture sociale, hébergé·e par une structure d'accompagnement.",
     url: "https://www.service-public.fr/particuliers/vosdroits/F11299",
-    relevant: (f) => f.has(FLAGS.ENTREPRENEUR),
     priorite: () => 2,
-    criteres: () => [
-      valide("Porter un projet d'entreprise"),
+    criteres: (f) => [
+      critere("Porter un projet d'entreprise", f.has(FLAGS.ENTREPRENEUR), true),
       aVerifier("Être hébergé·e par une structure d'accompagnement (couveuse…)"),
     ],
   },
@@ -108,10 +112,9 @@ export const DEVICES: Device[] = [
     description:
       "Accompagnement en 3 phases (montage, financement, développement) et prêt à taux zéro jusqu'à 8 000 €.",
     url: "https://www.service-public.fr/particuliers/vosdroits/F13067",
-    relevant: (f) => f.has(FLAGS.ENTREPRENEUR),
     priorite: (f) => (f.has(FLAGS.JEUNE) || f.has(FLAGS.DE_ENTREPRENEUR) ? 2 : 3),
     criteres: (f) => [
-      valide("Porter un projet de création / reprise"),
+      critere("Porter un projet de création / reprise", f.has(FLAGS.ENTREPRENEUR), true),
       critere(
         "Public prioritaire (demandeur d'emploi, RSA, moins de 26 ans)",
         f.has(FLAGS.DE_ENTREPRENEUR) || f.has(FLAGS.JEUNE),
@@ -125,9 +128,8 @@ export const DEVICES: Device[] = [
     description:
       "Accompagnement pour structurer le projet, identifier les financements et rejoindre un réseau d'entrepreneurs.",
     url: "https://bpifrance-creation.fr/contacts-utiles",
-    relevant: (f) => f.has(FLAGS.ENTREPRENEUR),
     priorite: () => 4,
-    criteres: () => [valide("Porter un projet entrepreneurial")],
+    criteres: (f) => [critere("Porter un projet entrepreneurial", f.has(FLAGS.ENTREPRENEUR), true)],
   },
 
   // ── Santé / Handicap / AT-MP ──────────────────────────────────────────────
@@ -138,7 +140,6 @@ export const DEVICES: Device[] = [
     description:
       "Accompagnement pluridisciplinaire pour les personnes en arrêt prolongé suite à un AT/MP ou une maladie invalidante.",
     url: "https://www.ameli.fr/assure/remboursements/maladie-accident-hospitalisation/arret-travail-maladie/desinsertion-professionnelle",
-    relevant: (f) => f.has(FLAGS.ATMP) || f.has(FLAGS.INVALIDITE),
     priorite: () => 1,
     criteres: (f) => [
       critere(
@@ -156,7 +157,6 @@ export const DEVICES: Device[] = [
     description:
       "Remise en condition physique et mentale progressive, débouchant sur un projet de reconversion adapté à l'état de santé.",
     url: "https://www.ameli.fr/assure/remboursements/maladie-accident-hospitalisation/accident-travail/reeducation-professionnelle",
-    relevant: (f) => f.has(FLAGS.ATMP),
     priorite: () => 1,
     criteres: (f) => [
       critere("Être victime d'un AT/MP", f.has(FLAGS.ATMP), true),
@@ -170,7 +170,6 @@ export const DEVICES: Device[] = [
     description:
       "Réapprentissage d'un métier compatible avec votre état de santé chez un employeur, avec maintien des indemnités AT/MP.",
     url: "https://www.service-public.fr/particuliers/vosdroits/F31659",
-    relevant: (f) => f.has(FLAGS.ATMP),
     priorite: () => 1,
     criteres: (f) => [
       critere("Être victime d'un AT/MP", f.has(FLAGS.ATMP), true),
@@ -184,7 +183,6 @@ export const DEVICES: Device[] = [
     description:
       "Aides à la formation, à l'aménagement de poste et à la création d'entreprise pour les travailleurs handicapés du privé.",
     url: "https://www.agefiph.fr/personne-handicapee/services-et-aides",
-    relevant: (f) => f.has(FLAGS.RQTH) && !f.has(FLAGS.FONCTIONNAIRE),
     priorite: () => 1,
     criteres: (f) => [
       critere("Disposer d'une RQTH", f.has(FLAGS.RQTH), true),
@@ -198,7 +196,6 @@ export const DEVICES: Device[] = [
     description:
       "Équivalent de l'AGEFIPH pour la fonction publique : aménagements, formations adaptées et accompagnement vers un autre métier.",
     url: "https://www.fiphfp.fr/personnes-en-situation-de-handicap/evoluer-dans-la-fonction-publique/se-maintenir-dans-l-emploi",
-    relevant: (f) => f.has(FLAGS.RQTH) && f.has(FLAGS.FONCTIONNAIRE),
     priorite: () => 1,
     criteres: (f) => [
       critere("Disposer d'une RQTH", f.has(FLAGS.RQTH), true),
@@ -212,7 +209,6 @@ export const DEVICES: Device[] = [
     description:
       "Un référent dédié accompagne dans la durée : recherche d'emploi, intégration et maintien sur le poste. L'employeur est aussi accompagné.",
     url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F34063",
-    relevant: (f) => f.has(FLAGS.RQTH) && !f.has(FLAGS.ENTREPRENEUR),
     priorite: () => 2,
     criteres: (f) => [
       critere("Disposer d'une RQTH", f.has(FLAGS.RQTH), true),
@@ -229,7 +225,6 @@ export const DEVICES: Device[] = [
     description:
       "Accompagnement personnalisé et gratuit pour faire le point et construire un plan d'action. L'étape obligatoire avant toute démission.",
     url: "https://mon-cep.org/",
-    relevant: () => true,
     priorite: (f) =>
       f.has(FLAGS.ORIENTATION) || f.has(FLAGS.DEMISSION) ? 1 : f.has(FLAGS.ENTREPRENEUR) ? 3 : 4,
     criteres: () => [valide("Ouvert à toute personne active, gratuitement")],
@@ -241,7 +236,6 @@ export const DEVICES: Device[] = [
     description:
       "24h sur 3 mois maximum pour analyser compétences, motivations et valeurs et définir un projet solide.",
     url: "https://www.moncompteformation.gouv.fr/espace-public/bilan-de-competences",
-    relevant: (f) => !f.has(FLAGS.ENTREPRENEUR),
     priorite: (f) => (f.has(FLAGS.ORIENTATION) ? 1 : 5),
     criteres: () => [valide("Ouvert à toute personne active"), valide("Finançable via le CPF")],
   },
@@ -252,7 +246,6 @@ export const DEVICES: Device[] = [
     description:
       "Immersion de 1 à 5 jours en entreprise pour découvrir un métier de l'intérieur et confirmer un projet. Indemnisation maintenue.",
     url: "https://immersion-facile.beta.gouv.fr/",
-    relevant: (f) => !f.has(FLAGS.ENTREPRENEUR),
     priorite: (f) => (f.has(FLAGS.ORIENTATION) ? 2 : 5),
     criteres: (f) => [
       critere(
@@ -271,7 +264,6 @@ export const DEVICES: Device[] = [
     description:
       "Vos droits accumulés financent une formation certifiante, un bilan de compétences, une VAE ou une formation à la création d'entreprise.",
     url: "https://www.moncompteformation.gouv.fr/espace-public/decouvrir-le-compte-personnel-de-formation",
-    relevant: () => true,
     priorite: () => 3,
     criteres: (f) => [
       valide("Ouvert à tout actif"),
@@ -287,7 +279,6 @@ export const DEVICES: Device[] = [
     description:
       "Obtenez tout ou partie d'un diplôme grâce à votre expérience, sans formation obligatoire. Ouverte à tous les statuts.",
     url: "https://vae.gouv.fr/",
-    relevant: (f) => !f.has(FLAGS.ENTREPRENEUR),
     priorite: (f) => (f.has(FLAGS.VAE) ? 1 : 3),
     criteres: (f) => [
       valide("Ouverte à tous les statuts"),
@@ -303,7 +294,6 @@ export const DEVICES: Device[] = [
     description:
       "Congé rémunéré pour suivre une formation certifiante vers un autre métier, en conservant son contrat de travail.",
     url: "https://www.transitionspro.fr",
-    relevant: (f) => f.has(FLAGS.SALARIE),
     priorite: (f) => (f.has(FLAGS.PTP) ? 2 : 3),
     criteres: (f) => [
       critere("Statut de salarié (CDI, CDD ou intérim)", f.has(FLAGS.SALARIE), true),
@@ -324,7 +314,6 @@ export const DEVICES: Device[] = [
     description:
       "Se reconvertir par alternance sans quitter son emploi : la formation se déroule sur le temps de travail, financée par l'OPCO.",
     url: "https://www.service-public.fr/particuliers/vosdroits/F13516",
-    relevant: (f) => f.has(FLAGS.CDI) && f.has(FLAGS.SANS_DIPLOME),
     priorite: () => 2,
     criteres: (f) => [
       critere("Être en CDI", f.has(FLAGS.CDI), true),
@@ -341,7 +330,6 @@ export const DEVICES: Device[] = [
     description:
       "Financement d'une formation individuelle par France Travail, en complément ou à la place du CPF.",
     url: "https://www.service-public.gouv.fr/particuliers/vosdroits/N31131",
-    relevant: (f) => f.has(FLAGS.DE),
     priorite: () => 2,
     criteres: (f) => [
       critere("Être inscrit·e à France Travail", f.has(FLAGS.DE), true),
@@ -355,7 +343,6 @@ export const DEVICES: Device[] = [
     description:
       "Formation collective pour acquérir les compétences d'un métier en tension, souvent suivie d'entretiens avec des employeurs.",
     url: "https://travail-emploi.gouv.fr/la-preparation-operationnelle-lemploi-collective-poec",
-    relevant: (f) => f.has(FLAGS.DE),
     priorite: () => 2,
     criteres: (f) => [
       critere("Être demandeur·euse d'emploi", f.has(FLAGS.DE), true),
@@ -369,7 +356,6 @@ export const DEVICES: Device[] = [
     description:
       "Alternance pour acquérir une qualification tout en travaillant, rémunération garantie. Accessible à tout âge.",
     url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F15478",
-    relevant: (f) => f.has(FLAGS.DE),
     priorite: () => 3,
     criteres: (f) => [
       critere("Être demandeur·euse d'emploi", f.has(FLAGS.DE), true),
@@ -385,7 +371,6 @@ export const DEVICES: Device[] = [
     description:
       "Accompagnement global (emploi, formation, logement, santé) par un conseiller dédié, avec allocation possible et suivi intensif.",
     url: "https://www.1jeune1solution.gouv.fr/espace-jeune",
-    relevant: (f) => f.has(FLAGS.JEUNE) && !f.has(FLAGS.ENTREPRENEUR),
     priorite: () => 1,
     criteres: (f) => [
       critere("Avoir entre 16 et 25 ans révolus", f.has(FLAGS.JEUNE), true),
@@ -399,11 +384,10 @@ export const DEVICES: Device[] = [
     description:
       "Insertion intensive pour jeunes sans qualification : remise à niveau, savoir-être professionnel, projet de vie.",
     url: "https://www.epide.fr/",
-    relevant: (f) => f.has(FLAGS.JEUNE) && f.has(FLAGS.SANS_DIPLOME),
     priorite: () => 1,
     criteres: (f) => [
       critere("Jeune de 16 à 30 ans (selon le dispositif)", f.has(FLAGS.JEUNE), true),
-      critere("Sans qualification / en décrochage", f.has(FLAGS.SANS_DIPLOME)),
+      critere("Sans qualification / en décrochage", f.has(FLAGS.SANS_DIPLOME), true),
     ],
   },
   {
@@ -413,9 +397,6 @@ export const DEVICES: Device[] = [
     description:
       "Alternance en CFA du CAP au Master : salarié·e dès le premier jour, formation prise en charge. Voie directe vers un diplôme.",
     url: "https://www.alternance.emploi.gouv.fr/candidat-le-contrat-dapprentissage",
-    relevant: (f) =>
-      (f.has(FLAGS.JEUNE) || (f.has(FLAGS.RQTH) && !f.has(FLAGS.SENIOR))) &&
-      !f.has(FLAGS.ENTREPRENEUR),
     priorite: (f) => (f.has(FLAGS.JEUNE) ? 2 : 4),
     criteres: (f) => [
       critere(
@@ -435,7 +416,6 @@ export const DEVICES: Device[] = [
     description:
       "Équivalent du CPF pour les agents publics : droits cumulés sur la carrière pour formations certifiantes, bilans ou VAE.",
     url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F18090",
-    relevant: (f) => f.has(FLAGS.FONCTIONNAIRE),
     priorite: () => 2,
     criteres: (f) => [
       critere("Être agent·e public (titulaire ou contractuel)", f.has(FLAGS.FONCTIONNAIRE), true),
@@ -449,7 +429,6 @@ export const DEVICES: Device[] = [
     description:
       "Équivalent du PTP pour la fonction publique : congé rémunéré (partiellement) pour se former vers un nouveau métier.",
     url: "https://www.service-public.fr/particuliers/vosdroits/F3026",
-    relevant: (f) => f.has(FLAGS.FONCTIONNAIRE),
     priorite: () => 2,
     criteres: (f) => [
       critere("Être agent·e public avec l'ancienneté minimale", f.has(FLAGS.FONCTIONNAIRE), true),

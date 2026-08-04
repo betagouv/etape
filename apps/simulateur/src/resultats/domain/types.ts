@@ -1,8 +1,10 @@
 // Modèle de données des résultats.
 //
-// Un dispositif est PERTINENT pour un profil (sinon il n'est pas analysé), puis
-// classé dans l'un des trois onglets de la maquette (Éligible / Sous réserve /
-// Non éligible) à partir du statut de ses critères d'accès.
+// TOUT le catalogue est analysé pour un profil : chaque dispositif est classé
+// dans l'un des trois onglets de la maquette (Éligible / Sous réserve / Non
+// éligible) à partir du statut de ses critères d'accès. Les critères sont donc
+// la seule source de vérité du classement — y compris les conditions d'entrée
+// du dispositif, qui font tomber en « Non éligible » plutôt que de le masquer.
 
 import type { FlagSet } from "@/questionnaire/domain/flags";
 
@@ -34,10 +36,13 @@ export interface Device {
   acteur: string | ((flags: FlagSet) => string);
   /** Lien « Commencer ma reconversion » (optionnel). */
   url?: string;
-  /** Le dispositif concerne-t-il ce profil ? Sinon il n'est pas analysé. */
-  relevant: (flags: FlagSet) => boolean;
   /** Priorité d'affichage au sein d'un onglet (1 = plus haut). */
   priorite: (flags: FlagSet) => number;
-  /** Critères d'accès décomposés — leur statut détermine l'onglet. */
+  /**
+   * Critères d'accès décomposés — leur statut détermine l'onglet. Ils doivent
+   * inclure les conditions d'entrée du dispositif (statut, âge, RQTH…) sous
+   * forme de critère bloquant : c'est ce qui classe un dispositif hors cible en
+   * « Non éligible », avec le motif visible, au lieu de le faire disparaître.
+   */
   criteres: (flags: FlagSet) => Critere[];
 }
