@@ -6,8 +6,8 @@ import { CriteriaList } from "./CriteriaList";
 const DEFAULT_URL = "https://mon-cep.org";
 
 export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
-  const { device, acteur, criteres } = evaluated;
-  const href = device.url ?? DEFAULT_URL;
+  const { device, acteur, url, criteres } = evaluated;
+  const href = url ?? DEFAULT_URL;
 
   return (
     <article className="border-border bg-card flex flex-col gap-6 rounded-sm border p-6 md:flex-row md:gap-8 md:p-8">

@@ -7,6 +7,7 @@
 // du dispositif, qui font tomber en « Non éligible » plutôt que de le masquer.
 
 import type { FlagSet } from "@/questionnaire/domain/flags";
+import type { RegionCode } from "@/questionnaire/domain/regions";
 
 /** Onglet de classement d'un dispositif. */
 export type Tier = "eligible" | "sous-reserve" | "non-eligible";
@@ -34,8 +35,11 @@ export interface Device {
   description: string;
   /** Organisme(s) porteur(s) — parfois fonction des flags (ex. CEP). */
   acteur: string | ((flags: FlagSet) => string);
-  /** Lien « Commencer ma reconversion » (optionnel). */
-  url?: string;
+  /**
+   * Lien « Commencer ma reconversion » (optionnel). Fonction de la région quand
+   * le réseau est régionalisé (ex. CEP → portails Avenir Actifs).
+   */
+  url?: string | ((region: RegionCode | null) => string);
   /** Priorité d'affichage au sein d'un onglet (1 = plus haut). */
   priorite: (flags: FlagSet) => number;
   /**

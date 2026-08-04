@@ -4,6 +4,7 @@
 // d'entrée n'est pas remplie remonte dans « Non éligible », motif à l'appui.
 
 import type { FlagSet } from "@/questionnaire/domain/flags";
+import type { RegionCode } from "@/questionnaire/domain/regions";
 
 import { DEVICES } from "./devices";
 import type { Critere, Device, Tier } from "./types";
@@ -25,18 +26,21 @@ export function tierFromCriteres(criteres: Critere[]): Tier {
 export interface EvaluatedDevice {
   device: Device;
   acteur: string;
+  /** Lien résolu — régionalisé pour les dispositifs qui le sont (ex. CEP). */
+  url?: string;
   criteres: Critere[];
   tier: Tier;
   priorite: number;
 }
 
 /** Évalue tout le catalogue pour ce profil, trié par priorité. */
-export function evaluateDevices(flags: FlagSet): EvaluatedDevice[] {
+export function evaluateDevices(flags: FlagSet, region: RegionCode | null): EvaluatedDevice[] {
   return DEVICES.map((device) => {
     const criteres = device.criteres(flags);
     return {
       device,
       acteur: typeof device.acteur === "function" ? device.acteur(flags) : device.acteur,
+      url: typeof device.url === "function" ? device.url(region) : device.url,
       criteres,
       tier: tierFromCriteres(criteres),
       priorite: device.priorite(flags),

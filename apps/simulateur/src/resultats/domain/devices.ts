@@ -10,6 +10,7 @@
 
 import { FLAGS } from "@/questionnaire/domain/flags";
 
+import { cepUrl } from "./cep";
 import type { Critere, Device } from "./types";
 
 // ─── Fabriques de critères ─────────────────────────────────────────────────
@@ -224,7 +225,8 @@ export const DEVICES: Device[] = [
       f.has(FLAGS.BAC3) ? "APEC" : f.has(FLAGS.JEUNE) ? "Mission Locale" : "France Travail",
     description:
       "Accompagnement personnalisé et gratuit pour faire le point et construire un plan d'action. L'étape obligatoire avant toute démission.",
-    url: "https://mon-cep.org/",
+    // Réseau régionalisé : le portail dépend de la région de l'utilisateur.
+    url: cepUrl,
     priorite: (f) =>
       f.has(FLAGS.ORIENTATION) || f.has(FLAGS.DEMISSION) ? 1 : f.has(FLAGS.ENTREPRENEUR) ? 3 : 4,
     criteres: () => [valide("Ouvert à toute personne active, gratuitement")],

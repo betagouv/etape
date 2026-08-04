@@ -6,8 +6,10 @@ import { Button } from "@etape/ui/components/button";
 import { Tabs, TabsContent } from "@etape/ui/components/tabs";
 
 import { walkFlow } from "@/questionnaire/domain/flow";
+import { regionFromAnswers } from "@/questionnaire/domain/regions";
 import type { Answers } from "@/questionnaire/domain/types";
 
+import { cepUrl } from "../domain/cep";
 import { evaluateDevices, groupByTier, TIERS } from "../domain/eligibility";
 import type { Tier } from "../domain/types";
 import { AnswersRecap } from "./AnswersRecap";
@@ -26,10 +28,11 @@ interface ResultsScreenProps {
 const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10";
 
 export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: ResultsScreenProps) {
+  const region = useMemo(() => regionFromAnswers(answers), [answers]);
   const grouped = useMemo(() => {
     const { flags } = walkFlow(answers);
-    return groupByTier(evaluateDevices(flags));
-  }, [answers]);
+    return groupByTier(evaluateDevices(flags, region));
+  }, [answers, region]);
 
   const counts: Record<Tier, number> = {
     eligible: grouped.eligible.length,
@@ -109,7 +112,7 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
             Cet outil donne une orientation indicative, susceptible d’évoluer, et ne remplace pas
             l’accompagnement personnalisé et gratuit d’un{" "}
             <a
-              href="https://mon-cep.org"
+              href={cepUrl(region)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-content-accent font-semibold"

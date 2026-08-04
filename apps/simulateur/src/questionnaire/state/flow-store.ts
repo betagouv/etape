@@ -6,7 +6,7 @@ import { flowReducer, initialFlowState, type FlowAction, type FlowState } from "
 // refresh), sans setState-dans-un-effet ni hydration mismatch.
 
 /** À incrémenter dès que la forme de `FlowState` change. */
-const STORAGE_KEY = "etape.flow.v1";
+const STORAGE_KEY = "etape.flow.v2";
 
 let state: FlowState = initialFlowState;
 let initialized = false;
