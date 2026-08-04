@@ -64,7 +64,7 @@ export const trust = {
     { icon: EyeOff, label: "Anonyme" },
     { icon: FolderX, label: "Sans dossier" },
     { icon: Timer, label: "Environ 5 min" },
-    { icon: ShieldCheck, label: "Sans engagement" },
+    { icon: ShieldCheck, label: "Tous profils" },
   ] satisfies ReassuranceItem[],
 };
 
@@ -219,7 +219,7 @@ export const finalCta = {
     { icon: EyeOff, label: "Anonyme" },
     { icon: FolderX, label: "Sans dossier" },
     { icon: Timer, label: "5 minutes" },
-    { icon: ShieldCheck, label: "Sans engagement" },
+    { icon: ShieldCheck, label: "Tous profils" },
   ] satisfies ReassuranceItem[],
 };
 
