@@ -119,7 +119,7 @@ export function CityAutocompleteField({ field, value, onChange }: CityAutocomple
               <button
                 type="button"
                 onClick={() => select(commune)}
-                className="hover:bg-accent flex w-full flex-col items-start px-3 py-2 text-left"
+                className="hover:bg-accent flex w-full cursor-pointer flex-col items-start px-3 py-2 text-left"
               >
                 <span className="text-foreground text-sm font-medium">{commune.nom}</span>
                 {commune.codesPostaux?.[0] && (
