@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 import { SIMULATEUR_BASE_PATH } from "../../paths.mjs";
 
 const nextConfig: NextConfig = {
@@ -21,4 +22,24 @@ const nextConfig: NextConfig = {
   env: { NEXT_PUBLIC_BASE_PATH: SIMULATEUR_BASE_PATH },
 };
 
-export default nextConfig;
+// En dev, l'app est seule sur son port : la racine tombe hors du `basePath` et
+// répond 404. En prod la racine appartient au site, et `output: "export"`
+// ignore les `redirects` — d'où l'ajout limité à la phase `next dev`.
+export default (phase: string): NextConfig =>
+  phase === PHASE_DEVELOPMENT_SERVER
+    ? {
+        ...nextConfig,
+        async redirects() {
+          return [
+            {
+              source: "/",
+              // `basePath: false` : sans lui, Next préfixerait la source
+              // (`/simulateur/`) et ne verrait jamais la racine.
+              destination: `${SIMULATEUR_BASE_PATH}/`,
+              basePath: false,
+              permanent: false,
+            },
+          ];
+        },
+      }
+    : nextConfig;
