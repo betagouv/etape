@@ -52,9 +52,10 @@ function AccordionItem({
 /**
  * Déclencheur d'un item.
  *
- * `AccordionPrimitive.Header` rend un `<h3>` : le niveau attendu sous le `<h2>`
- * d'une `Section`. Passer `asChild` sur l'en-tête si le plan du document impose
- * un autre niveau.
+ * Le libellé est un `<h3>`, rendu par `AccordionPrimitive.Header` : le niveau
+ * attendu sous le `<h2>` d'une `Section`, seul contexte d'usage à ce jour. Ce
+ * niveau n'est pas réglable — imbriquer l'accordéon plus profond dans le plan
+ * du document demanderait d'exposer l'en-tête ici.
  */
 function AccordionTrigger({
   className,
@@ -78,9 +79,10 @@ function AccordionTrigger({
           // l'affichage mais laisse la largeur min-content inchangée, si bien
           // que l'élément flex refuse toujours de rétrécir.
           "text-body-sm flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-4 rounded-sm py-4 text-left font-semibold wrap-anywhere hover:underline disabled:pointer-events-none disabled:opacity-50",
-          // Le chevron n'expose pas `data-state` : la rotation est pilotée
-          // depuis le déclencheur, qui le porte.
-          "[&[data-state=open]>svg]:rotate-180",
+          // `group/accordion-trigger` : le chevron n'expose pas `data-state`,
+          // il lit celui du déclencheur. La rotation est déclarée sur le chevron
+          // lui-même, donc une icône passée en `children` ne pivote pas avec lui.
+          "group/accordion-trigger",
           focusRing,
           className,
         )}
@@ -88,9 +90,10 @@ function AccordionTrigger({
       >
         {children}
         <ChevronDownIcon
+          data-slot="accordion-chevron"
           aria-hidden="true"
           focusable="false"
-          className="text-muted-foreground pointer-events-none size-4 shrink-0 transition-transform duration-200 motion-reduce:transition-none"
+          className="text-muted-foreground pointer-events-none size-4 shrink-0 transition-transform duration-200 group-data-[state=open]/accordion-trigger:rotate-180 motion-reduce:transition-none"
         />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
