@@ -7,17 +7,6 @@ import { Accordion as AccordionPrimitive } from "radix-ui";
 import { cn } from "@etape/ui/lib/utils";
 import { focusRing } from "@etape/ui/lib/focus";
 
-/**
- * Accordéon en cartes, tel que défini dans la maquette (`Accordion / AccordionItem`).
- *
- * Chaque item est une carte autonome, séparée de la suivante par un `Gap/L` :
- * contrairement à l'accordéon shadcn d'origine, les items ne partagent pas un
- * filet commun. Le filet n'apparaît qu'à l'ouverture, entre la question et sa
- * réponse.
- *
- * `Root` reste non contraint : c'est l'appelant qui choisit `type="single"` ou
- * `"multiple"` selon la règle métier.
- */
 function Accordion({ className, ...props }: React.ComponentProps<typeof AccordionPrimitive.Root>) {
   return (
     <AccordionPrimitive.Root
@@ -28,14 +17,6 @@ function Accordion({ className, ...props }: React.ComponentProps<typeof Accordio
   );
 }
 
-/*
- * La gouttière horizontale (`Padding/L`) est portée par l'item, la verticale par
- * le déclencheur et le contenu. C'est ce partage qui donne, sans surcouche, les
- * deux propriétés de la maquette : un filet d'ouverture en retrait de 16px des
- * bords de la carte, et un déclencheur qui occupe toute la largeur et toute la
- * hauteur de la zone « question » — soit une cible de 52px, bien au-delà des
- * 24px exigés par le critère « taille de cible » (WCAG 2.5.8).
- */
 function AccordionItem({
   className,
   ...props
@@ -49,14 +30,7 @@ function AccordionItem({
   );
 }
 
-/**
- * Déclencheur d'un item.
- *
- * Le libellé est un `<h3>`, rendu par `AccordionPrimitive.Header` : le niveau
- * attendu sous le `<h2>` d'une `Section`, seul contexte d'usage à ce jour. Ce
- * niveau n'est pas réglable — imbriquer l'accordéon plus profond dans le plan
- * du document demanderait d'exposer l'en-tête ici.
- */
+/** Le libellé est un `<h3>` : niveau figé par `AccordionPrimitive.Header`. */
 function AccordionTrigger({
   className,
   children,
@@ -67,22 +41,7 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          // Pas d'`outline-none` ici : en Tailwind v4 il fixe `--tw-outline-style`
-          // à `none`, ce qui neutralise silencieusement l'anneau de `focusRing`.
-          // `cursor-pointer` est explicite : le preflight de Tailwind v4 laisse
-          // aux boutons le curseur par défaut du navigateur, soit la flèche.
-          // `min-w-0` et `wrap-anywhere` : sans eux, un mot insécable long fixe
-          // la largeur minimale du déclencheur, qui déborde alors de sa carte et
-          // fait défiler la page horizontalement — un échec du critère
-          // « redimensionnement du contenu » (WCAG 1.4.10). `wrap-anywhere` et
-          // non `break-words` : `overflow-wrap: break-word` casse le mot à
-          // l'affichage mais laisse la largeur min-content inchangée, si bien
-          // que l'élément flex refuse toujours de rétrécir.
-          "text-body-sm flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-4 rounded-sm py-4 text-left font-semibold wrap-anywhere hover:underline disabled:pointer-events-none disabled:opacity-50",
-          // `group/accordion-trigger` : le chevron n'expose pas `data-state`,
-          // il lit celui du déclencheur. La rotation est déclarée sur le chevron
-          // lui-même, donc une icône passée en `children` ne pivote pas avec lui.
-          "group/accordion-trigger",
+          "group/accordion-trigger text-body-sm flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-4 rounded-sm py-4 text-left font-semibold wrap-anywhere hover:underline disabled:pointer-events-none disabled:opacity-50",
           focusRing,
           className,
         )}
@@ -108,18 +67,9 @@ function AccordionContent({
   return (
     <AccordionPrimitive.Content
       data-slot="accordion-content"
-      // `motion-reduce` : l'ouverture devient instantanée quand le système
-      // demande de limiter les animations (WCAG 2.3.3, RGAA 13.8).
       className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden motion-reduce:animate-none"
       {...props}
     >
-      {/*
-        Le filet de séparation est porté par le contenu, jamais par le
-        déclencheur : celui-ci est arrondi pour son anneau de focus, et une
-        bordure basse en épouserait les coins — le trait remonterait à ses
-        extrémités. Ici il reste droit, et n'existe que quand un contenu est
-        déplié, ce qui est exactement sa condition d'affichage dans la maquette.
-      */}
       <div className={cn("text-body-sm border-border border-t py-4 wrap-anywhere", className)}>
         {children}
       </div>

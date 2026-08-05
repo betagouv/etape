@@ -6,7 +6,7 @@ import {
 } from "@etape/ui/components/accordion";
 import { Section, SectionHeader } from "@etape/ui/components/section";
 
-import { faq } from "@/content/home";
+import { faq } from "@/content/faq";
 
 /**
  * `type="single" collapsible` porte à lui seul la règle métier « ouvrir une
