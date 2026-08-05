@@ -2,12 +2,11 @@ import { CompassIcon, ExternalLinkIcon } from "lucide-react";
 
 import type { EvaluatedDevice } from "../domain/eligibility";
 import { CriteriaList } from "./CriteriaList";
-
-const DEFAULT_URL = "https://mon-cep.org";
+import { CEP_URL_DEFAUT } from "@/resultats/domain/cep";
 
 export function DeviceCard({ evaluated }: { evaluated: EvaluatedDevice }) {
   const { device, acteur, liens, criteres } = evaluated;
-  const links = liens.length > 0 ? liens : [{ url: DEFAULT_URL }];
+  const links = liens.length > 0 ? liens : [{ url: CEP_URL_DEFAUT }];
 
   return (
     <article className="border-border bg-card flex flex-col gap-6 rounded-sm border p-6 md:flex-row md:gap-8 md:p-8">
