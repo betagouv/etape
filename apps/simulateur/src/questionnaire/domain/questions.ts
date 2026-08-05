@@ -49,8 +49,8 @@ const Q_SANTE = "sante-handicap";
 const Q_DIPLOME = "diplome";
 
 // Valeurs partagées par les deux questions de localisation.
-const LOC_FRANCE = "france";
-const LOC_HORS_FRANCE = "hors-france";
+export const LOC_FRANCE = "france";
+export const LOC_HORS_FRANCE = "hors-france";
 
 /** Écran terminal : réside ET travaille hors de France. */
 export const OUTCOME_HORS_FRANCE = "hors-france";

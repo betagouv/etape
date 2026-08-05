@@ -1,10 +1,13 @@
-// Moteur d'éligibilité : filtre les dispositifs pertinents pour un profil, puis
-// les classe dans un des trois onglets à partir du statut de leurs critères.
+// Moteur d'éligibilité : évalue TOUT le catalogue pour un profil, puis classe
+// chaque dispositif dans un des trois onglets à partir du statut de ses
+// critères. Aucun dispositif n'est écarté en silence : celui dont une condition
+// d'entrée n'est pas remplie remonte dans « Non éligible », motif à l'appui.
 
 import type { FlagSet } from "@/questionnaire/domain/flags";
+import type { RegionCode } from "@/questionnaire/domain/regions";
 
 import { DEVICES } from "./devices";
-import type { Critere, Device, Tier } from "./types";
+import type { Critere, Device, DeviceLink, Tier } from "./types";
 
 /** Ordre des onglets (du plus favorable au moins favorable). */
 export const TIERS = ["eligible", "sous-reserve", "non-eligible"] as const;
@@ -23,25 +26,37 @@ export function tierFromCriteres(criteres: Critere[]): Tier {
 export interface EvaluatedDevice {
   device: Device;
   acteur: string;
+  /** Liens résolus (0, 1 ou plusieurs) — voir `resolveLinks`. */
+  liens: DeviceLink[];
   criteres: Critere[];
   tier: Tier;
   priorite: number;
 }
 
-/** Évalue tous les dispositifs pertinents pour ce profil, triés par priorité. */
-export function evaluateDevices(flags: FlagSet): EvaluatedDevice[] {
-  return DEVICES.filter((device) => device.relevant(flags))
-    .map((device) => {
-      const criteres = device.criteres(flags);
-      return {
-        device,
-        acteur: typeof device.acteur === "function" ? device.acteur(flags) : device.acteur,
-        criteres,
-        tier: tierFromCriteres(criteres),
-        priorite: device.priorite(flags),
-      };
-    })
-    .sort((a, b) => a.priorite - b.priorite);
+/**
+ * Normalise le lien d'un dispositif en liste prête à l'affichage : URL simple,
+ * lien régionalisé (résolu ici), ou déclinaison déjà multi-liens.
+ */
+function resolveLinks(url: Device["url"], region: RegionCode | null): DeviceLink[] {
+  if (!url) return [];
+  if (typeof url === "string") return [{ url }];
+  if (typeof url === "function") return [{ url: url(region) }];
+  return url;
+}
+
+/** Évalue tout le catalogue pour ce profil, trié par priorité. */
+export function evaluateDevices(flags: FlagSet, region: RegionCode | null): EvaluatedDevice[] {
+  return DEVICES.map((device) => {
+    const criteres = device.criteres(flags);
+    return {
+      device,
+      acteur: typeof device.acteur === "function" ? device.acteur(flags) : device.acteur,
+      liens: resolveLinks(device.url, region),
+      criteres,
+      tier: tierFromCriteres(criteres),
+      priorite: device.priorite(flags),
+    };
+  }).sort((a, b) => a.priorite - b.priorite);
 }
 
 /** Regroupe les dispositifs évalués par onglet, en conservant l'ordre de tri. */

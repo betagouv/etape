@@ -1,10 +1,13 @@
 // Modèle de données des résultats.
 //
-// Un dispositif est PERTINENT pour un profil (sinon il n'est pas analysé), puis
-// classé dans l'un des trois onglets de la maquette (Éligible / Sous réserve /
-// Non éligible) à partir du statut de ses critères d'accès.
+// TOUT le catalogue est analysé pour un profil : chaque dispositif est classé
+// dans l'un des trois onglets de la maquette (Éligible / Sous réserve / Non
+// éligible) à partir du statut de ses critères d'accès. Les critères sont donc
+// la seule source de vérité du classement — y compris les conditions d'entrée
+// du dispositif, qui font tomber en « Non éligible » plutôt que de le masquer.
 
 import type { FlagSet } from "@/questionnaire/domain/flags";
+import type { RegionCode } from "@/questionnaire/domain/regions";
 
 /** Onglet de classement d'un dispositif. */
 export type Tier = "eligible" | "sous-reserve" | "non-eligible";
@@ -22,6 +25,16 @@ export interface Critere {
   statut: CritereStatut;
 }
 
+/** Lien « Commencer ma reconversion » d'une carte de dispositif. */
+export interface DeviceLink {
+  url: string;
+  /**
+   * Précision affichée entre parenthèses, qui distingue les liens d'un
+   * dispositif qui se décline (ex. CPF-AP : « État », « territoriale »…).
+   */
+  precision?: string;
+}
+
 /** Un dispositif du catalogue (repris du prototype HTML v2.1). */
 export interface Device {
   /** Identifiant stable du dispositif (sert de clé de rendu). */
@@ -32,12 +45,20 @@ export interface Device {
   description: string;
   /** Organisme(s) porteur(s) — parfois fonction des flags (ex. CEP). */
   acteur: string | ((flags: FlagSet) => string);
-  /** Lien « Commencer ma reconversion » (optionnel). */
-  url?: string;
-  /** Le dispositif concerne-t-il ce profil ? Sinon il n'est pas analysé. */
-  relevant: (flags: FlagSet) => boolean;
+  /**
+   * Lien « Commencer ma reconversion » (optionnel) : une URL, une fonction de la
+   * région quand le réseau est régionalisé (ex. CEP → portails Avenir Actifs),
+   * ou plusieurs liens précisés quand le dispositif se décline (ex. CPF-AP → un
+   * lien par versant de la fonction publique).
+   */
+  url?: string | DeviceLink[] | ((region: RegionCode | null) => string);
   /** Priorité d'affichage au sein d'un onglet (1 = plus haut). */
   priorite: (flags: FlagSet) => number;
-  /** Critères d'accès décomposés — leur statut détermine l'onglet. */
+  /**
+   * Critères d'accès décomposés — leur statut détermine l'onglet. Ils doivent
+   * inclure les conditions d'entrée du dispositif (statut, âge, RQTH…) sous
+   * forme de critère bloquant : c'est ce qui classe un dispositif hors cible en
+   * « Non éligible », avec le motif visible, au lieu de le faire disparaître.
+   */
   criteres: (flags: FlagSet) => Critere[];
 }

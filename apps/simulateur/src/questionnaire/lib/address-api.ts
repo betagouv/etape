@@ -14,7 +14,7 @@ export async function searchCommunes(query: string, signal?: AbortSignal): Promi
 
   const params = new URLSearchParams({
     nom: trimmedQuery,
-    fields: "nom,code,codesPostaux,departement",
+    fields: "nom,code,codesPostaux,departement,region",
     boost: "population",
     limit: "7",
   });

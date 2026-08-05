@@ -36,6 +36,8 @@ export interface Commune {
   nom: string;
   codesPostaux?: string[];
   departement?: { code: string; nom: string };
+  /** Région administrative — son `code` INSEE pilote les liens régionalisés. */
+  region?: { code: string; nom: string };
 }
 
 /** Valeur stockée pour un champ donné dans la map des réponses. */
