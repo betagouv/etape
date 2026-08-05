@@ -15,7 +15,10 @@ export function ReassuranceList({
     <ul
       className={cn(
         "flex flex-wrap justify-center",
-        variant === "grid" ? "gap-x-4 gap-y-8 lg:gap-x-12" : "gap-x-6 gap-y-3 lg:gap-x-8",
+        variant === "grid"
+          ? "gap-x-4 gap-y-8 lg:gap-x-12"
+          : // `Réassurance / Items` : `Gap/3XL` (48) en colonne, `Gap/M` (12) en ligne.
+            "gap-x-12 gap-y-3",
         className,
       )}
     >
@@ -27,7 +30,8 @@ export function ReassuranceList({
             variant === "grid"
               ? // Largeurs de la maquette : 150px en mobile, 160px en desktop.
                 "text-primary text-label-lg basis-32 flex-col gap-3 text-center font-semibold lg:basis-40"
-              : "text-muted-foreground text-body-sm gap-2",
+              : // `Caption/Default` (12/16) en `Content/Secondary`, et `Gap/S` (8).
+                "text-content-secondary text-caption gap-2",
           )}
         >
           <Icon
