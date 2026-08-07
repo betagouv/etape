@@ -42,13 +42,7 @@ function FooterLinkList({ links }: { links: readonly FooterLink[] }) {
   );
 }
 
-/**
- * Pied de page commun à toutes les pages du site.
- *
- * La gouttière de 128 px (`xl:px-32`) suit la maquette du pied de page, plus
- * large que celle de 96 px du reste du site — d'où la surcharge explicite du
- * `Container` à cet endroit.
- */
+/** Pied de page commun à toutes les pages du site. */
 export function SiteFooter() {
   return (
     <footer

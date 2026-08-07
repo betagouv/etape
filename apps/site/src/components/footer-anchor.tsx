@@ -16,7 +16,8 @@ const linkClassName = cn(
 
 export function FooterAnchor({ link }: { link: FooterLink }) {
   const pathname = usePathname();
-  const isInternalRoute = !link.isExternal && link.href.startsWith("/");
+  const isInternalRoute =
+    !link.isExternal && link.href.startsWith("/") && !link.href.startsWith("//");
 
   if (isInternalRoute) {
     const isCurrent = isCurrentPage(link.href, pathname);

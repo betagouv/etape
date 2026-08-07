@@ -38,16 +38,18 @@ function renderBlock(block: Block, key: number) {
     case "list":
       return (
         <ul key={key}>
-          {block.items.map((item) => (
-            <li key={item}>{item}</li>
+          {block.items.map((item, index) => (
+            <li key={index}>{item}</li>
           ))}
         </ul>
       );
 
-    case "address":
+    case "address": {
+      const Lines = block.isContact ? "address" : "p";
+
       return (
         <Callout key={key} icon={Signpost} title={block.title}>
-          <address>
+          <Lines>
             {block.name ? (
               <>
                 <strong>{block.name}</strong>
@@ -55,14 +57,15 @@ function renderBlock(block: Block, key: number) {
               </>
             ) : null}
             {block.lines.map((line, index) => (
-              <React.Fragment key={line}>
+              <React.Fragment key={index}>
                 {index > 0 ? <br /> : null}
                 {line}
               </React.Fragment>
             ))}
-          </address>
+          </Lines>
         </Callout>
       );
+    }
 
     case "subsection":
       return (
@@ -71,6 +74,11 @@ function renderBlock(block: Block, key: number) {
           {block.blocks.map((child, index) => renderBlock(child, index))}
         </div>
       );
+
+    default: {
+      const exhaustive: never = block;
+      return exhaustive;
+    }
   }
 }
 

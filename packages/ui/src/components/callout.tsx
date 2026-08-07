@@ -9,7 +9,7 @@ function Callout({
   className,
   children,
   ...props
-}: React.ComponentProps<"div"> & {
+}: Omit<React.ComponentProps<"div">, "title"> & {
   icon: LucideIcon;
   title: React.ReactNode;
 }) {
@@ -23,7 +23,7 @@ function Callout({
         <Icon aria-hidden="true" focusable="false" className="text-primary size-6" />
       </div>
 
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1 break-words">
         <p className="text-body text-foreground font-bold">{title}</p>
         <div className="text-body text-content-secondary">{children}</div>
       </div>

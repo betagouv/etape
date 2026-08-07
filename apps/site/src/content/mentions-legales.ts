@@ -10,6 +10,7 @@ export type Block =
       readonly title: string;
       readonly name?: string;
       readonly lines: readonly string[];
+      readonly isContact?: boolean;
     }
   | {
       readonly kind: "subsection";
@@ -156,11 +157,13 @@ export const MENTIONS_LEGALES: readonly LegalSection[] = [
         kind: "address",
         title: "France compétences",
         lines: ["Immeuble Canopy", "6 rue du Général Audran", "92400 Courbevoie"],
+        isContact: true,
       },
       {
         kind: "address",
         title: "Certif Pro",
         lines: ["2 ter boulevard Saint-Martin", "75498 Paris Cedex 10"],
+        isContact: true,
       },
     ],
   },
