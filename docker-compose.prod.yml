@@ -103,10 +103,6 @@ services:
     build:
       context: .
       target: keycloak
-    # Nommée explicitement pour que `keycloak-init` réutilise cette image plutôt
-    # que d'en reconstruire une identique — deux builds concurrents de la même
-    # cible, dont l'empaquetage Maven du thème, échouent l'un sur l'autre.
-    image: etape-keycloak:local
     restart: unless-stopped
     # `start` et non `start-dev` : mode production. `--optimized` s'appuie sur le
     # `kc.sh build` déjà fait dans l'image, et `--import-realm` crée le realm au
@@ -169,9 +165,17 @@ services:
   # et non un échec de déploiement.
   # ---------------------------------------------------------------------
   keycloak-init:
-    image: etape-keycloak:local
+    # L'image officielle, et non celle que construit `keycloak` : le script n'a
+    # besoin que de `kcadm`, jamais du thème. Deux raisons de ne pas partager
+    # l'image construite — elle n'existe que sous une étiquette locale, que
+    # l'hébergeur peut chercher à tirer d'un registre où elle n'est pas ; et
+    # reconstruire la même cible deux fois en parallèle rejouerait l'échec
+    # d'empaquetage Maven rencontré au premier déploiement.
+    image: quay.io/keycloak/keycloak:26.7
     restart: "no"
-    entrypoint: ["/bin/bash", "/opt/keycloak/bin/etape-init.sh"]
+    volumes:
+      - ./deploy/keycloak-init.sh:/etape-init.sh:ro
+    entrypoint: ["/bin/bash", "/etape-init.sh"]
     environment:
       KEYCLOAK_INTERNAL_URL: http://keycloak:8080
       KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL}
