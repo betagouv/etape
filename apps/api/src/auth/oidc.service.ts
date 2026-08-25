@@ -5,21 +5,6 @@ import * as client from "openid-client";
 import type { Env } from "../config/env.js";
 
 /**
- * Niveau de garantie eIDAS exigé par FranceConnect sur la requête d'autorisation.
- *
- * Le broker OIDC générique de Keycloak ne sait pas produire ce paramètre : son
- * champ de configuration `acrValues` est enregistré mais jamais émis (vérifié).
- * La parade tient en deux morceaux — l'API l'envoie ici, et l'identity provider
- * porte `forwardParameters: "acr_values"` pour le relayer jusqu'à FranceConnect.
- * Retirer l'un des deux fait silencieusement retomber les requêtes sans niveau
- * de garantie, que FranceConnect rejette.
- *
- * `eidas1` correspond à FranceConnect ; FranceConnect+ demanderait un niveau
- * supérieur.
- */
-const FRANCECONNECT_ACR_VALUES = "eidas1";
-
-/**
  * Client OIDC de l'API vis-à-vis de **Keycloak**.
  *
  * FranceConnect n'apparaît nulle part dans ce fichier, et c'est voulu : Keycloak
@@ -100,9 +85,7 @@ export class OidcService {
       nonce: params.nonce,
       code_challenge: params.codeChallenge,
       code_challenge_method: "S256",
-      ...(params.idpHint
-        ? { kc_idp_hint: params.idpHint, acr_values: FRANCECONNECT_ACR_VALUES }
-        : {}),
+      ...(params.idpHint ? { kc_idp_hint: params.idpHint } : {}),
     });
   }
 

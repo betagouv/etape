@@ -110,6 +110,25 @@ RUN apk add --no-cache maven
 RUN npx turbo run build --filter=@etape/keycloak-theme
 
 # ---------------------------------------------------------------------------
+# Extension FranceConnect pour Keycloak.
+#
+# Le broker OIDC générique ne suffit pas : FranceConnect impose à `state` et
+# `nonce` un format que Keycloak ne sait pas produire — alphanumériques stricts,
+# 32 caractères au minimum en v2, là où Keycloak émet un `state` composite ponctué
+# de `.`, `-` et `_`. Toute requête d'autorisation est rejetée, code Y030007.
+#
+# Cette extension est celle de l'INSEE, maintenue et employée par plusieurs
+# services publics. Elle règle aussi les deux inconnues laissées ouvertes par
+# `docs/authentification.md` : le `/userinfo` renvoyé en JWT signé, et la
+# propagation de la déconnexion.
+# ---------------------------------------------------------------------------
+FROM alpine:3.22 AS franceconnect-extension
+ARG KEYCLOAK_FRANCECONNECT_VERSION=7.7.0
+RUN apk add --no-cache curl && \
+    curl -fsSL -o /keycloak-franceconnect.jar \
+      "https://github.com/InseeFr/Keycloak-FranceConnect/releases/download/${KEYCLOAK_FRANCECONNECT_VERSION}/keycloak-franceconnect-${KEYCLOAK_FRANCECONNECT_VERSION}.jar"
+
+# ---------------------------------------------------------------------------
 # Keycloak.
 #
 # `kc.sh build` est exécuté ici plutôt qu'au démarrage : c'est ce qui autorise
@@ -120,6 +139,7 @@ RUN npx turbo run build --filter=@etape/keycloak-theme
 FROM quay.io/keycloak/keycloak:26.7 AS keycloak
 
 COPY --from=theme /app/apps/keycloak-theme/dist_keycloak/etape-keycloak-theme.jar /opt/keycloak/providers/
+COPY --from=franceconnect-extension /keycloak-franceconnect.jar /opt/keycloak/providers/
 COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
 COPY deploy/keycloak-demarrer.sh /opt/keycloak/bin/etape-demarrer.sh
 

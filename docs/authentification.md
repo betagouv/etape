@@ -92,35 +92,53 @@ appliqué après coup par `kcadm`. Le détail et les pièges associés sont dans
 
 ### Identity provider FranceConnect
 
-Le broker OIDC générique de Keycloak ne couvre pas nativement les écarts de
-FranceConnect. Un point est réglé, deux restent ouverts.
+Le broker OIDC générique de Keycloak **ne suffit pas**, et l'apprendre coûte une
+matinée : FranceConnect rejette toutes ses requêtes d'autorisation avec l'erreur
+`Y030007`, qui signifie « un paramètre de l'appel à `/authorize` ne respecte pas
+le format attendu » — sans dire lequel.
 
-**`acr_values=eidas1` — résolu, sans SPI.** Le champ `acrValues` de la
-configuration de l'IdP est enregistré par Keycloak mais **jamais émis** : vérifié
-en lisant la redirection réellement construite vers FranceConnect, le paramètre
-en était absent. La parade tient en deux morceaux qui ne fonctionnent qu'ensemble :
+Le paramètre en cause est le **`nonce`**. FranceConnect v2 exige `state` et
+`nonce` d'au moins 32 caractères ; le broker générique émet un `nonce` de 22.
+Aucun réglage ne permet de le changer, c'est du code.
 
-1. l'API ajoute `acr_values=eidas1` à sa requête d'autorisation quand elle vise
-   FranceConnect (`OidcService`) ;
-2. l'identity provider porte `forwardParameters: "acr_values"`, qui le relaie.
+L'identity provider est donc celui de l'**extension Keycloak-FranceConnect de
+l'INSEE**, ajoutée à l'image dans le `Dockerfile`. Elle s'enregistre comme
+_social identity provider_ sous l'identifiant `franceconnect-particulier` —
+détail qui a son importance, car elle n'apparaît pas dans la liste des identity
+providers de `serverinfo`, ce qui donne à croire qu'elle n'est pas chargée.
 
-Retirer l'un des deux fait silencieusement retomber les requêtes sans niveau de
-garantie, que FranceConnect rejette.
+Trois choses qu'elle règle, et qui étaient autant de questions ouvertes :
 
-**Ce qui reste à vérifier avec de vrais identifiants :**
+- **le format des paramètres** (`nonce` de 64 caractères alphanumériques) ;
+- **le niveau de garantie eIDAS**, émis nativement. Le montage précédent —
+  `acr_values` ajouté par l'API et relayé par `forwardParameters` — a donc été
+  retiré de `OidcService` ;
+- **le `/userinfo` renvoyé en JWT signé** et la **propagation de la
+  déconnexion**, que le broker générique ne savait pas traiter.
 
-- `/userinfo` renvoie un **JWT signé** et non du JSON — comportement non standard
-  que le broker générique pourrait ne pas savoir lire ;
-- la **déconnexion**, obligatoire et vérifiée à l'homologation. `logoutUrl` est
-  renseignée dans la configuration, mais la propagation effective jusqu'à
-  FranceConnect n'a pas pu être testée.
+Sa configuration tient en deux clés :
 
-Sur ces deux points, chercher les extensions Keycloak dédiées à FranceConnect
-avant d'écrire un SPI maison : l'écosystème public français en a produit.
+| Clé              | Valeur                           | Effet                           |
+| ---------------- | -------------------------------- | ------------------------------- |
+| `fc_environment` | `INTEGRATION_STANDARD_LEGACY_V2` | toutes les URL de FranceConnect |
+| `eidas_values`   | `EIDAS1`                         | niveau de garantie demandé      |
 
-Les URL d'intégration présentes dans le fichier de realm sont celles de
-l'environnement de test de FranceConnect ; **à confronter au portail partenaires**,
-qui fait foi.
+Plus aucune URL en dur : l'extension les dérive de l'environnement. La
+correspondance, lue dans son fichier de propriétés :
+
+| Environnement                    | Hôte                                   |
+| -------------------------------- | -------------------------------------- |
+| `INTEGRATION_STANDARD_LEGACY_V2` | `fcp-low.integ01.dev-franceconnect.fr` |
+| `INTEGRATION_STANDARD_V2`        | `fcp-low.sbx.dev-franceconnect.fr`     |
+| `PRODUCTION_STANDARD_V2`         | `oidc.franceconnect.gouv.fr`           |
+
+Les identifiants ne valent que pour l'environnement où ils ont été délivrés :
+s'y tromper produit un « client_id inconnu ». La variable
+`FRANCECONNECT_ENVIRONNEMENT` permet d'en changer sans toucher au code.
+
+L'alias reste `franceconnect`, et non celui que l'extension propose par défaut :
+c'est lui qui figure dans la `redirect_uri` déclarée chez FranceConnect, pénible
+à faire changer, et dans `kc_idp_hint`.
 
 ### Liaison des comptes
 

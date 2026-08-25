@@ -95,6 +95,54 @@ echo "→ client etape-api : secret, redirect_uri et post-logout alignés sur ${
 # parcours FranceConnect reste indisponible. La `redirect_uri` à déclarer côté
 # FranceConnect est celle du broker, pas celle de l'API.
 # ---------------------------------------------------------------------------
+# Migration du fournisseur générique vers celui de l'extension INSEE.
+#
+# `providerId` ne se modifie pas sur une instance existante, et l'import de
+# realm est en `IGNORE_EXISTING` : sur un environnement déjà déployé, le
+# fichier ne sera jamais relu. Le fournisseur est donc recréé — sans quoi la
+# bascule ne prendrait que sur une base neuve, et l'erreur Y030007 persisterait
+# là où elle a été constatée.
+PROVIDER_ATTENDU=franceconnect-particulier
+PROVIDER_ACTUEL=$($KCADM get identity-provider/instances/franceconnect -r "$REALM" \
+  --fields providerId --format csv --noquotes 2>/dev/null || true)
+
+if [ -n "$PROVIDER_ACTUEL" ] && [ "$PROVIDER_ACTUEL" != "$PROVIDER_ATTENDU" ]; then
+  echo "→ franceconnect : migration de ${PROVIDER_ACTUEL} vers ${PROVIDER_ATTENDU}"
+  $KCADM delete identity-provider/instances/franceconnect -r "$REALM"
+  PROVIDER_ACTUEL=""
+fi
+
+if [ -z "$PROVIDER_ACTUEL" ]; then
+  $KCADM create identity-provider/instances -r "$REALM" -f - <<JSON
+{
+  "alias": "franceconnect",
+  "displayName": "FranceConnect",
+  "providerId": "${PROVIDER_ATTENDU}",
+  "enabled": true,
+  "storeToken": false,
+  "linkOnly": false,
+  "addReadTokenRoleOnCreate": false,
+  "trustEmail": false,
+  "firstBrokerLoginFlowAlias": "first broker login",
+  "config": {
+    "fc_environment": "${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_LEGACY_V2}",
+    "eidas_values": "${FRANCECONNECT_EIDAS:-EIDAS1}",
+    "defaultScope": "openid given_name family_name birthdate birthplace birthcountry gender email",
+    "clientAuthMethod": "client_secret_post",
+    "syncMode": "FORCE"
+  }
+}
+JSON
+fi
+
+# Réappliqué à chaque démarrage, et pas seulement à la création : sans cela,
+# changer d'environnement FranceConnect n'aurait aucun effet sur un realm déjà
+# en place, et la variable donnerait l'illusion d'être prise en compte.
+$KCADM update identity-provider/instances/franceconnect -r "$REALM" \
+  -s "config.fc_environment=${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_LEGACY_V2}" \
+  -s "config.eidas_values=${FRANCECONNECT_EIDAS:-EIDAS1}"
+echo "→ franceconnect : environnement ${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_LEGACY_V2}"
+
 if [ -n "${FRANCECONNECT_CLIENT_ID:-}" ]; then
   $KCADM update identity-provider/instances/franceconnect -r "$REALM" \
     -s "config.clientId=${FRANCECONNECT_CLIENT_ID}" \
