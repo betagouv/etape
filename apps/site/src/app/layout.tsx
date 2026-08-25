@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
+import { BackToTop } from "@etape/ui/components/back-to-top";
+import { SkipLinks } from "@etape/ui/components/skip-links";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
+
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { MAIN_CONTENT_ID, SKIP_LINKS } from "@/lib/navigation";
 import "./globals.css";
 
 const openSans = Open_Sans({
@@ -28,7 +34,19 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <SkipLinks links={SKIP_LINKS} />
+          {/* Doit rester haut dans l'arbre : cf. `BackToTop`. */}
+          <BackToTop targetId={MAIN_CONTENT_ID} />
+          <SiteHeader />
+          {/*
+            `tabIndex={-1}` rend le contenu principal focusable par programme :
+            sans lui, certains navigateurs suivent le lien d'évitement sans
+            déplacer le focus, qui resterait alors au début de la page.
+          */}
+          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 focus:outline-none">
+            {children}
+          </main>
+          <SiteFooter />
         </ThemeProvider>
       </body>
     </html>

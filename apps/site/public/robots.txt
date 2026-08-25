@@ -1,0 +1,6 @@
+# Les previews sont publiques mais ne doivent pas être indexées : le produit est
+# en cours de développement et ses résultats d'éligibilité ne sont pas fiables.
+#
+# TODO : supprimer ce fichier au passage en production réelle (cf. docs/previews.md).
+User-agent: *
+Disallow: /

@@ -1,0 +1,16 @@
+{
+  "codeConnect": {
+    "parser": "react",
+    "include": ["src/**/*.tsx"],
+    "exclude": ["node_modules/**", ".next/**", "out/**"],
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "importPaths": {
+      "src/components/*": "@/components"
+    },
+    "documentUrlSubstitutions": {
+      "<SIMULATEUR_V2>": "https://www.figma.com/design/CjMnzScPtELfkwJpJYfl4n/SIMULATEUR-v2"
+    }
+  }
+}
