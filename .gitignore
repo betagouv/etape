@@ -9,6 +9,11 @@ node_modules
 out
 dist
 
+# keycloakify — tout est régénéré à chaque build
+dist_keycloak
+apps/keycloak-theme/src/kc.gen.tsx
+apps/keycloak-theme/public/keycloakify-dev-resources
+
 # misc
 .DS_Store
 *.pem
@@ -32,4 +37,3 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-.env*

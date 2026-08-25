@@ -3,7 +3,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "out/**", "!.next/cache/**"]
+      "outputs": [".next/**", "out/**", "dist/**", "dist_keycloak/**", "!.next/cache/**"],
+      /*
+       * Les exports statiques figent ces valeurs au build : sans les déclarer,
+       * Turborepo servirait depuis son cache un export construit avec l'URL
+       * d'API d'un autre environnement.
+       */
+      "env": ["NODE_ENV", "NEXT_PUBLIC_API_BASE_URL"]
     },
     "dev": {
       "cache": false,

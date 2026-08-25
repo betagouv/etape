@@ -1,0 +1,122 @@
+{
+  "realm": "etape",
+  "displayName": "ETAPE",
+  "enabled": true,
+
+  "sslRequired": "none",
+
+  "loginTheme": "etape",
+  "emailTheme": "etape",
+
+  "internationalizationEnabled": true,
+  "defaultLocale": "fr",
+  "supportedLocales": ["fr"],
+
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+
+  "verifyEmail": false,
+
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 10,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+
+  "passwordPolicy": "length(12) and notUsername(undefined) and passwordHistory(3)",
+
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "accessTokenLifespan": 300,
+
+  "clients": [
+    {
+      "clientId": "etape-api",
+      "secret": "dev-secret-etape-non-confidentiel",
+      "name": "API ETAPE",
+      "description": "Client confidentiel du service NestJS. Seul détenteur du secret.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": false,
+      "redirectUris": ["http://localhost:3002/api/auth/callback"],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*##http://localhost:3001/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "identity-provider",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "identity_provider",
+            "claim.name": "identity_provider",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "test@etape.local",
+      "email": "test@etape.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Test",
+      "lastName": "Utilisateur",
+      "credentials": [{ "type": "password", "value": "MotDePasseTest2026", "temporary": false }]
+    }
+  ],
+
+  "identityProviders": [
+    {
+      "alias": "franceconnect",
+      "displayName": "FranceConnect",
+      "providerId": "oidc",
+      "enabled": true,
+      "storeToken": false,
+      "linkOnly": false,
+      "addReadTokenRoleOnCreate": false,
+      "trustEmail": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientAuthMethod": "client_secret_post",
+        "issuer": "https://fcp-low.integ01.dev-franceconnect.fr/api/v2",
+        "authorizationUrl": "https://fcp-low.integ01.dev-franceconnect.fr/api/v2/authorize",
+        "tokenUrl": "https://fcp-low.integ01.dev-franceconnect.fr/api/v2/token",
+        "userInfoUrl": "https://fcp-low.integ01.dev-franceconnect.fr/api/v2/userinfo",
+        "logoutUrl": "https://fcp-low.integ01.dev-franceconnect.fr/api/v2/session/end",
+        "jwksUrl": "https://fcp-low.integ01.dev-franceconnect.fr/api/v2/jwks",
+        "useJwksUrl": "true",
+        "validateSignature": "true",
+        "defaultScope": "openid given_name family_name birthdate birthplace birthcountry gender email",
+        "forwardParameters": "acr_values",
+        "backchannelSupported": "false",
+        "loginHint": "false",
+        "uiLocales": "false",
+        "syncMode": "FORCE"
+      }
+    }
+  ]
+}

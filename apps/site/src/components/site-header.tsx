@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 
 import { MainNav } from "@/components/main-nav";
+import { LOGIN_URL } from "@/lib/auth";
 
 /**
  * En-tête commun à toutes les pages du site : le logo Transitions Pro, qui
@@ -36,6 +38,15 @@ export function SiteHeader() {
         </Link>
 
         <MainNav />
+
+        {/*
+          Un lien, pas un bouton : la connexion quitte le site pour `apps/api`,
+          qui redirige ensuite vers Keycloak. `<a>` et non `<Link>`, Next ne
+          pouvant pas router vers une origine qu'il ne sert pas.
+        */}
+        <Button asChild className="shrink-0">
+          <a href={LOGIN_URL}>Se connecter</a>
+        </Button>
       </Container>
     </header>
   );

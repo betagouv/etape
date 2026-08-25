@@ -1,0 +1,111 @@
+# Keycloak de développement local, avec sa base.
+#
+# Sert uniquement à faire tourner le parcours de connexion sur un poste. La
+# configuration de production dépendra de l'hébergement retenu et n'est pas
+# décrite ici.
+#
+#   docker compose up -d
+#
+# Console d'administration : http://localhost:8080 (admin / admin)
+#
+# Aucun serveur SMTP : le realm de développement n'envoie donc pas d'email, et
+# `verifyEmail` y est désactivé pour que l'inscription aboutisse quand même. Les
+# gabarits d'email existent (`apps/keycloak-theme/src/email`) mais ne sont pas
+# jouables ici — voir `docs/authentification.md`.
+
+services:
+  keycloak-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7
+    # `start-dev` désactive HTTPS et le cache distribué. Interdit en production,
+    # où l'on utilise `start` avec un certificat et un hostname explicites.
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      # Tout fichier de realm déposé ici est importé au démarrage. Permet de
+      # versionner la configuration plutôt que de la recréer à la main sur
+      # chaque poste — voir `docs/authentification.md`.
+      - ./keycloak/realms:/opt/keycloak/data/import:ro
+      # Thème ETAPE. Keycloak charge au démarrage tout JAR présent dans
+      # `providers`, dossier vide dans l'image officielle : on y monte le dossier
+      # de sortie du build plutôt que le JAR lui-même. Sur un dépôt fraîchement
+      # cloné, où rien n'a encore été construit, Keycloak démarre alors avec son
+      # thème par défaut — là où le montage d'un fichier absent aurait fait
+      # apparaître un dossier fantôme à sa place.
+      - ./apps/keycloak-theme/dist_keycloak:/opt/keycloak/providers:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
+  # Applique après import ce qu'un fichier de realm ne peut pas porter.
+  #
+  # Deux raisons distinctes de passer par `kcadm` :
+  #
+  # 1. Le realm `master` est créé par Keycloak lui-même, hors de tout fichier
+  #    d'import. Il naît en `sslRequired: external` — « HTTPS obligatoire sauf
+  #    depuis une adresse locale ». Or avec le mapping de ports de Docker Desktop,
+  #    une requête venue de l'hôte se présente sous l'adresse de la passerelle et
+  #    non en loopback : Keycloak la juge externe et répond « HTTPS required ». La
+  #    console d'administration s'affiche puis échoue à se connecter, panne
+  #    déroutante s'il faut la diagnostiquer soi-même. Ce conteneur passe par le
+  #    réseau Docker, où l'adresse privée est bien reconnue comme locale.
+  #
+  # 2. L'import de realm ne substitue **aucune** variable : ni environnement, ni
+  #    propriété système. Une valeur `${env.X:defaut}` retombe toujours sur son
+  #    défaut (vérifié sur Keycloak 26.7). Les secrets FranceConnect ne peuvent
+  #    donc pas être injectés dans le JSON — ils sont posés ici, après coup.
+  #
+  # Strictement réservé au développement.
+  keycloak-init:
+    image: quay.io/keycloak/keycloak:26.7
+    restart: "no"
+    depends_on:
+      keycloak:
+        condition: service_started
+    environment:
+      FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
+      FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        KCADM=/opt/keycloak/bin/kcadm.sh
+        until $$KCADM config credentials --server http://keycloak:8080 \
+          --realm master --user admin --password admin >/dev/null 2>&1; do sleep 3; done
+
+        $$KCADM update realms/master -s sslRequired=NONE
+        echo "master : sslRequired=NONE — console admin joignable en HTTP depuis l'hôte."
+
+        if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then
+          $$KCADM update identity-provider/instances/franceconnect -r etape \
+            -s "config.clientId=$$FRANCECONNECT_CLIENT_ID" \
+            -s "config.clientSecret=$$FRANCECONNECT_CLIENT_SECRET"
+          echo "franceconnect : identifiants injectés."
+        else
+          echo "franceconnect : aucun identifiant fourni — le fournisseur restera inutilisable."
+          echo "                renseigner FRANCECONNECT_CLIENT_ID / _SECRET puis relancer."
+        fi
+
+volumes:
+  keycloak-db-data:
