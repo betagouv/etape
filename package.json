@@ -29,8 +29,8 @@
     "turbo": "^2",
     "vercel": "^58"
   },
-  "packageManager": "npm@10.9.3",
+  "packageManager": "npm@11.17.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   }
 }
