@@ -65,15 +65,13 @@ services:
       KEYCLOAK_CLIENT_ID: etape-api
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
       KEYCLOAK_FRANCECONNECT_ALIAS: franceconnect
-    # Certains hôtes ne renvoient pas vers eux-mêmes une requête adressée à leur
-    # propre adresse publique : la découverte OIDC échoue alors, avec un
-    # « fournisseur d'identité injoignable » dans les journaux de l'API. Faire
-    # pointer le nom vers la passerelle de l'hôte le résout — le proxy y écoute,
-    # et la requête ne sort plus de la machine. Le certificat reste valable, le
-    # nom demandé étant inchangé.
-    #
-    # extra_hosts:
-    #   - "auth.etape.beta.ordesoft.com:host-gateway"
+    # L'hôte ne renvoie pas vers lui-même une requête adressée à sa propre adresse
+    # publique : la découverte OIDC échouait, avec « Le fournisseur d'identité est
+    # injoignable » à l'arrivée sur `/api/auth/login`. Le nom pointe donc vers la
+    # passerelle de l'hôte, où écoute le proxy : la requête ne sort plus de la
+    # machine. Le certificat reste valable — le nom demandé, lui, ne change pas.
+    extra_hosts:
+      - "${KEYCLOAK_HOSTNAME:-auth.etape.beta.ordesoft.com}:host-gateway"
     healthcheck:
       # `/auth/session` répond 401 sans cookie : c'est une réponse, donc un
       # service vivant. Toute autre issue — connexion refusée, 5xx — signale un
