@@ -4,6 +4,7 @@ import type { Request, Response } from "express";
 import * as client from "openid-client";
 
 import type { Env } from "../config/env.js";
+import { identityClaims } from "./identity-claims.js";
 import { OidcService } from "./oidc.service.js";
 import { sanitizeReturnTo } from "./return-to.js";
 import { SessionService } from "./session/session.service.js";
@@ -111,6 +112,7 @@ export class AuthController {
         viaFranceConnect:
           claims.identity_provider ===
           this.config.get("KEYCLOAK_FRANCECONNECT_ALIAS", { infer: true }),
+        claims: identityClaims(claims),
         idToken: tokens.id_token,
       });
 

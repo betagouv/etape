@@ -203,6 +203,31 @@ produit. Deux points méritent d'être connus :
   compte sans mot de passe. `Register.tsx` le déduit du contexte ; le détail est
   dans le README du thème.
 
+## La page `/compte/`
+
+Le site expose une page qui rend compte de la session en cours : l'identité
+reçue, champ par champ, et un bouton de déconnexion.
+
+Elle affiche les claims **tels qu'ils arrivent**, sous leur libellé français et
+leur nom technique. C'est délibéré : les champs que renvoie FranceConnect
+varient selon le fournisseur d'identité choisi, et c'est le nom technique qui
+sert à discuter avec le portail partenaires quand l'un d'eux manque. Un champ
+inconnu de la table des libellés est affiché quand même, jamais écarté.
+
+Deux conséquences côté API : `PublicSession` porte un `claims` non typé, et
+`identity-claims.ts` en retire la plomberie du protocole — `iss`, `aud`,
+`at_hash` et consorts — en liste noire plutôt qu'en liste blanche, pour la même
+raison.
+
+L'entrée de l'en-tête suit l'état de session : « Se connecter » avant, « Mon
+compte » après. Le lien de connexion porte `returnTo=/compte/`, sans quoi
+quelqu'un déjà connecté à Keycloak repasse tout le parcours pour revenir d'où il
+vient — et croit que le bouton n'a rien fait.
+
+L'en-tête n'interroge la session qu'au chargement complet d'une page : il vit
+dans le layout, que les navigations côté client ne remontent pas. Se déconnecter
+depuis `/compte/` provoque une vraie navigation, donc l'en-tête se remet à jour.
+
 ## Développement local
 
 ```bash

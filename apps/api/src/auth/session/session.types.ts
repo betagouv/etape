@@ -29,6 +29,14 @@ export interface UserSession {
   email?: string;
   /** `true` si l'identité vient de FranceConnect plutôt que d'un compte local. */
   viaFranceConnect: boolean;
+  /**
+   * Identité reçue du fournisseur, débarrassée de la plomberie du protocole.
+   *
+   * Conservée telle quelle plutôt que remodelée en type fermé : les champs que
+   * renvoie FranceConnect varient selon le fournisseur d'identité, et l'objet
+   * du parcours de recette est justement de voir ce qui arrive réellement.
+   */
+  claims: Record<string, unknown>;
   idToken: string;
   expiresAt: number;
 }
@@ -41,6 +49,7 @@ export interface PublicSession {
   sub: string;
   email?: string;
   viaFranceConnect: boolean;
+  claims: Record<string, unknown>;
 }
 
 export function toPublicSession(session: UserSession): PublicSession {
@@ -48,5 +57,6 @@ export function toPublicSession(session: UserSession): PublicSession {
     sub: session.sub,
     email: session.email,
     viaFranceConnect: session.viaFranceConnect,
+    claims: session.claims,
   };
 }
