@@ -135,10 +135,11 @@ services:
       KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
       FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
       FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
-      # `INTEGRATION_STANDARD_V2` vise `fcp-low.integ01`,
-      # `INTEGRATION_STANDARD_V2` la sandbox `fcp-low.sbx`, et
+      # `INTEGRATION_STANDARD_V2` vise le bac à sable `fcp-low.sbx`,
+      # `INTEGRATION_STANDARD_LEGACY_V2` l'ancien `fcp-low.integ01`, et
       # `PRODUCTION_STANDARD_V2` la production. Les identifiants ne valent que
-      # pour l'environnement où ils ont été délivrés.
+      # pour l'environnement où ils ont été délivrés : ailleurs, FranceConnect
+      # répond « client_id inconnu ».
       FRANCECONNECT_ENVIRONNEMENT: ${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_V2}
       FRANCECONNECT_EIDAS: ${FRANCECONNECT_EIDAS:-EIDAS1}
       SMTP_HOST: ${SMTP_HOST:-}
