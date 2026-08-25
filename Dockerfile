@@ -104,10 +104,10 @@ WORKDIR /app
 
 RUN apk add --no-cache maven
 
-# Le dépôt Maven local est monté en cache : sans lui, chaque build repart de
-# zéro pour quelques dizaines de mégaoctets d'artefacts strictement identiques.
-RUN --mount=type=cache,target=/root/.m2 \
-    npx turbo run build --filter=@etape/keycloak-theme
+# Sans cache monté sur le dépôt Maven local, volontairement : deux services
+# construisent cette cible, et un cache partagé les ferait écrire à deux dans le
+# même dossier. Le temps regagné ne vaut pas ce mode de panne.
+RUN npx turbo run build --filter=@etape/keycloak-theme
 
 # ---------------------------------------------------------------------------
 # Keycloak.

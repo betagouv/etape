@@ -103,6 +103,10 @@ services:
     build:
       context: .
       target: keycloak
+    # Nommée explicitement pour que `keycloak-init` réutilise cette image plutôt
+    # que d'en reconstruire une identique — deux builds concurrents de la même
+    # cible, dont l'empaquetage Maven du thème, échouent l'un sur l'autre.
+    image: etape-keycloak:local
     restart: unless-stopped
     # `start` et non `start-dev` : mode production. `--optimized` s'appuie sur le
     # `kc.sh build` déjà fait dans l'image, et `--import-realm` crée le realm au
@@ -165,9 +169,7 @@ services:
   # et non un échec de déploiement.
   # ---------------------------------------------------------------------
   keycloak-init:
-    build:
-      context: .
-      target: keycloak
+    image: etape-keycloak:local
     restart: "no"
     entrypoint: ["/bin/bash", "/opt/keycloak/bin/etape-init.sh"]
     environment:
