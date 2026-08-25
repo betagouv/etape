@@ -1,0 +1,28 @@
+# Tout ce qui serait reconstruit dans l'image, ou n'a rien à y faire.
+#
+# `node_modules` en tête : sans cette ligne, le contexte de build embarquerait
+# le dossier du poste — plusieurs centaines de mégaoctets, compilés pour un
+# autre système, et qui écraseraient l'installation faite dans l'image.
+
+node_modules
+**/node_modules
+
+.git
+.github
+.turbo
+**/.turbo
+.vercel
+
+**/.next
+**/out
+**/dist
+**/dist_keycloak
+
+.env
+**/.env
+**/.env.*
+!**/.env.example
+
+**/.DS_Store
+*.md
+!README.md

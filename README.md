@@ -12,10 +12,18 @@ Monorepo [Turborepo](https://turbo.build/) regroupant plusieurs applications Nex
 
 ### Applications
 
-| Application       | Description              | Port (dev) |
-| ----------------- | ------------------------ | ---------- |
-| `apps/site`       | Site vitrine             | 3000       |
-| `apps/simulateur` | Simulateur d'éligibilité | 3001       |
+| Application           | Description                    | Port (dev) |
+| --------------------- | ------------------------------ | ---------- |
+| `apps/site`           | Site vitrine                   | 3000       |
+| `apps/simulateur`     | Simulateur d'éligibilité       | 3001       |
+| `apps/api`            | API d'authentification         | 3002       |
+| `apps/keycloak-theme` | Écrans de connexion et d'email | —          |
+
+Le site et le simulateur sont des exports statiques. `apps/api` est un service
+NestJS : il porte la connexion FranceConnect et les comptes locaux, et reste le
+seul composant à détenir des secrets. `apps/keycloak-theme` n'est pas un serveur
+mais un thème Keycloak, construit en JAR et servi par Keycloak — voir
+[docs/authentification.md](docs/authentification.md).
 
 ### Prérequis
 
@@ -48,3 +56,12 @@ Pour ne cibler qu'une seule application, utilise le filtre Turborepo :
 npm run dev -- --filter=@etape/site
 npm run build -- --filter=@etape/simulateur
 ```
+
+Le parcours de connexion demande en plus un Keycloak local — voir
+[docs/authentification.md](docs/authentification.md).
+
+## Déploiement
+
+Recette sur Coolify : <https://etape.beta.ordesoft.com>, décrite par
+[`docker-compose.prod.yml`](docker-compose.prod.yml). Variables d'environnement,
+identifiants FranceConnect et vérifications : [docs/deploiement.md](docs/deploiement.md).

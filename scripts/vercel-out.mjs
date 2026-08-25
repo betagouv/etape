@@ -6,66 +6,21 @@
  * dossier. Ni `vercel.json`, ni les réglages de build du dashboard, ni ses
  * variables d'environnement ne s'appliquent : tout se décide ici et au build.
  *
+ * L'assemblage lui-même vit dans `scripts/assembler-statique.mjs`, partagé avec
+ * le nginx du déploiement : seules les règles de routage propres à Vercel
+ * restent ici.
+ *
  * À lancer depuis la racine du monorepo, après `turbo run build`.
  */
-import { access, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { SIMULATEUR_BASE_PATH } from "../paths.mjs";
+import { assembler, verifierLesBuilds } from "./assembler-statique.mjs";
 
 const root = process.cwd();
 const out = path.join(root, ".vercel/output");
 const staticDir = path.join(out, "static");
-
-// Nom du sous-dossier où atterrit l'export du simulateur, dérivé du préfixe :
-// "/simulateur" -> "simulateur".
-const simulateurDir = SIMULATEUR_BASE_PATH.replace(/^\//, "");
-
-// Reproduit le découpage de chemins de la production : le site à la racine,
-// le simulateur sous son préfixe.
-const sources = [
-  { from: "apps/site/out", to: "" },
-  { from: "apps/simulateur/out", to: simulateurDir },
-];
-
-/**
- * Vérifie que les deux builds ont tourné **et** que le simulateur porte bien son
- * préfixe.
- *
- * Sonder la seule existence de `index.html` laisserait passer le mode de
- * défaillance le plus coûteux : un `basePath` disparu de la config. Le build
- * reste vert, l'assemblage aussi, et la casse ne se voit qu'une fois la preview
- * déployée, sous forme d'assets en 404.
- */
-async function verifierLesBuilds() {
-  for (const source of sources) {
-    const index = path.join(root, source.from, "index.html");
-    await access(index).catch(() => {
-      throw new Error(
-        `${path.relative(root, index)} est absent. Lancer \`turbo run build\` avant ce script.`,
-      );
-    });
-  }
-
-  const marqueur = `${SIMULATEUR_BASE_PATH}/_next/`;
-  const indexSimulateur = path.join(root, "apps/simulateur/out/index.html");
-  const html = await readFile(indexSimulateur, "utf8");
-  if (!html.includes(marqueur)) {
-    throw new Error(
-      `Le build du simulateur ne référence pas \`${marqueur}\`.\n` +
-        `   Son \`basePath\` a probablement sauté de apps/simulateur/next.config.ts :\n` +
-        `   déployé tel quel, tous ses assets seraient en 404.`,
-    );
-  }
-}
-
-async function assembler() {
-  await rm(staticDir, { recursive: true, force: true });
-  await mkdir(staticDir, { recursive: true });
-  for (const source of sources) {
-    await cp(path.join(root, source.from), path.join(staticDir, source.to), { recursive: true });
-  }
-}
 
 /**
  * Tient le rôle du `vercel.json`, qui n'est pas lu en mode `--prebuilt`.
@@ -102,7 +57,8 @@ function construireConfig() {
 
 async function main() {
   await verifierLesBuilds();
-  await assembler();
+  await mkdir(out, { recursive: true });
+  await assembler(staticDir);
   await writeFile(
     path.join(out, "config.json"),
     `${JSON.stringify(construireConfig(), null, 2)}\n`,
