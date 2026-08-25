@@ -120,6 +120,8 @@ RUN npx turbo run build --filter=@etape/keycloak-theme
 FROM quay.io/keycloak/keycloak:26.7 AS keycloak
 
 COPY --from=theme /app/apps/keycloak-theme/dist_keycloak/etape-keycloak-theme.jar /opt/keycloak/providers/
+COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
+COPY deploy/keycloak-demarrer.sh /opt/keycloak/bin/etape-demarrer.sh
 
 # Tout fichier de realm déposé ici est importé au premier démarrage. Il décrit le
 # poste de développement — URL en `localhost`, secret public — et n'est qu'un

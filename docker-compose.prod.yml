@@ -104,10 +104,10 @@ services:
       context: .
       target: keycloak
     restart: unless-stopped
-    # `start` et non `start-dev` : mode production. `--optimized` s'appuie sur le
-    # `kc.sh build` déjà fait dans l'image, et `--import-realm` crée le realm au
-    # premier démarrage — les suivants l'ignorent (stratégie IGNORE_EXISTING).
-    command: ["start", "--optimized", "--import-realm"]
+    # Configure le realm en tâche de fond, puis démarre Keycloak au premier plan
+    # — `start` et non `start-dev`, avec `--import-realm` qui crée le realm au
+    # premier démarrage et l'ignore ensuite (stratégie IGNORE_EXISTING).
+    entrypoint: ["/bin/bash", "/opt/keycloak/bin/etape-demarrer.sh"]
     expose:
       - "8080"
     environment:
@@ -125,6 +125,26 @@ services:
 
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+
+      # Lues par `etape-init.sh`, qui applique au realm ce que le fichier
+      # d'import ne peut pas porter.
+      KEYCLOAK_INTERNAL_URL: http://127.0.0.1:8080
+      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL}
+      PUBLIC_URL: ${PUBLIC_URL}
+      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
+      FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
+      FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-true}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SMTP_SSL: ${SMTP_SSL:-false}
     healthcheck:
       # Les sondes de santé vivent sur le port de gestion (9000), séparé du
       # trafic applicatif. L'image ne contient ni curl ni wget, d'où ce dialogue
@@ -156,47 +176,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-
-  # ---------------------------------------------------------------------
-  # Configuration du realm propre à cet environnement.
-  #
-  # Même image que Keycloak — le script y est déjà, et `kcadm` avec lui. Le
-  # conteneur s'exécute une fois puis s'arrête : c'est le comportement attendu,
-  # et non un échec de déploiement.
-  # ---------------------------------------------------------------------
-  keycloak-init:
-    # L'image officielle, et non celle que construit `keycloak` : le script n'a
-    # besoin que de `kcadm`, jamais du thème. Deux raisons de ne pas partager
-    # l'image construite — elle n'existe que sous une étiquette locale, que
-    # l'hébergeur peut chercher à tirer d'un registre où elle n'est pas ; et
-    # reconstruire la même cible deux fois en parallèle rejouerait l'échec
-    # d'empaquetage Maven rencontré au premier déploiement.
-    image: quay.io/keycloak/keycloak:26.7
-    restart: "no"
-    volumes:
-      - ./deploy/keycloak-init.sh:/etape-init.sh:ro
-    entrypoint: ["/bin/bash", "/etape-init.sh"]
-    environment:
-      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
-      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL}
-      PUBLIC_URL: ${PUBLIC_URL}
-      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN_USER:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
-      KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
-      FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
-      FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_FROM: ${SMTP_FROM:-}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_AUTH: ${SMTP_AUTH:-true}
-      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
-      SMTP_SSL: ${SMTP_SSL:-false}
-    depends_on:
-      keycloak:
-        condition: service_healthy
 
 volumes:
   keycloak-db-data:

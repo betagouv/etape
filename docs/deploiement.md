@@ -40,8 +40,12 @@ survit à un déménagement du front comme à un changement d'hébergeur.
 4. Variables d'environnement : voir ci-dessous.
 5. Déployer.
 
-Le conteneur `keycloak-init` s'exécute puis s'arrête, code 0. C'est son
-fonctionnement normal, pas un déploiement en échec.
+Les quatre conteneurs doivent rester `Up`. Keycloak configure son realm
+lui-même au démarrage, en tâche de fond : les lignes préfixées `→` puis
+`✅ realm etape configuré` apparaissent dans ses journaux quelques secondes
+après le démarrage. Aucun conteneur ne doit s'arrêter — un conteneur sorti,
+même en code 0, fait échouer le `docker compose up --wait` de l'hébergeur et
+emporte toute la pile.
 
 ## Variables d'environnement
 
@@ -67,8 +71,8 @@ Trois pièges tiennent au moment où ces valeurs sont lues :
 - `KEYCLOAK_DB_PASSWORD` est figé quand PostgreSQL initialise son volume. Le
   changer plus tard empêche Keycloak de se connecter, sans que rien n'indique
   pourquoi.
-- `KEYCLOAK_CLIENT_SECRET`, à l'inverse, est réappliqué à chaque déploiement par
-  `keycloak-init` : c'est la seule des trois qui se corrige en redéployant.
+- `KEYCLOAK_CLIENT_SECRET`, à l'inverse, est réappliqué à chaque démarrage de
+  Keycloak : c'est la seule des trois qui se corrige en redéployant.
 
 `KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Le fichier de realm crée
 `test@etape.local` avec un mot de passe écrit en clair dans un dépôt public :
@@ -80,8 +84,8 @@ reçoit ce mot de passe-là.
 ## FranceConnect
 
 Les identifiants viennent du portail partenaires, environnement d'intégration.
-Renseignés dans Coolify, ils sont posés sur l'identity provider par
-`keycloak-init` — jamais dans le fichier de realm, qui est versionné.
+Renseignés dans Coolify, ils sont posés sur l'identity provider au démarrage
+de Keycloak — jamais dans le fichier de realm, qui est versionné.
 
 Les URL à déclarer côté FranceConnect sont celles du **broker**, pas celles de
 l'API :
