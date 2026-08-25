@@ -7,9 +7,7 @@
   "emailTheme": "etape",
   "internationalizationEnabled": true,
   "defaultLocale": "fr",
-  "supportedLocales": [
-    "fr"
-  ],
+  "supportedLocales": ["fr"],
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,
   "loginWithEmailAllowed": true,
@@ -45,9 +43,7 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
       "frontchannelLogout": false,
-      "redirectUris": [
-        "http://localhost:3002/api/auth/callback"
-      ],
+      "redirectUris": ["http://localhost:3002/api/auth/callback"],
       "webOrigins": [],
       "attributes": {
         "pkce.code.challenge.method": "S256",
@@ -100,7 +96,7 @@
       "trustEmail": false,
       "firstBrokerLoginFlowAlias": "first broker login",
       "config": {
-        "fc_environment": "INTEGRATION_STANDARD_LEGACY_V2",
+        "fc_environment": "INTEGRATION_STANDARD_V2",
         "eidas_values": "EIDAS1",
         "defaultScope": "openid given_name family_name birthdate birthplace birthcountry gender email",
         "clientAuthMethod": "client_secret_post",

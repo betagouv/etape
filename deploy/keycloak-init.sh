@@ -125,7 +125,7 @@ if [ -z "$PROVIDER_ACTUEL" ]; then
   "trustEmail": false,
   "firstBrokerLoginFlowAlias": "first broker login",
   "config": {
-    "fc_environment": "${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_LEGACY_V2}",
+    "fc_environment": "${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_V2}",
     "eidas_values": "${FRANCECONNECT_EIDAS:-EIDAS1}",
     "defaultScope": "openid given_name family_name birthdate birthplace birthcountry gender email",
     "clientAuthMethod": "client_secret_post",
@@ -139,9 +139,9 @@ fi
 # changer d'environnement FranceConnect n'aurait aucun effet sur un realm déjà
 # en place, et la variable donnerait l'illusion d'être prise en compte.
 $KCADM update identity-provider/instances/franceconnect -r "$REALM" \
-  -s "config.fc_environment=${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_LEGACY_V2}" \
+  -s "config.fc_environment=${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_V2}" \
   -s "config.eidas_values=${FRANCECONNECT_EIDAS:-EIDAS1}"
-echo "→ franceconnect : environnement ${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_LEGACY_V2}"
+echo "→ franceconnect : environnement ${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_V2}"
 
 if [ -n "${FRANCECONNECT_CLIENT_ID:-}" ]; then
   $KCADM update identity-provider/instances/franceconnect -r "$REALM" \

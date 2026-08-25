@@ -133,8 +133,13 @@ correspondance, lue dans son fichier de propriétés :
 | `PRODUCTION_STANDARD_V2`         | `oidc.franceconnect.gouv.fr`           |
 
 Les identifiants ne valent que pour l'environnement où ils ont été délivrés :
-s'y tromper produit un « client_id inconnu ». La variable
+s'y tromper produit un « client_id inconnu » (`Y04EA6EF`). La variable
 `FRANCECONNECT_ENVIRONNEMENT` permet d'en changer sans toucher au code.
+
+Pour savoir quel environnement connaît un `client_id` sans rien déployer, il
+suffit d'appeler son `/authorize` : `Y04EA6EF` signifie qu'il l'ignore,
+`Y04C013C` qu'il le connaît mais que la `redirect_uri` n'y est pas déclarée.
+Le second code est donc une bonne nouvelle — il désigne le bon environnement.
 
 L'alias reste `franceconnect`, et non celui que l'extension propose par défaut :
 c'est lui qui figure dans la `redirect_uri` déclarée chez FranceConnect, pénible
