@@ -18,6 +18,12 @@ node_modules
 **/dist
 **/dist_keycloak
 
+# Générés par Keycloakify, et gitignorés. Les laisser entrer ferait dépendre
+# l'image de ce qui traîne sur le poste : le build passerait ici et échouerait
+# sur un clone frais, exactement là où on ne peut plus le voir.
+apps/keycloak-theme/src/kc.gen.tsx
+apps/keycloak-theme/public/keycloakify-dev-resources
+
 .env
 **/.env
 **/.env.*
