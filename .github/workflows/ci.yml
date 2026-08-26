@@ -13,7 +13,7 @@ concurrency:
 jobs:
   quality:
     name: Qualité (format, lint, types, build)
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, cegedim]
     env:
       # Pas d'installation des hooks git en CI.
       HUSKY: 0

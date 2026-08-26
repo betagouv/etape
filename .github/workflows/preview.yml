@@ -1,0 +1,171 @@
+name: Preview
+
+# Cycle de vie des environnements de preview, un par PR (DAT §4.4, modèle « Vercel ») :
+# ouverture / push → déploiement sur https://pr-<n>.dev.certifpro.cegedim.cloud ;
+# fermeture (merge ou abandon) → destruction de l'environnement.
+#
+# Mécanique : le runner (DEBFCOETAPOPS01, label « cegedim ») construit les apps,
+# les assemble (scripts/assemble-static.mjs) puis rsync le dossier vers la VM
+# front (DEBFCOETAPFRT01). Le nginx de la VM résout `pr-<n>` par regex sur le
+# hostname (docs/infra/nginx-previews.conf) : déployer ou détruire une preview,
+# c'est créer ou supprimer un dossier — rien à recharger.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+# Une exécution à la fois par PR : un nouveau push annule le déploiement
+# précédent encore en cours (l'URL ne peut pas revenir en arrière), une
+# fermeture annule un déploiement devenu inutile avant de détruire.
+concurrency:
+  group: preview-pr-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write # commentaire avec l'URL de la preview
+  deployments: write # environnement GitHub « preview-pr-<n> »
+
+env:
+  # Point de dépôt des previews — à faire évoluer avec l'infra Cegedim.
+  PREVIEW_SSH: deploy@debfcoetapfrt01.fco.cegedim.cloud
+  PREVIEW_ROOT: /srv/previews
+  PREVIEW_DOMAIN: dev.certifpro.cegedim.cloud
+  PR_NUMBER: ${{ github.event.number }}
+
+jobs:
+  deploy:
+    name: Déployer la preview
+    # Jamais pour les PR venant d'un fork : le runner vit dans la bulle Cegedim
+    # et porte une clé SSH vers les machines applicatives. Seules les branches
+    # du dépôt lui-même sont déployées.
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, cegedim]
+    environment:
+      name: preview-pr-${{ github.event.number }}
+      url: https://pr-${{ github.event.number }}.dev.certifpro.cegedim.cloud
+    env:
+      # Pas d'installation des hooks git en CI.
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install (lockfile)
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Assemblage statique
+        run: node scripts/assemble-static.mjs
+
+      - name: Déployer sur la VM de previews
+        run: |
+          ssh -o BatchMode=yes "$PREVIEW_SSH" "mkdir -p -- '$PREVIEW_ROOT/pr-$PR_NUMBER'"
+          rsync -az --delete dist/preview/ "$PREVIEW_SSH:$PREVIEW_ROOT/pr-$PR_NUMBER/"
+
+      - name: Vérifier la preview
+        # Depuis la VM elle-même (Host forcé) : le test ne dépend ni du DNS
+        # public ni du routage entrant, seulement de nginx et des fichiers.
+        #
+        # Les deux apps sont sondées : un `basePath` cassé laisse la racine
+        # intacte et ne se voit que sous le préfixe du simulateur.
+        run: |
+          echec=0
+          for chemin in / /simulateur/; do
+            code="$(ssh -o BatchMode=yes "$PREVIEW_SSH" \
+              "curl -sk -o /dev/null -w '%{http_code}' -H 'Host: pr-$PR_NUMBER.$PREVIEW_DOMAIN' 'https://localhost$chemin'")"
+            if [ "$code" = "200" ]; then
+              echo "ok    $chemin ($code)"
+            else
+              echo "::error::La preview répond $code au lieu de 200 sur $chemin"
+              echec=1
+            fi
+          done
+          exit "$echec"
+
+      - name: Poser l'URL en commentaire de la PR
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const marker = "<!-- preview-etape -->";
+            const url = `https://pr-${context.issue.number}.${process.env.PREVIEW_DOMAIN}`;
+            const sha = context.payload.pull_request.head.sha.slice(0, 7);
+            const body = [
+              marker,
+              `**Preview** : ${url}`,
+              "",
+              `Dernier déploiement : \`${sha}\` — mis à jour à chaque push, détruit à la fermeture de la PR.`,
+            ].join("\n");
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+            }
+
+  teardown:
+    name: Détruire la preview
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, cegedim]
+    steps:
+      - name: Supprimer le dossier sur la VM
+        run: |
+          case "$PR_NUMBER" in
+            (*[!0-9]*|"") echo "::error::Numéro de PR inattendu : '$PR_NUMBER'"; exit 1 ;;
+          esac
+          ssh -o BatchMode=yes "$PREVIEW_SSH" "rm -rf -- '$PREVIEW_ROOT/pr-$PR_NUMBER'"
+
+      - name: Désactiver l'environnement GitHub
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const environment = `preview-pr-${context.issue.number}`;
+            const deployments = await github.paginate(github.rest.repos.listDeployments, {
+              ...context.repo,
+              environment,
+            });
+            for (const d of deployments) {
+              await github.rest.repos.createDeploymentStatus({
+                ...context.repo,
+                deployment_id: d.id,
+                state: "inactive",
+              });
+              await github.rest.repos.deleteDeployment({ ...context.repo, deployment_id: d.id });
+            }
+            // Supprimer l'entrée « environment » elle-même demande des droits
+            // admin que le GITHUB_TOKEN n'a pas toujours : on tente, sans échouer.
+            try {
+              await github.rest.repos.deleteAnEnvironment({ ...context.repo, environment_name: environment });
+            } catch (e) {
+              core.info(`Environnement conservé (HTTP ${e.status}) — déploiements désactivés.`);
+            }
+
+      - name: Mettre à jour le commentaire
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const marker = "<!-- preview-etape -->";
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: existing.id,
+                body: `${marker}\nPreview supprimée (PR fermée).`,
+              });
+            }
