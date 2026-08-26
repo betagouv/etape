@@ -1,0 +1,65 @@
+name: Preview GC
+
+# Filet de sécurité du cycle de vie des previews : purge les environnements
+# orphelins — dossier `pr-<n>` encore présent sur la VM alors que la PR est
+# fermée (évènement `closed` manqué, runner hors ligne à ce moment-là…).
+# Vercel faisait ce ménage pour nous ; sur nos VM, c'est ce workflow.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1-5" # chaque matin de semaine (06h UTC ≈ 8h Paris en été)
+  workflow_dispatch: # déclenchable à la main depuis l'onglet Actions
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: preview-gc
+  cancel-in-progress: false
+
+env:
+  PREVIEW_SSH: deploy@debfcoetapfrt01.fco.cegedim.cloud
+  PREVIEW_ROOT: /srv/previews
+
+jobs:
+  gc:
+    name: Purger les previews orphelines
+    runs-on: [self-hosted, cegedim]
+    steps:
+      - name: Lister les PR ouvertes
+        id: prs
+        uses: actions/github-script@v9
+        with:
+          result-encoding: string
+          script: |
+            const prs = await github.paginate(github.rest.pulls.list, {
+              ...context.repo,
+              state: "open",
+              per_page: 100,
+            });
+            return prs.map((p) => `pr-${p.number}`).join(" ");
+
+      - name: Supprimer les dossiers sans PR ouverte
+        env:
+          OPEN_PRS: ${{ steps.prs.outputs.result }}
+        run: |
+          existantes="$(ssh -o BatchMode=yes "$PREVIEW_SSH" "ls -1 -- '$PREVIEW_ROOT' 2>/dev/null || true")"
+          [ -n "$existantes" ] || { echo "Aucune preview sur la VM."; exit 0; }
+          for d in $existantes; do
+            case "$d" in
+              pr-*[!0-9]* | pr- | [!p]* | p | pr)
+                echo "ignore  $d (nom hors convention pr-<n>)"
+                continue
+                ;;
+            esac
+            case " $OPEN_PRS " in
+              *" $d "*)
+                echo "conserve $d (PR ouverte)"
+                ;;
+              *)
+                echo "purge    $d (aucune PR ouverte)"
+                ssh -o BatchMode=yes "$PREVIEW_SSH" "rm -rf -- '$PREVIEW_ROOT/$d'"
+                ;;
+            esac
+          done

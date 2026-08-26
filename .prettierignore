@@ -12,3 +12,8 @@ package-lock.json
 
 # Fichiers spécifiques
 next-env.d.ts
+
+# Skills IA vendorées (contenu tiers) et manifeste généré
+.agents
+.claude/skills
+skills-lock.json

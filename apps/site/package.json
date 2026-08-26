@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
     "figma:create": "figma connect create",
     "figma:publish": "figma connect publish",
     "figma:check": "figma connect publish --dry-run --exit-on-unreadable-files"
@@ -24,7 +25,7 @@
     "@etape/prettier-config": "*",
     "@figma/code-connect": "^1.4.9",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
