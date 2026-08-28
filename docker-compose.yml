@@ -48,16 +48,63 @@ services:
       # versionner la configuration plutôt que de la recréer à la main sur
       # chaque poste — voir `docs/authentification.md`.
       - ./keycloak/realms:/opt/keycloak/data/import:ro
-      # Thème ETAPE. Keycloak charge au démarrage tout JAR présent dans
-      # `providers`, dossier vide dans l'image officielle : on y monte le dossier
-      # de sortie du build plutôt que le JAR lui-même. Sur un dépôt fraîchement
-      # cloné, où rien n'a encore été construit, Keycloak démarre alors avec son
-      # thème par défaut — là où le montage d'un fichier absent aurait fait
-      # apparaître un dossier fantôme à sa place.
-      - ./apps/keycloak-theme/dist_keycloak:/opt/keycloak/providers:ro
+      # Extensions : le thème ETAPE et le broker FranceConnect, rassemblés par
+      # `keycloak-providers` ci-dessous.
+      - keycloak-providers:/opt/keycloak/providers:ro
     depends_on:
       keycloak-db:
         condition: service_healthy
+      keycloak-providers:
+        condition: service_completed_successfully
+
+  # Rassemble les extensions que Keycloak charge au démarrage.
+  #
+  # Keycloak ne lit qu'un seul dossier, `providers`. Il en faut pourtant deux
+  # choses d'origines différentes — le thème, construit ici, et le broker
+  # FranceConnect, téléchargé — d'où ce volume et le conteneur qui le remplit
+  # plutôt qu'un montage direct du dossier de build.
+  #
+  # L'extension n'est pas un supplément d'agrément : le realm déclare son
+  # identity provider sous `franceconnect-particulier`, et Keycloak **refuse de
+  # démarrer** s'il ne connaît pas cet identifiant. Sans elle, `docker compose
+  # up` échoue sur « Invalid identity provider id » et rien ne tourne, pas même
+  # la connexion par mot de passe. La version suit celle du `Dockerfile`.
+  keycloak-providers:
+    image: alpine:3.22
+    restart: "no"
+    environment:
+      KEYCLOAK_FRANCECONNECT_VERSION: ${KEYCLOAK_FRANCECONNECT_VERSION:-7.7.0}
+    volumes:
+      - keycloak-providers:/providers
+      # Sortie du build du thème. Absente sur un dépôt fraîchement cloné, où
+      # rien n'a encore été construit : Keycloak démarre alors avec son thème
+      # par défaut, ce qui vaut mieux qu'un échec.
+      - ./apps/keycloak-theme/dist_keycloak:/theme:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        jar=/providers/keycloak-franceconnect-$$KEYCLOAK_FRANCECONNECT_VERSION.jar
+        if [ ! -f "$$jar" ]; then
+          apk add --no-cache curl >/dev/null
+          # Les versions antérieures sont retirées : deux JAR de la même
+          # extension dans `providers` empêchent Keycloak de démarrer.
+          rm -f /providers/keycloak-franceconnect-*.jar
+          curl -fsSL -o "$$jar" \
+            "https://github.com/InseeFr/Keycloak-FranceConnect/releases/download/$$KEYCLOAK_FRANCECONNECT_VERSION/keycloak-franceconnect-$$KEYCLOAK_FRANCECONNECT_VERSION.jar"
+          echo "extension FranceConnect $$KEYCLOAK_FRANCECONNECT_VERSION téléchargée."
+        fi
+
+        # Recopié à chaque démarrage : c'est ce qui fait prendre une
+        # reconstruction du thème sans avoir à vider le volume.
+        rm -f /providers/etape-keycloak-theme.jar
+        if [ -f /theme/etape-keycloak-theme.jar ]; then
+          cp /theme/etape-keycloak-theme.jar /providers/
+          echo "thème ETAPE installé."
+        else
+          echo "thème ETAPE non construit — Keycloak servira son thème par défaut."
+          echo "  npm run build -- --filter=@etape/keycloak-theme pour l'obtenir."
+        fi
 
   # Applique après import ce qu'un fichier de realm ne peut pas porter.
   #
@@ -109,3 +156,4 @@ services:
 
 volumes:
   keycloak-db-data:
+  keycloak-providers:

@@ -102,10 +102,17 @@ Le paramètre en cause est le **`nonce`**. FranceConnect v2 exige `state` et
 Aucun réglage ne permet de le changer, c'est du code.
 
 L'identity provider est donc celui de l'**extension Keycloak-FranceConnect de
-l'INSEE**, ajoutée à l'image dans le `Dockerfile`. Elle s'enregistre comme
-_social identity provider_ sous l'identifiant `franceconnect-particulier` —
-détail qui a son importance, car elle n'apparaît pas dans la liste des identity
-providers de `serverinfo`, ce qui donne à croire qu'elle n'est pas chargée.
+l'INSEE**, ajoutée à l'image dans le `Dockerfile` et installée en local par le
+service `keycloak-providers`. Elle s'enregistre comme _social identity provider_
+sous l'identifiant `franceconnect-particulier` — détail qui a son importance, car
+elle n'apparaît pas dans la liste des identity providers de `serverinfo`, ce qui
+donne à croire qu'elle n'est pas chargée.
+
+Elle n'est pas facultative, même sans identifiants FranceConnect : le fichier de
+realm déclare son fournisseur sous cet identifiant, et Keycloak **refuse de
+démarrer** s'il ne le connaît pas — « Invalid identity provider id ». Une pile
+locale sans l'extension ne perd pas le seul parcours FranceConnect, elle ne
+démarre pas du tout.
 
 Trois choses qu'elle règle, et qui étaient autant de questions ouvertes :
 
@@ -118,10 +125,10 @@ Trois choses qu'elle règle, et qui étaient autant de questions ouvertes :
 
 Sa configuration tient en deux clés :
 
-| Clé              | Valeur                           | Effet                           |
-| ---------------- | -------------------------------- | ------------------------------- |
-| `fc_environment` | `INTEGRATION_STANDARD_LEGACY_V2` | toutes les URL de FranceConnect |
-| `eidas_values`   | `EIDAS1`                         | niveau de garantie demandé      |
+| Clé              | Valeur                    | Effet                           |
+| ---------------- | ------------------------- | ------------------------------- |
+| `fc_environment` | `INTEGRATION_STANDARD_V2` | toutes les URL de FranceConnect |
+| `eidas_values`   | `EIDAS1`                  | niveau de garantie demandé      |
 
 Plus aucune URL en dur : l'extension les dérive de l'environnement. La
 correspondance, lue dans son fichier de propriétés :
@@ -231,7 +238,7 @@ depuis `/compte/` provoque une vraie navigation, donc l'en-tête se remet à jou
 ## Développement local
 
 ```bash
-# Le thème d'abord : le `docker-compose.yml` monte le JAR qu'il produit. Sans
+# Le thème d'abord : `keycloak-providers` recopie le JAR qu'il produit. Sans
 # lui Keycloak démarre quand même, mais avec ses écrans par défaut.
 npm run build -- --filter=@etape/keycloak-theme
 
@@ -244,7 +251,9 @@ npm run dev            # site, simulateur et API
 ```
 
 Après modification du thème, `npm run build -- --filter=@etape/keycloak-theme`
-puis `docker compose restart keycloak`.
+puis `docker compose up -d keycloak-providers && docker compose restart keycloak` :
+c'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions, un
+simple redémarrage de Keycloak servirait l'ancien.
 
 | Service           | Adresse               | Accès                                     |
 | ----------------- | --------------------- | ----------------------------------------- |
