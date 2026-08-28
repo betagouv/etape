@@ -16,6 +16,8 @@ export const FOOTER_ID = "pied-de-page";
  */
 const A_VENIR = "#";
 
+export const MENTIONS_LEGALES_PATH = "/mentions-legales";
+
 export type FooterLink = {
   readonly label: string;
   readonly href: string;
@@ -46,7 +48,7 @@ export const USEFUL_LINKS: readonly FooterLink[] = [
 
 /** Colonne « Légal ». « Politique RGPD » a été retirée à la demande du ticket. */
 export const LEGAL_LINKS: readonly FooterLink[] = [
-  { label: "Mentions légales", href: A_VENIR },
+  { label: "Mentions légales", href: MENTIONS_LEGALES_PATH },
   { label: "CGU", href: A_VENIR },
   { label: "Accessibilité : non conforme", href: A_VENIR },
 ];

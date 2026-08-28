@@ -1,9 +1,8 @@
 import * as React from "react";
 
 import { Container } from "@etape/ui/components/container";
-import { focusRing } from "@etape/ui/lib/focus";
-import { cn } from "@etape/ui/lib/utils";
 
+import { FooterAnchor } from "@/components/footer-anchor";
 import {
   DISCLAIMER,
   FOOTER_ID,
@@ -31,26 +30,6 @@ function FooterColumn({ title, children }: { title: string; children: React.Reac
   );
 }
 
-/** Lien du pied de page, utilisable seul ou au sein d'une liste. */
-function FooterAnchor({ link }: { link: FooterLink }) {
-  return (
-    <a
-      href={link.href}
-      // `noreferrer` implique `noopener` : suffisant pour neutraliser l'accès à
-      // `window.opener` depuis la page ouverte.
-      {...(link.isExternal ? { target: "_blank", rel: "noreferrer" } : {})}
-      className={cn(
-        "text-content-secondary hover:text-content-accent rounded-sm text-sm hover:underline hover:underline-offset-4",
-        focusRing,
-      )}
-    >
-      {link.label}
-      {/* L'ouverture dans un nouvel onglet doit être annoncée. */}
-      {link.isExternal ? <span className="sr-only"> (nouvelle fenêtre)</span> : null}
-    </a>
-  );
-}
-
 function FooterLinkList({ links }: { links: readonly FooterLink[] }) {
   return (
     <ul className="flex flex-col gap-2">
@@ -63,13 +42,7 @@ function FooterLinkList({ links }: { links: readonly FooterLink[] }) {
   );
 }
 
-/**
- * Pied de page commun à toutes les pages du site.
- *
- * La gouttière de 128 px (`xl:px-32`) suit la maquette du pied de page, plus
- * large que celle de 96 px du reste du site — d'où la surcharge explicite du
- * `Container` à cet endroit.
- */
+/** Pied de page commun à toutes les pages du site. */
 export function SiteFooter() {
   return (
     <footer

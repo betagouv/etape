@@ -63,6 +63,10 @@ export const SKIP_LINKS: readonly NavItem[] = [
   { label: "Pied de page", href: `#${FOOTER_ID}` },
 ];
 
+function normalizePath(path: string): string {
+  return path.length > 1 ? path.replace(/\/+$/, "") : path;
+}
+
 /**
  * Indique si une entrée du menu correspond à la page affichée.
  *
@@ -72,5 +76,5 @@ export const SKIP_LINKS: readonly NavItem[] = [
  * courantes en même temps que « Accueil ».
  */
 export function isCurrentPage(href: NavItem["href"], pathname: string): boolean {
-  return !href.includes("#") && href === pathname;
+  return !href.includes("#") && normalizePath(href) === normalizePath(pathname);
 }
