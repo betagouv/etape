@@ -157,6 +157,9 @@ function UserProfileField(props: {
     onBlur,
     invalid: isInvalid,
     "aria-required": attribute.required,
+    // Rattache le message d'erreur au champ : `aria-invalid` signale qu'il y a
+    // une erreur, `aria-describedby` est ce qui en fait lire l'énoncé.
+    "aria-describedby": isInvalid ? `input-error-${attribute.name}` : undefined,
   };
 
   return (

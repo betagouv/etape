@@ -119,6 +119,11 @@ export default function Register(props: RegisterProps) {
               checked={areTermsAccepted}
               onChange={(event) => setAreTermsAccepted(event.target.checked)}
               label={msg("acceptTerms")}
+              aria-describedby={
+                messagesPerField.existsError("termsAccepted")
+                  ? "input-error-terms-accepted"
+                  : undefined
+              }
             />
             {messagesPerField.existsError("termsAccepted") && (
               <FieldError

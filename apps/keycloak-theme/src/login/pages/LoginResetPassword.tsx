@@ -56,6 +56,7 @@ export default function LoginResetPassword(
             autoFocus
             autoComplete="username"
             aria-required
+            aria-describedby={hasError ? "input-error-username" : undefined}
             defaultValue={auth.attemptedUsername ?? ""}
             invalid={hasError}
           />

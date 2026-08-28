@@ -52,6 +52,9 @@ export default function LoginUpdatePassword(
               autoFocus
               autoComplete="new-password"
               aria-required
+              aria-describedby={
+                messagesPerField.existsError("password") ? "input-error-password" : undefined
+              }
               invalid={hasError}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -78,6 +81,11 @@ export default function LoginUpdatePassword(
               i18n={i18n}
               autoComplete="new-password"
               aria-required
+              aria-describedby={
+                messagesPerField.existsError("password-confirm")
+                  ? "input-error-password-confirm"
+                  : undefined
+              }
               invalid={hasError}
             />
           </Field>

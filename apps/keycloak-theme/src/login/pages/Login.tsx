@@ -94,6 +94,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                   autoFocus
                   autoComplete="username"
                   aria-required
+                  aria-describedby={hasCredentialsError ? "input-error" : undefined}
                   defaultValue={login.username ?? ""}
                   invalid={hasCredentialsError}
                 />
@@ -120,6 +121,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                 i18n={i18n}
                 autoComplete="current-password"
                 aria-required
+                aria-describedby={hasCredentialsError ? "input-error" : undefined}
                 invalid={hasCredentialsError}
               />
             </Field>
