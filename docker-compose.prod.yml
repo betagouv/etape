@@ -6,8 +6,12 @@
 #
 # Deux domaines à déclarer dans Coolify, sur les deux seuls services exposés :
 #
-#   web       https://etape.beta.ordesoft.com        (port 80)
-#   keycloak  https://auth.etape.beta.ordesoft.com   (port 8080)
+#   web   https://etape.beta.ordesoft.com        (port 80)
+#   auth  https://auth.etape.beta.ordesoft.com   (port 80)
+#
+# `auth`, et non `keycloak` : c'est le proxy qui porte le sous-domaine, et lui
+# qui refuse l'administration. Keycloak n'expose plus de port, précisément pour
+# qu'on ne puisse pas lui repointer un domaine dessus par inadvertance.
 #
 # Les variables attendues sont listées dans `deploy/.env.example`. Marche à
 # suivre complète : `docs/deploiement.md`.
@@ -89,13 +93,53 @@ services:
       start_period: 15s
 
   # ---------------------------------------------------------------------
-  # Keycloak, sur son propre sous-domaine.
+  # Proxy du sous-domaine de Keycloak.
   #
-  # Ni le même domaine ni un préfixe de chemin : les écrans de connexion et le
-  # broker FranceConnect gardent ainsi une adresse stable, indépendante de
+  # Porte le domaine `auth.…` à la place de Keycloak, et refuse `/admin` et
+  # `/realms/master` : ni la console d'administration ni l'API qui va avec n'ont
+  # de raison d'être joignables depuis Internet. Ce qui reste public, c'est le
+  # realm `etape` — écrans de connexion, points OIDC, et l'endpoint du broker
+  # que FranceConnect appelle au retour.
+  #
+  # Administration : `docker exec <conteneur> /opt/keycloak/bin/kcadm.sh …`, ou
+  # un tunnel vers la machine. Voir `docs/deploiement.md`.
+  # ---------------------------------------------------------------------
+  auth:
+    build:
+      context: .
+      target: auth
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - keycloak
+    healthcheck:
+      # Deux réponses valent bonne santé : le realm répond, et l'administration
+      # est refusée. Une sonde qui ne vérifierait que la première laisserait
+      # passer un proxy dont le filtrage a sauté.
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1/realms/etape/.well-known/openid-configuration && ! wget -q -O /dev/null http://127.0.0.1/admin/master/console/",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # ---------------------------------------------------------------------
+  # Keycloak.
+  #
+  # Sur son propre sous-domaine, derrière `auth` : ni le même domaine que le
+  # front ni un préfixe de chemin. Les écrans de connexion et le broker
+  # FranceConnect gardent ainsi une adresse stable, indépendante de
   # l'hébergement du front. Le jour où Keycloak déménage, seul un enregistrement
   # DNS bouge — et la `redirect_uri` déclarée chez FranceConnect, pénible à
   # faire changer, reste valable.
+  #
+  # Aucun `expose` : Keycloak n'est joint que par `auth`, sur le réseau interne.
+  # Le port absent est ce qui empêche de lui rattacher un domaine sans y penser,
+  # et de court-circuiter ainsi le filtrage de l'administration.
   # ---------------------------------------------------------------------
   keycloak:
     build:
@@ -106,8 +150,6 @@ services:
     # — `start` et non `start-dev`, avec `--import-realm` qui crée le realm au
     # premier démarrage et l'ignore ensuite (stratégie IGNORE_EXISTING).
     entrypoint: ["/bin/bash", "/opt/keycloak/bin/etape-demarrer.sh"]
-    expose:
-      - "8080"
     environment:
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak

@@ -8,13 +8,13 @@ préparer sur la machine : Coolify clone, construit, démarre.
 
 ## Ce qui tourne
 
-| Service         | Rôle                                      | Exposé           |
-| --------------- | ----------------------------------------- | ---------------- |
-| `web`           | nginx : exports statiques + `/api/` → API | domaine du site  |
-| `api`           | NestJS, client OIDC confidentiel          | non              |
-| `keycloak`      | IAM, broker FranceConnect, thème ETAPE    | son sous-domaine |
-| `keycloak-db`   | PostgreSQL de Keycloak                    | non              |
-| `keycloak-init` | Configure le realm, puis s'arrête         | non              |
+| Service       | Rôle                                       | Exposé           |
+| ------------- | ------------------------------------------ | ---------------- |
+| `web`         | nginx : exports statiques + `/api/` → API  | domaine du site  |
+| `api`         | NestJS, client OIDC confidentiel           | non              |
+| `auth`        | nginx : filtre l'administration → Keycloak | son sous-domaine |
+| `keycloak`    | IAM, broker FranceConnect, thème ETAPE     | non              |
+| `keycloak-db` | PostgreSQL de Keycloak                     | non              |
 
 Deux origines, et c'est voulu :
 
@@ -36,11 +36,17 @@ survit à un déménagement du front comme à un changement d'hébergeur.
 2. **Docker Compose Location** : `/docker-compose.prod.yml`.
 3. Domaines, sur les deux seuls services exposés :
    - `web` → `https://etape.beta.ordesoft.com`
-   - `keycloak` → `https://auth.etape.beta.ordesoft.com` (port 8080)
+   - `auth` → `https://auth.etape.beta.ordesoft.com` (port 80)
+
+   Le sous-domaine va bien sur **`auth`**, et non sur `keycloak` : c'est le
+   proxy qui refuse l'administration. Sur une pile déjà déployée, c'est un
+   domaine à déplacer d'un service à l'autre. `keycloak` n'expose plus aucun
+   port, ce qui rend l'erreur visible tout de suite plutôt que silencieuse.
+
 4. Variables d'environnement : voir ci-dessous.
 5. Déployer.
 
-Les quatre conteneurs doivent rester `Up`. Keycloak configure son realm
+Les cinq conteneurs doivent rester `Up`. Keycloak configure son realm
 lui-même au démarrage, en tâche de fond : les lignes préfixées `→` puis
 `✅ realm etape configuré` apparaissent dans ses journaux quelques secondes
 après le démarrage. Aucun conteneur ne doit s'arrêter — un conteneur sorti,
@@ -56,7 +62,7 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 | `PUBLIC_URL`                  | oui         | `https://etape.beta.ordesoft.com`, sans slash final       |
 | `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.beta.ordesoft.com`, sans slash final  |
 | `KEYCLOAK_ADMIN_USER`         | non         | `admin` par défaut                                        |
-| `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Console d'administration                                  |
+| `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Administration de Keycloak (`kcadm`)                      |
 | `KEYCLOAK_DB_PASSWORD`        | oui         | Base de Keycloak                                          |
 | `KEYCLOAK_CLIENT_SECRET`      | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak      |
 | `FRANCECONNECT_CLIENT_ID`     | non         | Identifiant du client FranceConnect                       |
@@ -113,6 +119,13 @@ curl -s -o /dev/null -w '%{http_code}\n' https://etape.beta.ordesoft.com/api/aut
 # l'échange de jetons
 curl -s https://auth.etape.beta.ordesoft.com/realms/etape/.well-known/openid-configuration \
   | grep -o '"issuer":"[^"]*"'
+
+# L'administration n'est pas joignable : les trois doivent répondre 404.
+# Un 200 ou un 401 ici signale un sous-domaine encore branché sur `keycloak`.
+for chemin in /admin/master/console/ /admin/realms /realms/master/protocol/openid-connect/token; do
+  printf '%s -> ' "$chemin"
+  curl -s -o /dev/null -w '%{http_code}\n' "https://auth.etape.beta.ordesoft.com$chemin"
+done
 ```
 
 Puis, dans le navigateur : « Se connecter » dans l'en-tête du site part vers
@@ -135,6 +148,21 @@ commentaire, sur le service `api` (`extra_hosts` vers `host-gateway`).
   passe oublié ». Or c'est la vérification d'adresse qui rend sûre la liaison
   d'un compte local à une identité FranceConnect. À régler avant d'ouvrir
   l'inscription à qui que ce soit.
-- **La console d'administration de Keycloak est publiquement joignable**, à
-  `https://auth.etape.beta.ordesoft.com/admin`. D'où l'exigence d'un mot de
-  passe administrateur sérieux.
+- **L'administration de Keycloak ne passe plus par le navigateur.** La console
+  est retirée de l'image (`--features-disabled=admin`) et `auth` refuse `/admin`
+  ainsi que `/realms/master` : ni la console ni l'API qui va avec ne sont
+  joignables depuis Internet. Ce qui reste public, c'est le realm `etape` —
+  écrans de connexion, points OIDC, endpoint du broker.
+
+  Pour administrer, depuis la machine :
+
+  ```bash
+  docker exec -it <conteneur-keycloak> /opt/keycloak/bin/kcadm.sh \
+    config credentials --server http://127.0.0.1:8080 --realm master \
+    --user "$KEYCLOAK_ADMIN_USER" --password "$KEYCLOAK_ADMIN_PASSWORD"
+  docker exec -it <conteneur-keycloak> /opt/keycloak/bin/kcadm.sh get realms/etape
+  ```
+
+  Le mot de passe administrateur reste à choisir sérieusement : `/realms/master`
+  n'est refusé que par le proxy, et la protection contre la force brute posée
+  par `deploy/keycloak-init.sh` ralentit sans interdire.

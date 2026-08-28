@@ -91,6 +91,17 @@ COPY --from=build /srv/static /usr/share/nginx/html
 EXPOSE 80
 
 # ---------------------------------------------------------------------------
+# Proxy du sous-domaine de Keycloak.
+#
+# C'est lui, et non Keycloak, qui porte le domaine `auth.…` : il refuse
+# `/admin` et `/realms/master`, et transmet le reste. Keycloak n'a plus à être
+# joignable directement depuis l'extérieur.
+# ---------------------------------------------------------------------------
+FROM nginx:1.29-alpine AS auth
+COPY deploy/nginx-auth.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+
+# ---------------------------------------------------------------------------
 # Thème Keycloak, construit à part.
 #
 # C'est le build le plus fragile de la chaîne : Keycloakify délègue l'empaquetage
@@ -158,4 +169,12 @@ COPY keycloak/realms/etape-realm.json /opt/keycloak/data/import/
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 
-RUN /opt/keycloak/bin/kc.sh build
+# La console d'administration est retirée de l'image, et non seulement masquée
+# par le proxy : ce qui n'est pas construit ne peut pas être servi, quelle que
+# soit la façon dont l'hébergeur route ensuite le sous-domaine.
+#
+# Seule la console disparaît. L'API REST d'administration reste en place — sans
+# elle `deploy/keycloak-init.sh` n'aurait plus rien pour configurer le realm —
+# et c'est `deploy/nginx-auth.conf` qui la met hors de portée depuis Internet.
+# Administration : `docker exec … kcadm.sh`, ou un tunnel vers le conteneur.
+RUN /opt/keycloak/bin/kc.sh build --features-disabled=admin
