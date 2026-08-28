@@ -99,6 +99,7 @@ EXPOSE 80
 # ---------------------------------------------------------------------------
 FROM nginx:1.29-alpine AS auth
 COPY deploy/nginx-auth.conf /etc/nginx/conf.d/default.conf
+COPY deploy/nginx-auth-proxy.inc /etc/nginx/snippets/keycloak-proxy.inc
 EXPOSE 80
 
 # ---------------------------------------------------------------------------

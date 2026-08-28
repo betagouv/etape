@@ -8,13 +8,13 @@ préparer sur la machine : Coolify clone, construit, démarre.
 
 ## Ce qui tourne
 
-| Service       | Rôle                                       | Exposé           |
-| ------------- | ------------------------------------------ | ---------------- |
-| `web`         | nginx : exports statiques + `/api/` → API  | domaine du site  |
-| `api`         | NestJS, client OIDC confidentiel           | non              |
-| `auth`        | nginx : filtre l'administration → Keycloak | son sous-domaine |
-| `keycloak`    | IAM, broker FranceConnect, thème ETAPE     | non              |
-| `keycloak-db` | PostgreSQL de Keycloak                     | non              |
+| Service       | Rôle                                      | Exposé           |
+| ------------- | ----------------------------------------- | ---------------- |
+| `web`         | nginx : exports statiques + `/api/` → API | domaine du site  |
+| `api`         | NestJS, client OIDC confidentiel          | non              |
+| `auth`        | nginx : refuse tout sauf le realm `etape` | son sous-domaine |
+| `keycloak`    | IAM, broker FranceConnect, thème ETAPE    | non              |
+| `keycloak-db` | PostgreSQL de Keycloak                    | non              |
 
 Deux origines, et c'est voulu :
 
@@ -120,9 +120,10 @@ curl -s -o /dev/null -w '%{http_code}\n' https://etape.beta.ordesoft.com/api/aut
 curl -s https://auth.etape.beta.ordesoft.com/realms/etape/.well-known/openid-configuration \
   | grep -o '"issuer":"[^"]*"'
 
-# L'administration n'est pas joignable : les trois doivent répondre 404.
-# Un 200 ou un 401 ici signale un sous-domaine encore branché sur `keycloak`.
-for chemin in /admin/master/console/ /admin/realms /realms/master/protocol/openid-connect/token; do
+# Rien d'autre que le realm `etape` n'est joignable : les quatre doivent
+# répondre 404. La racine est la sonde du refus par défaut ; un 200 ou un 401
+# ici signale un sous-domaine encore branché sur `keycloak`.
+for chemin in / /admin/master/console/ /admin/realms /realms/master/protocol/openid-connect/token; do
   printf '%s -> ' "$chemin"
   curl -s -o /dev/null -w '%{http_code}\n' "https://auth.etape.beta.ordesoft.com$chemin"
 done
@@ -149,10 +150,11 @@ commentaire, sur le service `api` (`extra_hosts` vers `host-gateway`).
   d'un compte local à une identité FranceConnect. À régler avant d'ouvrir
   l'inscription à qui que ce soit.
 - **L'administration de Keycloak ne passe plus par le navigateur.** La console
-  est retirée de l'image (`--features-disabled=admin`) et `auth` refuse `/admin`
-  ainsi que `/realms/master` : ni la console ni l'API qui va avec ne sont
-  joignables depuis Internet. Ce qui reste public, c'est le realm `etape` —
-  écrans de connexion, points OIDC, endpoint du broker.
+  est retirée de l'image (`--features-disabled=admin`), et `auth` refuse tout
+  par défaut : seuls passent le realm `etape` et les ressources du thème. Ni la
+  console, ni l'API qui partage son préfixe, ni le realm `master` ne sont
+  joignables depuis Internet — pas davantage qu'un point d'entrée ajouté par une
+  version ultérieure de Keycloak, qui arriverait fermé plutôt qu'ouvert.
 
   Pour administrer, depuis la machine :
 
