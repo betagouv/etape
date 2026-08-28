@@ -62,6 +62,7 @@ Le parcours de connexion demande en plus un Keycloak local — voir
 
 ## Déploiement
 
-Recette sur Coolify : <https://etape.beta.ordesoft.com>, décrite par
-[`docker-compose.prod.yml`](docker-compose.prod.yml). Variables d'environnement,
-identifiants FranceConnect et vérifications : [docs/deploiement.md](docs/deploiement.md).
+La pile est décrite par [`docker-compose.prod.yml`](docker-compose.prod.yml) et
+tient sur tout hébergeur capable de construire et lancer un `docker-compose`.
+Variables d'environnement, identifiants FranceConnect et vérifications :
+[docs/deploiement.md](docs/deploiement.md).

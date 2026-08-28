@@ -1,10 +1,13 @@
 # Déploiement
 
-Environnement de recette, sur Coolify : <https://etape.beta.ordesoft.com>.
-
 Tout part de [`docker-compose.prod.yml`](../docker-compose.prod.yml), qui
 construit ses images depuis le [`Dockerfile`](../Dockerfile) du dépôt. Rien à
-préparer sur la machine : Coolify clone, construit, démarre.
+préparer sur la machine : l'hébergeur clone, construit, démarre — n'importe
+lequel sait le faire, dès lors qu'il accepte un `docker-compose` et sait placer
+un domaine devant un service.
+
+Les adresses données ici en exemple (`etape.example.org`) sont à remplacer par
+celles de l'environnement visé.
 
 ## Ce qui tourne
 
@@ -29,14 +32,13 @@ du broker est celle que FranceConnect met en liste blanche, et la faire changer
 demande de repasser par le portail partenaires. Sur un sous-domaine dédié, elle
 survit à un déménagement du front comme à un changement d'hébergeur.
 
-## Configurer Coolify
+## Configurer l'hébergeur
 
-1. Nouvelle ressource **Docker Compose**, dépôt `betagouv/etape`, branche
-   `feat/franceconnect`.
-2. **Docker Compose Location** : `/docker-compose.prod.yml`.
+1. Une ressource **Docker Compose**, sur ce dépôt et la branche à déployer.
+2. Fichier de composition : `/docker-compose.prod.yml`.
 3. Domaines, sur les deux seuls services exposés :
-   - `web` → `https://etape.beta.ordesoft.com`
-   - `auth` → `https://auth.etape.beta.ordesoft.com` (port 80)
+   - `web` → `https://etape.example.org`
+   - `auth` → `https://auth.etape.example.org` (port 80)
 
    Le sous-domaine va bien sur **`auth`**, et non sur `keycloak` : c'est le
    proxy qui refuse l'administration. Sur une pile déjà déployée, c'est un
@@ -59,8 +61,9 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 
 | Variable                      | Obligatoire | Rôle                                                      |
 | ----------------------------- | ----------- | --------------------------------------------------------- |
-| `PUBLIC_URL`                  | oui         | `https://etape.beta.ordesoft.com`, sans slash final       |
-| `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.beta.ordesoft.com`, sans slash final  |
+| `PUBLIC_URL`                  | oui         | `https://etape.example.org`, sans slash final             |
+| `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.example.org`, sans slash final        |
+| `KEYCLOAK_HOSTNAME`           | oui         | Nom d'hôte du précédent, sans le schéma                   |
 | `KEYCLOAK_ADMIN_USER`         | non         | `admin` par défaut                                        |
 | `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Administration de Keycloak (`kcadm`)                      |
 | `KEYCLOAK_DB_PASSWORD`        | oui         | Base de Keycloak                                          |
@@ -90,15 +93,15 @@ reçoit ce mot de passe-là.
 ## FranceConnect
 
 Les identifiants viennent du portail partenaires, environnement d'intégration.
-Renseignés dans Coolify, ils sont posés sur l'identity provider au démarrage
-de Keycloak — jamais dans le fichier de realm, qui est versionné.
+Renseignés chez l'hébergeur, ils sont posés sur l'identity provider au
+démarrage de Keycloak — jamais dans le fichier de realm, qui est versionné.
 
 Les URL à déclarer côté FranceConnect sont celles du **broker**, pas celles de
 l'API :
 
 ```
-redirect_uri       https://auth.etape.beta.ordesoft.com/realms/etape/broker/franceconnect/endpoint
-post_logout_uri    https://auth.etape.beta.ordesoft.com/realms/etape/broker/franceconnect/endpoint/logout_response
+redirect_uri       https://auth.etape.example.org/realms/etape/broker/franceconnect/endpoint
+post_logout_uri    https://auth.etape.example.org/realms/etape/broker/franceconnect/endpoint/logout_response
 ```
 
 C'est tout l'intérêt du brokerage : FranceConnect ne voit qu'une adresse, fixe
@@ -111,13 +114,17 @@ sont à confronter au portail, qui fait foi.
 ## Vérifier après déploiement
 
 ```bash
+# Les adresses de l'environnement visé, pour les commandes qui suivent
+PUBLIC_URL=https://etape.example.org
+KEYCLOAK_PUBLIC_URL=https://auth.etape.example.org
+
 # Le front et l'API répondent (401 sans cookie, c'est la bonne réponse)
-curl -sI https://etape.beta.ordesoft.com/ | head -1
-curl -s -o /dev/null -w '%{http_code}\n' https://etape.beta.ordesoft.com/api/auth/session
+curl -sI "$PUBLIC_URL/" | head -1
+curl -s -o /dev/null -w '%{http_code}\n' "$PUBLIC_URL/api/auth/session"
 
 # Keycloak annonce le bon émetteur — s'il annonce autre chose, l'API refusera
 # l'échange de jetons
-curl -s https://auth.etape.beta.ordesoft.com/realms/etape/.well-known/openid-configuration \
+curl -s "$KEYCLOAK_PUBLIC_URL/realms/etape/.well-known/openid-configuration" \
   | grep -o '"issuer":"[^"]*"'
 
 # Rien d'autre que le realm `etape` n'est joignable : les quatre doivent
@@ -125,7 +132,7 @@ curl -s https://auth.etape.beta.ordesoft.com/realms/etape/.well-known/openid-con
 # ici signale un sous-domaine encore branché sur `keycloak`.
 for chemin in / /admin/master/console/ /admin/realms /realms/master/protocol/openid-connect/token; do
   printf '%s -> ' "$chemin"
-  curl -s -o /dev/null -w '%{http_code}\n' "https://auth.etape.beta.ordesoft.com$chemin"
+  curl -s -o /dev/null -w '%{http_code}\n' "$KEYCLOAK_PUBLIC_URL$chemin"
 done
 ```
 

@@ -1,13 +1,16 @@
-# Pile de déploiement, destinée à Coolify.
+# Pile de déploiement.
 #
 # Quatre services et une base : le front statique et l'API derrière un même
-# nginx, Keycloak sur son propre sous-domaine, et un conteneur d'initialisation
-# qui applique au realm ce que le fichier d'import ne peut pas porter.
+# nginx, et Keycloak sur son propre sous-domaine, derrière un proxy qui n'y
+# laisse passer que le realm applicatif. Keycloak configure son realm lui-même
+# au démarrage — plus de conteneur d'initialisation, dont l'arrêt était compté
+# comme un échec par les hébergeurs qui attendent `docker compose up --wait`.
 #
-# Deux domaines à déclarer dans Coolify, sur les deux seuls services exposés :
+# Rien à préparer sur la machine : l'hébergeur clone, construit, démarre. Deux
+# domaines lui restent à déclarer, sur les deux seuls services exposés :
 #
-#   web   https://etape.beta.ordesoft.com        (port 80)
-#   auth  https://auth.etape.beta.ordesoft.com   (port 80)
+#   web   https://etape.example.org        (port 80)
+#   auth  https://auth.etape.example.org   (port 80)
 #
 # `auth`, et non `keycloak` : c'est le proxy qui porte le sous-domaine, et lui
 # qui refuse l'administration. Keycloak n'expose plus de port, précisément pour
@@ -75,7 +78,7 @@ services:
     # passerelle de l'hôte, où écoute le proxy : la requête ne sort plus de la
     # machine. Le certificat reste valable — le nom demandé, lui, ne change pas.
     extra_hosts:
-      - "${KEYCLOAK_HOSTNAME:-auth.etape.beta.ordesoft.com}:host-gateway"
+      - "${KEYCLOAK_HOSTNAME:?nom d'hôte de KEYCLOAK_PUBLIC_URL, sans le schéma}:host-gateway"
     healthcheck:
       # `/auth/session` répond 401 sans cookie : c'est une réponse, donc un
       # service vivant. Toute autre issue — connexion refusée, 5xx — signale un
