@@ -123,10 +123,17 @@ RUN npx turbo run build --filter=@etape/keycloak-theme
 # propagation de la déconnexion.
 # ---------------------------------------------------------------------------
 FROM alpine:3.22 AS franceconnect-extension
+# Version et empreinte vont par paire : changer l'une sans l'autre fait échouer
+# le build, ce qui est le comportement voulu. L'empreinte est celle publiée avec
+# la release, et c'est tout ce qui sépare une extension chargée dans Keycloak
+# avec les droits du serveur d'un binaire quelconque servi par un dépôt
+# compromis ou une réponse détournée.
 ARG KEYCLOAK_FRANCECONNECT_VERSION=7.7.0
+ARG KEYCLOAK_FRANCECONNECT_SHA256=e6a3853ac6fcf5e55e32cead622612ad03a1df034f4ba6be808f6aa7cf2d8fd7
 RUN apk add --no-cache curl && \
     curl -fsSL -o /keycloak-franceconnect.jar \
-      "https://github.com/InseeFr/Keycloak-FranceConnect/releases/download/${KEYCLOAK_FRANCECONNECT_VERSION}/keycloak-franceconnect-${KEYCLOAK_FRANCECONNECT_VERSION}.jar"
+      "https://github.com/InseeFr/Keycloak-FranceConnect/releases/download/${KEYCLOAK_FRANCECONNECT_VERSION}/keycloak-franceconnect-${KEYCLOAK_FRANCECONNECT_VERSION}.jar" && \
+    echo "${KEYCLOAK_FRANCECONNECT_SHA256}  /keycloak-franceconnect.jar" | sha256sum -c -
 
 # ---------------------------------------------------------------------------
 # Keycloak.

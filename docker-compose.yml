@@ -73,7 +73,12 @@ services:
     image: alpine:3.22
     restart: "no"
     environment:
+      # Version et empreinte vont par paire, comme dans le `Dockerfile` :
+      # changer l'une sans l'autre fait échouer le téléchargement. C'est ce qui
+      # sépare une extension chargée dans Keycloak avec les droits du serveur
+      # d'un binaire quelconque servi par une réponse détournée.
       KEYCLOAK_FRANCECONNECT_VERSION: ${KEYCLOAK_FRANCECONNECT_VERSION:-7.7.0}
+      KEYCLOAK_FRANCECONNECT_SHA256: ${KEYCLOAK_FRANCECONNECT_SHA256:-e6a3853ac6fcf5e55e32cead622612ad03a1df034f4ba6be808f6aa7cf2d8fd7}
     volumes:
       - keycloak-providers:/providers
       # Sortie du build du thème. Absente sur un dépôt fraîchement cloné, où
@@ -92,7 +97,10 @@ services:
           rm -f /providers/keycloak-franceconnect-*.jar
           curl -fsSL -o "$$jar" \
             "https://github.com/InseeFr/Keycloak-FranceConnect/releases/download/$$KEYCLOAK_FRANCECONNECT_VERSION/keycloak-franceconnect-$$KEYCLOAK_FRANCECONNECT_VERSION.jar"
-          echo "extension FranceConnect $$KEYCLOAK_FRANCECONNECT_VERSION téléchargée."
+          # Le JAR est retiré si l'empreinte ne correspond pas : le laisser en
+          # place le ferait charger au démarrage suivant sans plus rien vérifier.
+          echo "$$KEYCLOAK_FRANCECONNECT_SHA256  $$jar" | sha256sum -c - || { rm -f "$$jar"; exit 1; }
+          echo "extension FranceConnect $$KEYCLOAK_FRANCECONNECT_VERSION téléchargée et vérifiée."
         fi
 
         # Recopié à chaque démarrage : c'est ce qui fait prendre une
