@@ -62,6 +62,27 @@ $KCADM update "realms/$REALM" -s sslRequired=EXTERNAL
 echo "→ realm ${REALM} : sslRequired=EXTERNAL"
 
 # ---------------------------------------------------------------------------
+# Realm `master` : protection contre la force brute.
+#
+# Le fichier d'import ne le décrit pas — Keycloak le crée lui-même, hors de tout
+# import — et il naît sans cette protection, là où le realm `etape` la porte.
+# C'est pourtant le realm des administrateurs : son point `/token` reste
+# joignable même une fois `/admin` refusé par le proxy, et c'est lui qui délivre
+# le jeton d'administration.
+#
+# `permanentLockout=false` : un verrouillage définitif du seul compte
+# administrateur se retourne contre nous, et l'attente croissante suffit à
+# rendre l'essai systématique inutilisable.
+# ---------------------------------------------------------------------------
+$KCADM update realms/master \
+  -s bruteForceProtected=true \
+  -s permanentLockout=false \
+  -s failureFactor=10 \
+  -s waitIncrementSeconds=60 \
+  -s maxFailureWaitSeconds=900
+echo "→ realm master : protection contre la force brute activée"
+
+# ---------------------------------------------------------------------------
 # Client `etape-api`.
 #
 # `redirectUris` doit correspondre au caractère près à la `redirect_uri` que
