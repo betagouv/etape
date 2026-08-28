@@ -1,16 +1,12 @@
 /**
- * Assemble les exports statiques des deux apps dans `.vercel/output/`, au format
- * attendu par la Build Output API v3 : https://vercel.com/docs/build-output-api/v3
+ * Assemble les exports dans `.vercel/output/`, au format de la Build Output API
+ * v3 : https://vercel.com/docs/build-output-api/v3
  *
- * En mode `--prebuilt`, Vercel ne voit ni le repo ni le code — uniquement ce
- * dossier. Ni `vercel.json`, ni les réglages de build du dashboard, ni ses
- * variables d'environnement ne s'appliquent : tout se décide ici et au build.
+ * En `--prebuilt`, Vercel ne voit que ce dossier : ni `vercel.json`, ni les
+ * réglages du dashboard, ni ses variables ne s'appliquent. L'assemblage vit dans
+ * `assembler-statique.mjs`, partagé avec le nginx du déploiement.
  *
- * L'assemblage lui-même vit dans `scripts/assembler-statique.mjs`, partagé avec
- * le nginx du déploiement : seules les règles de routage propres à Vercel
- * restent ici.
- *
- * À lancer depuis la racine du monorepo, après `turbo run build`.
+ * À lancer depuis la racine, après `turbo run build`.
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -23,21 +19,17 @@ const out = path.join(root, ".vercel/output");
 const staticDir = path.join(out, "static");
 
 /**
- * Tient le rôle du `vercel.json`, qui n'est pas lu en mode `--prebuilt`.
- *
- * `handle: "filesystem"` sert d'abord tout fichier existant ; `handle: "error"`
- * renvoie ensuite le 404 de la bonne app. Pas de fallback SPA : un export
- * statique Next produit un vrai fichier HTML par route, un fallback masquerait
- * les vraies 404.
+ * Tient le rôle du `vercel.json`, non lu en `--prebuilt`. Pas de fallback SPA :
+ * un export statique Next produit un vrai fichier par route, et un fallback
+ * masquerait les vraies 404.
  */
 function construireConfig() {
   return {
     version: 3,
     routes: [
-      // Ceinture et bretelles : Vercel marque déjà les previews `noindex`.
       { src: "/(.*)", headers: { "x-robots-tag": "noindex, nofollow" }, continue: true },
-      // `trailingSlash: true` côté Next, mais un export statique ne peut pas
-      // rediriger de lui-même : la redirection se fait donc ici.
+      // `trailingSlash: true` côté Next, qu'un export statique ne sait pas
+      // appliquer lui-même.
       {
         src: `^${SIMULATEUR_BASE_PATH}$`,
         status: 308,
@@ -66,9 +58,8 @@ async function main() {
   console.log("✅ .vercel/output prêt");
 }
 
-// `process.exit()` tronquerait les écritures encore en attente quand stdout est
-// un pipe : le dev verrait le code de sortie sans le message qui l'explique.
-// On se contente de positionner le code et de laisser Node terminer.
+// `process.exit()` tronquerait les écritures en attente quand stdout est un
+// pipe : on positionne le code et on laisse Node terminer.
 main().catch((erreur) => {
   console.error(`❌ ${erreur.message}`);
   process.exitCode = 1;

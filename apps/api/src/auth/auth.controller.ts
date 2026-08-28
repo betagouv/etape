@@ -12,8 +12,7 @@ import { toPublicSession, type PublicSession } from "./session/session.types.js"
 
 /**
  * Les quatre points d'entrée du parcours. Le front n'en connaît pas davantage :
- * il ne voit jamais un jeton, ne parle jamais à Keycloak, et ignore que
- * FranceConnect existe au-delà d'un paramètre `idp`.
+ * il ne voit jamais un jeton et ne parle jamais à Keycloak.
  */
 @Controller("auth")
 export class AuthController {
@@ -29,7 +28,6 @@ export class AuthController {
     return this.config.get("FRONT_BASE_URL", { infer: true });
   }
 
-  /** `idp=franceconnect` court-circuite l'écran de Keycloak ; sinon, mot de passe. */
   @Get("login")
   async login(
     @Query("idp") idp: string | undefined,
@@ -61,19 +59,14 @@ export class AuthController {
   }
 
   /**
-   * Échange le code contre les jetons et ouvre la session.
-   *
-   * Aucune erreur n'est renvoyée telle quelle au navigateur : un échec repart
-   * avec un simple marqueur, les détails restant dans les journaux — ils
-   * décrivent l'état interne du fournisseur d'identité.
+   * Aucune erreur n'est renvoyée telle quelle au navigateur : elles décrivent
+   * l'état interne du fournisseur d'identité et restent dans les journaux.
    */
   @Get("callback")
   async callback(@Req() request: Request, @Res() response: Response): Promise<void> {
     const transaction = await this.sessions.consumeTransaction(request, response);
 
     if (!transaction) {
-      // Transaction expirée, déjà consommée, ou callback atteint sans être passé
-      // par `/auth/login`.
       response.redirect(`${this.frontBaseUrl}/?connexion=expiree`);
       return;
     }
@@ -97,8 +90,7 @@ export class AuthController {
       await this.sessions.openSession(response, {
         sub: claims.sub,
         email: typeof claims.email === "string" ? claims.email : undefined,
-        // Suppose le mapper `identity_provider` sur le client — voir
-        // `docs/authentification.md`.
+        // Suppose le mapper `identity_provider` sur le client.
         viaFranceConnect:
           claims.identity_provider ===
           this.config.get("KEYCLOAK_FRANCECONNECT_ALIAS", { infer: true }),
@@ -114,9 +106,8 @@ export class AuthController {
   }
 
   /**
-   * Déconnexion propagée en chaîne. S'arrêter à la session de l'API laisserait
-   * une session ouverte chez le fournisseur : le « Se connecter » suivant
-   * reconnecterait silencieusement, ce qui est déroutant et non conforme.
+   * Propagée en chaîne : s'arrêter à la session de l'API laisserait le
+   * « Se connecter » suivant reconnecter silencieusement.
    */
   @Get("logout")
   async logout(@Req() request: Request, @Res() response: Response): Promise<void> {
@@ -136,7 +127,6 @@ export class AuthController {
     response.redirect(logoutUrl.href);
   }
 
-  /** État de connexion, interrogé par le front. */
   @Get("session")
   async session(@Req() request: Request): Promise<PublicSession> {
     const session = await this.sessions.readSession(request);

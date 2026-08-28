@@ -7,20 +7,17 @@ import type { Env } from "../../config/env.js";
 import { SessionStore } from "./session.store.js";
 import type { LoginTransaction, UserSession } from "./session.types.js";
 
-/** Identifiant de session. Opaque : aucune donnée utilisateur n'y transite. */
+// Identifiants opaques : aucune donnée utilisateur n'y transite.
 const SESSION_COOKIE = "etape.sid";
-/** Identifiant de la transaction de connexion en cours. */
 const TRANSACTION_COOKIE = "etape.txn";
 
 const TRANSACTION_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 /**
- * Fait le lien entre les cookies du navigateur et le stockage serveur.
- *
- * La politique de cookies est concentrée ici : un attribut oublié à un seul
- * endroit ouvrirait une faille, invisible à la relecture si les appels sont
- * éparpillés dans le contrôleur.
+ * Fait le lien entre les cookies du navigateur et le stockage serveur. La
+ * politique de cookies est concentrée ici : un attribut oublié à un seul endroit
+ * ouvrirait une faille invisible à la relecture.
  */
 @Injectable()
 export class SessionService {
@@ -30,11 +27,10 @@ export class SessionService {
   ) {}
 
   /**
-   * `sameSite: "lax"` est le point délicat. `strict` casserait la connexion : au
-   * retour sur `/auth/callback`, le navigateur voit une navigation venue d'un
-   * autre site et n'enverrait pas le cookie. `lax` l'autorise pour une
-   * navigation de premier niveau en GET — la forme exacte du callback — sans
-   * rouvrir le CSRF sur les requêtes de fond.
+   * `strict` casserait la connexion : au retour sur `/auth/callback`, le
+   * navigateur voit une navigation venue d'un autre site et n'enverrait pas le
+   * cookie. `lax` l'autorise pour un GET de premier niveau — la forme exacte du
+   * callback — sans rouvrir le CSRF.
    */
   private cookieOptions(maxAgeMs: number): CookieOptions {
     return {
@@ -60,7 +56,7 @@ export class SessionService {
     response.cookie(TRANSACTION_COOKIE, id, this.cookieOptions(TRANSACTION_TTL_MS));
   }
 
-  /** Consomme la transaction et retire son cookie : elle ne sert qu'une fois. */
+  /** Elle ne sert qu'une fois. */
   async consumeTransaction(request: Request, response: Response): Promise<LoginTransaction | null> {
     const id = this.readCookie(request, TRANSACTION_COOKIE);
     response.clearCookie(TRANSACTION_COOKIE, { path: "/" });

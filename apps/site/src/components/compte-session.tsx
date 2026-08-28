@@ -9,9 +9,8 @@ import { avecRetour, COMPTE_PATH, LOGIN_URL, LOGOUT_URL } from "@/lib/auth";
 import { useSession } from "@/lib/use-session";
 
 /**
- * Sert l'affichage, jamais le filtrage : un champ absent de cette table est
- * montré sous son nom technique plutôt qu'écarté — c'est ce qui permet de voir
- * arriver un champ inattendu, l'objet même de cette page.
+ * Affichage seulement, jamais filtrage : un champ absent de cette table est
+ * montré sous son nom technique — c'est l'objet même de cette page.
  */
 const LIBELLES: Record<string, string> = {
   given_name: "Prénom",
@@ -36,10 +35,7 @@ function formater(valeur: unknown): string {
   return String(valeur);
 }
 
-/**
- * Écrit ici plutôt qu'avec `SectionHeader`, qui rend un `<h2>` : cette page est
- * seule sur son URL et doit ouvrir le plan du document au premier niveau.
- */
+/** Plutôt que `SectionHeader`, qui rend un `<h2>` : cette page ouvre le plan. */
 function EnTete({ titre, chapo }: { titre: string; chapo: string }) {
   return (
     <div className="flex flex-col items-start gap-2 text-left lg:gap-4">
@@ -56,10 +52,7 @@ function Champ({ nom, valeur }: { nom: string; valeur: unknown }) {
     <div className="grid gap-1 py-3 sm:grid-cols-3 sm:gap-4">
       <dt className="text-muted-foreground text-sm">
         {libelle ?? nom}
-        {/*
-          Le nom technique reste affiché à côté du libellé : c'est lui qui sert
-          à discuter avec le portail partenaires quand un champ manque.
-        */}
+        {/* Le nom technique sert à discuter avec le portail partenaires. */}
         {libelle ? <span className="block font-mono text-xs opacity-60">{nom}</span> : null}
       </dt>
       <dd className="text-foreground font-medium break-words sm:col-span-2">{formater(valeur)}</dd>
@@ -67,10 +60,7 @@ function Champ({ nom, valeur }: { nom: string; valeur: unknown }) {
   );
 }
 
-/**
- * Montre l'identité telle qu'elle arrive, sans remise en forme : c'est ce qui
- * permet de la confronter aux champs demandés côté portail partenaires.
- */
+/** Montre l'identité telle qu'elle arrive, sans remise en forme. */
 export function CompteSession() {
   const etat = useSession();
 
@@ -132,11 +122,7 @@ export function CompteSession() {
       ) : null}
 
       <div className="mt-10">
-        {/*
-          `<a>` et non `<Link>` : la déconnexion quitte le site pour l'API, qui
-          propage ensuite à Keycloak puis à FranceConnect. S'arrêter avant
-          reconnecterait silencieusement au clic suivant.
-        */}
+        {/* `<a>` : la déconnexion quitte le site pour l'API, qui propage ensuite. */}
         <Button asChild variant="outline">
           <a href={LOGOUT_URL}>Se déconnecter</a>
         </Button>

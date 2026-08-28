@@ -3,13 +3,12 @@ import { Injectable } from "@nestjs/common";
 import type { LoginTransaction, UserSession } from "./session.types.js";
 
 /**
- * Stockage serveur des sessions et des transactions. Le navigateur ne reçoit
- * qu'un identifiant opaque : la session reste révocable, et l'`id_token` ne
- * transite pas dans un cookie, où il dépasserait vite les 4 Ko autorisés.
+ * Le navigateur ne reçoit qu'un identifiant opaque : la session reste révocable,
+ * et l'`id_token` ne transite pas dans un cookie, où il dépasserait les 4 Ko.
  */
 export abstract class SessionStore {
   abstract createTransaction(id: string, transaction: LoginTransaction): Promise<void>;
-  /** Lecture unique : une transaction consommée ne doit pas pouvoir être rejouée. */
+  /** Lecture unique : une transaction consommée ne se rejoue pas. */
   abstract consumeTransaction(id: string): Promise<LoginTransaction | null>;
 
   abstract createSession(id: string, session: UserSession): Promise<void>;
@@ -18,11 +17,9 @@ export abstract class SessionStore {
 }
 
 /**
- * Implémentation en mémoire, **pour le développement local uniquement** : tout
- * disparaît au redémarrage, et rien n'est partagé entre instances — dès qu'il y
- * en a deux, une requête sur deux se retrouve déconnectée.
- *
- * L'implémentation cible se substitue à celle-ci dans `AuthModule`.
+ * **Développement local uniquement** : tout disparaît au redémarrage, et rien
+ * n'est partagé entre instances. L'implémentation cible se substitue à celle-ci
+ * dans `AuthModule`.
  */
 @Injectable()
 export class InMemorySessionStore extends SessionStore {
@@ -63,7 +60,6 @@ export class InMemorySessionStore extends SessionStore {
     this.sessions.delete(id);
   }
 
-  /** Évite que la mémoire enfle indéfiniment sur un serveur de dev laissé ouvert. */
   private purge(): void {
     const now = Date.now();
 

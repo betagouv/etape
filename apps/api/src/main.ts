@@ -11,9 +11,9 @@ import { AppModule } from "./app.module.js";
 import type { Env } from "./config/env.js";
 
 /**
- * Préfixe porté par l'application, et non retiré par le proxy : les chemins vus
- * par Nest sont ceux vus par le navigateur. Une réécriture décalerait les deux
- * vues et produirait un `redirect_uri_mismatch` visible en production seulement.
+ * Porté par l'application et non retiré par le proxy : les chemins vus par Nest
+ * sont ceux vus par le navigateur. Une réécriture produirait un
+ * `redirect_uri_mismatch` visible en production seulement.
  */
 const API_PREFIX = "api";
 
@@ -25,9 +25,8 @@ async function bootstrap(): Promise<void> {
   app.use(helmet());
   app.use(cookieParser());
 
-  // Inutile en production, où front et API partagent l'origine ; nécessaire en
-  // développement, où ils vivent sur deux ports. `credentials` est
-  // indispensable, sans quoi le cookie de session ne serait pas envoyé.
+  // Inutile en production (origine commune), nécessaire en développement.
+  // `credentials` sans quoi le cookie de session ne serait pas envoyé.
   app.enableCors({
     origin: config.get("FRONT_BASE_URL", { infer: true }),
     credentials: true,

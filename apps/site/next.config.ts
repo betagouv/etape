@@ -1,11 +1,8 @@
 import type { NextConfig } from "next";
 import { SIMULATEUR_BASE_PATH } from "../../paths.mjs";
 
-/**
- * URL de l'API, préfixe `/api` inclus, figée au build — l'export étant statique,
- * rien ne pourra la relire au démarrage. En production un chemin relatif suffit,
- * front et API partageant l'origine ; en développement l'API a son propre port.
- */
+// Figée au build : l'export étant statique, rien ne la relira au démarrage. Un
+// chemin relatif suffit en production, l'origine étant commune.
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   (process.env.NODE_ENV === "development" ? "http://localhost:3002/api" : "/api");

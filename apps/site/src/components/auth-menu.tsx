@@ -8,9 +8,8 @@ import { avecRetour, COMPTE_PATH, LOGIN_URL } from "@/lib/auth";
 import { useSession } from "@/lib/use-session";
 
 /**
- * Entrée d'authentification de l'en-tête. La place du bouton est réservée
- * pendant l'aller-retour vers l'API : sans cela l'en-tête sauterait à chaque
- * chargement, en affichant « Se connecter » à quelqu'un qui l'est déjà.
+ * La place du bouton est réservée pendant l'aller-retour vers l'API : sans cela
+ * l'en-tête sauterait à chaque chargement de page.
  */
 export function AuthMenu() {
   const etat = useSession();
@@ -28,10 +27,9 @@ export function AuthMenu() {
   }
 
   /*
-    `<a>` et non `<Link>` : la connexion quitte le site pour `apps/api`, et Next
-    ne route pas vers une origine qu'il ne sert pas. `returnTo` ramène sur la
-    page de compte — sinon, quelqu'un déjà connecté à Keycloak repasse par tout
-    le parcours pour revenir là d'où il vient, et croit le bouton inerte.
+    `<a>` et non `<Link>` : Next ne route pas vers une origine qu'il ne sert pas.
+    `returnTo` évite que quelqu'un déjà connecté à Keycloak repasse par tout le
+    parcours pour revenir là d'où il vient, et croie le bouton inerte.
   */
   return (
     <Button asChild className="shrink-0">
