@@ -9,11 +9,9 @@ import { avecRetour, COMPTE_PATH, LOGIN_URL, LOGOUT_URL } from "@/lib/auth";
 import { useSession } from "@/lib/use-session";
 
 /**
- * Libellés des champs d'identité connus.
- *
  * Sert l'affichage, jamais le filtrage : un champ absent de cette table est
- * montré sous son nom technique plutôt qu'écarté. C'est ce qui permet de voir
- * arriver un champ inattendu — l'objet même de cette page.
+ * montré sous son nom technique plutôt qu'écarté — c'est ce qui permet de voir
+ * arriver un champ inattendu, l'objet même de cette page.
  */
 const LIBELLES: Record<string, string> = {
   given_name: "Prénom",
@@ -39,8 +37,6 @@ function formater(valeur: unknown): string {
 }
 
 /**
- * Titre de la page.
- *
  * Écrit ici plutôt qu'avec `SectionHeader`, qui rend un `<h2>` : cette page est
  * seule sur son URL et doit ouvrir le plan du document au premier niveau.
  */
@@ -72,11 +68,8 @@ function Champ({ nom, valeur }: { nom: string; valeur: unknown }) {
 }
 
 /**
- * Page de recette du parcours de connexion.
- *
- * Elle montre l'identité telle qu'elle arrive, sans remise en forme : c'est ce
- * qui permet de vérifier ce que FranceConnect transmet réellement, et de le
- * confronter aux champs demandés côté portail partenaires.
+ * Montre l'identité telle qu'elle arrive, sans remise en forme : c'est ce qui
+ * permet de la confronter aux champs demandés côté portail partenaires.
  */
 export function CompteSession() {
   const etat = useSession();
@@ -141,9 +134,8 @@ export function CompteSession() {
       <div className="mt-10">
         {/*
           `<a>` et non `<Link>` : la déconnexion quitte le site pour l'API, qui
-          ferme la session puis propage à Keycloak, et à FranceConnect si
-          l'identité en venait. S'arrêter avant reconnecterait silencieusement au
-          clic suivant.
+          propage ensuite à Keycloak puis à FranceConnect. S'arrêter avant
+          reconnecterait silencieusement au clic suivant.
         */}
         <Button asChild variant="outline">
           <a href={LOGOUT_URL}>Se déconnecter</a>

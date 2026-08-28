@@ -7,11 +7,9 @@ import type { Env } from "../config/env.js";
 /**
  * Client OIDC de l'API vis-à-vis de **Keycloak**.
  *
- * FranceConnect n'apparaît nulle part dans ce fichier, et c'est voulu : Keycloak
- * le broker. L'API ne parle qu'à un fournisseur standard, et le choix de
- * l'identité (FranceConnect ou compte local) se réduit à un paramètre
- * `kc_idp_hint`. Le jour où un second fournisseur s'ajoute — ProConnect pour des
- * conseillers, par exemple — rien ne bouge ici.
+ * FranceConnect n'apparaît nulle part ici, et c'est voulu : Keycloak le broker,
+ * l'API ne parle qu'à un fournisseur standard, et le choix de l'identité se
+ * réduit à un `kc_idp_hint`. Ajouter ProConnect demain ne touche pas ce fichier.
  */
 @Injectable()
 export class OidcService {
@@ -21,20 +19,19 @@ export class OidcService {
   constructor(private readonly config: ConfigService<Env, true>) {}
 
   /**
-   * Récupère la configuration du realm, mise en cache après le premier succès.
+   * Configuration du realm, mise en cache après le premier succès.
    *
-   * Découverte paresseuse plutôt qu'au démarrage : l'API et Keycloak démarrent
-   * en parallèle, et faire dépendre le boot de l'un de la disponibilité de
-   * l'autre transforme un simple décalage d'ordonnancement en panne.
+   * Découverte paresseuse : l'API et Keycloak démarrent en parallèle, et faire
+   * dépendre le boot de l'un de l'autre transforme un décalage d'ordonnancement
+   * en panne.
    */
   private async getConfiguration(): Promise<client.Configuration> {
-    // `openid-client` refuse tout issuer en clair, ce qui est le bon défaut : le
-    // secret et les jetons y transitent. Le Keycloak de développement écoutant en
-    // HTTP sur localhost, la contrainte est levée pour ce seul cas.
+    // `openid-client` refuse tout issuer en clair — le secret et les jetons y
+    // transitent — et la contrainte n'est levée que pour le Keycloak local.
     //
-    // Le test porte sur `development` et non sur « différent de production » : une
-    // recette lancée par erreur en `NODE_ENV=staging` doit échouer bruyamment
-    // plutôt que d'accepter silencieusement un échange de jetons non chiffré.
+    // Le test porte sur `development` et non sur « différent de production » :
+    // un `NODE_ENV=staging` lancé par erreur doit échouer bruyamment plutôt que
+    // d'accepter un échange de jetons non chiffré.
     const enDeveloppement = this.config.get("NODE_ENV", { infer: true }) === "development";
 
     this.discovery ??= client
@@ -46,9 +43,9 @@ export class OidcService {
         enDeveloppement ? { execute: [client.allowInsecureRequests] } : undefined,
       )
       .catch((error: unknown) => {
-        // Sans cette remise à zéro, un Keycloak indisponible au premier appel
-        // resterait en échec définitivement : la promesse rejetée serait servie
-        // en cache à toutes les requêtes suivantes.
+        // Sans cette remise à zéro, la promesse rejetée serait servie en cache à
+        // toutes les requêtes suivantes : un Keycloak indisponible au premier
+        // appel le resterait définitivement.
         this.discovery = null;
         this.logger.error("Découverte OIDC impossible auprès de Keycloak", error);
         throw new ServiceUnavailableException("Le fournisseur d'identité est injoignable.");
@@ -63,12 +60,9 @@ export class OidcService {
   }
 
   /**
-   * Construit l'URL d'autorisation.
-   *
-   * `idpHint` court-circuite l'écran de connexion de Keycloak et envoie
-   * directement vers le fournisseur voulu. C'est ce qui permet au bouton
-   * FranceConnect de vivre dans le front, seul endroit où sa conformité au kit
-   * UX imposé est réellement maîtrisable.
+   * `idpHint` court-circuite l'écran de Keycloak et envoie directement vers le
+   * fournisseur voulu — ce qui permet au bouton FranceConnect de vivre dans le
+   * front, seul endroit où sa conformité au kit imposé est maîtrisable.
    */
   async buildAuthorizationUrl(params: {
     state: string;
@@ -90,11 +84,9 @@ export class OidcService {
   }
 
   /**
-   * Échange le code contre les jetons.
-   *
-   * `expectedState` et `expectedNonce` ne sont pas décoratifs : la lib rejette
-   * la réponse si l'un ne correspond pas, ce qui ferme le CSRF sur le callback
-   * et le rejeu d'`id_token`.
+   * `expectedState` et `expectedNonce` ne sont pas décoratifs : la lib rejette la
+   * réponse si l'un ne correspond pas, ce qui ferme le CSRF sur le callback et le
+   * rejeu d'`id_token`.
    */
   async exchangeCode(params: {
     currentUrl: URL;
@@ -112,13 +104,10 @@ export class OidcService {
   }
 
   /**
-   * URL de déconnexion côté Keycloak.
-   *
-   * Maillon central d'une chaîne à trois : la session de l'API est détruite, la
-   * session Keycloak l'est ici, et Keycloak propage vers FranceConnect si
-   * l'identité en venait. FranceConnect impose cette propagation et la vérifie à
-   * l'homologation — d'où la conservation de l'`id_token` en session, sans quoi
-   * ce `id_token_hint` serait impossible à fournir.
+   * Maillon central d'une chaîne à trois : l'API détruit sa session, Keycloak la
+   * sienne ici, et propage vers FranceConnect si l'identité en venait. Cette
+   * propagation est vérifiée à l'homologation — d'où l'`id_token` gardé en
+   * session, sans quoi l'`id_token_hint` serait impossible à fournir.
    */
   async buildLogoutUrl(params: { idToken: string; postLogoutRedirectUri: string }): Promise<URL> {
     const configuration = await this.getConfiguration();

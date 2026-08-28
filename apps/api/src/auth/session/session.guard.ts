@@ -12,10 +12,8 @@ export interface AuthenticatedRequest extends Request {
 /**
  * Exige une session valide et la rattache à la requête.
  *
- * À poser sur les routes qui manipuleront le dossier d'une personne, quand la
- * persistance arrivera. Rien ne l'utilise encore : il est là pour que la
- * question « comment je protège cette route ? » ait déjà une réponse évidente le
- * jour où elle se pose, plutôt qu'une relecture de cookie réinventée sur place.
+ * Rien ne l'utilise encore : il attend les routes qui manipuleront le dossier
+ * d'une personne, pour qu'on n'y réinvente pas une relecture de cookie.
  */
 @Injectable()
 export class SessionGuard implements CanActivate {

@@ -1,10 +1,8 @@
 /**
- * Claims de plomberie du protocole, écartés de ce qui est exposé au front.
- *
- * Tout le reste est de l'identité : nom, prénom, date et lieu de naissance,
- * niveau de garantie, fournisseur d'origine. La liste est en négatif plutôt
- * qu'en positif à dessein — FranceConnect renvoie des champs qui varient selon
- * le fournisseur d'identité, et une liste blanche en perdrait en silence.
+ * Claims de plomberie du protocole, écartés de ce qui est exposé au front ; tout
+ * le reste est de l'identité. Liste en négatif à dessein : FranceConnect renvoie
+ * des champs qui varient d'un fournisseur à l'autre, et une liste blanche en
+ * perdrait en silence.
  */
 const CLAIMS_DE_PROTOCOLE = new Set([
   "iss",
@@ -29,12 +27,7 @@ const CLAIMS_DE_PROTOCOLE = new Set([
   "sub",
 ]);
 
-/**
- * Retient d'un `id_token` ce qui décrit la personne.
- *
- * Sert la page `/compte/`, qui affiche l'identité reçue pour vérifier de bout
- * en bout ce que FranceConnect transmet réellement.
- */
+/** Retient d'un `id_token` ce qui décrit la personne. Sert la page `/compte/`. */
 export function identityClaims(claims: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(claims).filter(

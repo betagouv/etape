@@ -22,14 +22,10 @@ INTERNE="${KEYCLOAK_INTERNAL_URL:-http://keycloak:8080}"
 : "${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD est obligatoire}"
 : "${KEYCLOAK_CLIENT_SECRET:?KEYCLOAK_CLIENT_SECRET est obligatoire}"
 
-# ---------------------------------------------------------------------------
-# Attente de Keycloak.
-#
-# L'API d'administration n'ouvre qu'une fois l'import de realm terminé : tant
-# que l'authentification échoue, c'est que le serveur n'est pas prêt. Cinq
-# minutes de patience, puis abandon — sans plafond, un Keycloak en échec
-# laisserait le conteneur tourner indéfiniment sans que rien ne le signale.
-# ---------------------------------------------------------------------------
+# Attente de Keycloak : l'API d'administration n'ouvre qu'une fois l'import
+# terminé, donc tant que l'authentification échoue, le serveur n'est pas prêt.
+# Cinq minutes puis abandon — sans plafond, un Keycloak en échec laisserait le
+# conteneur tourner sans que rien ne le signale.
 echo "→ attente de Keycloak sur ${INTERNE}"
 for tentative in $(seq 1 100); do
   if $KCADM config credentials --server "$INTERNE" --realm master \
@@ -44,14 +40,9 @@ for tentative in $(seq 1 100); do
   sleep 3
 done
 
-# ---------------------------------------------------------------------------
-# Realm : HTTPS exigé.
-#
-# Le fichier d'import porte `sslRequired: none`, nécessaire en local où Keycloak
-# écoute en clair. Ici, TLS est terminé par le proxy et le réglage doit repasser
-# en `EXTERNAL` — les adresses privées restent autorisées en clair, ce qui est
-# exactement le cas du réseau interne entre l'API et Keycloak.
-# ---------------------------------------------------------------------------
+# Le fichier d'import porte `sslRequired: none`, nécessaire en local. Ici TLS est
+# terminé par le proxy et le réglage repasse en `EXTERNAL` : les adresses privées
+# restent autorisées en clair, ce qui est le cas du réseau interne API ↔ Keycloak.
 if ! $KCADM get "realms/$REALM" --fields realm >/dev/null 2>&1; then
   echo "✗ le realm ${REALM} n'existe pas." >&2
   echo "  L'import a échoué, ou l'image ne contient pas keycloak/realms/etape-realm.json." >&2
@@ -61,19 +52,11 @@ fi
 $KCADM update "realms/$REALM" -s sslRequired=EXTERNAL
 echo "→ realm ${REALM} : sslRequired=EXTERNAL"
 
-# ---------------------------------------------------------------------------
-# Realm `master` : protection contre la force brute.
-#
-# Le fichier d'import ne le décrit pas — Keycloak le crée lui-même, hors de tout
-# import — et il naît sans cette protection, là où le realm `etape` la porte.
-# C'est pourtant le realm des administrateurs : son point `/token` reste
-# joignable même une fois `/admin` refusé par le proxy, et c'est lui qui délivre
-# le jeton d'administration.
-#
-# `permanentLockout=false` : un verrouillage définitif du seul compte
-# administrateur se retourne contre nous, et l'attente croissante suffit à
-# rendre l'essai systématique inutilisable.
-# ---------------------------------------------------------------------------
+# Le realm `master` naît sans protection contre la force brute — Keycloak le crée
+# hors de tout import — là où `etape` la porte. C'est pourtant lui qui délivre le
+# jeton d'administration, et son `/token` reste le seul chemin vers un compte
+# unique. `permanentLockout=false` : verrouiller définitivement le seul
+# administrateur se retourne contre nous, l'attente croissante suffit.
 $KCADM update realms/master \
   -s bruteForceProtected=true \
   -s permanentLockout=false \
@@ -82,14 +65,9 @@ $KCADM update realms/master \
   -s maxFailureWaitSeconds=900
 echo "→ realm master : protection contre la force brute activée"
 
-# ---------------------------------------------------------------------------
-# Client `etape-api`.
-#
-# `redirectUris` doit correspondre au caractère près à la `redirect_uri` que
-# l'API construit (`${API_BASE_URL}/auth/callback`). `post.logout.redirect.uris`
-# n'en est pas déduit : oublié, la déconnexion échoue alors même que la
-# connexion fonctionne.
-# ---------------------------------------------------------------------------
+# `redirectUris` doit correspondre au caractère près à ce que l'API construit
+# (`${API_BASE_URL}/auth/callback`). `post.logout.redirect.uris` n'en est pas
+# déduit : oublié, la déconnexion échoue alors que la connexion fonctionne.
 ID_CLIENT=$($KCADM get clients -r "$REALM" -q clientId=etape-api --fields id --format csv --noquotes)
 if [ -z "$ID_CLIENT" ]; then
   echo "✗ client etape-api absent du realm ${REALM} — l'import a-t-il eu lieu ?" >&2
@@ -109,20 +87,12 @@ $KCADM update "clients/$ID_CLIENT" -r "$REALM" -f - <<JSON
 JSON
 echo "→ client etape-api : secret, redirect_uri et post-logout alignés sur ${PUBLIC_URL}"
 
-# ---------------------------------------------------------------------------
-# FranceConnect.
+# FranceConnect. Les identifiants sont facultatifs : sans eux seul ce parcours
+# est indisponible. La `redirect_uri` à déclarer est celle du broker.
 #
-# Les identifiants sont facultatifs : sans eux tout le reste fonctionne, seul le
-# parcours FranceConnect reste indisponible. La `redirect_uri` à déclarer côté
-# FranceConnect est celle du broker, pas celle de l'API.
-# ---------------------------------------------------------------------------
-# Migration du fournisseur générique vers celui de l'extension INSEE.
-#
-# `providerId` ne se modifie pas sur une instance existante, et l'import de
-# realm est en `IGNORE_EXISTING` : sur un environnement déjà déployé, le
-# fichier ne sera jamais relu. Le fournisseur est donc recréé — sans quoi la
-# bascule ne prendrait que sur une base neuve, et l'erreur Y030007 persisterait
-# là où elle a été constatée.
+# Migration vers l'extension INSEE : `providerId` ne se modifie pas sur une
+# instance existante, et l'import est en `IGNORE_EXISTING`. Le fournisseur est
+# donc recréé, sans quoi la bascule ne prendrait que sur une base neuve.
 PROVIDER_ATTENDU=franceconnect-particulier
 PROVIDER_ACTUEL=$($KCADM get identity-provider/instances/franceconnect -r "$REALM" \
   --fields providerId --format csv --noquotes 2>/dev/null || true)
@@ -156,9 +126,8 @@ if [ -z "$PROVIDER_ACTUEL" ]; then
 JSON
 fi
 
-# Réappliqué à chaque démarrage, et pas seulement à la création : sans cela,
-# changer d'environnement FranceConnect n'aurait aucun effet sur un realm déjà
-# en place, et la variable donnerait l'illusion d'être prise en compte.
+# Réappliqué à chaque démarrage : sinon changer d'environnement FranceConnect
+# n'aurait aucun effet sur un realm déjà en place.
 $KCADM update identity-provider/instances/franceconnect -r "$REALM" \
   -s "config.fc_environment=${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_V2}" \
   -s "config.eidas_values=${FRANCECONNECT_EIDAS:-EIDAS1}"
@@ -176,14 +145,10 @@ else
   echo "→ franceconnect : aucun identifiant fourni, le fournisseur restera inutilisable"
 fi
 
-# ---------------------------------------------------------------------------
-# Serveur d'envoi.
-#
-# Sans SMTP, `verifyEmail` doit rester désactivé : l'inscription s'arrêterait
-# sur un message qui n'arriverait jamais. C'est un pis-aller assumé pour une
-# recette — la vérification d'adresse est ce qui rend sûre la liaison d'un
-# compte local à une identité FranceConnect (cf. `docs/authentification.md`).
-# ---------------------------------------------------------------------------
+# Sans SMTP, `verifyEmail` reste désactivé : l'inscription s'arrêterait sur un
+# message qui n'arriverait jamais. Pis-aller assumé — c'est la vérification
+# d'adresse qui rend sûre la liaison d'un compte local à une identité
+# FranceConnect (cf. `docs/authentification.md`).
 if [ -n "${SMTP_HOST:-}" ]; then
   $KCADM update "realms/$REALM" -f - <<JSON
 {
@@ -207,22 +172,16 @@ else
   echo "  Inscription et « mot de passe oublié » ne sont pas jouables sans lui."
 fi
 
-# ---------------------------------------------------------------------------
-# Compte de test.
-#
-# Le fichier de realm en crée un dont le mot de passe est écrit en clair dans un
-# dépôt public : le laisser tel quel sur une instance joignable depuis Internet
-# reviendrait à publier un accès. Il est donc soit doté d'un mot de passe fourni
-# par l'environnement, soit supprimé.
-# ---------------------------------------------------------------------------
+# Le fichier de realm crée un compte dont le mot de passe est écrit en clair dans
+# un dépôt public : le laisser tel quel reviendrait à publier un accès. Il reçoit
+# donc un mot de passe de l'environnement, ou il est supprimé.
 ID_TEST=$($KCADM get users -r "$REALM" -q username=test@etape.local --fields id --format csv --noquotes)
 
 if [ -n "$ID_TEST" ]; then
   if [ -n "${KEYCLOAK_TEST_USER_PASSWORD:-}" ]; then
-    # Le realm porte `passwordHistory(3)` : rejouer le script avec le même mot
-    # de passe fait échouer `set-password`. Ce n'est pas une erreur — le compte
-    # est déjà dans l'état voulu — et cela ne doit pas interrompre un
-    # redéploiement.
+    # `passwordHistory(3)` fait échouer `set-password` si le script est rejoué
+    # avec le même mot de passe. Le compte est déjà dans l'état voulu : ce n'est
+    # pas une erreur, et cela ne doit pas interrompre un redéploiement.
     if erreur=$($KCADM set-password -r "$REALM" --userid "$ID_TEST" \
         --new-password "$KEYCLOAK_TEST_USER_PASSWORD" 2>&1); then
       echo "→ compte de test test@etape.local : mot de passe remplacé"

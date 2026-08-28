@@ -2,14 +2,9 @@ import type { NextConfig } from "next";
 import { SIMULATEUR_BASE_PATH } from "../../paths.mjs";
 
 /**
- * URL publique de l'API d'authentification, préfixe `/api` inclus.
- *
- * En production, front et API partagent l'origine derrière nginx : un chemin
- * relatif suffit, et évite d'avoir à connaître le domaine à la construction. En
- * développement l'API tourne sur son propre port, d'où ce repli.
- *
- * La valeur est figée au build — l'export étant statique, rien ne pourra la
- * relire au démarrage.
+ * URL de l'API, préfixe `/api` inclus, figée au build — l'export étant statique,
+ * rien ne pourra la relire au démarrage. En production un chemin relatif suffit,
+ * front et API partageant l'origine ; en développement l'API a son propre port.
  */
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??

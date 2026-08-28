@@ -11,12 +11,9 @@ import { SessionService } from "./session/session.service.js";
 import { toPublicSession, type PublicSession } from "./session/session.types.js";
 
 /**
- * Les quatre points d'entrée du parcours de connexion.
- *
- * Le front n'en connaît pas davantage : il ne voit jamais un jeton, ne parle
- * jamais à Keycloak, et ignore que FranceConnect existe au-delà d'un paramètre
- * `idp`. Toute la surface d'authentification tient dans ces routes, ce qui rend
- * le remplacement du fournisseur ou de l'IAM local à ce module.
+ * Les quatre points d'entrée du parcours. Le front n'en connaît pas davantage :
+ * il ne voit jamais un jeton, ne parle jamais à Keycloak, et ignore que
+ * FranceConnect existe au-delà d'un paramètre `idp`.
  */
 @Controller("auth")
 export class AuthController {
@@ -32,12 +29,7 @@ export class AuthController {
     return this.config.get("FRONT_BASE_URL", { infer: true });
   }
 
-  /**
-   * Démarre la connexion et redirige vers Keycloak.
-   *
-   * `idp=franceconnect` bascule sur le fournisseur brokerisé sans passer par
-   * l'écran de Keycloak ; sans ce paramètre, c'est le chemin email/mot de passe.
-   */
+  /** `idp=franceconnect` court-circuite l'écran de Keycloak ; sinon, mot de passe. */
   @Get("login")
   async login(
     @Query("idp") idp: string | undefined,
@@ -69,12 +61,11 @@ export class AuthController {
   }
 
   /**
-   * Retour de Keycloak : échange le code contre les jetons et ouvre la session.
+   * Échange le code contre les jetons et ouvre la session.
    *
-   * Aucune erreur n'est renvoyée telle quelle au navigateur — un échec repart
-   * vers le front avec un simple marqueur, à lui d'afficher un message. Les
-   * détails restent dans les journaux : ils décrivent l'état interne du
-   * fournisseur d'identité et n'ont rien à faire dans une page.
+   * Aucune erreur n'est renvoyée telle quelle au navigateur : un échec repart
+   * avec un simple marqueur, les détails restant dans les journaux — ils
+   * décrivent l'état interne du fournisseur d'identité.
    */
   @Get("callback")
   async callback(@Req() request: Request, @Res() response: Response): Promise<void> {
@@ -106,8 +97,7 @@ export class AuthController {
       await this.sessions.openSession(response, {
         sub: claims.sub,
         email: typeof claims.email === "string" ? claims.email : undefined,
-        // Keycloak expose le fournisseur d'origine dans `identity_provider`, à
-        // condition d'avoir ajouté le mapper correspondant sur le client — voir
+        // Suppose le mapper `identity_provider` sur le client — voir
         // `docs/authentification.md`.
         viaFranceConnect:
           claims.identity_provider ===
@@ -124,13 +114,9 @@ export class AuthController {
   }
 
   /**
-   * Déconnexion, propagée en chaîne.
-   *
-   * La session de l'API est détruite d'abord, puis l'internaute part vers
-   * Keycloak qui ferme la sienne et, si l'identité venait de FranceConnect,
-   * propage à son tour. S'arrêter à la première étape laisserait une session
-   * ouverte chez le fournisseur : le « Se connecter » suivant reconnecterait
-   * silencieusement, ce qui est à la fois déroutant et non conforme.
+   * Déconnexion propagée en chaîne. S'arrêter à la session de l'API laisserait
+   * une session ouverte chez le fournisseur : le « Se connecter » suivant
+   * reconnecterait silencieusement, ce qui est déroutant et non conforme.
    */
   @Get("logout")
   async logout(@Req() request: Request, @Res() response: Response): Promise<void> {

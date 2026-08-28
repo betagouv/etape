@@ -1,17 +1,12 @@
-# Keycloak de développement local, avec sa base.
-#
-# Sert uniquement à faire tourner le parcours de connexion sur un poste. La
-# configuration de production dépendra de l'hébergement retenu et n'est pas
-# décrite ici.
+# Keycloak de développement local, avec sa base. Voir `docker-compose.prod.yml`
+# pour le déploiement.
 #
 #   docker compose up -d
 #
 # Console d'administration : http://localhost:8080 (admin / admin)
 #
-# Aucun serveur SMTP : le realm de développement n'envoie donc pas d'email, et
-# `verifyEmail` y est désactivé pour que l'inscription aboutisse quand même. Les
-# gabarits d'email existent (`apps/keycloak-theme/src/email`) mais ne sont pas
-# jouables ici — voir `docs/authentification.md`.
+# Aucun SMTP : `verifyEmail` est désactivé pour que l'inscription aboutisse
+# quand même, et les gabarits d'email ne sont pas jouables ici.
 
 services:
   keycloak-db:
@@ -30,8 +25,7 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.7
-    # `start-dev` désactive HTTPS et le cache distribué. Interdit en production,
-    # où l'on utilise `start` avec un certificat et un hostname explicites.
+    # `start-dev` désactive HTTPS et le cache distribué : interdit en production.
     command: start-dev --import-realm
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
@@ -44,9 +38,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Tout fichier de realm déposé ici est importé au démarrage. Permet de
-      # versionner la configuration plutôt que de la recréer à la main sur
-      # chaque poste — voir `docs/authentification.md`.
+      # Importé au démarrage : la configuration est versionnée plutôt que
+      # recréée à la main sur chaque poste.
       - ./keycloak/realms:/opt/keycloak/data/import:ro
       # Extensions : le thème ETAPE et le broker FranceConnect, rassemblés par
       # `keycloak-providers` ci-dessous.
@@ -57,33 +50,26 @@ services:
       keycloak-providers:
         condition: service_completed_successfully
 
-  # Rassemble les extensions que Keycloak charge au démarrage.
+  # Rassemble les extensions dans un volume : Keycloak ne lit qu'un dossier,
+  # `providers`, et il y faut deux choses d'origines différentes — le thème,
+  # construit ici, et le broker FranceConnect, téléchargé.
   #
-  # Keycloak ne lit qu'un seul dossier, `providers`. Il en faut pourtant deux
-  # choses d'origines différentes — le thème, construit ici, et le broker
-  # FranceConnect, téléchargé — d'où ce volume et le conteneur qui le remplit
-  # plutôt qu'un montage direct du dossier de build.
-  #
-  # L'extension n'est pas un supplément d'agrément : le realm déclare son
-  # identity provider sous `franceconnect-particulier`, et Keycloak **refuse de
-  # démarrer** s'il ne connaît pas cet identifiant. Sans elle, `docker compose
-  # up` échoue sur « Invalid identity provider id » et rien ne tourne, pas même
-  # la connexion par mot de passe. La version suit celle du `Dockerfile`.
+  # L'extension n'est pas optionnelle : le realm déclare son identity provider
+  # sous `franceconnect-particulier`, et Keycloak **refuse de démarrer** s'il ne
+  # connaît pas cet identifiant — « Invalid identity provider id », et rien ne
+  # tourne, pas même la connexion par mot de passe.
   keycloak-providers:
     image: alpine:3.22
     restart: "no"
     environment:
       # Version et empreinte vont par paire, comme dans le `Dockerfile` :
-      # changer l'une sans l'autre fait échouer le téléchargement. C'est ce qui
-      # sépare une extension chargée dans Keycloak avec les droits du serveur
-      # d'un binaire quelconque servi par une réponse détournée.
+      # changer l'une sans l'autre fait échouer le téléchargement.
       KEYCLOAK_FRANCECONNECT_VERSION: ${KEYCLOAK_FRANCECONNECT_VERSION:-7.7.0}
       KEYCLOAK_FRANCECONNECT_SHA256: ${KEYCLOAK_FRANCECONNECT_SHA256:-e6a3853ac6fcf5e55e32cead622612ad03a1df034f4ba6be808f6aa7cf2d8fd7}
     volumes:
       - keycloak-providers:/providers
-      # Sortie du build du thème. Absente sur un dépôt fraîchement cloné, où
-      # rien n'a encore été construit : Keycloak démarre alors avec son thème
-      # par défaut, ce qui vaut mieux qu'un échec.
+      # Sortie du build du thème, absente sur un dépôt fraîchement cloné :
+      # Keycloak démarre alors avec son thème par défaut.
       - ./apps/keycloak-theme/dist_keycloak:/theme:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -92,19 +78,18 @@ services:
         jar=/providers/keycloak-franceconnect-$$KEYCLOAK_FRANCECONNECT_VERSION.jar
         if [ ! -f "$$jar" ]; then
           apk add --no-cache curl >/dev/null
-          # Les versions antérieures sont retirées : deux JAR de la même
-          # extension dans `providers` empêchent Keycloak de démarrer.
+          # Deux JAR de la même extension empêchent Keycloak de démarrer.
           rm -f /providers/keycloak-franceconnect-*.jar
           curl -fsSL -o "$$jar" \
             "https://github.com/InseeFr/Keycloak-FranceConnect/releases/download/$$KEYCLOAK_FRANCECONNECT_VERSION/keycloak-franceconnect-$$KEYCLOAK_FRANCECONNECT_VERSION.jar"
-          # Le JAR est retiré si l'empreinte ne correspond pas : le laisser en
-          # place le ferait charger au démarrage suivant sans plus rien vérifier.
+          # Retiré si l'empreinte ne correspond pas : le laisser en place le
+          # ferait charger au démarrage suivant sans plus rien vérifier.
           echo "$$KEYCLOAK_FRANCECONNECT_SHA256  $$jar" | sha256sum -c - || { rm -f "$$jar"; exit 1; }
           echo "extension FranceConnect $$KEYCLOAK_FRANCECONNECT_VERSION téléchargée et vérifiée."
         fi
 
-        # Recopié à chaque démarrage : c'est ce qui fait prendre une
-        # reconstruction du thème sans avoir à vider le volume.
+        # Recopié à chaque démarrage : une reconstruction du thème prend sans
+        # qu'il faille vider le volume.
         rm -f /providers/etape-keycloak-theme.jar
         if [ -f /theme/etape-keycloak-theme.jar ]; then
           cp /theme/etape-keycloak-theme.jar /providers/
@@ -114,25 +99,18 @@ services:
           echo "  npm run build -- --filter=@etape/keycloak-theme pour l'obtenir."
         fi
 
-  # Applique après import ce qu'un fichier de realm ne peut pas porter.
+  # Applique après import ce qu'un fichier de realm ne peut pas porter. Deux
+  # raisons distinctes, et le développement seulement :
   #
-  # Deux raisons distinctes de passer par `kcadm` :
+  # 1. Le realm `master` naît en `sslRequired: external`. Avec le mapping de
+  #    ports de Docker Desktop, une requête venue de l'hôte arrive sous l'adresse
+  #    de la passerelle et non en loopback : Keycloak la juge externe et répond
+  #    « HTTPS required ». Ce conteneur passe par le réseau Docker, où l'adresse
+  #    privée est bien reconnue comme locale.
   #
-  # 1. Le realm `master` est créé par Keycloak lui-même, hors de tout fichier
-  #    d'import. Il naît en `sslRequired: external` — « HTTPS obligatoire sauf
-  #    depuis une adresse locale ». Or avec le mapping de ports de Docker Desktop,
-  #    une requête venue de l'hôte se présente sous l'adresse de la passerelle et
-  #    non en loopback : Keycloak la juge externe et répond « HTTPS required ». La
-  #    console d'administration s'affiche puis échoue à se connecter, panne
-  #    déroutante s'il faut la diagnostiquer soi-même. Ce conteneur passe par le
-  #    réseau Docker, où l'adresse privée est bien reconnue comme locale.
-  #
-  # 2. L'import de realm ne substitue **aucune** variable : ni environnement, ni
-  #    propriété système. Une valeur `${env.X:defaut}` retombe toujours sur son
-  #    défaut (vérifié sur Keycloak 26.7). Les secrets FranceConnect ne peuvent
-  #    donc pas être injectés dans le JSON — ils sont posés ici, après coup.
-  #
-  # Strictement réservé au développement.
+  # 2. L'import de realm ne substitue **aucune** variable, ni environnement ni
+  #    propriété système (vérifié sur Keycloak 26.7) : les secrets FranceConnect
+  #    sont donc posés ici, après coup.
   keycloak-init:
     image: quay.io/keycloak/keycloak:26.7
     restart: "no"

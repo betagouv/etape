@@ -18,9 +18,9 @@ const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 /**
  * Fait le lien entre les cookies du navigateur et le stockage serveur.
  *
- * Toute la politique de cookies est concentrée ici plutôt que dispersée dans le
- * contrôleur : un attribut oublié à un seul endroit suffirait à ouvrir une
- * faille, et c'est invisible à la relecture quand les appels sont éparpillés.
+ * La politique de cookies est concentrée ici : un attribut oublié à un seul
+ * endroit ouvrirait une faille, invisible à la relecture si les appels sont
+ * éparpillés dans le contrôleur.
  */
 @Injectable()
 export class SessionService {
@@ -30,20 +30,15 @@ export class SessionService {
   ) {}
 
   /**
-   * Attributs communs à tous les cookies posés par l'API.
-   *
    * `sameSite: "lax"` est le point délicat. `strict` casserait la connexion : au
-   * retour de Keycloak sur `/auth/callback`, le navigateur considère la
-   * navigation comme venant d'un autre site et n'enverrait pas le cookie de
-   * transaction. `lax` l'autorise pour une navigation de premier niveau en GET,
-   * ce qui est exactement la forme du callback, sans rouvrir le CSRF sur les
-   * requêtes de fond.
+   * retour sur `/auth/callback`, le navigateur voit une navigation venue d'un
+   * autre site et n'enverrait pas le cookie. `lax` l'autorise pour une
+   * navigation de premier niveau en GET — la forme exacte du callback — sans
+   * rouvrir le CSRF sur les requêtes de fond.
    */
   private cookieOptions(maxAgeMs: number): CookieOptions {
     return {
       httpOnly: true,
-      // Le front et l'API partagent l'origine derrière nginx : pas de `domain`
-      // à poser, et rien à assouplir côté CORS.
       sameSite: "lax",
       secure: this.config.get("NODE_ENV", { infer: true }) === "production",
       path: "/",

@@ -13,11 +13,9 @@ export default defineConfig({
       // pas exposé aux usagers : le front d'ETAPE porte ces écrans.
       accountThemeImplementation: "none",
       /*
-       * Keycloakify produit par défaut un JAR par tranche de versions de
-       * Keycloak. Nous n'en visons qu'une — celle du `docker-compose.yml` — donc
-       * la tranche 22-25 est désactivée : deux fois moins de build, et aucun
-       * artefact qui laisserait croire qu'une version plus ancienne est
-       * supportée.
+       * Keycloakify produit un JAR par tranche de versions. Nous n'en visons
+       * qu'une, celle du `docker-compose.yml` : deux fois moins de build, et
+       * aucun artefact laissant croire qu'une version ancienne est supportée.
        */
       keycloakVersionTargets: {
         "22-to-25": false,

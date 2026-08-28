@@ -8,12 +8,9 @@ import { avecRetour, COMPTE_PATH, LOGIN_URL } from "@/lib/auth";
 import { useSession } from "@/lib/use-session";
 
 /**
- * Entrée d'authentification de l'en-tête.
- *
- * Deux états, et un troisième qui n'en est pas moins visible : le temps de
- * l'aller-retour vers l'API, la place du bouton est réservée. Sans cela
- * l'en-tête sauterait à chaque chargement de page, et afficherait brièvement
- * « Se connecter » à quelqu'un qui l'est déjà.
+ * Entrée d'authentification de l'en-tête. La place du bouton est réservée
+ * pendant l'aller-retour vers l'API : sans cela l'en-tête sauterait à chaque
+ * chargement, en affichant « Se connecter » à quelqu'un qui l'est déjà.
  */
 export function AuthMenu() {
   const etat = useSession();
@@ -31,13 +28,10 @@ export function AuthMenu() {
   }
 
   /*
-    Un lien, pas un bouton : la connexion quitte le site pour `apps/api`, qui
-    redirige ensuite vers Keycloak. `<a>` et non `<Link>`, Next ne pouvant pas
-    router vers une origine qu'il ne sert pas.
-
-    `returnTo` ramène sur la page de compte plutôt que sur l'accueil : sinon,
-    quelqu'un déjà connecté à Keycloak repasse par tout le parcours pour
-    revenir là d'où il vient, et a l'impression que le bouton n'a rien fait.
+    `<a>` et non `<Link>` : la connexion quitte le site pour `apps/api`, et Next
+    ne route pas vers une origine qu'il ne sert pas. `returnTo` ramène sur la
+    page de compte — sinon, quelqu'un déjà connecté à Keycloak repasse par tout
+    le parcours pour revenir là d'où il vient, et croit le bouton inerte.
   */
   return (
     <Button asChild className="shrink-0">

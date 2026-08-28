@@ -1,14 +1,8 @@
 /**
- * Assemble les exports statiques des deux apps dans un dossier unique : le site
- * à la racine, le simulateur sous son préfixe.
- *
- * Ce découpage doit être reproduit à l'identique par chaque hébergeur, et il y
- * en a deux — les previews Vercel (`scripts/vercel-out.mjs`) et le nginx du
- * déploiement (`Dockerfile`). D'où ce module partagé plutôt qu'une copie de
- * chaque côté, où le préfixe finirait par diverger.
- *
- * Utilisable en ligne de commande, depuis la racine du monorepo et après
- * `turbo run build` :
+ * Assemble les exports statiques des deux apps : le site à la racine, le
+ * simulateur sous son préfixe. Partagé entre les previews Vercel
+ * (`scripts/vercel-out.mjs`) et le nginx du déploiement (`Dockerfile`), où le
+ * découpage finirait sinon par diverger.
  *
  *   node scripts/assembler-statique.mjs <destination>
  */
@@ -31,13 +25,10 @@ export const sources = [
 ];
 
 /**
- * Vérifie que les deux builds ont tourné **et** que le simulateur porte bien son
- * préfixe.
- *
- * Sonder la seule existence de `index.html` laisserait passer le mode de
- * défaillance le plus coûteux : un `basePath` disparu de la config. Le build
- * reste vert, l'assemblage aussi, et la casse ne se voit qu'une fois déployée,
- * sous forme d'assets en 404.
+ * Vérifie que les deux builds ont tourné **et** que le simulateur porte son
+ * préfixe. Sonder la seule existence d'`index.html` laisserait passer un
+ * `basePath` disparu de la config : build vert, assemblage vert, et des assets
+ * en 404 une fois déployé.
  */
 export async function verifierLesBuilds() {
   for (const source of sources) {
@@ -86,8 +77,8 @@ async function main() {
 
 // Exécuté directement, et non importé par `vercel-out.mjs`.
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  // `process.exit()` tronquerait les écritures encore en attente quand stdout
-  // est un pipe : on positionne le code et on laisse Node terminer.
+  // `process.exit()` tronquerait les écritures en attente quand stdout est un
+  // pipe : on positionne le code et on laisse Node terminer.
   main().catch((erreur) => {
     console.error(`❌ ${erreur.message}`);
     process.exitCode = 1;

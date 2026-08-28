@@ -3,11 +3,9 @@ import { Injectable } from "@nestjs/common";
 import type { LoginTransaction, UserSession } from "./session.types.js";
 
 /**
- * Stockage serveur des sessions et des transactions de connexion.
- *
- * Le navigateur ne reçoit qu'un identifiant opaque ; tout le contenu vit ici.
- * C'est ce qui permet de révoquer une session côté serveur et évite de faire
- * transiter l'`id_token` dans un cookie — il dépasserait vite les 4 Ko autorisés.
+ * Stockage serveur des sessions et des transactions. Le navigateur ne reçoit
+ * qu'un identifiant opaque : la session reste révocable, et l'`id_token` ne
+ * transite pas dans un cookie, où il dépasserait vite les 4 Ko autorisés.
  */
 export abstract class SessionStore {
   abstract createTransaction(id: string, transaction: LoginTransaction): Promise<void>;
@@ -20,15 +18,11 @@ export abstract class SessionStore {
 }
 
 /**
- * Implémentation en mémoire, **pour le développement local uniquement**.
+ * Implémentation en mémoire, **pour le développement local uniquement** : tout
+ * disparaît au redémarrage, et rien n'est partagé entre instances — dès qu'il y
+ * en a deux, une requête sur deux se retrouve déconnectée.
  *
- * Deux limites rédhibitoires en production : tout disparaît au redémarrage, et
- * rien n'est partagé entre instances — dès qu'il y en a deux, une requête sur
- * deux se retrouve déconnectée.
- *
- * L'implémentation cible (Redis ou Postgres) dépend de ce que fournira
- * l'hébergement ; elle se substitue à celle-ci par le provider de
- * `AuthModule`, sans toucher au reste du code.
+ * L'implémentation cible se substitue à celle-ci dans `AuthModule`.
  */
 @Injectable()
 export class InMemorySessionStore extends SessionStore {

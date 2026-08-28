@@ -13,12 +13,9 @@
 #   docker build --target keycloak .
 
 # ---------------------------------------------------------------------------
-# Dépendances du monorepo.
-#
-# Seuls les manifestes sont copiés avant `npm ci` : la couche d'installation
-# n'est alors invalidée que lorsqu'une dépendance change, et non à chaque
-# modification du code. Chaque espace de travail doit y figurer — `npm ci`
-# refuse de résoudre le verrou s'il en manque un, et le dit clairement.
+# Dépendances du monorepo. Seuls les manifestes sont copiés avant `npm ci` : la
+# couche n'est invalidée qu'au changement d'une dépendance. Chaque espace de
+# travail doit y figurer, `npm ci` refusant sinon de résoudre le verrou.
 # ---------------------------------------------------------------------------
 FROM node:22-alpine AS deps
 WORKDIR /app
@@ -35,12 +32,8 @@ COPY packages/ui/package.json packages/ui/
 RUN npm ci
 
 # ---------------------------------------------------------------------------
-# Compilation.
-#
-# `NODE_ENV` reste non défini : `next build` le positionne lui-même, et le
-# forcer ici ferait retomber `next.config.ts` du site sur la mauvaise valeur
-# d'API. En production celle-ci vaut `/api`, chemin relatif, parce que le front
-# et l'API partagent l'origine derrière nginx.
+# Compilation. `NODE_ENV` reste non défini : `next build` le positionne lui-même,
+# et le forcer ici ferait retomber `next.config.ts` sur la mauvaise URL d'API.
 # ---------------------------------------------------------------------------
 FROM deps AS build
 WORKDIR /app
@@ -50,12 +43,9 @@ RUN npx turbo run build --filter=@etape/site --filter=@etape/simulateur --filter
 RUN node scripts/assembler-statique.mjs /srv/static
 
 # ---------------------------------------------------------------------------
-# Dépendances d'exécution de l'API, sans les outils de compilation.
-#
-# Réinstallation complète plutôt qu'un élagage : `npm ci` restaure exactement ce
-# que décrit le verrou, là où `npm prune` laisse derrière lui ce qu'il ne sait
-# pas rattacher. `--workspace` limite l'arbre à celui de l'API — ni Next, ni
-# Vite, ni Keycloakify n'ont à voyager dans l'image finale.
+# Dépendances d'exécution de l'API. Réinstallation plutôt qu'élagage : `npm ci`
+# restaure exactement le verrou, là où `npm prune` laisse ce qu'il ne sait pas
+# rattacher. `--workspace` tient Next, Vite et Keycloakify hors de l'image.
 # ---------------------------------------------------------------------------
 FROM deps AS api-deps
 WORKDIR /app
@@ -68,9 +58,8 @@ FROM node:22-alpine AS api
 ENV NODE_ENV=production
 WORKDIR /app
 
-# Reprend l'arborescence de l'espace de travail — manifestes compris. Le
-# `"type": "module"` d'`apps/api/package.json` n'est pas décoratif : sans lui
-# Node lirait le code émis comme du CommonJS et refuserait le premier `import`.
+# Manifestes compris : le `"type": "module"` d'`apps/api/package.json` n'est pas
+# décoratif, sans lui Node lirait le code émis comme du CommonJS.
 COPY --from=api-deps /app ./
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 
@@ -80,10 +69,8 @@ EXPOSE 3002
 CMD ["node", "dist/main.js"]
 
 # ---------------------------------------------------------------------------
-# Front statique : les deux exports assemblés, servis par nginx.
-#
-# nginx transmet aussi `/api/` à l'API, ce qui donne au front et à l'API la même
-# origine : ni CORS, ni `SameSite=None` sur le cookie de session.
+# Front statique : les deux exports assemblés, servis par nginx, qui transmet
+# aussi `/api/` — d'où une origine commune, ni CORS ni `SameSite=None`.
 # ---------------------------------------------------------------------------
 FROM nginx:1.29-alpine AS web
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
@@ -91,11 +78,9 @@ COPY --from=build /srv/static /usr/share/nginx/html
 EXPOSE 80
 
 # ---------------------------------------------------------------------------
-# Proxy du sous-domaine de Keycloak.
-#
-# C'est lui, et non Keycloak, qui porte le domaine `auth.…` : il refuse
-# `/admin` et `/realms/master`, et transmet le reste. Keycloak n'a plus à être
-# joignable directement depuis l'extérieur.
+# Proxy du sous-domaine de Keycloak : c'est lui qui porte le domaine `auth.…`,
+# et il refuse tout sauf le realm applicatif. Keycloak n'a plus à être joignable
+# depuis l'extérieur.
 # ---------------------------------------------------------------------------
 FROM nginx:1.29-alpine AS auth
 COPY deploy/nginx-auth.conf /etc/nginx/conf.d/default.conf
@@ -103,43 +88,29 @@ COPY deploy/nginx-auth-proxy.inc /etc/nginx/snippets/keycloak-proxy.inc
 EXPOSE 80
 
 # ---------------------------------------------------------------------------
-# Thème Keycloak, construit à part.
-#
-# C'est le build le plus fragile de la chaîne : Keycloakify délègue l'empaquetage
-# du JAR à Maven, absent de l'image Node. Il faut donc l'installer — avec le JDK
-# qu'il entraîne — et le laisser télécharger ses propres dépendances. L'isoler
-# dans sa propre étape évite que tout cela pèse sur les images du front et de
-# l'API, et qu'un échec de sa part les emporte.
+# Thème Keycloak, construit à part : Keycloakify délègue l'empaquetage du JAR à
+# Maven, absent de l'image Node. Une étape dédiée évite que le JDK pèse sur les
+# images du front et de l'API, et qu'un échec de sa part les emporte.
 # ---------------------------------------------------------------------------
 FROM build AS theme
 WORKDIR /app
 
 RUN apk add --no-cache maven
 
-# Sans cache monté sur le dépôt Maven local, volontairement : deux services
-# construisent cette cible, et un cache partagé les ferait écrire à deux dans le
-# même dossier. Le temps regagné ne vaut pas ce mode de panne.
+# Sans cache Maven, volontairement : deux services construisent cette cible, et
+# un cache partagé les ferait écrire à deux dans le même dossier.
 RUN npx turbo run build --filter=@etape/keycloak-theme
 
 # ---------------------------------------------------------------------------
-# Extension FranceConnect pour Keycloak.
-#
-# Le broker OIDC générique ne suffit pas : FranceConnect impose à `state` et
-# `nonce` un format que Keycloak ne sait pas produire — alphanumériques stricts,
-# 32 caractères au minimum en v2, là où Keycloak émet un `state` composite ponctué
-# de `.`, `-` et `_`. Toute requête d'autorisation est rejetée, code Y030007.
-#
-# Cette extension est celle de l'INSEE, maintenue et employée par plusieurs
-# services publics. Elle règle aussi les deux inconnues laissées ouvertes par
-# `docs/authentification.md` : le `/userinfo` renvoyé en JWT signé, et la
-# propagation de la déconnexion.
+# Extension FranceConnect (INSEE). Le broker OIDC générique ne suffit pas :
+# FranceConnect v2 exige un `nonce` d'au moins 32 caractères alphanumériques là
+# où Keycloak en émet 22, et rejette tout en `Y030007`. Voir
+# `docs/authentification.md`.
 # ---------------------------------------------------------------------------
 FROM alpine:3.22 AS franceconnect-extension
 # Version et empreinte vont par paire : changer l'une sans l'autre fait échouer
-# le build, ce qui est le comportement voulu. L'empreinte est celle publiée avec
-# la release, et c'est tout ce qui sépare une extension chargée dans Keycloak
-# avec les droits du serveur d'un binaire quelconque servi par un dépôt
-# compromis ou une réponse détournée.
+# le build. C'est tout ce qui sépare une extension chargée avec les droits du
+# serveur d'un binaire quelconque servi par une réponse détournée.
 ARG KEYCLOAK_FRANCECONNECT_VERSION=7.7.0
 ARG KEYCLOAK_FRANCECONNECT_SHA256=e6a3853ac6fcf5e55e32cead622612ad03a1df034f4ba6be808f6aa7cf2d8fd7
 RUN apk add --no-cache curl && \
@@ -148,12 +119,9 @@ RUN apk add --no-cache curl && \
     echo "${KEYCLOAK_FRANCECONNECT_SHA256}  /keycloak-franceconnect.jar" | sha256sum -c -
 
 # ---------------------------------------------------------------------------
-# Keycloak.
-#
-# `kc.sh build` est exécuté ici plutôt qu'au démarrage : c'est ce qui autorise
-# `start --optimized` côté conteneur, et ce qui fait entrer le thème dans le
-# registre des extensions. Les options figées à ce moment-là — la base de
-# données, les sondes de santé — ne peuvent plus varier à l'exécution.
+# Keycloak. `kc.sh build` est exécuté ici plutôt qu'au démarrage : c'est ce qui
+# autorise `start --optimized` et fait entrer le thème dans le registre des
+# extensions. Les options figées alors ne varient plus à l'exécution.
 # ---------------------------------------------------------------------------
 FROM quay.io/keycloak/keycloak:26.7 AS keycloak
 
@@ -162,20 +130,15 @@ COPY --from=franceconnect-extension /keycloak-franceconnect.jar /opt/keycloak/pr
 COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
 COPY deploy/keycloak-demarrer.sh /opt/keycloak/bin/etape-demarrer.sh
 
-# Tout fichier de realm déposé ici est importé au premier démarrage. Il décrit le
-# poste de développement — URL en `localhost`, secret public — et n'est qu'un
-# point de départ : `etape-init.sh` le corrige ensuite pour cet environnement.
+# Importé au premier démarrage. Il décrit le poste de développement — URL en
+# `localhost`, secret public — et `etape-init.sh` le corrige ensuite.
 COPY keycloak/realms/etape-realm.json /opt/keycloak/data/import/
 
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 
-# La console d'administration est retirée de l'image, et non seulement masquée
-# par le proxy : ce qui n'est pas construit ne peut pas être servi, quelle que
-# soit la façon dont l'hébergeur route ensuite le sous-domaine.
-#
-# Seule la console disparaît. L'API REST d'administration reste en place — sans
-# elle `deploy/keycloak-init.sh` n'aurait plus rien pour configurer le realm —
-# et c'est `deploy/nginx-auth.conf` qui la met hors de portée depuis Internet.
-# Administration : `docker exec … kcadm.sh`, ou un tunnel vers le conteneur.
+# La console est retirée de l'image et pas seulement masquée par le proxy : ce
+# qui n'est pas construit ne peut pas être servi, quel que soit le routage.
+# L'API REST, elle, reste en place — `deploy/keycloak-init.sh` en dépend — et
+# c'est `deploy/nginx-auth.conf` qui la met hors de portée.
 RUN /opt/keycloak/bin/kc.sh build --features-disabled=admin

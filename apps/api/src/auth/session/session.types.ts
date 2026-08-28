@@ -1,9 +1,8 @@
 /**
- * Transaction de connexion : l'état à retenir entre le départ vers Keycloak et
- * le retour sur `/callback`.
+ * État à retenir entre le départ vers Keycloak et le retour sur `/callback`.
  *
- * Volontairement hors de la session utilisateur : elle existe avant que
- * quiconque soit authentifié, et doit expirer vite.
+ * Hors de la session utilisateur : elle existe avant que quiconque soit
+ * authentifié, et doit expirer vite.
  */
 export interface LoginTransaction {
   /** Contrôle anti-CSRF, comparé au `state` renvoyé par Keycloak. */
@@ -17,34 +16,25 @@ export interface LoginTransaction {
   expiresAt: number;
 }
 
-/**
- * Session d'un utilisateur connecté.
- *
- * L'`idToken` est conservé pour une seule raison : il est exigé comme
- * `id_token_hint` à la déconnexion. FranceConnect impose la propagation du
- * logout et la vérifie à l'homologation — sans lui, la chaîne casse.
- */
 export interface UserSession {
   sub: string;
   email?: string;
-  /** `true` si l'identité vient de FranceConnect plutôt que d'un compte local. */
   viaFranceConnect: boolean;
   /**
    * Identité reçue du fournisseur, débarrassée de la plomberie du protocole.
-   *
-   * Conservée telle quelle plutôt que remodelée en type fermé : les champs que
-   * renvoie FranceConnect varient selon le fournisseur d'identité, et l'objet
-   * du parcours de recette est justement de voir ce qui arrive réellement.
+   * Conservée telle quelle : les champs varient d'un fournisseur à l'autre, et
+   * l'objet de la recette est justement de voir ce qui arrive réellement.
    */
   claims: Record<string, unknown>;
+  /**
+   * Conservé pour une seule raison : il est exigé comme `id_token_hint` à la
+   * déconnexion, dont FranceConnect impose la propagation.
+   */
   idToken: string;
   expiresAt: number;
 }
 
-/**
- * Vue exposée au front. Ne contient délibérément aucun jeton : le navigateur n'a
- * besoin de savoir que *qui* est connecté, jamais *avec quoi*.
- */
+/** Vue exposée au front. Aucun jeton : le navigateur sait *qui*, jamais *avec quoi*. */
 export interface PublicSession {
   sub: string;
   email?: string;

@@ -20,12 +20,8 @@
 # suivre complète : `docs/deploiement.md`.
 
 services:
-  # ---------------------------------------------------------------------
-  # Front statique, et point d'entrée unique du domaine principal.
-  #
-  # nginx transmet `/api/` à l'API : front et API partagent donc l'origine,
-  # ce qui évite CORS et permet au cookie de session de rester `SameSite=Lax`.
-  # ---------------------------------------------------------------------
+  # Front statique et point d'entrée du domaine principal. nginx transmet
+  # `/api/` à l'API : origine commune, donc ni CORS ni `SameSite=None`.
   web:
     build:
       context: .
@@ -42,10 +38,7 @@ services:
       retries: 3
       start_period: 10s
 
-  # ---------------------------------------------------------------------
-  # API d'authentification. Jamais exposée directement : elle n'est jointe
-  # que par nginx, sur le réseau interne.
-  # ---------------------------------------------------------------------
+  # API d'authentification, jointe par le seul nginx, sur le réseau interne.
   api:
     build:
       context: .
@@ -57,32 +50,27 @@ services:
       NODE_ENV: production
       API_PORT: 3002
 
-      # Le préfixe `/api` est porté par l'application elle-même et n'est pas
-      # retiré par nginx : les chemins vus par Nest sont ceux vus par le
-      # navigateur, et la `redirect_uri` reste valable des deux côtés du proxy.
+      # Le préfixe `/api` est porté par l'application et non retiré par nginx :
+      # la `redirect_uri` reste valable des deux côtés du proxy.
       API_BASE_URL: ${PUBLIC_URL}/api
       FRONT_BASE_URL: ${PUBLIC_URL}
 
-      # URL **publique** de Keycloak, et non son nom de service interne :
-      # `openid-client` compare l'`issuer` annoncé par le document de découverte
-      # à celui qu'on lui donne, et les deux doivent coïncider. L'appel sort donc
-      # du réseau Docker pour revenir par le proxy — voir `extra_hosts` plus bas
-      # si l'hôte ne sait pas router ce demi-tour.
+      # URL **publique**, et non le nom de service interne : `openid-client`
+      # exige que l'issuer coïncide avec celui du document de découverte.
+      # L'appel sort donc du réseau Docker — voir `extra_hosts` plus bas.
       KEYCLOAK_ISSUER_URL: ${KEYCLOAK_PUBLIC_URL}/realms/etape
       KEYCLOAK_CLIENT_ID: etape-api
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
       KEYCLOAK_FRANCECONNECT_ALIAS: franceconnect
-    # L'hôte ne renvoie pas vers lui-même une requête adressée à sa propre adresse
-    # publique : la découverte OIDC échouait, avec « Le fournisseur d'identité est
-    # injoignable » à l'arrivée sur `/api/auth/login`. Le nom pointe donc vers la
-    # passerelle de l'hôte, où écoute le proxy : la requête ne sort plus de la
-    # machine. Le certificat reste valable — le nom demandé, lui, ne change pas.
+    # Certains hôtes ne routent pas vers eux-mêmes une requête adressée à leur
+    # propre adresse publique : la découverte OIDC échouait sur « Le fournisseur
+    # d'identité est injoignable ». Le nom pointe donc vers la passerelle de
+    # l'hôte, où écoute le proxy. Le certificat reste valable, le nom ne changeant pas.
     extra_hosts:
       - "${KEYCLOAK_HOSTNAME:?nom d'hôte de KEYCLOAK_PUBLIC_URL, sans le schéma}:host-gateway"
     healthcheck:
-      # `/auth/session` répond 401 sans cookie : c'est une réponse, donc un
-      # service vivant. Toute autre issue — connexion refusée, 5xx — signale un
-      # démarrage manqué.
+      # `/auth/session` répond 401 sans cookie : une réponse, donc un service
+      # vivant. Connexion refusée ou 5xx signalent un démarrage manqué.
       test:
         [
           "CMD",
@@ -95,19 +83,10 @@ services:
       retries: 3
       start_period: 15s
 
-  # ---------------------------------------------------------------------
-  # Proxy du sous-domaine de Keycloak.
-  #
-  # Porte le domaine `auth.…` à la place de Keycloak, et **refuse tout par
-  # défaut** : seuls passent le realm `etape` — écrans de connexion, points
-  # OIDC, endpoint du broker que FranceConnect appelle au retour — et les
-  # ressources du thème. Rien d'autre n'est joignable depuis Internet, ni la
-  # console d'administration, ni l'API qui partage son préfixe, ni le realm
-  # `master` qui délivre les jetons.
-  #
-  # Administration : `docker exec <conteneur> /opt/keycloak/bin/kcadm.sh …`.
-  # Voir `docs/deploiement.md`.
-  # ---------------------------------------------------------------------
+  # Porte le domaine `auth.…` à la place de Keycloak et **refuse tout par
+  # défaut** : seuls passent le realm `etape` et les ressources du thème. Ni la
+  # console, ni l'API d'administration, ni le realm `master` ne sont joignables.
+  # Administration : `docker exec … kcadm.sh`, voir `docs/deploiement.md`.
   auth:
     build:
       context: .
@@ -118,10 +97,8 @@ services:
     depends_on:
       - keycloak
     healthcheck:
-      # Deux réponses valent bonne santé : le realm répond, et la racine est
-      # refusée. La seconde est la sonde du refus par défaut — une sonde qui ne
-      # vérifierait que la première laisserait passer un proxy transformé en
-      # simple relais, administration comprise.
+      # Le realm répond, et la racine est refusée : sans la seconde, un proxy
+      # retombé en simple relais passerait pour sain, administration comprise.
       test:
         [
           "CMD-SHELL",
@@ -132,39 +109,32 @@ services:
       retries: 3
       start_period: 30s
 
-  # ---------------------------------------------------------------------
-  # Keycloak.
+  # Sur son propre sous-domaine, derrière `auth` : le broker garde une adresse
+  # stable, indépendante de l'hébergement du front, et la `redirect_uri`
+  # déclarée chez FranceConnect — pénible à faire changer — survit à un
+  # déménagement.
   #
-  # Sur son propre sous-domaine, derrière `auth` : ni le même domaine que le
-  # front ni un préfixe de chemin. Les écrans de connexion et le broker
-  # FranceConnect gardent ainsi une adresse stable, indépendante de
-  # l'hébergement du front. Le jour où Keycloak déménage, seul un enregistrement
-  # DNS bouge — et la `redirect_uri` déclarée chez FranceConnect, pénible à
-  # faire changer, reste valable.
-  #
-  # Aucun `expose` : Keycloak n'est joint que par `auth`, sur le réseau interne.
-  # Le port absent est ce qui empêche de lui rattacher un domaine sans y penser,
-  # et de court-circuiter ainsi le filtrage de l'administration.
-  # ---------------------------------------------------------------------
+  # Aucun `expose` : le port absent empêche de rattacher un domaine à Keycloak
+  # sans y penser, et de court-circuiter ainsi le filtrage de l'administration.
   keycloak:
     build:
       context: .
       target: keycloak
     restart: unless-stopped
-    # Configure le realm en tâche de fond, puis démarre Keycloak au premier plan
-    # — `start` et non `start-dev`, avec `--import-realm` qui crée le realm au
-    # premier démarrage et l'ignore ensuite (stratégie IGNORE_EXISTING).
+    # Configure le realm en tâche de fond, puis démarre Keycloak au premier
+    # plan. `--import-realm` crée le realm au premier démarrage et l'ignore
+    # ensuite (IGNORE_EXISTING).
     entrypoint: ["/bin/bash", "/opt/keycloak/bin/etape-demarrer.sh"]
     environment:
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
 
-      # Hostname figé, explicitement : c'est ce qui empêche un en-tête `Host`
-      # forgé de faire émettre des jetons au nom d'un émetteur frauduleux.
+      # Figé explicitement : empêche un `Host` forgé de faire émettre des jetons
+      # au nom d'un émetteur frauduleux.
       KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL}
-      # TLS est terminé par le proxy ; Keycloak écoute en clair derrière lui et
-      # ne se fie aux `X-Forwarded-*` que si on le lui demande.
+      # TLS terminé par le proxy ; Keycloak ne se fie aux `X-Forwarded-*` que si
+      # on le lui demande.
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
 
@@ -182,11 +152,9 @@ services:
       KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
       FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
       FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
-      # `INTEGRATION_STANDARD_V2` vise le bac à sable `fcp-low.sbx`,
-      # `INTEGRATION_STANDARD_LEGACY_V2` l'ancien `fcp-low.integ01`, et
-      # `PRODUCTION_STANDARD_V2` la production. Les identifiants ne valent que
-      # pour l'environnement où ils ont été délivrés : ailleurs, FranceConnect
-      # répond « client_id inconnu ».
+      # `INTEGRATION_STANDARD_V2` vise le bac à sable, `..._LEGACY_V2` l'ancien
+      # `integ01`, `PRODUCTION_STANDARD_V2` la production. Les identifiants ne
+      # valent que pour l'environnement où ils ont été délivrés.
       FRANCECONNECT_ENVIRONNEMENT: ${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_V2}
       FRANCECONNECT_EIDAS: ${FRANCECONNECT_EIDAS:-EIDAS1}
       SMTP_HOST: ${SMTP_HOST:-}
@@ -198,9 +166,8 @@ services:
       SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
       SMTP_SSL: ${SMTP_SSL:-false}
     healthcheck:
-      # Les sondes de santé vivent sur le port de gestion (9000), séparé du
-      # trafic applicatif. L'image ne contient ni curl ni wget, d'où ce dialogue
-      # HTTP écrit à la main sur un descripteur.
+      # Les sondes vivent sur le port de gestion (9000). L'image n'a ni curl ni
+      # wget, d'où ce dialogue HTTP écrit à la main sur un descripteur.
       test:
         [
           "CMD-SHELL",
