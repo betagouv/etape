@@ -1,0 +1,188 @@
+# Pile de déploiement. Quatre services et une base : le front et l'API derrière
+# un même nginx, Keycloak derrière un proxy qui n'y laisse passer que le realm
+# applicatif. Keycloak configure son realm lui-même au démarrage — un conteneur
+# d'initialisation qui s'arrête est compté comme un échec par les hébergeurs qui
+# attendent `docker compose up --wait`.
+#
+# Deux domaines à déclarer, sur les deux seuls services exposés :
+#
+#   web   https://etape.example.org        (port 80)
+#   auth  https://auth.etape.example.org   (port 80)
+#
+# `auth`, et non `keycloak` : c'est le proxy qui porte le sous-domaine, et lui
+# qui refuse l'administration. Keycloak n'expose plus de port, précisément pour
+# qu'on ne puisse pas lui repointer un domaine dessus par inadvertance.
+#
+# Les variables attendues sont listées dans `deploy/.env.example`. Marche à
+# suivre complète : `docs/deploiement.md`.
+
+services:
+  # Point d'entrée du domaine principal : nginx transmet aussi `/api/` à l'API,
+  # d'où une origine commune.
+  web:
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      target: api
+    restart: unless-stopped
+    expose:
+      - "3002"
+    environment:
+      NODE_ENV: production
+      API_PORT: 3002
+
+      # Préfixe porté par l'application et non retiré par nginx : la
+      # `redirect_uri` reste valable des deux côtés du proxy.
+      API_BASE_URL: ${PUBLIC_URL}/api
+      FRONT_BASE_URL: ${PUBLIC_URL}
+
+      # URL **publique** et non le nom de service interne : `openid-client` exige
+      # que l'issuer coïncide avec le document de découverte. L'appel sort donc
+      # du réseau Docker — voir `extra_hosts`.
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_PUBLIC_URL}/realms/etape
+      KEYCLOAK_CLIENT_ID: etape-api
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_FRANCECONNECT_ALIAS: franceconnect
+    # Certains hôtes ne routent pas vers eux-mêmes une requête adressée à leur
+    # propre adresse publique : la découverte OIDC échouait sur « Le fournisseur
+    # d'identité est injoignable ». Le nom pointe donc vers la passerelle, où
+    # écoute le proxy. Le certificat reste valable, le nom ne changeant pas.
+    extra_hosts:
+      - "${KEYCLOAK_HOSTNAME:?nom d'hôte de KEYCLOAK_PUBLIC_URL, sans le schéma}:host-gateway"
+    healthcheck:
+      # 401 sans cookie est une réponse, donc un service vivant.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3002/api/auth/session').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Porte le domaine `auth.…` à la place de Keycloak et **refuse tout par
+  # défaut** : ni la console, ni l'API d'administration, ni le realm `master` ne
+  # sont joignables. Administration : `docker exec … kcadm.sh`.
+  auth:
+    build:
+      context: .
+      target: auth
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - keycloak
+    healthcheck:
+      # Sans le second test, un proxy retombé en simple relais passerait pour
+      # sain, administration comprise.
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1/realms/etape/.well-known/openid-configuration && ! wget -q -O /dev/null http://127.0.0.1/",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Sous-domaine dédié : la `redirect_uri` déclarée chez FranceConnect, pénible à
+  # faire changer, survit à un déménagement du front.
+  #
+  # Aucun `expose` : le port absent empêche de rattacher un domaine à Keycloak
+  # sans y penser, et de court-circuiter le filtrage de l'administration.
+  keycloak:
+    build:
+      context: .
+      target: keycloak
+    restart: unless-stopped
+    # `--import-realm` crée le realm au premier démarrage et l'ignore ensuite.
+    entrypoint: ["/bin/bash", "/opt/keycloak/bin/etape-demarrer.sh"]
+    environment:
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+
+      # Figé : empêche un `Host` forgé de faire émettre des jetons au nom d'un
+      # émetteur frauduleux.
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL}
+      # TLS terminé par le proxy ; les `X-Forwarded-*` ne sont pris en compte que
+      # si on le demande.
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+
+      # Lues par `etape-init.sh`.
+      KEYCLOAK_INTERNAL_URL: http://127.0.0.1:8080
+      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL}
+      PUBLIC_URL: ${PUBLIC_URL}
+      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
+      FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
+      FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
+      # Bac à sable, `..._LEGACY_V2` pour `integ01`, `PRODUCTION_STANDARD_V2` pour
+      # la production. Les identifiants ne valent que pour leur environnement.
+      FRANCECONNECT_ENVIRONNEMENT: ${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_V2}
+      FRANCECONNECT_EIDAS: ${FRANCECONNECT_EIDAS:-EIDAS1}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-true}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SMTP_SSL: ${SMTP_SSL:-false}
+    healthcheck:
+      # Port de gestion (9000). L'image n'a ni curl ni wget, d'où ce dialogue
+      # HTTP écrit à la main sur un descripteur.
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/127.0.0.1/9000; printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3; grep -q '\"status\": \"UP\"' <&3",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
+  keycloak-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  keycloak-db-data:

@@ -1,0 +1,34 @@
+# Tout ce qui serait reconstruit dans l'image, ou n'a rien à y faire.
+#
+# `node_modules` en tête : sans cette ligne, le contexte de build embarquerait
+# le dossier du poste — plusieurs centaines de mégaoctets, compilés pour un
+# autre système, et qui écraseraient l'installation faite dans l'image.
+
+node_modules
+**/node_modules
+
+.git
+.github
+.turbo
+**/.turbo
+.vercel
+
+**/.next
+**/out
+**/dist
+**/dist_keycloak
+
+# Générés par Keycloakify, et gitignorés. Les laisser entrer ferait dépendre
+# l'image de ce qui traîne sur le poste : le build passerait ici et échouerait
+# sur un clone frais, exactement là où on ne peut plus le voir.
+apps/keycloak-theme/src/kc.gen.tsx
+apps/keycloak-theme/public/keycloakify-dev-resources
+
+.env
+**/.env
+**/.env.*
+!**/.env.example
+
+**/.DS_Store
+*.md
+!README.md

@@ -5,6 +5,7 @@ import { Container } from "@etape/ui/components/container";
 import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 
+import { AuthMenu } from "@/components/auth-menu";
 import { MainNav } from "@/components/main-nav";
 
 /**
@@ -36,6 +37,8 @@ export function SiteHeader() {
         </Link>
 
         <MainNav />
+
+        <AuthMenu />
       </Container>
     </header>
   );

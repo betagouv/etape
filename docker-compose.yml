@@ -1,0 +1,142 @@
+# Keycloak de développement local, avec sa base. Voir `docker-compose.prod.yml`
+# pour le déploiement.
+#
+#   docker compose up -d
+#
+# Console d'administration : http://localhost:8080 (admin / admin)
+#
+# Aucun SMTP : `verifyEmail` est désactivé pour que l'inscription aboutisse
+# quand même, et les gabarits d'email ne sont pas jouables ici.
+
+services:
+  keycloak-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7
+    # `start-dev` désactive HTTPS et le cache distribué : interdit en production.
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      # Importé au démarrage : configuration versionnée plutôt que recréée à la
+      # main sur chaque poste.
+      - ./keycloak/realms:/opt/keycloak/data/import:ro
+      # Extensions : le thème ETAPE et le broker FranceConnect, rassemblés par
+      # `keycloak-providers` ci-dessous.
+      - keycloak-providers:/opt/keycloak/providers:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+      keycloak-providers:
+        condition: service_completed_successfully
+
+  # Keycloak ne lit qu'un dossier d'extensions, et il y faut deux choses : le
+  # thème construit ici, et le broker FranceConnect téléchargé.
+  #
+  # L'extension n'est pas optionnelle : le realm déclare son identity provider
+  # sous `franceconnect-particulier`, et Keycloak **refuse de démarrer** s'il ne
+  # connaît pas cet identifiant — rien ne tourne, pas même le mot de passe.
+  keycloak-providers:
+    image: alpine:3.22
+    restart: "no"
+    environment:
+      # Version et empreinte vont par paire, comme dans le `Dockerfile`.
+      KEYCLOAK_FRANCECONNECT_VERSION: ${KEYCLOAK_FRANCECONNECT_VERSION:-7.7.0}
+      KEYCLOAK_FRANCECONNECT_SHA256: ${KEYCLOAK_FRANCECONNECT_SHA256:-e6a3853ac6fcf5e55e32cead622612ad03a1df034f4ba6be808f6aa7cf2d8fd7}
+    volumes:
+      - keycloak-providers:/providers
+      # Absente sur un dépôt fraîchement cloné : Keycloak démarre alors avec son
+      # thème par défaut.
+      - ./apps/keycloak-theme/dist_keycloak:/theme:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        jar=/providers/keycloak-franceconnect-$$KEYCLOAK_FRANCECONNECT_VERSION.jar
+        if [ ! -f "$$jar" ]; then
+          apk add --no-cache curl >/dev/null
+          # Deux JAR de la même extension empêchent Keycloak de démarrer.
+          rm -f /providers/keycloak-franceconnect-*.jar
+          curl -fsSL -o "$$jar" \
+            "https://github.com/InseeFr/Keycloak-FranceConnect/releases/download/$$KEYCLOAK_FRANCECONNECT_VERSION/keycloak-franceconnect-$$KEYCLOAK_FRANCECONNECT_VERSION.jar"
+          # Retiré si l'empreinte ne correspond pas : sinon il serait chargé au
+          # démarrage suivant sans plus rien vérifier.
+          echo "$$KEYCLOAK_FRANCECONNECT_SHA256  $$jar" | sha256sum -c - || { rm -f "$$jar"; exit 1; }
+          echo "extension FranceConnect $$KEYCLOAK_FRANCECONNECT_VERSION téléchargée et vérifiée."
+        fi
+
+        # Recopié à chaque démarrage : une reconstruction du thème prend sans
+        # vider le volume.
+        rm -f /providers/etape-keycloak-theme.jar
+        if [ -f /theme/etape-keycloak-theme.jar ]; then
+          cp /theme/etape-keycloak-theme.jar /providers/
+          echo "thème ETAPE installé."
+        else
+          echo "thème ETAPE non construit — Keycloak servira son thème par défaut."
+          echo "  npm run build -- --filter=@etape/keycloak-theme pour l'obtenir."
+        fi
+
+  # Applique après import ce qu'un fichier de realm ne peut pas porter. Deux
+  # raisons distinctes, et le développement seulement :
+  #
+  # 1. Le realm `master` naît en `sslRequired: external`. Avec le mapping de
+  #    ports de Docker Desktop, une requête venue de l'hôte arrive sous l'adresse
+  #    de la passerelle et non en loopback : Keycloak la juge externe et répond
+  #    « HTTPS required ». Ce conteneur passe par le réseau Docker, où l'adresse
+  #    privée est bien reconnue comme locale.
+  #
+  # 2. L'import de realm ne substitue **aucune** variable, ni environnement ni
+  #    propriété système (vérifié sur Keycloak 26.7) : les secrets FranceConnect
+  #    sont donc posés ici, après coup.
+  keycloak-init:
+    image: quay.io/keycloak/keycloak:26.7
+    restart: "no"
+    depends_on:
+      keycloak:
+        condition: service_started
+    environment:
+      FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
+      FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        KCADM=/opt/keycloak/bin/kcadm.sh
+        until $$KCADM config credentials --server http://keycloak:8080 \
+          --realm master --user admin --password admin >/dev/null 2>&1; do sleep 3; done
+
+        $$KCADM update realms/master -s sslRequired=NONE
+        echo "master : sslRequired=NONE — console admin joignable en HTTP depuis l'hôte."
+
+        if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then
+          $$KCADM update identity-provider/instances/franceconnect -r etape \
+            -s "config.clientId=$$FRANCECONNECT_CLIENT_ID" \
+            -s "config.clientSecret=$$FRANCECONNECT_CLIENT_SECRET"
+          echo "franceconnect : identifiants injectés."
+        else
+          echo "franceconnect : aucun identifiant fourni — le fournisseur restera inutilisable."
+          echo "                renseigner FRANCECONNECT_CLIENT_ID / _SECRET puis relancer."
+        fi
+
+volumes:
+  keycloak-db-data:
+  keycloak-providers:

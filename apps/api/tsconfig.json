@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    // `nodenext` est imposé par le passage en ESM (`"type": "module"`) : c'est le
+    // seul réglage où TypeScript applique les règles de résolution réelles de
+    // Node. Conséquence visible partout dans `src/` : les imports relatifs
+    // portent une extension `.js`, y compris depuis un fichier `.ts` — c'est le
+    // chemin du fichier *émis* que Node résoudra à l'exécution.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "es2023",
+    "lib": ["es2023"],
+
+    // Requis par l'injection de dépendances de NestJS, qui lit les types des
+    // constructeurs à l'exécution via les métadonnées émises ici.
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "declaration": false,
+
+    "strict": true,
+    // Nest injecte les dépendances déclarées dans le constructeur : le
+    // compilateur ne peut pas prouver leur affectation, d'où la désactivation.
+    "strictPropertyInitialization": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
