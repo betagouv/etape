@@ -11,6 +11,10 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
   const { message, client, skipLink } = kcContext;
   const { msg } = i18n;
 
+  // Extrait plutôt que testé sur place : `Boolean(client?.baseUrl)` en garde de
+  // rendu ne dit rien au typage, et obligeait à réaffirmer l'existence en dessous.
+  const retourApplication = skipLink ? undefined : client?.baseUrl;
+
   return (
     <Template
       kcContext={kcContext}
@@ -25,13 +29,13 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
         <Prose>
           <p dangerouslySetInnerHTML={{ __html: kcSanitize(message.summary) }} />
         </Prose>
-        {!skipLink && Boolean(client?.baseUrl) && (
+        {retourApplication ? (
           <Button asChild size="xl" className="w-full rounded-lg">
-            <a id="backToApplication" href={client!.baseUrl}>
+            <a id="backToApplication" href={retourApplication}>
               {msg("backToApplication")}
             </a>
           </Button>
-        )}
+        ) : null}
       </div>
     </Template>
   );

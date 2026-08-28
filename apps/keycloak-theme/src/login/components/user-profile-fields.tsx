@@ -177,7 +177,7 @@ function UserProfileField(props: {
         isInvalid ? (
           <FieldError
             id={`input-error-${attribute.name}`}
-            message={displayableErrors[0]!.errorMessageStr}
+            message={displayableErrors[0]?.errorMessageStr ?? ""}
           />
         ) : undefined
       }
