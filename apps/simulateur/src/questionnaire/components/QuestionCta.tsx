@@ -63,7 +63,7 @@ export function QuestionCta({
 
       {!canGoNext && (
         <span id={NEXT_HINT_ID} className="sr-only">
-          Sélectionne une réponse pour continuer.
+          Répondez à la question pour continuer.
         </span>
       )}
 

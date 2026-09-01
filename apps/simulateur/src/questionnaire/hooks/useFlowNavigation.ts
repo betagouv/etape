@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { maxDepthFrom, stepAfter, walkFlow, type FlowWalk } from "../domain/flow";
+import { stepAfter, totalSteps, walkFlow, type FlowWalk } from "../domain/flow";
 import { findOutcome, findQuestion, STEP_RESULTS } from "../domain/questions";
 import { isQuestionComplete } from "../domain/validation";
 import { useFlow } from "./useFlow";
@@ -60,7 +60,10 @@ export function useFlowNavigation() {
         : undefined;
 
   const isFirst = !previousId;
-  const total = question ? stepNumber - 1 + maxDepthFrom(question.id) : walk.path.length;
+  // Total = nombre de questions du parcours (il raccourcit quand une question
+  // conditionnelle est écartée, il ne s'allonge jamais). Sur un écran terminal
+  // ou les résultats, le parcours est figé : sa longueur est celle du chemin.
+  const total = question ? totalSteps(state.answers) : walk.path.length;
   const canGoNext = question ? isQuestionComplete(question, state.answers) : false;
   const isLast = !!question && stepAfter(question.id, state.answers) === STEP_RESULTS;
 

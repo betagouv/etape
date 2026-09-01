@@ -56,8 +56,8 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
             Résultats
           </h1>
           <p className="text-content-secondary max-w-3xl text-base leading-6 md:text-lg md:leading-7">
-            Sur la base de tes réponses, voici tous les dispositifs analysés. Chacun est classé
-            selon ton éligibilité, avec le motif et un accès direct à l’organisme.
+            Sur la base de vos réponses, voici tous les dispositifs analysés. Chacun est classé
+            selon votre éligibilité, avec le motif et un accès direct à l’organisme.
           </p>
         </div>
       </header>
@@ -65,7 +65,7 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
       {total === 0 ? (
         <div className={`${CONTAINER} flex flex-col gap-4 py-12 md:gap-8`}>
           <p className="text-content-secondary py-12 text-center text-base">
-            Aucun dispositif n’a pu être analysé à partir de tes réponses. Essaie de les modifier.
+            Aucun dispositif n’a pu être analysé à partir de vos réponses. Essayez de les modifier.
           </p>
         </div>
       ) : (

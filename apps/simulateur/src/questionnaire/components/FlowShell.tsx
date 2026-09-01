@@ -23,12 +23,18 @@ export function FlowShell() {
   const hasRenderedOnce = useRef(false);
   const questionId = nav.question?.id;
 
-  const [attemptedOn, setAttemptedOn] = useState<string | null>(null);
-  const showRequiredError = attemptedOn === questionId && !nav.canGoNext;
+  // Tentative de validation échouée : la question concernée, et un compteur
+  // pour que deux clics de suite sur « Suivant » redéplacent bien le focus.
+  const [attempt, setAttempt] = useState<{ questionId: string | null; count: number }>({
+    questionId: null,
+    count: 0,
+  });
+  const failedAttempt =
+    attempt.questionId === questionId && !nav.canGoNext ? attempt.count : undefined;
 
   function handleNext() {
     if (!nav.canGoNext) {
-      setAttemptedOn(questionId ?? null);
+      setAttempt((previous) => ({ questionId: questionId ?? null, count: previous.count + 1 }));
       return;
     }
     nav.goNext();
@@ -58,7 +64,9 @@ export function FlowShell() {
   }
 
   if (nav.outcome) {
-    return <OutcomeScreen outcome={nav.outcome} headingRef={headingRef} />;
+    // `goPrev` ramène à la dernière question répondue : un clic malheureux sur
+    // « Hors de France » ne condamne pas la simulation.
+    return <OutcomeScreen outcome={nav.outcome} onBack={nav.goPrev} headingRef={headingRef} />;
   }
 
   if (!nav.question) return null;
@@ -76,7 +84,7 @@ export function FlowShell() {
               answers={state.answers}
               setAnswer={setAnswer}
               headingRef={headingRef}
-              showRequiredError={showRequiredError}
+              failedAttempt={failedAttempt}
             />
           </div>
           <QuestionCta

@@ -1,3 +1,4 @@
+import { pruneAnswers } from "../domain/flow";
 import type { Answers } from "../domain/types";
 import { flowReducer, initialFlowState, type FlowAction, type FlowState } from "./flow-reducer";
 
@@ -6,7 +7,7 @@ import { flowReducer, initialFlowState, type FlowAction, type FlowState } from "
 // refresh), sans setState-dans-un-effet ni hydration mismatch.
 
 /** À incrémenter dès que la forme de `FlowState` change. */
-const STORAGE_KEY = "etape.flow.v2";
+const STORAGE_KEY = "etape.flow.v3";
 
 let state: FlowState = initialFlowState;
 let initialized = false;
@@ -25,7 +26,10 @@ function loadFromStorage(): FlowState {
       return initialFlowState;
     }
 
-    return { answers: answers as Answers };
+    // Nettoyage à la relecture : un état déposé par une version antérieure du
+    // questionnaire peut porter des réponses qui ne correspondent plus à aucun
+    // champ posé. L'invariant du reducer vaut ainsi dès le premier rendu.
+    return { answers: pruneAnswers(answers as Answers) };
   } catch {
     // Storage indisponible ou JSON corrompu.
     return initialFlowState;

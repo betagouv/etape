@@ -1,46 +1,75 @@
-// Région du parcours. Certains liens des résultats sont régionalisés (portail
-// CEP) : on déduit la région des questions de localisation, la commune renvoyée
-// par geo.api.gouv.fr portant le code INSEE de sa région.
+// Régions administratives — liste fermée, source unique du produit.
+//
+// La région est demandée directement en Q6 : c'est la maille des organismes
+// (Transitions Pro, portails CEP d'Avenir Actifs), et elle ne bouge pas. Elle
+// est donc écrite ici plutôt que cherchée sur une API : une liste de 21 entrées
+// figées ne justifie ni requête réseau, ni état de chargement, ni panne
+// possible.
+//
+// L'ordre du tableau est celui de l'affichage : métropole puis outre-mer,
+// chacune par ordre alphabétique.
 
-import {
-  FIELD_LIEU_TRAVAIL,
-  FIELD_VILLE_RESIDENCE,
-  FIELD_VILLE_TRAVAIL,
-  LOC_HORS_FRANCE,
-} from "./questions";
+import { FIELD_REGION_RESIDENCE, FIELD_REGION_TRAVAIL } from "./questions";
 import type { Answers, AnswerValue } from "./types";
 
+/** Une région, telle que proposée à la saisie. `code` est le code INSEE. */
+export interface Region {
+  code: string;
+  nom: string;
+  /** Les collectivités d'outre-mer sont groupées à part dans la liste. */
+  outreMer?: true;
+}
+
+export const REGIONS = [
+  { code: "84", nom: "Auvergne-Rhône-Alpes" },
+  { code: "27", nom: "Bourgogne-Franche-Comté" },
+  { code: "53", nom: "Bretagne" },
+  { code: "24", nom: "Centre-Val de Loire" },
+  { code: "94", nom: "Corse" },
+  { code: "44", nom: "Grand Est" },
+  { code: "32", nom: "Hauts-de-France" },
+  { code: "11", nom: "Île-de-France" },
+  { code: "28", nom: "Normandie" },
+  { code: "75", nom: "Nouvelle-Aquitaine" },
+  { code: "76", nom: "Occitanie" },
+  { code: "52", nom: "Pays de la Loire" },
+  { code: "93", nom: "Provence-Alpes-Côte d'Azur" },
+  { code: "01", nom: "Guadeloupe", outreMer: true },
+  { code: "03", nom: "Guyane", outreMer: true },
+  { code: "04", nom: "La Réunion", outreMer: true },
+  { code: "02", nom: "Martinique", outreMer: true },
+  { code: "06", nom: "Mayotte", outreMer: true },
+  { code: "977", nom: "Saint-Barthélemy", outreMer: true },
+  { code: "978", nom: "Saint-Martin", outreMer: true },
+  { code: "975", nom: "Saint-Pierre-et-Miquelon", outreMer: true },
+] as const satisfies readonly Region[];
+
 /**
- * Codes INSEE de région renvoyés par geo.api.gouv.fr. Les trois derniers sont
- * des collectivités d'outre-mer, que l'API expose comme des régions à part.
+ * Code INSEE d'une région. Union littérale dérivée de `REGIONS` : ajouter une
+ * région ici oblige `resultats/domain/cep.ts` à lui donner un portail.
  */
-// prettier-ignore
-export const REGION_CODES = [
-  "11", "24", "27", "28", "32", "44", "52", "53", "75", "76", "84", "93", "94", // métropole
-  "01", "02", "03", "04", "06",                                                // DROM
-  "975", "977", "978",                                                         // COM
-] as const;
+export type RegionCode = (typeof REGIONS)[number]["code"];
 
-export type RegionCode = (typeof REGION_CODES)[number];
-
-function isRegionCode(code: string | undefined): code is RegionCode {
-  return code !== undefined && (REGION_CODES as readonly string[]).includes(code);
+export function isRegionCode(code: unknown): code is RegionCode {
+  return typeof code === "string" && REGIONS.some((region) => region.code === code);
 }
 
-/** Région de la commune répondue pour un champ « ville », si exploitable. */
+/** Nom affichable d'une région. `null` si le code est inconnu. */
+export function regionName(code: string | null | undefined): string | null {
+  return REGIONS.find((region) => region.code === code)?.nom ?? null;
+}
+
+/** Code région d'une réponse, si elle en porte un. */
 function regionOf(value: AnswerValue | undefined): RegionCode | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  return isRegionCode(value.region?.code) ? value.region.code : null;
+  return isRegionCode(value) ? value : null;
 }
 
 /**
- * Région retenue pour les liens régionalisés : celle du lieu de TRAVAIL (Q1) ;
- * si l'utilisateur travaille hors de France, celle de sa RÉSIDENCE (Q2).
- * `null` quand la réponse retenue ne permet pas de la déterminer (ville non
- * renseignée, ou réponse antérieure à l'ajout du champ `region`).
+ * Région retenue pour les liens régionalisés : celle du lieu de TRAVAIL quand
+ * elle est renseignée (c'est elle qui détermine le Transitions Pro compétent),
+ * à défaut celle de la RÉSIDENCE. `null` quand aucune des deux n'est
+ * exploitable — les liens retombent alors sur le portail national.
  */
 export function regionFromAnswers(answers: Answers): RegionCode | null {
-  const cityField =
-    answers[FIELD_LIEU_TRAVAIL] === LOC_HORS_FRANCE ? FIELD_VILLE_RESIDENCE : FIELD_VILLE_TRAVAIL;
-  return regionOf(answers[cityField]);
+  return regionOf(answers[FIELD_REGION_TRAVAIL]) ?? regionOf(answers[FIELD_REGION_RESIDENCE]);
 }
