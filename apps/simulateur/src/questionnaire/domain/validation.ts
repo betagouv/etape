@@ -47,11 +47,11 @@ function requiredFields(question: Question, answers: Answers): Field[] {
 }
 
 /**
- * Une question est complète quand tous ses champs VISIBLES et REQUIS sont
- * complets. Les champs masqués par le branchement sont ignorés.
+ * Une question est complète quand rien sur l'écran n'empêche de continuer :
+ * ni réponse manquante, ni incohérence avec une réponse antérieure.
  */
 export function isQuestionComplete(question: Question, answers: Answers): boolean {
-  return requiredFields(question, answers).every((field) => isFieldComplete(field, answers));
+  return fieldErrors(question, answers).size === 0;
 }
 
 /**
@@ -61,6 +61,29 @@ export function isQuestionComplete(question: Question, answers: Answers): boolea
  */
 export function missingFields(question: Question, answers: Answers): Field[] {
   return requiredFields(question, answers).filter((field) => !isFieldComplete(field, answers));
+}
+
+/**
+ * Ce qui bloque sur cet écran, par nom de champ et dans l'ordre d'affichage :
+ * les réponses manquantes, puis les réponses valides mais incohérentes avec le
+ * reste du parcours (`Field.coherence`).
+ *
+ * Un champ ne porte qu'un message : tant qu'il est vide, c'est son absence
+ * qu'on signale — un contrôle de cohérence sur une valeur absente n'aurait rien
+ * à comparer.
+ */
+export function fieldErrors(question: Question, answers: Answers): Map<string, string> {
+  const errors = new Map<string, string>();
+
+  for (const field of question.fields.filter((field) => isFieldVisible(field, answers))) {
+    if (!isFieldComplete(field, answers)) {
+      if (field.required !== false) errors.set(field.name, fieldErrorMessage(field));
+      continue;
+    }
+    const incoherence = field.coherence?.(answers);
+    if (incoherence) errors.set(field.name, incoherence);
+  }
+  return errors;
 }
 
 /**

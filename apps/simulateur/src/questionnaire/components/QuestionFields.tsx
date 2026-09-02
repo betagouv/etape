@@ -2,7 +2,6 @@
 
 import { isFieldVisible, opensUnder } from "../domain/conditions";
 import type { Answers, AnswerValue, Field, Question } from "../domain/types";
-import { fieldErrorMessage } from "../domain/validation";
 import { FieldRenderer } from "./FieldRenderer";
 
 interface QuestionFieldsProps {
@@ -12,8 +11,8 @@ interface QuestionFieldsProps {
   /** Id du titre de la question, prêté au champ quand il est seul sur l'écran. */
   titleId: string;
   describedBy?: string;
-  /** Champs à signaler en erreur, par `name`. Vide tant que rien n'a été tenté. */
-  missing?: ReadonlySet<string>;
+  /** Message d'erreur par `name` de champ. Vide tant que rien n'a été tenté. */
+  errors?: ReadonlyMap<string, string>;
 }
 
 /**
@@ -30,7 +29,7 @@ export function QuestionFields({
   setAnswer,
   titleId,
   describedBy,
-  missing,
+  errors,
 }: QuestionFieldsProps) {
   const mainFields = question.fields.filter((field) => field.sub === undefined);
   const subFields = question.fields.filter((field) => field.sub !== undefined);
@@ -41,8 +40,7 @@ export function QuestionFields({
   const labelledBy = single ? titleId : undefined;
   const inherited = single ? describedBy : undefined;
 
-  const errorOf = (field: Field) =>
-    missing?.has(field.name) ? fieldErrorMessage(field) : undefined;
+  const errorOf = (field: Field) => errors?.get(field.name);
 
   /**
    * Les précisions ouvertes par une option — seulement pour l'option retenue.

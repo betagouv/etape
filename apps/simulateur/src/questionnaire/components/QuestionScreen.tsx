@@ -3,7 +3,7 @@
 import { useEffect, useRef, type RefObject } from "react";
 
 import type { Answers, AnswerValue, Question } from "../domain/types";
-import { missingFields } from "../domain/validation";
+import { fieldErrors, missingFields } from "../domain/validation";
 import { FIELD_ERROR_ATTRIBUTE } from "./fields/aria";
 import { QuestionFields } from "./QuestionFields";
 import { QuestionHeader } from "./QuestionHeader";
@@ -57,8 +57,18 @@ export function QuestionScreen({
   const subtitleId = question.subtitle ? `${question.id}-subtitle` : undefined;
 
   const showErrors = failedAttempt !== undefined;
-  const missing = showErrors ? missingFields(question, answers) : [];
-  const missingNames = new Set(missing.map((field) => field.name));
+  const errors = showErrors ? fieldErrors(question, answers) : new Map<string, string>();
+  // Une réponse absente ne se « corrige » pas, elle se donne ; une réponse
+  // incohérente est là mais fausse. Le résumé le dit avec le bon verbe.
+  const absences = showErrors ? missingFields(question, answers).length : 0;
+  const resume =
+    errors.size === absences
+      ? errors.size === 1
+        ? "Une réponse manque pour continuer."
+        : `${errors.size} réponses manquent pour continuer.`
+      : errors.size === 1
+        ? "Une réponse est à corriger pour continuer."
+        : `${errors.size} réponses sont à corriger pour continuer.`;
 
   const fieldsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -78,11 +88,9 @@ export function QuestionScreen({
       />
       {/* Le récapitulatif est visible mais pas annoncé : le focus part sur le
           premier champ fautif, et deux annonces se marcheraient dessus. */}
-      {missing.length > 0 && (
+      {errors.size > 0 && (
         <p className="text-destructive-text text-sm leading-5 font-semibold md:text-base md:leading-6">
-          {missing.length === 1
-            ? "Une réponse manque pour continuer."
-            : `${missing.length} réponses manquent pour continuer.`}
+          {resume}
         </p>
       )}
       <div ref={fieldsRef}>
@@ -92,7 +100,7 @@ export function QuestionScreen({
           setAnswer={setAnswer}
           titleId={titleId}
           describedBy={subtitleId}
-          missing={missingNames}
+          errors={errors}
         />
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { FLAGS } from "./flags";
-import { oldestSelectableYear } from "./month";
+import { monthLabel, monthsSince, oldestSelectableYear, parseMonth } from "./month";
 import type { Answers, Outcome, Question } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -72,6 +72,29 @@ const enActivite = (answers: Answers) =>
   aUnEmployeur(answers) || answers[FIELD_SITUATION] === SITUATION_INDEPENDANT;
 
 const estSalarie = (answers: Answers) => answers[FIELD_SITUATION] === SITUATION_SALARIE;
+
+/**
+ * Q5 ne peut pas être inférieure à Q4 : on ne totalise pas 5 ans d'activité en
+ * étant chez le même employeur depuis 10 ans.
+ *
+ * Le seuil est l'ancienneté arrondie à l'année INFÉRIEURE. Q5 se saisit « en
+ * années, arrondies à l'année la plus proche » : une ancienneté de 10 ans et
+ * 8 mois se déclare donc légitimement 10 comme 11, et seul 10 fait un seuil qui
+ * n'accuse personne à tort.
+ *
+ * Porté par Q5 seule, jamais par Q4 : voir `Field.coherence`.
+ */
+const dureeCoherente = (answers: Answers): string | null => {
+  const entree = parseMonth(answers[FIELD_ENTREE_EMPLOYEUR]);
+  // Ancienneté non demandée (sans employeur) ou pas encore saisie : rien à comparer.
+  if (!entree) return null;
+
+  const seuil = Math.floor(monthsSince(entree) / 12);
+  const total = Number(answers[FIELD_DUREE_ACTIVITE]);
+  if (!Number.isFinite(total) || total >= seuil) return null;
+
+  return `Vous avez indiqué être chez votre employeur actuel depuis ${monthLabel(entree)}, soit ${seuil} ${seuil > 1 ? "ans" : "an"} : votre durée totale ne peut pas être inférieure. Corrigez-la, ou revenez à la question précédente.`;
+};
 
 /** Séquence ordonnée des questions du flow. */
 export const questions: Question[] = [
@@ -295,6 +318,7 @@ export const questions: Question[] = [
         // « ans » porte l'unité. Un « Nombre d'années » de plus serait redondant.
         hint: "En années, arrondies à l'année la plus proche.",
         required: true,
+        coherence: dureeCoherente,
         min: 0,
         max: 99,
         placeholder: "12",

@@ -52,6 +52,17 @@ interface BaseField {
    */
   visibleWhen?: (answers: Answers) => boolean;
   /**
+   * Contrôle de COHÉRENCE avec les autres réponses, évalué une fois le champ
+   * rempli et valide. Renvoie le message à afficher, ou `null` si tout va bien.
+   *
+   * À poser sur le champ posé EN DERNIER des deux : c'est celui-là que la
+   * personne vient de saisir, et le seul qu'elle puisse corriger sans être
+   * renvoyée en arrière. Le poser des deux côtés enfermerait le parcours — la
+   * traversée s'arrêterait sur la première question en erreur, sans jamais
+   * laisser atteindre l'autre.
+   */
+  coherence?: (answers: Answers) => string | null;
+  /**
    * Sous-question : valeur(s) d'option du champ principal sous laquelle ce
    * champ s'ouvre, dans le MÊME écran. Absent = champ de premier niveau.
    * Une liste quand la même précision se pose sous plusieurs options (l'arrêt
