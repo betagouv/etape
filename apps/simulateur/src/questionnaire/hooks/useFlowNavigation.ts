@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { stepAfter, totalSteps, walkFlow, type FlowWalk } from "../domain/flow";
 import { findOutcome, findQuestion, STEP_RESULTS } from "../domain/questions";
-import { isQuestionComplete } from "../domain/validation";
+import { isQuestionComplete, missingFields } from "../domain/validation";
 import { useFlow } from "./useFlow";
 
 /** Nom du paramètre d'URL qui porte l'étape courante. */
@@ -65,6 +65,10 @@ export function useFlowNavigation() {
   // ou les résultats, le parcours est figé : sa longueur est celle du chemin.
   const total = question ? totalSteps(state.answers) : walk.path.length;
   const canGoNext = question ? isQuestionComplete(question, state.answers) : false;
+  // À distinguer de `canGoNext` : une réponse peut être donnée ET incohérente
+  // (Q5 face à Q4). Le bouton ne se grise que sur une réponse ABSENTE — sinon
+  // le message qui explique l'incohérence ne serait jamais déclenché.
+  const isAnswered = question ? missingFields(question, state.answers).length === 0 : true;
   const isLast = !!question && stepAfter(question.id, state.answers) === STEP_RESULTS;
 
   function goNext() {
@@ -93,6 +97,7 @@ export function useFlowNavigation() {
     isFirst,
     isLast,
     canGoNext,
+    isAnswered,
     goNext,
     goPrev,
     goTo,
