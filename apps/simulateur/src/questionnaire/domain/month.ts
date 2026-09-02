@@ -69,3 +69,12 @@ const YEARS_BACK = 60;
 export function oldestSelectableYear(): number {
   return currentMonth().year - YEARS_BACK;
 }
+
+/**
+ * Nombre de mois révolus écoulés depuis `value`. Négatif impossible : un mois
+ * futur est déjà refusé par la validation, et vaut 0 par sécurité.
+ */
+export function monthsSince(value: MonthValue): number {
+  const now = currentMonth();
+  return Math.max(0, (now.year - value.year) * 12 + (now.month - value.month));
+}

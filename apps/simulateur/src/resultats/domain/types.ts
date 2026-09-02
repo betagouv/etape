@@ -1,64 +1,52 @@
 // Modèle de données des résultats.
 //
-// TOUT le catalogue est analysé pour un profil : chaque dispositif est classé
-// dans l'un des trois onglets de la maquette (Éligible / Sous réserve / Non
-// éligible) à partir du statut de ses critères d'accès. Les critères sont donc
-// la seule source de vérité du classement — y compris les conditions d'entrée
-// du dispositif, qui font tomber en « Non éligible » plutôt que de le masquer.
+// Un résultat est une CARTE : un interlocuteur, un outil ou un dispositif que
+// les réponses de l'utilisateur rendent pertinent. Contrairement à la version
+// précédente, rien n'est affiché « sous réserve » ni « non éligible » : une
+// carte est retenue ou elle ne l'est pas (règle du ticket — aucun filtre, aucun
+// onglet, uniquement ce à quoi la personne a droit).
 
-import type { FlagSet } from "@/questionnaire/domain/flags";
 import type { RegionCode } from "@/questionnaire/domain/regions";
 
-/** Onglet de classement d'un dispositif. */
-export type Tier = "eligible" | "sous-reserve" | "non-eligible";
+import type { Profil } from "./profil";
 
 /**
- * Statut d'un critère d'accès :
- *  - `valide`     → rempli d'après les réponses (icône verte)
- *  - `a-verifier` → conditionnel / non déterminable ici (icône orange)
- *  - `manquant`   → condition bloquante non remplie (icône rouge)
+ * Catégorie d'un résultat, affichée en tag sur la carte. L'ordre du tableau est
+ * l'ordre d'affichage imposé par le ticket.
  */
-export type CritereStatut = "valide" | "a-verifier" | "manquant";
+export const CATEGORIES = ["interlocuteur", "outil", "dispositif"] as const;
 
-export interface Critere {
-  label: string;
-  statut: CritereStatut;
-}
+export type Categorie = (typeof CATEGORIES)[number];
 
-/** Lien « Commencer ma reconversion » d'une carte de dispositif. */
-export interface DeviceLink {
-  url: string;
-  /**
-   * Précision affichée entre parenthèses, qui distingue les liens d'un
-   * dispositif qui se décline (ex. CPF-AP : « État », « territoriale »…).
-   */
-  precision?: string;
-}
+/** Libellé du tag, tel qu'il apparaît sur la carte. */
+export const CATEGORIE_LABELS: Record<Categorie, string> = {
+  interlocuteur: "Interlocuteur",
+  outil: "Outil",
+  dispositif: "Dispositif",
+};
 
-/** Un dispositif du catalogue (repris du prototype HTML v2.1). */
-export interface Device {
-  /** Identifiant stable du dispositif (sert de clé de rendu). */
+/** Une carte du catalogue. */
+export interface Resultat {
+  /** Identifiant stable (clé de rendu, et repère dans le ticket). */
   id: string;
-  /** Intitulé complet. */
-  name: string;
-  /** Description courte affichée sur la carte. */
+  categorie: Categorie;
+  /** Intitulé affiché en titre de carte. */
+  nom: string;
+  /** Deux phrases maximum : ce que c'est, et ce que ça change pour la personne. */
   description: string;
-  /** Organisme(s) porteur(s) — parfois fonction des flags (ex. CEP). */
-  acteur: string | ((flags: FlagSet) => string);
   /**
-   * Lien « Commencer ma reconversion » (optionnel) : une URL, une fonction de la
-   * région quand le réseau est régionalisé (ex. CEP → portails Avenir Actifs),
-   * ou plusieurs liens précisés quand le dispositif se décline (ex. CPF-AP → un
-   * lien par versant de la fonction publique).
+   * Lien « En savoir plus ». Une fonction quand le réseau est régionalisé
+   * (le portail CEP dépend de la région de l'utilisateur).
    */
-  url?: string | DeviceLink[] | ((region: RegionCode | null) => string);
-  /** Priorité d'affichage au sein d'un onglet (1 = plus haut). */
-  priorite: (flags: FlagSet) => number;
+  url: string | ((region: RegionCode | null) => string);
   /**
-   * Critères d'accès décomposés — leur statut détermine l'onglet. Ils doivent
-   * inclure les conditions d'entrée du dispositif (statut, âge, RQTH…) sous
-   * forme de critère bloquant : c'est ce qui classe un dispositif hors cible en
-   * « Non éligible », avec le motif visible, au lieu de le faire disparaître.
+   * Condition d'affichage. Vraie = la carte est retenue. C'est la seule règle
+   * d'éligibilité : pas de statut intermédiaire.
    */
-  criteres: (flags: FlagSet) => Critere[];
+  quand: (profil: Profil) => boolean;
+}
+
+/** Une carte retenue, son lien déjà résolu pour la région de l'utilisateur. */
+export interface ResultatAffiche extends Omit<Resultat, "url" | "quand"> {
+  url: string;
 }
