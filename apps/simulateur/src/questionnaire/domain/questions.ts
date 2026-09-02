@@ -162,14 +162,12 @@ export const questions: Question[] = [
         options: [
           {
             value: SITUATION_SALARIE,
-            label: "Salarié·e",
-            description: "Secteur privé.",
+            label: "Salarié·e du secteur privé",
             flags: [FLAGS.SALARIE],
           },
           {
             value: SITUATION_DEMANDEUR,
-            label: "Demandeur·euse d'emploi",
-            description: "Inscrit·e à France Travail.",
+            label: "Demandeur·euse d'emploi inscrit·e à France Travail",
             flags: [FLAGS.DE],
           },
           {
@@ -184,8 +182,7 @@ export const questions: Question[] = [
           },
           {
             value: SITUATION_SANS_EMPLOI,
-            label: "Sans emploi",
-            description: "Non inscrit·e à France Travail.",
+            label: "Sans emploi, non inscrit·e à France Travail",
             flags: [FLAGS.SANS_EMPLOI],
           },
         ],
@@ -196,6 +193,7 @@ export const questions: Question[] = [
         sub: SITUATION_SALARIE,
         label: "Quel est votre type de contrat ?",
         required: true,
+        orientation: "horizontal",
         visibleWhen: estSalarie,
         options: [
           { value: "cdi", label: "CDI", flags: [FLAGS.CDI] },
