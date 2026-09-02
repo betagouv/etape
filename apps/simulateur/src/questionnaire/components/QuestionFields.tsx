@@ -78,7 +78,12 @@ export function QuestionFields({
                   <div
                     role="group"
                     aria-label={`Précisions : ${option?.label ?? ""}`}
-                    className="border-border-strong ms-2 flex flex-col gap-6 border-s-2 ps-4 sm:ms-4 sm:ps-6"
+                    // Filet teal aligné sous le LIBELLÉ de l'option (ms-6 = la
+                    // puce de 16px + son écart de 8px), et remonté de 8px pour
+                    // se coller à elle : dans la colonne d'options espacée de
+                    // 24px, il reste ainsi plus proche de la réponse qu'il
+                    // précise que de la suivante. Repris du proto (`.sub`).
+                    className="border-secondary-selected ms-6 -mt-2 flex flex-col gap-5 border-s-2 ps-4 pt-4 pb-1"
                   >
                     {opened.map((sub) => (
                       <FieldRenderer
