@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 
+import { isFieldVisible } from "../domain/conditions";
 import type { Answers, AnswerValue, Question } from "../domain/types";
 import { fieldErrors, missingFields } from "../domain/validation";
 import { FIELD_ERROR_ATTRIBUTE } from "./fields/aria";
@@ -56,6 +57,13 @@ export function QuestionScreen({
   const titleId = `${question.id}-title`;
   const subtitleId = question.subtitle ? `${question.id}-subtitle` : undefined;
 
+  // Un écran à champ unique (Q1, Q2, Q4, Q5, Q7) porte son message une seule
+  // fois, en bas. Un écran qui en a plusieurs (Q3, Q6) garde un message sous
+  // chaque champ fautif — une ligne unique ne dirait pas LEQUEL — et se résume
+  // en bas au nombre de réponses en attente.
+  const visibles = question.fields.filter((field) => isFieldVisible(field, answers));
+  const champUnique = visibles.length === 1 ? visibles[0] : undefined;
+
   const showErrors = failedAttempt !== undefined;
   const errors = showErrors ? fieldErrors(question, answers) : new Map<string, string>();
   // Une réponse absente ne se « corrige » pas, elle se donne ; une réponse
@@ -64,11 +72,16 @@ export function QuestionScreen({
   const resume =
     errors.size === absences
       ? errors.size === 1
-        ? "Une réponse manque pour continuer."
-        : `${errors.size} réponses manquent pour continuer.`
+        ? "Une réponse manque : complétez-la pour continuer."
+        : `${errors.size} réponses manquent : complétez-les pour continuer.`
       : errors.size === 1
         ? "Une réponse est à corriger pour continuer."
         : `${errors.size} réponses sont à corriger pour continuer.`;
+
+  // Sur un écran à champ unique, cette ligne EST le message du champ : elle en
+  // porte l'`id`, celui que l'`aria-describedby` du champ désigne déjà.
+  const bilan = champUnique ? [...errors.values()][0] : resume;
+  const bilanId = champUnique ? `${champUnique.name}-error` : undefined;
 
   const fieldsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -86,13 +99,6 @@ export function QuestionScreen({
         subtitleId={subtitleId}
         headingRef={headingRef}
       />
-      {/* Le récapitulatif est visible mais pas annoncé : le focus part sur le
-          premier champ fautif, et deux annonces se marcheraient dessus. */}
-      {errors.size > 0 && (
-        <p className="text-destructive-text text-sm leading-5 font-semibold md:text-base md:leading-6">
-          {resume}
-        </p>
-      )}
       <div ref={fieldsRef}>
         <QuestionFields
           question={question}
@@ -101,8 +107,19 @@ export function QuestionScreen({
           titleId={titleId}
           describedBy={subtitleId}
           errors={errors}
+          inlineErrors={champUnique === undefined}
         />
       </div>
+      {/* Le bilan est visible mais pas annoncé : le focus part sur le premier
+          champ fautif, et deux annonces se marcheraient dessus. */}
+      {errors.size > 0 && (
+        <p
+          id={bilanId}
+          className="text-destructive-text text-sm leading-5 font-semibold md:text-base md:leading-6"
+        >
+          {bilan}
+        </p>
+      )}
     </div>
   );
 }

@@ -87,21 +87,24 @@ export function fieldErrors(question: Question, answers: Answers): Map<string, s
 }
 
 /**
- * Message adressé à l'utilisateur pour un champ resté incomplet. Il dit quoi
- * faire, pas ce qui est faux : c'est la seule information utile à ce stade.
+ * Message adressé à l'utilisateur pour un champ resté incomplet.
+ *
+ * Forme unique : le constat, puis l'action à faire pour continuer. Le message
+ * se suffit à lui-même — sur un écran à champ unique, il s'affiche seul en bas,
+ * détaché du champ qu'il concerne.
  */
 export function fieldErrorMessage(field: Field): string {
   switch (field.type) {
     case "radio":
-      return "Sélectionnez une réponse.";
+      return "Aucune réponse sélectionnée : choisissez une option pour continuer.";
     case "checkbox":
-      return "Sélectionnez au moins une réponse.";
+      return "Aucune réponse sélectionnée : cochez au moins une option pour continuer.";
     case "month":
-      return "Indiquez le mois et l'année.";
+      return "Date incomplète : indiquez le mois et l'année pour continuer.";
     case "number":
-      return `Indiquez un nombre entre ${field.min ?? NUMBER_MIN} et ${field.max ?? NUMBER_MAX}.`;
+      return `Aucune valeur saisie : indiquez un nombre entre ${field.min ?? NUMBER_MIN} et ${field.max ?? NUMBER_MAX} pour continuer.`;
     case "region":
-      return "Choisissez une région dans la liste.";
+      return "Aucune région sélectionnée : choisissez-la dans la liste pour continuer.";
     case "toggle":
       // Jamais atteint : une case à cocher est toujours complète.
       return "";

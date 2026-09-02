@@ -3,6 +3,7 @@
 import { isFieldVisible, opensUnder } from "../domain/conditions";
 import type { Answers, AnswerValue, Field, Question } from "../domain/types";
 import { FieldRenderer } from "./FieldRenderer";
+import { InlineFieldErrorProvider } from "./fields/FieldError";
 
 interface QuestionFieldsProps {
   question: Question;
@@ -13,6 +14,11 @@ interface QuestionFieldsProps {
   describedBy?: string;
   /** Message d'erreur par `name` de champ. Vide tant que rien n'a été tenté. */
   errors?: ReadonlyMap<string, string>;
+  /**
+   * Afficher les messages SOUS les champs. Faux quand l'écran n'a qu'un champ :
+   * son message tient alors en bas de l'écran, sans le répéter.
+   */
+  inlineErrors?: boolean;
 }
 
 /**
@@ -30,6 +36,7 @@ export function QuestionFields({
   titleId,
   describedBy,
   errors,
+  inlineErrors = true,
 }: QuestionFieldsProps) {
   const mainFields = question.fields.filter((field) => field.sub === undefined);
   const subFields = question.fields.filter((field) => field.sub !== undefined);
@@ -101,5 +108,9 @@ export function QuestionFields({
     );
   }
 
-  return <div className="flex w-full flex-col gap-6 md:gap-8">{mainFields.map(renderField)}</div>;
+  return (
+    <InlineFieldErrorProvider value={inlineErrors}>
+      <div className="flex w-full flex-col gap-6 md:gap-8">{mainFields.map(renderField)}</div>
+    </InlineFieldErrorProvider>
+  );
 }
