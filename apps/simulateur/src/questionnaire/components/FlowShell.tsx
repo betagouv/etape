@@ -89,7 +89,6 @@ export function FlowShell() {
           </div>
           <QuestionCta
             isFirst={nav.isFirst}
-            canGoNext={nav.canGoNext}
             onPrev={nav.goPrev}
             onNext={handleNext}
             nextLabel={nav.isLast ? "Voir les résultats" : "Suivant"}

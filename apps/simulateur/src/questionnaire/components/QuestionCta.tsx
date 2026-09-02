@@ -16,25 +16,25 @@ import {
 
 interface QuestionCtaProps {
   isFirst: boolean;
-  canGoNext: boolean;
   onPrev: () => void;
   onNext: () => void;
   nextLabel?: string;
 }
 
-const NEXT_HINT_ID = "question-cta-next-hint";
-
 // TODO (ticket dédié) : sur la 1re question, « Précédent » sort du simulateur,
 // ce qui double le « Quitter » de la navbar. Et comme quitter ne détruit plus
 // rien, la confirmation protège d'une perte qui n'existe pas. À trancher :
 // soit « Précédent » redevient inerte, soit « Quitter » disparaît d'ici.
-export function QuestionCta({
-  isFirst,
-  canGoNext,
-  onPrev,
-  onNext,
-  nextLabel = "Suivant",
-}: QuestionCtaProps) {
+/**
+ * Les deux boutons de bas d'écran.
+ *
+ * « Suivant » est TOUJOURS actif, même quand la question n'est pas valide : un
+ * bouton grisé ne dit ni ce qui manque ni quoi faire, il laisse croire à une
+ * panne. C'est le clic qui répond — la navigation est retenue, le récapitulatif
+ * d'erreurs s'affiche et le focus part sur le premier champ fautif. Le CTA n'a
+ * donc pas à connaître la validité de l'écran.
+ */
+export function QuestionCta({ isFirst, onPrev, onNext, nextLabel = "Suivant" }: QuestionCtaProps) {
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -53,19 +53,11 @@ export function QuestionCta({
       <Button
         type="button"
         size="lg"
-        aria-disabled={!canGoNext}
-        aria-describedby={canGoNext ? undefined : NEXT_HINT_ID}
         onClick={onNext}
-        className="aria-disabled:hover:bg-primary min-h-11 flex-1 rounded-lg px-4 py-3 text-sm font-semibold aria-disabled:cursor-not-allowed aria-disabled:opacity-50 md:flex-none md:py-2 md:text-base"
+        className="min-h-11 flex-1 rounded-lg px-4 py-3 text-sm font-semibold md:flex-none md:py-2 md:text-base"
       >
         {nextLabel}
       </Button>
-
-      {!canGoNext && (
-        <span id={NEXT_HINT_ID} className="sr-only">
-          Répondez à la question pour continuer.
-        </span>
-      )}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
