@@ -48,7 +48,9 @@ export const REGIONS = [
 
 /**
  * Code INSEE d'une région. Union littérale dérivée de `REGIONS` : ajouter une
- * région ici oblige `resultats/domain/cep.ts` à lui donner un portail.
+ * région ici oblige les trois fichiers de liens régionalisés de
+ * `resultats/domain/` — `cep.ts`, `transitions-pro.ts` et `conseil-regional.ts` —
+ * à lui donner une URL.
  */
 export type RegionCode = (typeof REGIONS)[number]["code"];
 

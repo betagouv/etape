@@ -10,7 +10,7 @@ const OCEAN_INDIEN = "https://oceanindien.avenir-actifs.org";
 const PACA_CORSE = "https://pacacorse.avenir-actifs.org";
 
 /** Portail national, servi quand la région n'a pas pu être déterminée. */
-export const CEP_URL_DEFAUT = "https://mon-cep.org/";
+const CEP_URL_DEFAUT = "https://mon-cep.org/";
 
 const CEP_URLS: Record<RegionCode, string> = {
   "11": "https://idf.avenir-actifs.org", // Île-de-France
