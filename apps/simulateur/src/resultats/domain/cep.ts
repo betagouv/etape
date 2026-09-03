@@ -31,9 +31,6 @@ const CEP_URLS: Record<RegionCode, string> = {
   "03": ANTILLES_GUYANE, // Guyane
   "04": OCEAN_INDIEN, // La Réunion
   "06": OCEAN_INDIEN, // Mayotte
-  "975": ANTILLES_GUYANE, // Saint-Pierre-et-Miquelon
-  "977": ANTILLES_GUYANE, // Saint-Barthélemy
-  "978": ANTILLES_GUYANE, // Saint-Martin
 };
 
 /** Portail CEP de l'utilisateur, d'après la région déduite de ses réponses. */

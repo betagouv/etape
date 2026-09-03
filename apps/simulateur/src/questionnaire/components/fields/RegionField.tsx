@@ -32,7 +32,7 @@ const OUTRE_MER = REGIONS.filter((region) => "outreMer" in region);
 /**
  * Choix d'une région dans la liste fermée du produit.
  *
- * Une liste déroulante, pas une recherche : les 21 régions tiennent à l'écran,
+ * Une liste déroulante, pas une recherche : les 18 régions tiennent à l'écran,
  * et la saisie au clavier de Radix amène directement sur celle dont le nom
  * commence par les lettres tapées. Les collectivités d'outre-mer sont groupées
  * à part pour que la métropole reste lisible d'un coup d'œil.

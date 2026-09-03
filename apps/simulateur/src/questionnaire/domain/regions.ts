@@ -2,12 +2,17 @@
 //
 // La région est demandée directement en Q6 : c'est la maille des organismes
 // (Transitions Pro, portails CEP d'Avenir Actifs), et elle ne bouge pas. Elle
-// est donc écrite ici plutôt que cherchée sur une API : une liste de 21 entrées
+// est donc écrite ici plutôt que cherchée sur une API : une liste de 18 entrées
 // figées ne justifie ni requête réseau, ni état de chargement, ni panne
 // possible.
 //
 // L'ordre du tableau est celui de l'affichage : métropole puis outre-mer,
 // chacune par ordre alphabétique.
+//
+// Seules les RÉGIONS y figurent. Saint-Pierre-et-Miquelon, Saint-Barthélemy et
+// Saint-Martin sont des collectivités d'outre-mer, pas des régions : elles ont
+// été retirées sur décision produit, et les réseaux régionalisés n'ont donc
+// pas à leur donner de lien.
 
 import { FIELD_REGION_RESIDENCE, FIELD_REGION_TRAVAIL } from "./questions";
 import type { Answers, AnswerValue } from "./types";
@@ -39,9 +44,6 @@ export const REGIONS = [
   { code: "04", nom: "La Réunion", outreMer: true },
   { code: "02", nom: "Martinique", outreMer: true },
   { code: "06", nom: "Mayotte", outreMer: true },
-  { code: "977", nom: "Saint-Barthélemy", outreMer: true },
-  { code: "978", nom: "Saint-Martin", outreMer: true },
-  { code: "975", nom: "Saint-Pierre-et-Miquelon", outreMer: true },
 ] as const satisfies readonly Region[];
 
 /**
