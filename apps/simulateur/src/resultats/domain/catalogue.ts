@@ -32,7 +32,6 @@
 
 import { FLAGS } from "@/questionnaire/domain/flags";
 
-import { cepUrl } from "./cep";
 import { conseilRegionalUrl } from "./conseil-regional";
 import type { Profil } from "./profil";
 import { transitionsProUrl } from "./transitions-pro";
@@ -69,6 +68,13 @@ const ancienneteePtp = (p: Profil) => ancienneteMois(p) >= 12 && activiteAnnees(
 /** Démission-Reconversion : 5 ans d'activité. */
 const anciennete5Ans = (p: Profil) => activiteAnnees(p) >= 5;
 
+/**
+ * Portail national du réseau CEP. Il oriente lui-même vers l'opérateur régional,
+ * ce qui remplace la table des 18 portails Avenir Actifs qu'on servait avant.
+ * Exporté parce que le pied de page des résultats renvoie au même endroit.
+ */
+export const CEP_URL = "https://mon-cep.org/";
+
 export const CATALOGUE: Resultat[] = [
   // ═══ INTERLOCUTEURS ═════════════════════════════════════════════════════
   {
@@ -77,8 +83,7 @@ export const CATALOGUE: Resultat[] = [
     nom: "CEP régional",
     description:
       "Le conseiller en évolution professionnelle (CEP) vous accompagne gratuitement dans vos réflexions sur votre avenir professionnel. Il vous aide à faire le point sur votre situation, à construire votre projet et à identifier les solutions adaptées à vos objectifs.",
-    // Réseau régionalisé : le portail dépend de la région de l'utilisateur.
-    url: cepUrl,
+    url: CEP_URL,
     // Absent du parcours demandeur d'emploi (S7) : France Travail y est
     // l'opérateur CEP, la carte ferait doublon et enverrait au mauvais guichet.
     quand: (p) => salarie(p) || agentPublic(p) || sansEmploi(p) || independant(p),

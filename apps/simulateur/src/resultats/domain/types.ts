@@ -36,7 +36,8 @@ export interface Resultat {
   description: string;
   /**
    * Lien « En savoir plus ». Une fonction quand le réseau est régionalisé
-   * (le portail CEP dépend de la région de l'utilisateur).
+   * (Transitions Pro et l'offre de formation des Régions dépendent de la région
+   * de l'utilisateur).
    */
   url: string | ((region: RegionCode | null) => string);
   /**

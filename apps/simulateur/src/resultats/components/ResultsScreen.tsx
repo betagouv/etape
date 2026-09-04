@@ -6,7 +6,7 @@ import { Button } from "@etape/ui/components/button";
 
 import type { Answers } from "@/questionnaire/domain/types";
 
-import { cepUrl } from "../domain/cep";
+import { CEP_URL } from "../domain/catalogue";
 import { buildProfil } from "../domain/profil";
 import { selectResultats } from "../domain/selection";
 import { AnswersRecap } from "./AnswersRecap";
@@ -90,7 +90,7 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
             Cet outil donne une orientation indicative, susceptible d’évoluer, et ne remplace pas
             l’accompagnement personnalisé et gratuit d’un{" "}
             <a
-              href={cepUrl(profil.region)}
+              href={CEP_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-content-accent font-semibold"

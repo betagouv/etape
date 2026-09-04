@@ -1,7 +1,7 @@
 // Régions administratives — liste fermée, source unique du produit.
 //
 // La région est demandée directement en Q6 : c'est la maille des organismes
-// (Transitions Pro, portails CEP d'Avenir Actifs), et elle ne bouge pas. Elle
+// (Transitions Pro, programmes régionaux de formation), et elle ne bouge pas. Elle
 // est donc écrite ici plutôt que cherchée sur une API : une liste de 18 entrées
 // figées ne justifie ni requête réseau, ni état de chargement, ni panne
 // possible.
@@ -48,9 +48,9 @@ export const REGIONS = [
 
 /**
  * Code INSEE d'une région. Union littérale dérivée de `REGIONS` : ajouter une
- * région ici oblige les trois fichiers de liens régionalisés de
- * `resultats/domain/` — `cep.ts`, `transitions-pro.ts` et `conseil-regional.ts` —
- * à lui donner une URL.
+ * région ici oblige les deux fichiers de liens régionalisés de
+ * `resultats/domain/` — `transitions-pro.ts` et `conseil-regional.ts` — à lui
+ * donner une URL.
  */
 export type RegionCode = (typeof REGIONS)[number]["code"];
 
