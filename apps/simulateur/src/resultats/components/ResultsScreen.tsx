@@ -1,21 +1,17 @@
 "use client";
 
-import { useMemo, useState, type RefObject } from "react";
+import { useMemo, type RefObject } from "react";
 
 import { Button } from "@etape/ui/components/button";
-import { Tabs, TabsContent } from "@etape/ui/components/tabs";
 
-import { walkFlow } from "@/questionnaire/domain/flow";
-import { regionFromAnswers } from "@/questionnaire/domain/regions";
 import type { Answers } from "@/questionnaire/domain/types";
 
-import { cepUrl } from "../domain/cep";
-import { evaluateDevices, groupByTier, TIERS } from "../domain/eligibility";
-import type { Tier } from "../domain/types";
+import { CEP_URL } from "../domain/catalogue";
+import { buildProfil } from "../domain/profil";
+import { selectResultats } from "../domain/selection";
 import { AnswersRecap } from "./AnswersRecap";
-import { DeviceCard } from "./DeviceCard";
 import { EmptyResults } from "./EmptyResults";
-import { ResultsTabs } from "./ResultsTabs";
+import { ResultCard } from "./ResultCard";
 import { RESULTS_TOP_ID, ScrollToTopButton } from "./ScrollToTopButton";
 
 interface ResultsScreenProps {
@@ -27,26 +23,21 @@ interface ResultsScreenProps {
 
 const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10";
 
-export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: ResultsScreenProps) {
-  const region = useMemo(() => regionFromAnswers(answers), [answers]);
-  const grouped = useMemo(() => {
-    const { flags } = walkFlow(answers);
-    return groupByTier(evaluateDevices(flags, region));
-  }, [answers, region]);
+/** « 1 résultat correspond » / « 12 résultats correspondent ». */
+function decompte(total: number): string {
+  return total <= 1
+    ? `${total} résultat correspond à votre situation`
+    : `${total} résultats correspondent à votre situation`;
+}
 
-  const counts: Record<Tier, number> = {
-    eligible: grouped.eligible.length,
-    "sous-reserve": grouped["sous-reserve"].length,
-    "non-eligible": grouped["non-eligible"].length,
-  };
-  const total = counts.eligible + counts["sous-reserve"] + counts["non-eligible"];
-  const defaultTier = TIERS.find((tier) => counts[tier] > 0) ?? "eligible";
-  const [active, setActive] = useState<Tier>(defaultTier);
+export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: ResultsScreenProps) {
+  const profil = useMemo(() => buildProfil(answers), [answers]);
+  const resultats = useMemo(() => selectResultats(profil), [profil]);
 
   return (
     <main className="flex flex-1 flex-col">
       <header className="border-border bg-background border-b">
-        <div className={`${CONTAINER} flex flex-col gap-3 py-4 md:gap-4 md:py-16`}>
+        <div className={`${CONTAINER} flex flex-col gap-3 py-8 md:gap-4 md:py-16`}>
           <h1
             ref={headingRef}
             id={RESULTS_TOP_ID}
@@ -56,47 +47,34 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
             Résultats
           </h1>
           <p className="text-content-secondary max-w-3xl text-base leading-6 md:text-lg md:leading-7">
-            Sur la base de tes réponses, voici tous les dispositifs analysés. Chacun est classé
-            selon ton éligibilité, avec le motif et un accès direct à l’organisme.
+            Voici les interlocuteurs à contacter, les outils à votre disposition et les dispositifs
+            qui correspondent à vos réponses. Rien n’est automatique&nbsp;: un conseiller vous
+            aidera à choisir par où commencer.
           </p>
         </div>
       </header>
 
-      {total === 0 ? (
-        <div className={`${CONTAINER} flex flex-col gap-4 py-12 md:gap-8`}>
-          <p className="text-content-secondary py-12 text-center text-base">
-            Aucun dispositif n’a pu être analysé à partir de tes réponses. Essaie de les modifier.
-          </p>
-        </div>
-      ) : (
-        <Tabs
-          value={active}
-          onValueChange={(value) => setActive(value as Tier)}
-          className="flex flex-1 flex-col gap-0"
-        >
-          <div className="border-border bg-background sticky top-0 z-10 border-b">
-            <div className={`${CONTAINER} pt-3 md:pt-4`}>
-              <ResultsTabs counts={counts} />
-            </div>
-          </div>
-
-          {TIERS.map((tier) => (
-            <TabsContent
-              key={tier}
-              value={tier}
-              className={`${CONTAINER} flex flex-col gap-4 py-12 md:gap-8`}
+      <section aria-labelledby="resultats-decompte" className={`${CONTAINER} py-8 md:py-12`}>
+        {resultats.length === 0 ? (
+          <EmptyResults />
+        ) : (
+          <>
+            <h2
+              id="resultats-decompte"
+              className="text-foreground mb-6 text-lg leading-7 font-bold md:mb-8"
             >
-              {grouped[tier].length === 0 ? (
-                <EmptyResults />
-              ) : (
-                grouped[tier].map((evaluated) => (
-                  <DeviceCard key={evaluated.device.id} evaluated={evaluated} />
-                ))
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      )}
+              {decompte(resultats.length)}
+            </h2>
+            <ul className="grid list-none grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {resultats.map((resultat) => (
+                <li key={resultat.id} className="h-full">
+                  <ResultCard resultat={resultat} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
 
       <section className="border-border bg-muted border-t">
         <div className={`${CONTAINER} py-12 md:py-14`}>
@@ -112,7 +90,7 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
             Cet outil donne une orientation indicative, susceptible d’évoluer, et ne remplace pas
             l’accompagnement personnalisé et gratuit d’un{" "}
             <a
-              href={cepUrl(region)}
+              href={CEP_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-content-accent font-semibold"

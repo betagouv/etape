@@ -1,96 +1,342 @@
 import { FLAGS } from "./flags";
-import type { Outcome, Question } from "./types";
+import { monthLabel, monthsSince, oldestSelectableYear, parseMonth } from "./month";
+import type { Answers, Outcome, Question } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────
-// Flow du simulateur ÉTAPE (v2.1) — porté du prototype HTML.
+// Questionnaire du simulateur ÉTAPE — règles métier de la PO (ticket #56).
 //
-// Chaque question porte UN champ (radio ou checkbox) dont les options ajoutent
-// des flags. Le branchement (`next`) lit les flags accumulés (option courante
-// incluse) et renvoie l'id de l'étape suivante, ou le sentinelle STEP_RESULTS.
+// SÉQUENCE de 7 questions, posées dans l'ordre de ce tableau. Une question
+// conditionnelle porte un prédicat `when` ; une précision conditionnelle est un
+// champ de plus sur le MÊME écran, avec son `visibleWhen` et son `sub`, qui dit
+// sous quelle option elle s'ouvre.
+//
+// Les options ajoutent des flags, lus par la porte de sortie de Q6 et par le
+// module `resultats/`.
 // ─────────────────────────────────────────────────────────────────────────
 
 /** Sentinelle : fin du questionnaire → écran de résultats (module `resultats/`). */
 export const STEP_RESULTS = "resultats";
 
-// Champs. Servent de clé dans la map des réponses. Une entrée par question,
-// sauf les deux questions de localisation qui portent chacune un radio
-// (France / hors de France) et une ville conditionnelle.
-export const FIELD_LIEU_TRAVAIL = "lieuTravail";
-export const FIELD_VILLE_TRAVAIL = "villeTravail";
+// Champs — clés dans la map des réponses.
+export const FIELD_ORIGINE = "origine";
+export const FIELD_METIER = "metier";
+export const FIELD_SITUATION = "situation";
+export const FIELD_CONTRAT = "contrat";
+export const FIELD_CADRE = "cadre";
+export const FIELD_VERSANT = "versant";
+export const FIELD_ARRET_TRAVAIL = "arretTravail";
+export const FIELD_ENTREE_EMPLOYEUR = "entreeEmployeur";
+export const FIELD_DUREE_ACTIVITE = "dureeActivite";
 export const FIELD_RESIDENCE = "residence";
-export const FIELD_VILLE_RESIDENCE = "villeResidence";
-export const FIELD_MOTIVATION = "motivation";
-export const FIELD_ENTREPRENEUR_FT = "entrepreneurFranceTravail";
-export const FIELD_METIER_IDEE = "metierIdee";
-export const FIELD_AGE = "age";
-export const FIELD_FRANCE_TRAVAIL = "franceTravail";
-export const FIELD_FONCTION_PUBLIQUE = "fonctionPublique";
-export const FIELD_STATUT = "statut";
-export const FIELD_ANCIENNETE = "anciennete";
-export const FIELD_MODE_RECONVERSION = "modeReconversion";
-export const FIELD_ANCIENNETE_SALARIALE = "ancienneteSalariale";
-export const FIELD_SANTE = "sante";
-export const FIELD_DIPLOME = "diplome";
+export const FIELD_REGION_RESIDENCE = "regionResidence";
+export const FIELD_AUTRE_REGION = "autreRegion";
+export const FIELD_TRAVAIL_FRANCE = "travailFrance";
+export const FIELD_REGION_TRAVAIL = "regionTravail";
+export const FIELD_RQTH = "rqth";
 
-// Identifiants d'étapes (= id de question) référencés par le branchement.
-const Q_LIEU_TRAVAIL = "lieu-travail";
-const Q_RESIDENCE = "residence";
-const Q_MOTIVATION = "motivation";
-const Q_ENTREPRENEUR_FT = "entrepreneur-france-travail";
-const Q_METIER_IDEE = "metier-idee";
-const Q_AGE = "age";
-const Q_FRANCE_TRAVAIL = "france-travail";
-const Q_FONCTION_PUBLIQUE = "fonction-publique";
-const Q_STATUT = "statut";
+// Identifiants d'étapes (= id de question), repris dans l'URL (`?q=`).
+const Q_ORIGINE = "origine";
+const Q_METIER = "metier";
+const Q_SITUATION = "situation";
 const Q_ANCIENNETE = "anciennete";
-const Q_MODE_RECONVERSION = "mode-reconversion";
-const Q_ANCIENNETE_SALARIALE = "anciennete-salariale";
-const Q_SANTE = "sante-handicap";
-const Q_DIPLOME = "diplome";
+const Q_DUREE = "duree";
+const Q_LIEU = "lieu";
+const Q_RQTH = "rqth";
 
-// Valeurs partagées par les deux questions de localisation.
+// Valeurs de Q3, référencées par les conditions des précisions.
+export const SITUATION_SALARIE = "salarie";
+export const SITUATION_DEMANDEUR = "demandeur";
+export const SITUATION_AGENT = "agent";
+export const SITUATION_INDEPENDANT = "independant";
+export const SITUATION_SANS_EMPLOI = "sans-emploi";
+
+// Valeurs de Q6.
 export const LOC_FRANCE = "france";
 export const LOC_HORS_FRANCE = "hors-france";
+const OUI = "oui";
+const NON = "non";
 
-/** Écran terminal : réside ET travaille hors de France. */
+/** Écran terminal : ne réside ni ne travaille en France. */
 export const OUTCOME_HORS_FRANCE = "hors-france";
+
+/** A un employeur : les seules situations à qui l'ancienneté est demandée. */
+const aUnEmployeur = (answers: Answers) =>
+  answers[FIELD_SITUATION] === SITUATION_SALARIE || answers[FIELD_SITUATION] === SITUATION_AGENT;
+
+/**
+ * En activité : salarié·e, agent·e ou indépendant·e. Ces situations sont les
+ * seules à qui l'on demande l'arrêt de travail et le lieu de travail — les
+ * autres n'ont pas d'employeur à situer.
+ */
+const enActivite = (answers: Answers) =>
+  aUnEmployeur(answers) || answers[FIELD_SITUATION] === SITUATION_INDEPENDANT;
+
+const estSalarie = (answers: Answers) => answers[FIELD_SITUATION] === SITUATION_SALARIE;
+
+/**
+ * Q5 ne peut pas être inférieure à Q4 : on ne totalise pas 5 ans d'activité en
+ * étant chez le même employeur depuis 10 ans.
+ *
+ * Le seuil est l'ancienneté arrondie à l'année INFÉRIEURE. Q5 se saisit « en
+ * années, arrondies à l'année la plus proche » : une ancienneté de 10 ans et
+ * 8 mois se déclare donc légitimement 10 comme 11, et seul 10 fait un seuil qui
+ * n'accuse personne à tort.
+ *
+ * Porté par Q5 seule, jamais par Q4 : voir `Field.coherence`.
+ */
+const dureeCoherente = (answers: Answers): string | null => {
+  const entree = parseMonth(answers[FIELD_ENTREE_EMPLOYEUR]);
+  // Ancienneté non demandée (sans employeur) ou pas encore saisie : rien à comparer.
+  if (!entree) return null;
+
+  const seuil = Math.floor(monthsSince(entree) / 12);
+  const total = Number(answers[FIELD_DUREE_ACTIVITE]);
+  if (!Number.isFinite(total) || total >= seuil) return null;
+
+  return `Vous avez indiqué être chez votre employeur actuel depuis ${monthLabel(entree)}, soit ${seuil} ${seuil > 1 ? "ans" : "an"} : votre durée totale ne peut pas être inférieure. Corrigez-la, ou revenez à la question précédente.`;
+};
 
 /** Séquence ordonnée des questions du flow. */
 export const questions: Question[] = [
+  // ─── Q1. Origine de la demande ─────────────────────────────────────────
   {
-    id: Q_LIEU_TRAVAIL,
-    title: "Où travaillez-vous ?",
+    id: Q_ORIGINE,
+    title: "D'où vient ce besoin d'informations ?",
+    subtitle: "Plusieurs réponses possibles. Il n'y a pas de mauvaise réponse.",
+    fields: [
+      {
+        type: "checkbox",
+        name: FIELD_ORIGINE,
+        required: true,
+        options: [
+          {
+            value: "nouveau-depart",
+            label: "J'ai envie d'un nouveau départ",
+            flags: [FLAGS.NOUVEAU_DEPART],
+          },
+          {
+            value: "sante",
+            label: "Ma santé ne me permet plus de me projeter dans ma situation professionnelle",
+            flags: [FLAGS.SANTE],
+          },
+          {
+            value: "poste-menace",
+            label: "Mon poste est menacé ou mon entreprise est en difficulté ou en restructuration",
+            flags: [FLAGS.MENACE],
+          },
+          {
+            value: "pas-emploi",
+            label: "Je ne trouve pas d'emploi",
+            flags: [FLAGS.PAS_EMPLOI],
+          },
+          { value: "autre", label: "Autre", flags: [FLAGS.AUTRE_MOTIF] },
+        ],
+      },
+    ],
+  },
+
+  // ─── Q2. Métier souhaité ───────────────────────────────────────────────
+  {
+    id: Q_METIER,
+    title: "Avez-vous une idée du métier que vous souhaitez faire ?",
+    subtitle: "Choix unique.",
     fields: [
       {
         type: "radio",
-        name: FIELD_LIEU_TRAVAIL,
+        name: FIELD_METIER,
         required: true,
-        orientation: "horizontal",
         options: [
-          { value: LOC_FRANCE, label: "En France" },
           {
-            value: LOC_HORS_FRANCE,
-            label: "Hors de France",
-            flags: [FLAGS.TRAVAIL_HORS_FRANCE],
+            value: "precis",
+            label: "Oui, j'ai un métier cible précis",
+            flags: [FLAGS.METIER_PRECIS],
+          },
+          {
+            value: "piste",
+            label: "J'ai une piste mais pas encore de certitude",
+            flags: [FLAGS.ORIENTATION],
+          },
+          {
+            value: "ailleurs",
+            label: "Je veux garder mon métier mais l'exercer ailleurs",
+            flags: [FLAGS.GARDER_METIER],
+          },
+          {
+            value: "non",
+            label: "Non, je ne sais pas encore",
+            flags: [FLAGS.ORIENTATION],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ─── Q3. Situation professionnelle et ses précisions ───────────────────
+  // Les précisions vivent sur le même écran, sous l'option qui les déclenche.
+  {
+    id: Q_SITUATION,
+    title: "Quelle est votre situation professionnelle actuelle ?",
+    subtitle: "Choix unique. Des précisions s'afficheront sous votre réponse.",
+    fields: [
+      {
+        type: "radio",
+        name: FIELD_SITUATION,
+        required: true,
+        options: [
+          {
+            value: SITUATION_SALARIE,
+            label: "Salarié·e du secteur privé",
+            flags: [FLAGS.SALARIE],
+          },
+          {
+            value: SITUATION_DEMANDEUR,
+            label: "Demandeur·euse d'emploi inscrit·e à France Travail",
+            flags: [FLAGS.DE],
+          },
+          {
+            value: SITUATION_AGENT,
+            label: "Agent·e de la fonction publique",
+            flags: [FLAGS.FONCTIONNAIRE],
+          },
+          {
+            value: SITUATION_INDEPENDANT,
+            label: "Auto-entrepreneur·euse ou chef·fe d'entreprise",
+            flags: [FLAGS.INDEPENDANT],
+          },
+          {
+            value: SITUATION_SANS_EMPLOI,
+            label: "Sans emploi, non inscrit·e à France Travail",
+            flags: [FLAGS.SANS_EMPLOI],
           },
         ],
       },
       {
-        type: "city",
-        name: FIELD_VILLE_TRAVAIL,
-        label: "Ville",
+        type: "radio",
+        name: FIELD_CONTRAT,
+        sub: SITUATION_SALARIE,
+        label: "Quel est votre type de contrat ?",
         required: true,
-        placeholder: "Exemple : Lyon",
-        visibleWhen: (answers) => answers[FIELD_LIEU_TRAVAIL] === LOC_FRANCE,
+        orientation: "horizontal",
+        visibleWhen: estSalarie,
+        options: [
+          { value: "cdi", label: "CDI", flags: [FLAGS.CDI] },
+          { value: "cdd", label: "CDD", flags: [FLAGS.CDD] },
+          { value: "interim", label: "Intérimaire", flags: [FLAGS.INTERIM] },
+          {
+            value: "intermittent",
+            label: "Intermittent·e du spectacle",
+            flags: [FLAGS.INTERMITTENT],
+          },
+        ],
+      },
+      {
+        // Le statut cadre n'est demandé qu'en CDI et en CDD (règle du ticket) :
+        // il ne veut rien dire pour un intérim ou un intermittent du spectacle.
+        type: "radio",
+        name: FIELD_CADRE,
+        sub: SITUATION_SALARIE,
+        label: "Quel est votre statut ?",
+        required: true,
+        orientation: "horizontal",
+        visibleWhen: (answers) =>
+          estSalarie(answers) &&
+          (answers[FIELD_CONTRAT] === "cdi" || answers[FIELD_CONTRAT] === "cdd"),
+        options: [
+          { value: "cadre", label: "Cadre", flags: [FLAGS.CADRE] },
+          { value: "non-cadre", label: "Non-cadre" },
+        ],
+      },
+      {
+        type: "radio",
+        name: FIELD_VERSANT,
+        sub: SITUATION_AGENT,
+        label: "Dans quelle fonction publique travaillez-vous ?",
+        required: true,
+        visibleWhen: (answers) => answers[FIELD_SITUATION] === SITUATION_AGENT,
+        options: [
+          { value: "etat", label: "Fonction publique d'État", flags: [FLAGS.FP_ETAT] },
+          {
+            value: "territoriale",
+            label: "Fonction publique territoriale",
+            flags: [FLAGS.FP_TERRITORIALE],
+          },
+          {
+            value: "hospitaliere",
+            label: "Fonction publique hospitalière",
+            flags: [FLAGS.FP_HOSPITALIERE],
+          },
+        ],
+      },
+      {
+        // Même précision sous trois situations : un seul champ, une seule
+        // réponse stockée, ancrée sous l'option retenue.
+        type: "radio",
+        name: FIELD_ARRET_TRAVAIL,
+        sub: [SITUATION_SALARIE, SITUATION_AGENT, SITUATION_INDEPENDANT],
+        label: "Êtes-vous en arrêt de travail pour maladie, accident du travail ou invalidité ?",
+        required: true,
+        orientation: "horizontal",
+        visibleWhen: enActivite,
+        options: [
+          { value: OUI, label: "Oui", flags: [FLAGS.ARRET_TRAVAIL] },
+          { value: NON, label: "Non" },
+        ],
       },
     ],
   },
+
+  // ─── Q4. Ancienneté chez l'employeur actuel ────────────────────────────
   {
-    id: Q_RESIDENCE,
+    id: Q_ANCIENNETE,
+    title: "Depuis quand travaillez-vous chez votre employeur actuel ?",
+    subtitle: "Le mois et l'année suffisent.",
+    when: aUnEmployeur,
+    // Tant que la situation est inconnue, la question compte dans le total :
+    // celui-ci part du chemin le plus long et ne s'allonge jamais.
+    pending: (answers) => answers[FIELD_SITUATION] === undefined,
+    branch: "situation",
+    fields: [
+      {
+        type: "month",
+        name: FIELD_ENTREE_EMPLOYEUR,
+        required: true,
+        minYear: oldestSelectableYear(),
+      },
+    ],
+  },
+
+  // ─── Q5. Durée totale d'activité professionnelle ───────────────────────
+  {
+    id: Q_DUREE,
+    title: "Depuis combien de temps travaillez-vous au total ?",
+    subtitle: "Toutes vos périodes d'activité professionnelle cumulées.",
+    fields: [
+      {
+        type: "number",
+        name: FIELD_DUREE_ACTIVITE,
+        // Pas de libellé propre : le titre de la question nomme le champ, et
+        // « ans » porte l'unité. Un « Nombre d'années » de plus serait redondant.
+        hint: "En années, arrondies à l'année la plus proche.",
+        required: true,
+        coherence: dureeCoherente,
+        min: 0,
+        max: 99,
+        placeholder: "12",
+        suffix: "ans",
+      },
+    ],
+  },
+
+  // ─── Q6. Lieu de résidence et lieu de travail ──────────────────────────
+  {
+    id: Q_LIEU,
     title: "Où habitez-vous ?",
-    // La simulation ne s'arrête que si les DEUX lieux sont hors de France.
-    next: (flags) =>
-      flags.has(FLAGS.TRAVAIL_HORS_FRANCE) && flags.has(FLAGS.RESIDENCE_HORS_FRANCE)
+    subtitle: "Les organismes compétents et une partie des aides dépendent de votre région.",
+    // Porte d'inéligibilité : ni résidence ni travail en France. Une personne
+    // qui n'est pas en activité ne se voit pas poser la question du travail :
+    // résider hors de France suffit alors à fermer le parcours.
+    outcome: (flags) =>
+      flags.has(FLAGS.RESIDENCE_HORS_FRANCE) && !flags.has(FLAGS.TRAVAIL_FRANCE)
         ? OUTCOME_HORS_FRANCE
         : null,
     fields: [
@@ -109,322 +355,64 @@ export const questions: Question[] = [
         ],
       },
       {
-        type: "city",
-        name: FIELD_VILLE_RESIDENCE,
-        label: "Ville",
+        type: "region",
+        name: FIELD_REGION_RESIDENCE,
+        label: "Votre région de résidence",
         required: true,
-        placeholder: "Exemple : Lyon",
         visibleWhen: (answers) => answers[FIELD_RESIDENCE] === LOC_FRANCE,
       },
-    ],
-  },
-  {
-    id: Q_MOTIVATION,
-    title: "Quelle est ta situation actuelle ?",
-    subtitle: "Choisis ce qui te correspond le mieux.",
-    next: (flags) => (flags.has(FLAGS.ENTREPRENEUR) ? Q_ENTREPRENEUR_FT : Q_METIER_IDEE),
-    fields: [
       {
-        type: "radio",
-        name: FIELD_MOTIVATION,
-        required: true,
-        orientation: "vertical",
-        options: [
-          {
-            value: "envie",
-            label: "Je veux changer de métier — c'est une envie personnelle",
-          },
-          {
-            value: "contraint",
-            label: "Je dois changer de métier",
-            description: "Pour des raisons de santé, économiques ou autres",
-            flags: [FLAGS.CONTRAINT],
-          },
-          {
-            value: "entreprendre",
-            label: "Je rêve d'entreprendre et de voler de mes propres ailes",
-            flags: [FLAGS.ENTREPRENEUR],
-          },
-          {
-            value: "vae",
-            label: "Je sais travailler mais je n'ai pas de diplôme qui le prouve",
-            flags: [FLAGS.VAE],
-          },
-          {
-            value: "orientation",
-            label: "J'ai besoin de faire le point sur mon parcours professionnel",
-            flags: [FLAGS.ORIENTATION],
-          },
-        ],
+        // Masquée aux personnes sans employeur : leur demander où elles
+        // travaillent n'a pas de sens (règle du ticket, étendue au demandeur
+        // d'emploi pour la même raison).
+        type: "toggle",
+        name: FIELD_AUTRE_REGION,
+        label: "Je travaille dans une autre région",
+        visibleWhen: (answers) => answers[FIELD_RESIDENCE] === LOC_FRANCE && enActivite(answers),
       },
-    ],
-  },
-  {
-    id: Q_ENTREPRENEUR_FT,
-    title: "Es-tu actuellement inscrit·e à France Travail ?",
-    subtitle: "Cela détermine certaines aides à la création d'entreprise.",
-    next: () => Q_AGE,
-    fields: [
       {
         type: "radio",
-        name: FIELD_ENTREPRENEUR_FT,
-        required: true,
-        orientation: "vertical",
-        options: [
-          {
-            value: "oui",
-            label: "Oui, je suis demandeur·euse d'emploi",
-            flags: [FLAGS.DE_ENTREPRENEUR],
-          },
-          { value: "non", label: "Non" },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_METIER_IDEE,
-    title: "As-tu déjà une idée du métier vers lequel tu veux aller ?",
-    subtitle: "Choix unique.",
-    next: () => Q_AGE,
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_METIER_IDEE,
-        required: true,
-        orientation: "vertical",
-        options: [
-          { value: "oui-precis", label: "Oui, j'ai une idée assez précise" },
-          {
-            value: "pistes",
-            label: "Pas vraiment, j'ai quelques pistes",
-            flags: [FLAGS.ORIENTATION],
-          },
-          { value: "non", label: "Non, pas encore du tout", flags: [FLAGS.ORIENTATION] },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_AGE,
-    title: "Quel est ton âge ?",
-    subtitle: "Choix unique.",
-    next: (flags) => (flags.has(FLAGS.ENTREPRENEUR) ? Q_SANTE : Q_FRANCE_TRAVAIL),
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_AGE,
-        required: true,
-        orientation: "vertical",
-        options: [
-          { value: "moins-26", label: "Moins de 26 ans", flags: [FLAGS.JEUNE] },
-          { value: "26-44", label: "De 26 à 44 ans" },
-          { value: "45-plus", label: "45 ans et plus", flags: [FLAGS.SENIOR] },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_FRANCE_TRAVAIL,
-    title: "Es-tu inscrit·e à France Travail comme demandeur·euse d'emploi ?",
-    subtitle: "Choix unique.",
-    next: (flags) => (flags.has(FLAGS.DE) ? Q_SANTE : Q_FONCTION_PUBLIQUE),
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_FRANCE_TRAVAIL,
+        name: FIELD_TRAVAIL_FRANCE,
+        label: "Travaillez-vous en France ?",
         required: true,
         orientation: "horizontal",
+        visibleWhen: (answers) =>
+          answers[FIELD_RESIDENCE] === LOC_HORS_FRANCE && enActivite(answers),
         options: [
-          { value: "oui", label: "Oui", flags: [FLAGS.DE] },
-          { value: "non", label: "Non" },
+          { value: OUI, label: "Oui", flags: [FLAGS.TRAVAIL_FRANCE] },
+          { value: NON, label: "Non" },
         ],
+      },
+      {
+        type: "region",
+        name: FIELD_REGION_TRAVAIL,
+        label: "Votre région de travail",
+        required: true,
+        visibleWhen: (answers) =>
+          (answers[FIELD_RESIDENCE] === LOC_FRANCE && answers[FIELD_AUTRE_REGION] === true) ||
+          (answers[FIELD_RESIDENCE] === LOC_HORS_FRANCE && answers[FIELD_TRAVAIL_FRANCE] === OUI),
       },
     ],
   },
+
+  // ─── Q7. Reconnaissance de travailleur handicapé ───────────────────────
   {
-    id: Q_FONCTION_PUBLIQUE,
-    title: "Es-tu fonctionnaire ou agent·e de la fonction publique ?",
-    subtitle: "Choix unique.",
-    next: (flags) => (flags.has(FLAGS.FONCTIONNAIRE) ? Q_SANTE : Q_STATUT),
+    id: Q_RQTH,
+    title: "Êtes-vous reconnu·e travailleur·euse handicapé·e ?",
+    subtitle: "Cette reconnaissance ouvre des droits spécifiques. Choix unique.",
     fields: [
       {
         type: "radio",
-        name: FIELD_FONCTION_PUBLIQUE,
-        required: true,
-        orientation: "vertical",
-        options: [
-          {
-            value: "oui",
-            label: "Oui — État, territorial ou hospitalier",
-            flags: [FLAGS.FONCTIONNAIRE],
-          },
-          { value: "non", label: "Non" },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_STATUT,
-    title: "Quel est ton statut actuel ?",
-    subtitle: "Le type de contrat conditionne plusieurs dispositifs.",
-    next: (flags) => (flags.has(FLAGS.SALARIE) ? Q_ANCIENNETE : Q_SANTE),
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_STATUT,
-        required: true,
-        orientation: "vertical",
-        options: [
-          {
-            value: "cdi",
-            label: "Salarié·e en CDI — secteur privé",
-            flags: [FLAGS.SALARIE, FLAGS.CDI],
-          },
-          {
-            value: "cdd",
-            label: "Salarié·e en CDD ou intérim — secteur privé",
-            flags: [FLAGS.SALARIE, FLAGS.CDD],
-          },
-          {
-            value: "independant",
-            label: "Indépendant·e ou auto-entrepreneur·e",
-            flags: [FLAGS.INDEPENDANT],
-          },
-          {
-            value: "autre",
-            label: "Autre (congé parental, sans emploi non inscrit…)",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_ANCIENNETE,
-    title: "Depuis combien de temps travailles-tu dans ton entreprise actuelle ?",
-    subtitle: "Certains dispositifs exigent une ancienneté minimale.",
-    next: (flags) => (flags.has(FLAGS.CDI) ? Q_MODE_RECONVERSION : Q_SANTE),
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_ANCIENNETE,
-        required: true,
-        orientation: "vertical",
-        options: [
-          { value: "moins-1-an", label: "Moins d'1 an" },
-          { value: "1-2-ans", label: "Entre 1 et 2 ans", flags: [FLAGS.PTP_PARTIEL] },
-          { value: "plus-2-ans", label: "Plus de 2 ans", flags: [FLAGS.PTP] },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_MODE_RECONVERSION,
-    title: "Comment envisages-tu cette reconversion ?",
-    subtitle: "Il existe des dispositifs pour rester… et pour partir en sécurité.",
-    next: (flags) => (flags.has(FLAGS.DEMISSION) ? Q_ANCIENNETE_SALARIALE : Q_SANTE),
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_MODE_RECONVERSION,
-        required: true,
-        orientation: "vertical",
-        options: [
-          {
-            value: "rester",
-            label: "En gardant mon emploi actuel",
-            description: "Formation pendant ou en parallèle du travail",
-          },
-          {
-            value: "demission",
-            label: "En quittant mon entreprise — j'envisage de démissionner",
-            flags: [FLAGS.DEMISSION],
-          },
-          {
-            value: "menace",
-            label: "Mon poste est menacé — licenciement économique possible ou annoncé",
-            flags: [FLAGS.MENACE],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_ANCIENNETE_SALARIALE,
-    title: "Totalises-tu au moins 5 ans d'activité salariée en continu ?",
-    subtitle:
-      "Sans interruption, chez un ou plusieurs employeurs (≈ 1 300 jours travaillés sur les 60 derniers mois). C'est la condition clé du dispositif démissionnaire.",
-    next: () => Q_SANTE,
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_ANCIENNETE_SALARIALE,
-        required: true,
-        orientation: "vertical",
-        options: [
-          {
-            value: "oui",
-            label: "Oui, 5 ans ou plus sans interruption",
-            flags: [FLAGS.DEM_5ANS],
-          },
-          { value: "non", label: "Non, moins de 5 ans (ou avec des interruptions)" },
-          { value: "nsp", label: "Je ne sais pas" },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_SANTE,
-    title: "As-tu une ou plusieurs situations de santé ou de handicap reconnues ?",
-    subtitle:
-      "Plusieurs réponses possibles — ces situations ouvrent des droits spécifiques cumulables.",
-    next: (flags) => (flags.has(FLAGS.ENTREPRENEUR) ? STEP_RESULTS : Q_DIPLOME),
-    fields: [
-      {
-        type: "checkbox",
-        name: FIELD_SANTE,
+        name: FIELD_RQTH,
         required: true,
         options: [
+          { value: OUI, label: "Oui", flags: [FLAGS.RQTH] },
+          { value: NON, label: "Non" },
           {
-            value: "rqth",
-            label: "RQTH — Reconnaissance Qualité Travailleur Handicapé (ou démarche en cours)",
-            flags: [FLAGS.RQTH],
+            value: "refus",
+            label: "Je ne souhaite pas répondre",
+            flags: [FLAGS.RQTH_REFUS],
           },
-          {
-            value: "atmp",
-            label: "Accident du travail ou maladie professionnelle reconnu·e",
-            flags: [FLAGS.ATMP],
-          },
-          {
-            value: "invalidite",
-            label: "Pension d'invalidité (catégorie 1, 2 ou 3)",
-            flags: [FLAGS.INVALIDITE],
-          },
-          { value: "aucune", label: "Aucune / Je ne sais pas", exclusive: true },
-        ],
-      },
-    ],
-  },
-  {
-    id: Q_DIPLOME,
-    title: "Quel est ton niveau de formation le plus élevé ?",
-    subtitle: "Choix unique.",
-    next: () => STEP_RESULTS,
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_DIPLOME,
-        required: true,
-        orientation: "vertical",
-        options: [
-          {
-            value: "sans-diplome",
-            label: "Sans diplôme ou Brevet des collèges",
-            flags: [FLAGS.SANS_DIPLOME],
-          },
-          { value: "cap-bep", label: "CAP ou BEP", flags: [FLAGS.SANS_DIPLOME] },
-          { value: "bac", label: "Bac ou Bac Pro" },
-          { value: "bac-2", label: "Bac+2 — BTS, BUT, DUT…" },
-          { value: "bac-3-plus", label: "Bac+3 et plus — Licence, Master…", flags: [FLAGS.BAC3] },
         ],
       },
     ],
@@ -435,12 +423,12 @@ export const questions: Question[] = [
 export const outcomes: Record<string, Outcome> = {
   [OUTCOME_HORS_FRANCE]: {
     id: OUTCOME_HORS_FRANCE,
-    title: "Vous indiquez résider et travailler hors de France.",
-    text: "Le simulateur ne couvre pas les dispositifs pour les situations 100% hors France. La simulation s'arrête ici.",
-    actions: [
-      { label: "Retour à l'accueil", href: "/", variant: "primary" },
-      { label: "Découvrir les dispositifs", href: "#", variant: "secondary" },
-    ],
+    title: "Les dispositifs recensés ne s'appliquent pas hors de France.",
+    // La porte se déclenche pour deux profils : celui qui réside ET travaille
+    // hors de France, et celui qui réside hors de France sans être en activité.
+    // Le texte doit être juste pour les deux.
+    text: "Ils s'adressent aux personnes qui résident ou qui travaillent en France. Vous n'avez indiqué ni l'une ni l'autre : la simulation s'arrête ici.",
+    actions: [{ label: "Retour à l'accueil", href: "/", variant: "primary" }],
   },
 };
 
@@ -450,11 +438,4 @@ export function findQuestion(id: string): Question | undefined {
 
 export function findOutcome(id: string): Outcome | undefined {
   return outcomes[id];
-}
-
-/** Id de la question suivante dans l'ordre du tableau, ou null si dernière. */
-export function nextQuestionId(currentId: string): string | null {
-  const index = questions.findIndex((question) => question.id === currentId);
-  if (index < 0 || index + 1 >= questions.length) return null;
-  return questions[index + 1].id;
 }

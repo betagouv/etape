@@ -6,7 +6,10 @@ interface NavbarProps {
 }
 
 export function Navbar({ step, total }: NavbarProps) {
-  const pct = total > 0 ? Math.max(0, Math.min(100, ((step - 1) / total) * 100)) : 0;
+  // La question EN COURS compte comme franchie : la barre est donc pleine sur
+  // la dernière, et déjà entamée sur la première — arriver sur un questionnaire
+  // à jauge vide donne l'impression que rien n'a démarré.
+  const pct = total > 0 ? Math.max(0, Math.min(100, (step / total) * 100)) : 0;
 
   return (
     <header className="border-divider bg-background flex w-full shrink-0 flex-col gap-4 border-b pt-4 md:gap-6 md:pt-6">

@@ -7,10 +7,18 @@ import type { Outcome } from "../domain/types";
 
 interface OutcomeScreenProps {
   outcome: Outcome;
+  /**
+   * Retour à la dernière question répondue. Un écran terminal reste atteint
+   * par une réponse : sans porte de sortie, une faute de clic obligerait à
+   * tout recommencer.
+   */
+  onBack?: () => void;
   headingRef?: RefObject<HTMLHeadingElement | null>;
 }
 
-export function OutcomeScreen({ outcome, headingRef }: OutcomeScreenProps) {
+export function OutcomeScreen({ outcome, onBack, headingRef }: OutcomeScreenProps) {
+  const secondaryClassName =
+    "border-primary text-primary hover:bg-secondary hover:text-secondary-foreground h-auto min-h-11 w-full rounded-lg px-6 py-4 text-sm font-semibold md:text-base";
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:px-6">
       <div className="flex w-full max-w-[600px] flex-col items-center gap-8 md:gap-12">
@@ -38,12 +46,18 @@ export function OutcomeScreen({ outcome, headingRef }: OutcomeScreenProps) {
               className={
                 action.variant === "primary"
                   ? "h-auto min-h-11 w-full rounded-lg px-6 py-4 text-sm font-semibold md:text-base"
-                  : "border-primary text-primary hover:bg-secondary hover:text-secondary-foreground h-auto min-h-11 w-full rounded-lg px-6 py-4 text-sm font-semibold md:text-base"
+                  : secondaryClassName
               }
             >
               <Link href={action.href}>{action.label}</Link>
             </Button>
           ))}
+
+          {onBack && (
+            <Button type="button" variant="outline" onClick={onBack} className={secondaryClassName}>
+              Modifier ma réponse
+            </Button>
+          )}
         </div>
       </div>
     </main>
