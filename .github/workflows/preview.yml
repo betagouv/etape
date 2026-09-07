@@ -7,7 +7,7 @@ name: Preview
 # Mécanique : le runner (DEBFCOETAPOPS01, label « cegedim ») construit les apps,
 # les assemble (scripts/assemble-static.mjs) puis rsync le dossier vers la VM
 # front (DEBFCOETAPFRT01). Le nginx de la VM résout `pr-<n>` par regex sur le
-# hostname (docs/infra/nginx-previews.conf) : déployer ou détruire une preview,
+# hostname (infra/nginx/previews.conf) : déployer ou détruire une preview,
 # c'est créer ou supprimer un dossier — rien à recharger.
 
 on:
@@ -69,11 +69,16 @@ jobs:
       - name: Déployer sur la VM de previews
         run: |
           ssh -o BatchMode=yes "$PREVIEW_SSH" "mkdir -p -- '$PREVIEW_ROOT/pr-$PR_NUMBER'"
-          rsync -az --delete dist/preview/ "$PREVIEW_SSH:$PREVIEW_ROOT/pr-$PR_NUMBER/"
+          # --chmod : les fichiers arrivent lisibles par nginx (www-data) quel que
+          # soit l'umask du runner ; sans cela, un umask durci donnerait des 403.
+          rsync -az --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
+            dist/preview/ "$PREVIEW_SSH:$PREVIEW_ROOT/pr-$PR_NUMBER/"
 
       - name: Vérifier la preview
         # Depuis la VM elle-même (Host forcé) : le test ne dépend ni du DNS
         # public ni du routage entrant, seulement de nginx et des fichiers.
+        # En HTTP : le TLS est terminé sur le BigIP Cegedim, la VM n'écoute
+        # que sur le port 80. Localhost est exempté de la basic auth.
         #
         # Les deux apps sont sondées : un `basePath` cassé laisse la racine
         # intacte et ne se voit que sous le préfixe du simulateur.
@@ -81,7 +86,7 @@ jobs:
           echec=0
           for chemin in / /simulateur/; do
             code="$(ssh -o BatchMode=yes "$PREVIEW_SSH" \
-              "curl -sk -o /dev/null -w '%{http_code}' -H 'Host: pr-$PR_NUMBER.$PREVIEW_DOMAIN' 'https://localhost$chemin'")"
+              "curl -s -o /dev/null -w '%{http_code}' -H 'Host: pr-$PR_NUMBER.$PREVIEW_DOMAIN' 'http://localhost$chemin'")"
             if [ "$code" = "200" ]; then
               echo "ok    $chemin ($code)"
             else
