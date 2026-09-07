@@ -1,0 +1,86 @@
+name: Setup VM
+
+# Configuration du socle d'une VM Cegedim par Ansible (infra/ansible/).
+# Déclenchement MANUEL uniquement (aucun évènement git) : onglet Actions →
+# Setup VM → « Run workflow », choix de la machine, mot de passe d'exécution.
+#
+# Le mot de passe est comparé au secret SETUP_VM_PASSWORD. Limite assumée :
+# sur un dépôt public, la valeur saisie est visible dans les métadonnées du
+# run ; c'est un garde-fou contre les lancements accidentels, pas un secret
+# fort (voir infra/ansible/README.md ; contrôle fort = environnement GitHub
+# avec approbation obligatoire).
+
+on:
+  workflow_dispatch:
+    inputs:
+      machine:
+        description: "Machine à configurer"
+        type: choice
+        required: true
+        options:
+          - front
+          - back
+      mot_de_passe:
+        description: "Mot de passe d'exécution"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: setup-vm
+  cancel-in-progress: false
+
+jobs:
+  setup:
+    name: Configurer la machine « ${{ inputs.machine }} »
+    runs-on: [self-hosted, cegedim]
+    steps:
+      - name: Vérifier le mot de passe d'exécution
+        env:
+          SAISIE: ${{ inputs.mot_de_passe }}
+          ATTENDU: ${{ secrets.SETUP_VM_PASSWORD }}
+        run: |
+          if [ -z "$ATTENDU" ]; then
+            echo "::error::Le secret SETUP_VM_PASSWORD n'est pas défini dans le dépôt."
+            exit 1
+          fi
+          if [ "$SAISIE" != "$ATTENDU" ]; then
+            echo "::error::Mot de passe d'exécution incorrect."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Installer Ansible si absent (espace utilisateur du runner)
+        run: |
+          if ! command -v ansible-playbook >/dev/null 2>&1; then
+            python3 -m pip install --user --break-system-packages ansible-core
+          fi
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Enregistrer les empreintes SSH des machines cibles
+        run: |
+          mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+          ssh-keyscan -H \
+            debfcoetapfrt01.fco.cegedim.cloud \
+            debfcoetapapp01.fco.cegedim.cloud \
+            2>/dev/null >> "$HOME/.ssh/known_hosts"
+
+      - name: Appliquer le playbook
+        env:
+          # Lu par front.yml pour écrire le htpasswd de la basic auth des
+          # previews (utilisateur « etape »). Obligatoire au premier passage
+          # sur le front ; au rejeu, un secret vide laisse le htpasswd en place.
+          PREVIEW_BASIC_AUTH_PASSWORD: ${{ secrets.PREVIEW_BASIC_AUTH_PASSWORD }}
+          # Lus par back.yml pour authentifier la machine au registre Harbor ;
+          # mot de passe vide = tâche de login simplement sautée (cas du front).
+          # Le login n'est pas secret : c'est une variable GitHub (onglet Variables).
+          HARBOR_ROBOT_LOGIN: ${{ vars.HARBOR_ROBOT_LOGIN }}
+          HARBOR_ROBOT_PASSWORD: ${{ secrets.HARBOR_ROBOT_PASSWORD }}
+        run: |
+          ansible-playbook \
+            -i infra/ansible/inventaire.ini \
+            "infra/ansible/${{ inputs.machine }}.yml"

@@ -70,7 +70,6 @@ export default function Home() {
               </li>
             ))}
           </ul>
-
         </main>
       </Container>
     </div>
