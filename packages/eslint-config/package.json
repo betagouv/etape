@@ -14,7 +14,7 @@
     "react-internal.js"
   ],
   "dependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "eslint-config-next": "^16.2.10",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
