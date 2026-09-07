@@ -1,7 +1,7 @@
 /**
  * Assemble les exports statiques des deux apps dans `dist/preview/`, prêt à
  * être rsyncé tel quel vers la VM de previews (DEBFCOETAPFRT01), où nginx
- * applique les règles de routage (voir docs/infra/nginx-previews.conf).
+ * applique les règles de routage (voir infra/nginx/previews.conf).
  *
  * Successeur de `scripts/vercel-out.mjs` (previews Vercel, dispositif
  * transitoire) : l'assemblage et les garde-fous sont identiques, seul le
