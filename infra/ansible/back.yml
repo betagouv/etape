@@ -1,0 +1,98 @@
+# Socle de la VM back (DEBFCOETAPAPP01) : Docker + Compose pour le back NestJS
+# à venir (DAT §3.2 : VM + Docker Compose ; images via Harbor à terme).
+# Préparatoire : aucun service applicatif n'est encore déployé sur cette machine.
+#
+# NB : noms de paquets Debian 13 à confirmer sur la cible ; si les dépôts Debian
+# ne fournissent pas Compose v2, l'alternative est le dépôt officiel Docker
+# (flux sortant à faire ouvrir par Cegedim le cas échéant).
+#
+# Entrées attendues dans l'environnement du poste de pilotage (le workflow
+# Setup VM les fournit depuis GitHub : Settings → Secrets and variables → Actions) :
+#   HARBOR_ROBOT_LOGIN     nom du compte robot Harbor (variable GitHub, non secrète)
+#   HARBOR_ROBOT_PASSWORD  son mot de passe (secret GitHub)
+# Mot de passe absent = la tâche de login est sautée. Login absent alors que le
+# mot de passe est fourni = arrêt explicite.
+
+- name: Configurer la VM back (socle conteneurs)
+  hosts: back
+  become: true
+  vars:
+    # Registre privé Harbor (coordonnées transmises par Cegedim le 2/09, confirmées
+    # par mail le 7/09) : images de la forme fco.repo.cegedim.cloud/etape/<image>:<tag>.
+    # Le login (de la forme robot$…) contient un « $ » : il est transmis à docker
+    # par variable d'environnement, jamais interpolé dans la ligne de commande
+    # (bash y verrait une variable vide et enverrait « robot » tout court).
+    harbor_url: fco.repo.cegedim.cloud
+    harbor_login: "{{ lookup('env', 'HARBOR_ROBOT_LOGIN') }}"
+    harbor_password: "{{ lookup('env', 'HARBOR_ROBOT_PASSWORD') }}"
+
+  tasks:
+    - name: Paquets requis (Docker, Compose, rsync)
+      ansible.builtin.apt:
+        name: [docker.io, docker-compose-v2, rsync]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    # Le compte deploy existe normalement déjà (créé par Cegedim) ; la tâche
+    # garantit son état et l'ajoute au groupe docker.
+    - name: Compte de service deploy (membre du groupe docker)
+      ansible.builtin.user:
+        name: deploy
+        shell: /bin/bash
+        groups: docker
+        append: true
+
+    - name: Dossier applicatif
+      ansible.builtin.file:
+        path: /srv/etape
+        state: directory
+        owner: deploy
+        group: deploy
+        mode: "0755"
+
+    - ansible.builtin.import_tasks: taches/cle-runner.yml
+
+    - name: Docker démarré et activé au démarrage
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    # --- Registre Harbor : authentifie le compte deploy pour qu'APP01 puisse
+    # tirer les images (identifiant mémorisé dans /home/deploy/.docker/config.json).
+    - name: Login Harbor fourni avec le mot de passe
+      ansible.builtin.assert:
+        that: harbor_login | length > 0
+        fail_msg: >-
+          HARBOR_ROBOT_PASSWORD est fourni mais HARBOR_ROBOT_LOGIN est vide : définir la
+          variable GitHub HARBOR_ROBOT_LOGIN (Settings → Secrets and variables → Actions →
+          Variables), ou l'exporter pour un lancement manuel.
+        quiet: true
+      when: harbor_password | length > 0
+
+    - name: Identifiants Harbor déjà mémorisés pour deploy ?
+      ansible.builtin.command: grep -q '"{{ harbor_url }}"' /home/deploy/.docker/config.json
+      register: harbor_memorise
+      failed_when: false
+      changed_when: false
+      when: harbor_password | length > 0
+
+    # `become_user: deploy` ouvre une session fraîche : l'appartenance au groupe
+    # docker ajoutée plus haut est bien prise en compte dès le premier passage.
+    # Le login est rejoué à chaque passage (rafraîchit un mot de passe tourné) ;
+    # il n'est compté « changed » que s'il n'y avait encore aucun identifiant.
+    - name: Authentification de deploy au registre Harbor (si mot de passe fourni)
+      ansible.builtin.shell: |
+        set -o pipefail
+        printf '%s' "$HARBOR_PASSWORD" | docker login "$HARBOR_URL" -u "$HARBOR_LOGIN" --password-stdin
+      args:
+        executable: /bin/bash
+      environment:
+        HARBOR_URL: "{{ harbor_url }}"
+        HARBOR_LOGIN: "{{ harbor_login }}"
+        HARBOR_PASSWORD: "{{ harbor_password }}"
+      become_user: deploy
+      when: harbor_password | length > 0
+      no_log: true
+      changed_when: harbor_memorise.rc != 0
