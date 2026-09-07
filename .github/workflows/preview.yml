@@ -9,10 +9,14 @@ name: Preview
 # front (DEBFCOETAPFRT01). Le nginx de la VM résout `pr-<n>` par regex sur le
 # hostname (infra/nginx/previews.conf) : déployer ou détruire une preview,
 # c'est créer ou supprimer un dossier — rien à recharger.
+#
+# Les PR de Dependabot n'ont pas de preview par défaut (un seul runner, des
+# dizaines de PR par vague) : poser le label « preview » sur l'une d'elles
+# déclenche le déploiement, qui suit ensuite chaque push comme une PR normale.
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened, labeled, closed]
 
 # Une exécution à la fois par PR : un nouveau push annule le déploiement
 # précédent encore en cours (l'URL ne peut pas revenir en arrière), une
@@ -38,8 +42,13 @@ jobs:
     name: Déployer la preview
     # Jamais pour les PR venant d'un fork : le runner vit dans la bulle Cegedim
     # et porte une clé SSH vers les machines applicatives. Seules les branches
-    # du dépôt lui-même sont déployées.
-    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    # du dépôt lui-même sont déployées. Dependabot : seulement avec le label
+    # « preview » ; un autre label posé sur une PR ne redéploie rien.
+    if: >-
+      github.event.action != 'closed'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (github.event.action != 'labeled' || github.event.label.name == 'preview')
+      && (github.event.pull_request.user.login != 'dependabot[bot]' || contains(github.event.pull_request.labels.*.name, 'preview'))
     runs-on: [self-hosted, cegedim]
     environment:
       name: preview-pr-${{ github.event.number }}
