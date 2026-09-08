@@ -3,10 +3,8 @@
  * être rsyncé tel quel vers la VM de previews (DEBFCOETAPFRT01), où nginx
  * applique les règles de routage (voir infra/nginx/previews.conf).
  *
- * Successeur de `scripts/vercel-out.mjs` (previews Vercel, dispositif
- * transitoire) : l'assemblage et les garde-fous sont identiques, seul le
- * `config.json` Vercel disparaît — ses règles (noindex, 308 sur le préfixe,
- * 404 par app) vivent désormais dans la conf nginx.
+ * Les règles de routage (noindex, 308 sur le préfixe, 404 par app) ne sont
+ * pas ici : elles vivent dans la conf nginx.
  *
  * À lancer depuis la racine du monorepo, après `turbo run build`.
  */
