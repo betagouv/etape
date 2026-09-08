@@ -23,7 +23,7 @@
   "devDependencies": {
     "@etape/eslint-config": "*",
     "@etape/prettier-config": "*",
-    "@figma/code-connect": "^1.4.9",
+    "@figma/code-connect": "^2.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24",
     "@types/react": "^19",
