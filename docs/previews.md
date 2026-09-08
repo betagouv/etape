@@ -7,10 +7,10 @@ chaque pull request, mise à jour à chaque push, et supprimée quand la PR est 
 L'environnement **dev** est le même mécanisme appliqué à la branche `main` : il montre en
 permanence l'état de ce qui a été fusionné.
 
-| | Adresse | Mise à jour |
-| --- | --- | --- |
-| Preview d'une PR | `https://pr-<numéro>.dev.certifpro.cegedim.cloud/` | à chaque push sur la PR |
-| Environnement dev | `https://main.dev.certifpro.cegedim.cloud/` | à chaque fusion dans `main` |
+|                   | Adresse                                            | Mise à jour                 |
+| ----------------- | -------------------------------------------------- | --------------------------- |
+| Preview d'une PR  | `https://pr-<numéro>.dev.certifpro.cegedim.cloud/` | à chaque push sur la PR     |
+| Environnement dev | `https://main.dev.certifpro.cegedim.cloud/`        | à chaque fusion dans `main` |
 
 Tout cela tourne sur l'infrastructure Cegedim (VM `DEBFCOETAPFRT01`), celle qui portera aussi
 la production.
@@ -73,12 +73,12 @@ Deux exceptions volontaires :
 Les deux apps sont des exports statiques Next (`output: "export"`). Le circuit, porté par
 l'action composite `.github/actions/deployer-statique` :
 
-| Étape | Effet |
-| --- | --- |
-| `turbo run build` | `apps/site/out/` et `apps/simulateur/out/` |
-| `node scripts/assemble-static.mjs` | assemble les deux dans `dist/preview/`, le simulateur sous son préfixe |
-| `rsync` vers `deploy@DEBFCOETAPFRT01:/srv/previews/<nom>/` | `<nom>` = `pr-<n>` ou `main` |
-| smoke test depuis la VM | `/` et `/simulateur/` doivent répondre 200 |
+| Étape                                                      | Effet                                                                  |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `turbo run build`                                          | `apps/site/out/` et `apps/simulateur/out/`                             |
+| `node scripts/assemble-static.mjs`                         | assemble les deux dans `dist/preview/`, le simulateur sous son préfixe |
+| `rsync` vers `deploy@DEBFCOETAPFRT01:/srv/previews/<nom>/` | `<nom>` = `pr-<n>` ou `main`                                           |
+| smoke test depuis la VM                                    | `/` et `/simulateur/` doivent répondre 200                             |
 
 Sur la VM, nginx (`infra/nginx/previews.conf`) résout le nom du dossier par regex sur le
 hostname : `pr-12.dev…` sert `/srv/previews/pr-12/`. Créer, mettre à jour ou détruire un
@@ -97,11 +97,11 @@ la VM : `docs/infra/installation-previews.md`.
 
 **Dans `paths.mjs`, à la racine, et nulle part ailleurs.** Trois consommateurs en dérivent :
 
-| Consommateur | Usage |
-| --- | --- |
-| `apps/simulateur/next.config.ts` | `basePath`, et `NEXT_PUBLIC_BASE_PATH` pour les assets |
-| `apps/site/next.config.ts` | `NEXT_PUBLIC_SIMULATEUR_PATH`, pour le lien de l'accueil |
-| `scripts/assemble-static.mjs` | dossier d'assemblage |
+| Consommateur                     | Usage                                                    |
+| -------------------------------- | -------------------------------------------------------- |
+| `apps/simulateur/next.config.ts` | `basePath`, et `NEXT_PUBLIC_BASE_PATH` pour les assets   |
+| `apps/site/next.config.ts`       | `NEXT_PUBLIC_SIMULATEUR_PATH`, pour le lien de l'accueil |
+| `scripts/assemble-static.mjs`    | dossier d'assemblage                                     |
 
 La conf nginx recopie le préfixe à la main (`/simulateur`), c'est le seul endroit qui ne peut pas
 importer le module. Changer le préfixe se fait donc dans `paths.mjs` puis dans la conf. Ne pas
@@ -149,12 +149,12 @@ npx serve dist/preview
 
 ### Quand ça ne marche pas
 
-| Symptôme | Où regarder |
-| --- | --- |
-| Le job « Déployer la preview » échoue au rsync en 1 s (`exit 255`) | Clé SSH du runner : `docs/infra/reprise-cle-runner.md` |
-| Le smoke test répond autre chose que 200 | Logs du job, puis nginx sur la VM ; `docs/infra/installation-previews.md`, section dépannage |
-| Preview absente alors que la PR est ouverte | Le job a-t-il tourné ? PR d'un fork, ou de Dependabot sans le label `preview` |
-| Un dossier `pr-<n>` traîne sur la VM après fermeture | Le workflow `Preview GC` le purge chaque matin de semaine |
+| Symptôme                                                           | Où regarder                                                                                  |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Le job « Déployer la preview » échoue au rsync en 1 s (`exit 255`) | Clé SSH du runner : `docs/infra/reprise-cle-runner.md`                                       |
+| Le smoke test répond autre chose que 200                           | Logs du job, puis nginx sur la VM ; `docs/infra/installation-previews.md`, section dépannage |
+| Preview absente alors que la PR est ouverte                        | Le job a-t-il tourné ? PR d'un fork, ou de Dependabot sans le label `preview`                |
+| Un dossier `pr-<n>` traîne sur la VM après fermeture               | Le workflow `Preview GC` le purge chaque matin de semaine                                    |
 
 ### TODO au passage en production
 
