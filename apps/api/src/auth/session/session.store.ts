@@ -18,7 +18,6 @@ export abstract class SessionStore {
   abstract deleteSession(id: string): Promise<void>;
 }
 
-/** Ligne absente : `delete` de Prisma lève, là où `findUnique` rend `null`. */
 function estIntrouvable(erreur: unknown): boolean {
   return erreur instanceof Prisma.PrismaClientKnownRequestError && erreur.code === "P2025";
 }
@@ -49,18 +48,13 @@ export class PrismaSessionStore extends SessionStore {
     });
   }
 
-  /**
-   * L'unicité de la lecture est tenue par la base, pas par le code : c'est le
-   * `delete` qui la garantit, y compris si deux requêtes arrivent ensemble.
-   */
   async consumeTransaction(id: string): Promise<LoginTransaction | null> {
-    const ligne = await this.prisma.transactionConnexion.delete({ where: { id } }).catch(
-      // Seule l'absence est un cas normal ; une base en panne doit remonter.
-      (erreur: unknown) => {
+    const ligne = await this.prisma.transactionConnexion
+      .delete({ where: { id } })
+      .catch((erreur: unknown) => {
         if (estIntrouvable(erreur)) return null;
         throw erreur;
-      },
-    );
+      });
 
     if (!ligne || ligne.expiresAt.getTime() <= Date.now()) return null;
 
@@ -88,7 +82,6 @@ export class PrismaSessionStore extends SessionStore {
     });
   }
 
-  /** `sub` et `email` viennent du compte lié : la session n'en garde pas de copie. */
   async getSession(id: string): Promise<UserSession | null> {
     const ligne = await this.prisma.session.findUnique({
       where: { id },
@@ -113,20 +106,10 @@ export class PrismaSessionStore extends SessionStore {
     };
   }
 
-  /** `deleteMany` et non `delete` : se déconnecter deux fois n'est pas une erreur. */
   async deleteSession(id: string): Promise<void> {
     await this.prisma.session.deleteMany({ where: { id } });
   }
 
-  /**
-   * Balayage des lignes expirées, à l'écriture. Elles ne sont de toute façon
-   * jamais rendues — les lectures vérifient la date —, donc c'est du ménage et
-   * non de la correction : rien ne dépend de son passage.
-   *
-   * À l'écriture, et pas sur une minuterie : on n'écrit qu'à la connexion, ce
-   * qui est rare, et une tâche périodique demanderait `@nestjs/schedule` et un
-   * verrou pour ne pas tourner deux fois sur deux instances.
-   */
   private async purger(): Promise<void> {
     const maintenant = new Date();
 

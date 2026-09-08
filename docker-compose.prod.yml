@@ -62,8 +62,6 @@ services:
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?secret du client etape-api, partagé avec Keycloak}
       KEYCLOAK_FRANCECONNECT_ALIAS: franceconnect
 
-      # Nom de service interne, contrairement à l'issuer Keycloak : la base ne
-      # sort pas du réseau Docker et n'expose aucun port.
       DATABASE_URL: postgresql://etape:${APP_DB_PASSWORD}@app-db:5432/etape
     # Certains hôtes ne routent pas vers eux-mêmes une requête adressée à leur
     # propre adresse publique : la découverte OIDC échouait sur « Le fournisseur
@@ -71,8 +69,6 @@ services:
     # écoute le proxy. Le certificat reste valable, le nom ne changeant pas.
     extra_hosts:
       - "${KEYCLOAK_HOSTNAME:?nom d'hôte de KEYCLOAK_PUBLIC_URL, sans le schéma}:host-gateway"
-    # `healthy` et non `started` : le conteneur applique les migrations avant de
-    # servir, et une base qui n'écoute pas encore les ferait échouer.
     depends_on:
       app-db:
         condition: service_healthy
@@ -181,8 +177,6 @@ services:
       keycloak-db:
         condition: service_healthy
 
-  # Base applicative. Aucun `expose` : elle n'est jointe que par l'API, sur le
-  # réseau Docker. Les migrations sont appliquées par l'API à son démarrage.
   app-db:
     image: postgres:17-alpine
     restart: unless-stopped

@@ -34,11 +34,6 @@ export function identityClaims(claims: Record<string, unknown>): Record<string, 
   );
 }
 
-/**
- * Lit un claim attendu comme texte. Les fournisseurs d'identité en omettent, en
- * rendent parfois autre chose qu'une chaîne : la valeur absente vaut mieux
- * qu'une valeur inventée, et se range telle quelle dans une colonne nullable.
- */
 export function claimTexte(valeur: unknown): string | undefined {
   return typeof valeur === "string" && valeur.length > 0 ? valeur : undefined;
 }

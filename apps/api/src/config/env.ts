@@ -21,11 +21,6 @@ const envSchema = z.object({
   /** Transmis en `kc_idp_hint`. */
   KEYCLOAK_FRANCECONNECT_ALIAS: z.string().min(1).default("franceconnect"),
 
-  /**
-   * Base **applicative**, distincte de celle de Keycloak : identifiants séparés,
-   * et un dump des données du service ne contient pas les empreintes de mots de
-   * passe de l'IAM.
-   */
   DATABASE_URL: z.url(),
 });
 

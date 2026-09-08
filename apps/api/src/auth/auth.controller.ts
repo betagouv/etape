@@ -90,13 +90,8 @@ export class AuthController {
         throw new Error("Réponse du fournisseur d'identité sans `sub` ou sans `id_token`.");
       }
 
-      // Suppose le mapper `identity_provider` sur le client. Lu une fois : le
-      // compte et la session doivent en donner la même version.
       const fournisseur = fournisseurIdentite(claims);
 
-      // Avant la session, et dans le même `try` : une session sans compte local
-      // n'aurait aucun identifiant à donner aux routes qui manipuleront un
-      // dossier. La panne se voit donc ici, et non à la première écriture.
       const utilisateur = await this.utilisateurs.enregistrerConnexion({
         keycloakSub: claims.sub,
         email: claimTexte(claims.email),

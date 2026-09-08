@@ -47,10 +47,6 @@ WORKDIR /app
 COPY --from=api-deps /app ./
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 
-# Schéma, migrations et configuration du CLI : `api-demarrer.sh` les applique au
-# démarrage. C'est aussi ce qui explique que `prisma` soit une dépendance de
-# production et non de développement — sans son CLI dans l'image, il n'y aurait
-# pas de migration au déploiement.
 COPY apps/api/prisma ./apps/api/prisma
 COPY apps/api/prisma.config.ts ./apps/api/
 COPY --chmod=0755 deploy/api-demarrer.sh /usr/local/bin/etape-api-demarrer.sh

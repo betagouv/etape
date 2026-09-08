@@ -6,10 +6,6 @@
 # Console d'administration : http://localhost:8080 (admin / admin)
 
 services:
-  # Base **applicative**, séparée de celle de Keycloak et non une base de plus
-  # dans la même instance : cycles de vie et identifiants distincts, l'IAM gère
-  # son schéma lui-même, et un dump des données du service ne contient pas ses
-  # empreintes de mots de passe.
   app-db:
     image: postgres:17-alpine
     environment:
@@ -17,8 +13,6 @@ services:
       POSTGRES_USER: etape
       POSTGRES_PASSWORD: etape
     ports:
-      # Ouvert en développement seulement : `prisma migrate` et `psql` tournent
-      # depuis l'hôte. En production, la base n'expose aucun port.
       - "5432:5432"
     volumes:
       - app-db-data:/var/lib/postgresql/data

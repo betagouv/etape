@@ -11,7 +11,6 @@ import type { LoginTransaction, SessionAOuvrir, UserSession } from "./session.ty
 const SESSION_COOKIE = "etape.sid";
 const TRANSACTION_COOKIE = "etape.txn";
 
-/** Forme des identifiants émis par `randomUUID`. */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const TRANSACTION_TTL_MS = 10 * 60 * 1000;
@@ -86,12 +85,6 @@ export class SessionService {
     response.clearCookie(SESSION_COOKIE, { path: "/" });
   }
 
-  /**
-   * Les identifiants sont des UUID que nous avons émis. Écarter ici ce qui n'en
-   * a pas la forme évite de porter jusqu'à PostgreSQL un cookie forgé, où la
-   * colonne `uuid` le refuserait par une erreur de conversion — une panne, là où
-   * il ne s'agit que d'un cookie inconnu.
-   */
   private readCookie(request: Request, name: string): string | null {
     const value: unknown = (request.cookies as Record<string, unknown> | undefined)?.[name];
     return typeof value === "string" && UUID.test(value) ? value : null;

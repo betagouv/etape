@@ -15,10 +15,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
 
-    // Le client Prisma est généré en **TypeScript**, sous `src/generated/`, et
-    // ses imports internes portent l'extension `.ts`. Ces deux options les
-    // acceptent et les réécrivent en `.js` à l'émission : le client est compilé
-    // avec le reste plutôt que livré à part.
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
 
