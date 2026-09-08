@@ -192,15 +192,26 @@ ID_TEST=$($KCADM get users -r "$REALM" -q username=test@etape.local --fields id 
 if [ -n "$ID_TEST" ]; then
   if [ -n "${KEYCLOAK_TEST_USER_PASSWORD:-}" ]; then
     # `passwordHistory(3)` fait échouer `set-password` si le script est rejoué
-    # avec le même mot de passe : le compte est déjà dans l'état voulu.
+    # avec le même mot de passe : le compte est alors déjà dans l'état voulu.
+    #
+    # Impossible de le vérifier, cependant. L'image est construite sans la
+    # fonctionnalité `admin`, donc sans le thème dont l'API d'administration se
+    # sert pour traduire ses messages : elle échoue à le charger sur toute
+    # erreur de validation et répond `unknown_error` à la place
+    # d'`invalidPasswordHistoryMessage`. Distinguer les deux cas sur le texte
+    # est donc hors de portée ici.
+    #
+    # D'où un avertissement plutôt qu'un arrêt : un compte de test est un
+    # confort de recette, pas une raison de faire échouer la configuration du
+    # realm — et le rejeu du script est le cas nominal.
     if erreur=$($KCADM set-password -r "$REALM" --userid "$ID_TEST" \
         --new-password "$KEYCLOAK_TEST_USER_PASSWORD" 2>&1); then
       echo "→ compte de test test@etape.local : mot de passe remplacé"
-    elif [[ "$erreur" == *invalidPasswordHistoryMessage* ]]; then
-      echo "→ compte de test test@etape.local : mot de passe déjà en place"
     else
-      echo "✗ compte de test : ${erreur}" >&2
-      exit 1
+      echo "⚠ compte de test test@etape.local : mot de passe inchangé"
+      echo "  ${erreur}"
+      echo "  Attendu au rejeu du script, l'historique refusant le même mot de passe."
+      echo "  Sinon, vérifier KEYCLOAK_TEST_USER_PASSWORD (12 caractères minimum)."
     fi
   else
     $KCADM delete "users/$ID_TEST" -r "$REALM"
