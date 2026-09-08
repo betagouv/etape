@@ -167,12 +167,6 @@ export default function Register(props: RegisterProps) {
             </Button>
           )}
 
-          {/*
-           * Acceptation implicite, faute d'exigence côté realm. Quand
-           * `termsAcceptanceRequired` est activé, Keycloak impose une case à
-           * cocher et refuse l'inscription sans elle : les deux formulations
-           * cohabiteraient mal, et c'est la case qui prime.
-           */}
           {!termsAcceptanceRequired && (
             <p className="text-body-sm text-muted-foreground text-center">
               {msg("etapeRegisterTerms")}

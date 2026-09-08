@@ -41,13 +41,7 @@ export function UserProfileFields(props: {
   formFieldStates: FormFieldState[];
   dispatchFormAction: (action: FormAction) => void;
   i18n: I18n;
-  /** Rendu sous le champ `password` : les règles à respecter. */
   passwordAddon?: (value: string) => ReactNode;
-  /**
-   * Faire ressaisir le mot de passe. Quand c'est écarté, le champ n'est pas
-   * retiré mais masqué : Keycloakify l'ajoute toujours au profil et y recopie la
-   * valeur saisie, et Keycloak refuse l'inscription s'il ne le reçoit pas.
-   */
   confirmPassword?: boolean;
 }) {
   const {
@@ -209,26 +203,11 @@ function UserProfileField(props: {
   );
 }
 
-/**
- * Règles du mot de passe, vérifiées à la frappe.
- *
- * Elles reprennent **exactement** la politique du realm — c'est elle qui fait
- * autorité, et Keycloak la réapplique à l'envoi. Les deux doivent donc être
- * modifiées ensemble : une règle affichée ici et absente du realm laisserait
- * passer, l'inverse ferait échouer un formulaire qui paraît complet.
- *
- * Les tests reproduisent la lecture de Keycloak, qui s'appuie sur les
- * catégories Unicode de Java : `é` est une lettre, donc ni un chiffre ni un
- * caractère spécial. Un `[^A-Za-z0-9]` la compterait comme spéciale et
- * annoncerait une règle satisfaite que le serveur refuserait ensuite.
- */
 export function PasswordRules(props: { value: string; i18n: I18n; minLength?: number }) {
   const { value, i18n, minLength = 12 } = props;
   const { msgStr } = i18n;
 
   const regles = [
-    // `length` et non le nombre de points de code : Java compte lui aussi des
-    // unités UTF-16, et c'est son décompte qui fait foi.
     { cle: "etapePasswordRuleLength", satisfaite: value.length >= minLength },
     { cle: "etapePasswordRuleUpper", satisfaite: /\p{Lu}/u.test(value) },
     { cle: "etapePasswordRuleLower", satisfaite: /\p{Ll}/u.test(value) },
@@ -242,11 +221,6 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
       <ul className="flex flex-col gap-1">
         {regles.map(({ cle, satisfaite }) => (
           <li key={cle} className="text-body-sm flex items-center gap-2">
-            {/*
-             * L'icône est décorative et la couleur ne porte rien à elle seule :
-             * l'état est aussi écrit, pour qui ne distingue pas le vert du gris
-             * comme pour qui écoute la page.
-             */}
             {satisfaite ? (
               <Check aria-hidden className="text-success size-4 shrink-0" />
             ) : (

@@ -4,10 +4,6 @@
 #   docker compose up -d
 #
 # Console d'administration : http://localhost:8080 (admin / admin)
-#
-# Les emails partent par Brevo, comme en production. Renseigner `SMTP_*` (voir
-# `docs/authentification.md`) active la vérification d'adresse et le parcours
-# « mot de passe oublié » ; sans ces variables, les deux restent fermés.
 
 services:
   # Base **applicative**, séparée de celle de Keycloak et non une base de plus
@@ -165,19 +161,6 @@ services:
           echo "                renseigner FRANCECONNECT_CLIENT_ID / _SECRET puis relancer."
         fi
 
-        # Même raison que ci-dessus : la clé Brevo ne peut pas figurer dans le
-        # fichier de realm, qui est versionné et public. `verifyEmail` suit
-        # l'envoi — l'activer sans SMTP arrêterait l'inscription sur un message
-        # qui n'arriverait jamais.
-        #
-        # L'objet est envoyé d'un bloc sur l'entrée standard, comme le fait
-        # `deploy/keycloak-init.sh` — les deux environnements se règlent ainsi de
-        # la même façon. Un heredoc, lui, ne peut pas fermer ici : bash exige son
-        # délimiteur en colonne zéro, que ce bloc YAML interdit.
-        #
-        # Pour vérifier le résultat, lire le realm **sans** filtre : `kcadm get
-        # realms/etape --fields smtpServer` affiche `{}` pour toute map imbriquée,
-        # et donne à croire que rien n'a été appliqué.
         if [ -n "$$SMTP_HOST" ]; then
           printf '{"verifyEmail":true,"smtpServer":{"host":"%s","port":"%s","from":"%s","fromDisplayName":"ETAPE","starttls":"true","ssl":"false","auth":"true","user":"%s","password":"%s"}}' \
             "$$SMTP_HOST" "$$SMTP_PORT" "$$SMTP_FROM" "$$SMTP_USER" "$$SMTP_PASSWORD" \

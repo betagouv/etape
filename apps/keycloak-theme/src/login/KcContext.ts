@@ -13,16 +13,6 @@ export type KcContextExtension = {
   properties: Record<KcEnvName, string>;
 };
 
-/**
- * Champs ajoutés page par page.
- *
- * Keycloak place `loginResetCredentialsUrl` sur toutes ses pages, y compris
- * `error.ftl` où atterrit un lien de réinitialisation expiré — vérifié sur
- * Keycloak 26.7. Keycloakify ne le déclare que sur les pages de connexion, si
- * bien que la seule porte de sortie utile de cette page-là est invisible au
- * typage. Facultatif malgré tout : le contexte est fourni par le serveur, et
- * une version ultérieure pourrait cesser de le poser.
- */
 export type KcContextExtensionPerPage = {
   "error.ftl": { url: { loginResetCredentialsUrl?: string } };
 };

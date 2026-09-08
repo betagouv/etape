@@ -47,16 +47,9 @@ fi
 $KCADM update "realms/$REALM" -s sslRequired=EXTERNAL
 echo "→ realm ${REALM} : sslRequired=EXTERNAL"
 
-# Durée de vie du lien de réinitialisation reçu par email. Keycloak la fixe à
-# 5 minutes, ce qui ne laisse pas le temps d'ouvrir sa boîte mail sur un autre
-# appareil — la première chose que fait la personne est de redemander un lien.
 $KCADM update "realms/$REALM" -s actionTokenGeneratedByUserLifespan=900
 echo "→ realm ${REALM} : lien de réinitialisation valable 15 minutes"
 
-# Réappliquée ici bien qu'elle figure déjà dans le fichier de realm, et qu'elle
-# ne varie pas d'un environnement à l'autre : l'import est en `IGNORE_EXISTING`,
-# si bien qu'un realm déjà créé ne verrait jamais le changement. Elle doit rester
-# identique à `PasswordRules`, côté thème, qui l'affiche pendant la saisie.
 $KCADM update "realms/$REALM" -s "passwordPolicy=length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername(undefined) and passwordHistory(3)"
 echo "→ realm ${REALM} : politique de mot de passe appliquée"
 
@@ -75,13 +68,6 @@ echo "→ realm master : protection contre la force brute activée"
 # `redirectUris` doit correspondre au caractère près à ce que l'API construit.
 # `post.logout.redirect.uris` n'en est pas déduit : oublié, la déconnexion échoue
 # alors que la connexion fonctionne.
-#
-# `baseUrl` est la destination des liens « retour » que Keycloak pose sur ses
-# pages d'information et d'erreur. Sans elle, la page « votre compte a été mis à
-# jour » qui clôt une réinitialisation de mot de passe n'affiche **aucun bouton**,
-# et Keycloak se rabat sur sa propre console de compte. Elle vise l'entrée de
-# connexion de l'API, et non la racine du site : c'est là que mène le seul lien
-# de ces pages, et la personne n'y est jamais connectée.
 ID_CLIENT=$($KCADM get clients -r "$REALM" -q clientId=etape-api --fields id --format csv --noquotes)
 if [ -z "$ID_CLIENT" ]; then
   echo "✗ client etape-api absent du realm ${REALM} — l'import a-t-il eu lieu ?" >&2
@@ -159,14 +145,9 @@ else
   echo "→ franceconnect : aucun identifiant fourni, le fournisseur restera inutilisable"
 fi
 
-# Le serveur d'envoi. Sans lui, ni vérification d'adresse à l'inscription, ni
-# « mot de passe oublié » — les deux parcours s'arrêtent sur un email qui
-# n'arrive jamais. C'est aussi la vérification d'adresse qui rend sûre la
-# liaison d'un compte local à une identité FranceConnect.
-#
-# Le fichier de realm importé porte le collecteur du poste de développement
-# (`mailpit`), inatteignable ailleurs : il est donc soit remplacé, soit effacé.
-# Le laisser en place ferait échouer chaque envoi en silence.
+# Sans SMTP, `verifyEmail` reste désactivé : l'inscription s'arrêterait sur un
+# message qui n'arriverait jamais. Pis-aller assumé — c'est la vérification
+# d'adresse qui rend sûre la liaison d'un compte local à une identité.
 if [ -n "${SMTP_HOST:-}" ]; then
   $KCADM update "realms/$REALM" -f - <<JSON
 {
@@ -199,18 +180,7 @@ ID_TEST=$($KCADM get users -r "$REALM" -q username=test@etape.local --fields id 
 if [ -n "$ID_TEST" ]; then
   if [ -n "${KEYCLOAK_TEST_USER_PASSWORD:-}" ]; then
     # `passwordHistory(3)` fait échouer `set-password` si le script est rejoué
-    # avec le même mot de passe : le compte est alors déjà dans l'état voulu.
-    #
-    # Impossible de le vérifier, cependant. L'image est construite sans la
-    # fonctionnalité `admin`, donc sans le thème dont l'API d'administration se
-    # sert pour traduire ses messages : elle échoue à le charger sur toute
-    # erreur de validation et répond `unknown_error` à la place
-    # d'`invalidPasswordHistoryMessage`. Distinguer les deux cas sur le texte
-    # est donc hors de portée ici.
-    #
-    # D'où un avertissement plutôt qu'un arrêt : un compte de test est un
-    # confort de recette, pas une raison de faire échouer la configuration du
-    # realm — et le rejeu du script est le cas nominal.
+    # avec le même mot de passe : le compte est déjà dans l'état voulu.
     if erreur=$($KCADM set-password -r "$REALM" --userid "$ID_TEST" \
         --new-password "$KEYCLOAK_TEST_USER_PASSWORD" 2>&1); then
       echo "→ compte de test test@etape.local : mot de passe remplacé"

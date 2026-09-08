@@ -15,20 +15,6 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
   // rendu ne dit rien au typage, et obligeait à réaffirmer l'existence en dessous.
   const retourApplication = skipLink ? undefined : client?.baseUrl;
 
-  /*
-   * Un lien de réinitialisation périmé aboutit ici, et c'est le seul écran du
-   * parcours « mot de passe oublié » dont on ne peut pas repartir : sans issue,
-   * il faut retrouver la page de connexion à la main pour tout recommencer.
-   *
-   * Keycloak ne transmet pas la clé du message, seulement son texte déjà
-   * traduit — d'où cette comparaison. Elle tient parce que les deux chaînes
-   * sortent de la même source : Keycloakify recopie nos traductions dans le
-   * paquet de messages que le serveur utilise pour composer `message.summary`.
-   * Les deux libellés visés sont écrits sans apostrophe pour cette raison,
-   * `MessageFormat` la doublant d'un côté et pas de l'autre.
-   *
-   * En cas d'écart, la page reprend simplement son apparence d'avant.
-   */
   const lienExpire =
     message.summary === msgStr("expiredActionTokenNoSessionMessage") ||
     message.summary === msgStr("expiredActionTokenSessionExistsMessage");
@@ -51,10 +37,6 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
         </Prose>
         {(nouvelleDemande ?? retourApplication) !== undefined && (
           <div className="flex flex-col gap-4">
-            {/*
-             * Redemander un lien passe avant la connexion : qui arrive ici n'a
-             * toujours pas de mot de passe utilisable.
-             */}
             {nouvelleDemande !== undefined && (
               <Button asChild size="xl" className="w-full rounded-lg">
                 <a id="resetPasswordLink" href={nouvelleDemande}>

@@ -8,13 +8,6 @@ import Template from "./Template";
 
 const UserProfileFormFields = lazy(() => import("keycloakify/login/UserProfileFormFields"));
 
-/**
- * Ressaisie du mot de passe à l'inscription — écartée.
- *
- * Elle protégeait de la faute de frappe, mais le champ offre déjà de révéler ce
- * qui est saisi : vérifier soi-même coûte un clic, retaper douze caractères en
- * coûte douze. Et l'oubli reste rattrapable par « mot de passe oublié ».
- */
 const doMakeUserConfirmPassword = false;
 
 const Error = lazy(() => import("./pages/Error"));
