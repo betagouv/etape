@@ -1,21 +1,20 @@
 /**
- * Assemble les exports statiques des deux apps dans `.vercel/output/`, au format
- * attendu par la Build Output API v3 : https://vercel.com/docs/build-output-api/v3
+ * Assemble les exports statiques des deux apps dans `dist/preview/`, prêt à
+ * être rsyncé tel quel vers la VM de previews (DEBFCOETAPFRT01), où nginx
+ * applique les règles de routage (voir infra/nginx/previews.conf).
  *
- * En mode `--prebuilt`, Vercel ne voit ni le repo ni le code — uniquement ce
- * dossier. Ni `vercel.json`, ni les réglages de build du dashboard, ni ses
- * variables d'environnement ne s'appliquent : tout se décide ici et au build.
+ * Les règles de routage (noindex, 308 sur le préfixe, 404 par app) ne sont
+ * pas ici : elles vivent dans la conf nginx.
  *
  * À lancer depuis la racine du monorepo, après `turbo run build`.
  */
-import { access, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 import { SIMULATEUR_BASE_PATH } from "../paths.mjs";
 
 const root = process.cwd();
-const out = path.join(root, ".vercel/output");
-const staticDir = path.join(out, "static");
+const staticDir = path.join(root, "dist/preview");
 
 // Nom du sous-dossier où atterrit l'export du simulateur, dérivé du préfixe :
 // "/simulateur" -> "simulateur".
@@ -67,47 +66,10 @@ async function assembler() {
   }
 }
 
-/**
- * Tient le rôle du `vercel.json`, qui n'est pas lu en mode `--prebuilt`.
- *
- * `handle: "filesystem"` sert d'abord tout fichier existant ; `handle: "error"`
- * renvoie ensuite le 404 de la bonne app. Pas de fallback SPA : un export
- * statique Next produit un vrai fichier HTML par route, un fallback masquerait
- * les vraies 404.
- */
-function construireConfig() {
-  return {
-    version: 3,
-    routes: [
-      // Ceinture et bretelles : Vercel marque déjà les previews `noindex`.
-      { src: "/(.*)", headers: { "x-robots-tag": "noindex, nofollow" }, continue: true },
-      // `trailingSlash: true` côté Next, mais un export statique ne peut pas
-      // rediriger de lui-même : la redirection se fait donc ici.
-      {
-        src: `^${SIMULATEUR_BASE_PATH}$`,
-        status: 308,
-        headers: { Location: `${SIMULATEUR_BASE_PATH}/` },
-      },
-      { handle: "filesystem" },
-      { handle: "error" },
-      {
-        src: `^${SIMULATEUR_BASE_PATH}(/.*)?$`,
-        status: 404,
-        dest: `${SIMULATEUR_BASE_PATH}/404.html`,
-      },
-      { src: "/(.*)", status: 404, dest: "/404.html" },
-    ],
-  };
-}
-
 async function main() {
   await verifierLesBuilds();
   await assembler();
-  await writeFile(
-    path.join(out, "config.json"),
-    `${JSON.stringify(construireConfig(), null, 2)}\n`,
-  );
-  console.log("✅ .vercel/output prêt");
+  console.log(`✅ ${path.relative(root, staticDir)} prêt à être déployé`);
 }
 
 // `process.exit()` tronquerait les écritures encore en attente quand stdout est
