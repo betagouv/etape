@@ -1,7 +1,9 @@
 # Mise en service des previews : installation et configuration nginx
 
 Objectif final : à chaque PR, une preview accessible sur `https://pr-<n>.dev.certifpro.cegedim.cloud/`,
-mise à jour à chaque push, détruite à la fermeture de la PR.
+mise à jour à chaque push, détruite à la fermeture de la PR. Et à chaque merge sur `main`,
+l'environnement dev sur `https://main.dev.certifpro.cegedim.cloud/` (workflow `deploy-dev.yml`,
+dossier `/srv/previews/main/`, jamais purgé). Même VM, même nginx, même basic auth.
 
 **Montage confirmé le 7/09** (curl sur `pr-0.dev.certifpro.cegedim.cloud`) : le DNS wildcard et le
 443 public sont déjà en place, et le TLS est terminé sur le point d'entrée Cegedim (BigIP,

@@ -1,0 +1,83 @@
+name: Déployer un export statique sur la VM front
+description: >-
+  Construit les deux apps, les assemble (scripts/assemble-static.mjs), dépose le
+  résultat dans un dossier de /srv/previews sur DEBFCOETAPFRT01 et vérifie que
+  nginx le sert. Partagé par les previews de PR (pr-<n>) et l'environnement dev
+  (main). Le dépôt doit déjà être extrait (actions/checkout) par l'appelant.
+
+inputs:
+  dossier:
+    description: "Nom du dossier cible dans /srv/previews (pr-<n> ou main)"
+    required: true
+  hote:
+    description: "Hostname servi par nginx pour ce dossier (résolu par regex dans infra/nginx/previews.conf)"
+    required: true
+  ssh:
+    description: "Cible SSH de la VM front"
+    default: deploy@debfcoetapfrt01.fco.cegedim.cloud
+  racine:
+    description: "Racine des environnements sur la VM"
+    default: /srv/previews
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+
+    - name: Install (lockfile)
+      shell: bash
+      run: npm ci
+
+    - name: Build
+      shell: bash
+      run: npm run build
+
+    - name: Assemblage statique
+      shell: bash
+      run: node scripts/assemble-static.mjs
+
+    - name: Déposer sur la VM front
+      shell: bash
+      env:
+        CIBLE_SSH: ${{ inputs.ssh }}
+        DOSSIER: ${{ inputs.racine }}/${{ inputs.dossier }}
+      run: |
+        case "${{ inputs.dossier }}" in
+          (main | pr-[0-9]*) ;;
+          (*) echo "::error::Dossier cible inattendu : '${{ inputs.dossier }}'"; exit 1 ;;
+        esac
+        ssh -o BatchMode=yes "$CIBLE_SSH" "mkdir -p -- '$DOSSIER'"
+        # --chmod : les fichiers arrivent lisibles par nginx (www-data) quel que
+        # soit l'umask du runner ; sans cela, un umask durci donnerait des 403.
+        rsync -az --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
+          dist/preview/ "$CIBLE_SSH:$DOSSIER/"
+
+    - name: Vérifier depuis la VM
+      # Depuis la VM elle-même (Host forcé) : le test ne dépend ni du DNS
+      # public ni du routage entrant, seulement de nginx et des fichiers.
+      # En HTTP : le TLS est terminé sur le BigIP Cegedim, la VM n'écoute
+      # que sur le port 80. Localhost est exempté de la basic auth.
+      #
+      # Les deux apps sont sondées : un `basePath` cassé laisse la racine
+      # intacte et ne se voit que sous le préfixe du simulateur.
+      shell: bash
+      env:
+        CIBLE_SSH: ${{ inputs.ssh }}
+        HOTE: ${{ inputs.hote }}
+      run: |
+        echec=0
+        for chemin in / /simulateur/; do
+          code="$(ssh -o BatchMode=yes "$CIBLE_SSH" \
+            "curl -s -o /dev/null -w '%{http_code}' -H 'Host: $HOTE' 'http://localhost$chemin'")"
+          if [ "$code" = "200" ]; then
+            echo "ok    $chemin ($code)"
+          else
+            echo "::error::$HOTE répond $code au lieu de 200 sur $chemin"
+            echec=1
+          fi
+        done
+        exit "$echec"
