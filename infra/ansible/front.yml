@@ -1,0 +1,139 @@
+# Socle de la VM front (DEBFCOETAPFRT01) : nginx et previews par PR.
+# Traduction exécutable de docs/infra/installation-previews.md.
+#
+# Montage confirmé le 7/09 (curl sur pr-0.dev.certifpro.cegedim.cloud) : le TLS
+# est terminé sur le point d'entrée Cegedim (BigIP, certificat wildcard
+# Let's Encrypt porté par eux). La VM reçoit du trafic en clair : la conf
+# appliquée est infra/nginx/previews.conf (port 80, aucun certificat sur la VM).
+# Rejouable sans risque : chaque tâche décrit un état.
+#
+# Entrée attendue dans l'environnement du poste de pilotage :
+#   PREVIEW_BASIC_AUTH_PASSWORD  mot de passe partagé des previews (utilisateur
+#                                « etape »), fourni par le workflow Setup VM
+#                                depuis le secret GitHub du même nom. Peut être
+#                                omis au rejeu si le htpasswd est déjà en place.
+
+- name: Configurer la VM front (previews)
+  hosts: front
+  become: true
+  vars:
+    previews_htpasswd: /etc/nginx/previews.htpasswd
+    previews_auth_user: etape
+    previews_auth_password: "{{ lookup('env', 'PREVIEW_BASIC_AUTH_PASSWORD') }}"
+
+  tasks:
+    - name: Paquets requis
+      ansible.builtin.apt:
+        name: [nginx, rsync, apache2-utils]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    # Le compte deploy existe normalement déjà (créé par Cegedim, point du 2/09) ;
+    # cette tâche et les suivantes garantissent son état exact quoi qu'il arrive.
+    - name: Compte de service deploy
+      ansible.builtin.user:
+        name: deploy
+        shell: /bin/bash
+
+    - name: Racine des previews
+      ansible.builtin.file:
+        path: /srv/previews
+        state: directory
+        owner: deploy
+        group: deploy
+        mode: "0755"
+
+    - ansible.builtin.import_tasks: taches/cle-runner.yml
+
+    # --- Basic auth : le 443 public est ouvert, aucune preview ne doit être
+    # servie sans mot de passe. La conf nginx exige le htpasswd ; il est écrit
+    # ici, jamais dans git, et n'est réécrit que si le mot de passe a changé.
+    - name: Fichier htpasswd déjà en place ?
+      ansible.builtin.stat:
+        path: "{{ previews_htpasswd }}"
+      register: htpasswd_existant
+
+    - name: Mot de passe des previews fourni (ou htpasswd déjà en place)
+      ansible.builtin.assert:
+        that: previews_auth_password | length > 0 or htpasswd_existant.stat.exists
+        fail_msg: >-
+          PREVIEW_BASIC_AUTH_PASSWORD est vide et {{ previews_htpasswd }} n'existe pas :
+          nginx servirait les previews sans protection. Définir le secret GitHub
+          PREVIEW_BASIC_AUTH_PASSWORD (ou exporter la variable pour un lancement manuel).
+        quiet: true
+
+    - name: Mot de passe en place identique à celui fourni ?
+      ansible.builtin.shell: |
+        set -o pipefail
+        printf '%s' "$MDP" | htpasswd -vi "{{ previews_htpasswd }}" "{{ previews_auth_user }}"
+      args:
+        executable: /bin/bash
+      environment:
+        MDP: "{{ previews_auth_password }}"
+      register: htpasswd_verif
+      failed_when: false
+      changed_when: false
+      no_log: true
+      when: previews_auth_password | length > 0 and htpasswd_existant.stat.exists
+
+    - name: Écrire le htpasswd (bcrypt)
+      ansible.builtin.shell: |
+        set -o pipefail
+        printf '%s' "$MDP" | htpasswd -iBc "{{ previews_htpasswd }}" "{{ previews_auth_user }}"
+      args:
+        executable: /bin/bash
+      environment:
+        MDP: "{{ previews_auth_password }}"
+      no_log: true
+      when: >-
+        previews_auth_password | length > 0
+        and (not htpasswd_existant.stat.exists or (htpasswd_verif.rc | default(1)) != 0)
+
+    - name: Droits du htpasswd (lisible par nginx uniquement)
+      ansible.builtin.file:
+        path: "{{ previews_htpasswd }}"
+        owner: root
+        group: www-data
+        mode: "0640"
+
+    # --- nginx
+    - name: Configuration nginx des previews
+      ansible.builtin.copy:
+        src: ../nginx/previews.conf
+        dest: /etc/nginx/sites-available/previews.conf
+        mode: "0644"
+      notify: Recharger nginx
+
+    - name: Site previews activé
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/previews.conf
+        dest: /etc/nginx/sites-enabled/previews.conf
+        state: link
+      notify: Recharger nginx
+
+    - name: Site nginx par défaut retiré (sinon default_server en double)
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Recharger nginx
+
+    # `nginx -s reload` (ExecReload Debian) renvoie 0 même si la nouvelle conf
+    # est refusée : sans ce test, une conf cassée laisserait l'ancienne en
+    # service avec un play vert. Ici, une conf cassée arrête le play avant le
+    # reload et l'erreur exacte est affichée.
+    - name: Configuration nginx valide
+      ansible.builtin.command: nginx -t
+      changed_when: false
+
+    - name: Nginx démarré et activé au démarrage
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+  handlers:
+    - name: Recharger nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded

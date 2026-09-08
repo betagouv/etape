@@ -1,0 +1,12 @@
+# Variables communes à toutes les machines (chargées automatiquement par Ansible
+# depuis le dossier de l'inventaire).
+
+# Clé publique du runner, lue sur la machine opérationnelle au moment de l'exécution
+# (OPS01, compte github-runner : c'est là que vit la paire de clés). Rien n'est
+# écrit en dur dans le dépôt : une régénération de la clé (voir
+# docs/infra/reprise-cle-runner.md) est prise en compte au rejeu suivant, sans
+# commit. Pour forcer une autre clé ou un autre chemin :
+#   -e "cle_runner='ssh-ed25519 AAAA… github-runner@debfcoetapops01'"
+#   -e "cle_runner_fichier=/chemin/vers/cle.pub"
+cle_runner_fichier: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
+cle_runner: "{{ lookup('file', cle_runner_fichier, errors='ignore') | default('', true) }}"

@@ -1,0 +1,32 @@
+# Autorise la clé du runner pour le compte deploy. Importé par front.yml et
+# back.yml (mêmes gestes sur toutes les machines cibles).
+
+- name: Clé publique du runner disponible sur la machine opérationnelle
+  ansible.builtin.assert:
+    that: cle_runner is match('^ssh-(ed25519|rsa) ')
+    fail_msg: >-
+      Clé publique du runner introuvable ({{ cle_runner_fichier }}). Le playbook doit
+      tourner sur OPS01 sous le compte github-runner (voir docs/infra/reprise-cle-runner.md
+      si la paire a disparu), ou recevoir la clé explicitement :
+      -e "cle_runner='ssh-ed25519 AAAA… github-runner@debfcoetapops01'".
+    quiet: true
+
+- name: Dossier .ssh de deploy
+  ansible.builtin.file:
+    path: /home/deploy/.ssh
+    state: directory
+    owner: deploy
+    group: deploy
+    mode: "0700"
+
+# lineinfile ajoute la clé si elle manque et laisse les autres lignes en place
+# (clé d'administration Cegedim, ancienne clé encore en transition…) : un rejeu
+# ne peut jamais verrouiller un accès existant.
+- name: Clé du runner autorisée pour deploy (les autres clés sont conservées)
+  ansible.builtin.lineinfile:
+    path: /home/deploy/.ssh/authorized_keys
+    line: "{{ cle_runner }}"
+    create: true
+    owner: deploy
+    group: deploy
+    mode: "0600"

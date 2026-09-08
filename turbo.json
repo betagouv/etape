@@ -16,6 +16,9 @@
       "persistent": true
     },
     "lint": {},
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
     "start": {
       "cache": false,
       "persistent": true
