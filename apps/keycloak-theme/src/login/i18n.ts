@@ -45,6 +45,15 @@ const { useI18n, ofTypeI18n } = i18nBuilder
        * d'un lien ; dans un bouton, ce chevron n'a plus de sens.
        */
       missingUsernameMessage: "Veuillez renseigner votre adresse email.",
+      invalidEmailMessage: "Adresse email invalide : il y manque un « @ ».",
+      missingEmailMessage: "Veuillez renseigner votre adresse email.",
+      /*
+       * `registrationEmailAsUsername` fait de l'adresse l'identifiant : Keycloak
+       * peut signaler le doublon sous l'un ou l'autre nom selon le chemin, et
+       * « nom d'utilisateur » ne désigne rien à l'écran.
+       */
+      emailExistsMessage: "Un compte existe déjà avec cette adresse email.",
+      usernameExistsMessage: "Un compte existe déjà avec cette adresse email.",
       backToApplication: "Se connecter à ETAPE",
       /*
        * Volontairement muet sur l'existence du compte : Keycloak affiche le même
@@ -73,6 +82,8 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeRegisterSubtitle:
         "Suivez en temps réel l'avancement de votre projet de transition professionnelle.",
       etapeNoAccount: "Pas encore de compte ?",
+      etapeRegisterTerms:
+        "En créant votre compte, vous acceptez les conditions générales d'utilisation.",
       etapeCreateAccount: "Créer un compte usager",
       etapeAlreadyAccount: "Déjà un compte ?",
       etapeOrCredentials: "ou renseignez vos identifiants",
@@ -98,10 +109,21 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeExpiredLinkTitle: "Lien expiré",
       etapeExpiredLinkRestart: "Demander un nouveau lien",
 
-      etapePasswordStrength: "Force du mot de passe",
-      etapePasswordStrengthWeak: "faible",
-      etapePasswordStrengthMedium: "moyen",
-      etapePasswordStrengthStrong: "solide",
+      /*
+       * Les cinq règles reprennent la politique du realm, terme pour terme.
+       * Les modifier ici sans toucher `passwordPolicy` annoncerait des règles
+       * que le serveur n'applique pas — ou l'inverse.
+       */
+      etapePasswordRulesTitle: "Votre mot de passe doit contenir :",
+      etapePasswordRuleLength: "au moins 12 caractères",
+      etapePasswordRuleUpper: "une lettre majuscule",
+      etapePasswordRuleLower: "une lettre minuscule",
+      etapePasswordRuleDigit: "un chiffre",
+      etapePasswordRuleSpecial: "un caractère spécial",
+      // Lus par les lecteurs d'écran seulement : la couleur ne dit rien à qui
+      // ne la perçoit pas.
+      etapePasswordRuleMet: "(satisfait)",
+      etapePasswordRuleUnmet: "(non satisfait)",
 
       etapeIllustrationAlt: "",
     },
@@ -113,6 +135,10 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       emailVerifyTitle: "Confirm your email address",
 
       missingUsernameMessage: "Please enter your email address.",
+      invalidEmailMessage: "Invalid email address: an « @ » is missing.",
+      missingEmailMessage: "Please enter your email address.",
+      emailExistsMessage: "An account already exists with this email address.",
+      usernameExistsMessage: "An account already exists with this email address.",
       backToApplication: "Sign in to ETAPE",
       emailSentMessage:
         "If an account exists for this address, a reset link has just been sent. Remember to check your spam folder.",
@@ -126,6 +152,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeRegisterTitle: "Create your personal account",
       etapeRegisterSubtitle: "Follow your career transition project in real time.",
       etapeNoAccount: "No account yet?",
+      etapeRegisterTerms: "By creating your account, you accept the terms of use.",
       etapeCreateAccount: "Create an account",
       etapeAlreadyAccount: "Already have an account?",
       etapeOrCredentials: "or enter your credentials",
@@ -149,10 +176,14 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeExpiredLinkTitle: "Link expired",
       etapeExpiredLinkRestart: "Request a new link",
 
-      etapePasswordStrength: "Password strength",
-      etapePasswordStrengthWeak: "weak",
-      etapePasswordStrengthMedium: "medium",
-      etapePasswordStrengthStrong: "strong",
+      etapePasswordRulesTitle: "Your password must contain:",
+      etapePasswordRuleLength: "at least 12 characters",
+      etapePasswordRuleUpper: "an uppercase letter",
+      etapePasswordRuleLower: "a lowercase letter",
+      etapePasswordRuleDigit: "a digit",
+      etapePasswordRuleSpecial: "a special character",
+      etapePasswordRuleMet: "(met)",
+      etapePasswordRuleUnmet: "(not met)",
 
       etapeIllustrationAlt: "",
     },

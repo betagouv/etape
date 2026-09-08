@@ -187,9 +187,20 @@ sauter l'étape de vérification.
 
 - **Brute force detection** : désactivée par défaut de Keycloak, activée dans le
   fichier de realm.
-- **Politique de mot de passe** : longueur plutôt que complexité, conformément
-  aux recommandations de l'ANSSI. `length(12)`, refus du mot de passe identique à
-  l'identifiant, historique de 3.
+- **Politique de mot de passe** : `length(12)`, une majuscule, une minuscule, un
+  chiffre, un caractère spécial, refus du mot de passe identique à l'identifiant,
+  historique de 3.
+
+  Les règles de composition sont une **demande produit**, et non ce que nous
+  recommanderions : l'ANSSI comme le NIST tiennent la longueur pour plus efficace
+  que la complexité, qui pousse surtout à des substitutions prévisibles
+  (`Password1!`) et à la réutilisation. Les douze caractères exigés restent le
+  garde-fou principal.
+
+  Elles sont écrites à deux endroits qui doivent rester d'accord : `passwordPolicy`
+  dans le realm, qui fait autorité, et `PasswordRules` dans le thème, qui les
+  affiche pendant la saisie. Modifier l'un sans l'autre annonce une règle que le
+  serveur n'applique pas, ou fait échouer un formulaire qui paraît complet.
 
 ## Thème
 
@@ -310,12 +321,12 @@ puis `docker compose up -d keycloak-providers && docker compose restart keycloak
 c'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions, un
 simple redémarrage de Keycloak servirait l'ancien.
 
-| Service           | Adresse               | Accès                                     |
-| ----------------- | --------------------- | ----------------------------------------- |
-| Site vitrine      | http://localhost:3000 | bouton « Se connecter » dans l'en-tête    |
-| Console Keycloak  | http://localhost:8080 | `admin` / `admin`                         |
-| Compte applicatif | —                     | `test@etape.local` / `MotDePasseTest2026` |
-| Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`           |
+| Service           | Adresse               | Accès                                      |
+| ----------------- | --------------------- | ------------------------------------------ |
+| Site vitrine      | http://localhost:3000 | bouton « Se connecter » dans l'en-tête     |
+| Console Keycloak  | http://localhost:8080 | `admin` / `admin`                          |
+| Compte applicatif | —                     | `test@etape.local` / `MotDePasseTest2026!` |
+| Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`            |
 
 Le secret du client est figé dans le fichier de realm et recopié tel quel dans
 `.env.example` : sans cela, Keycloak en régénère un à chaque import et il

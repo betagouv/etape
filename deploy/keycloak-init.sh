@@ -53,6 +53,13 @@ echo "→ realm ${REALM} : sslRequired=EXTERNAL"
 $KCADM update "realms/$REALM" -s actionTokenGeneratedByUserLifespan=900
 echo "→ realm ${REALM} : lien de réinitialisation valable 15 minutes"
 
+# Réappliquée ici bien qu'elle figure déjà dans le fichier de realm, et qu'elle
+# ne varie pas d'un environnement à l'autre : l'import est en `IGNORE_EXISTING`,
+# si bien qu'un realm déjà créé ne verrait jamais le changement. Elle doit rester
+# identique à `PasswordRules`, côté thème, qui l'affiche pendant la saisie.
+$KCADM update "realms/$REALM" -s "passwordPolicy=length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername(undefined) and passwordHistory(3)"
+echo "→ realm ${REALM} : politique de mot de passe appliquée"
+
 # Le realm `master` naît sans protection contre la force brute, là où `etape` la
 # porte, et c'est pourtant lui qui délivre le jeton d'administration.
 # `permanentLockout=false` : verrouiller le seul administrateur se retourne
@@ -211,12 +218,14 @@ if [ -n "$ID_TEST" ]; then
       echo "⚠ compte de test test@etape.local : mot de passe inchangé"
       echo "  ${erreur}"
       echo "  Attendu au rejeu du script, l'historique refusant le même mot de passe."
-      echo "  Sinon, vérifier KEYCLOAK_TEST_USER_PASSWORD (12 caractères minimum)."
+      echo "  Sinon, vérifier KEYCLOAK_TEST_USER_PASSWORD face à la politique du realm :"
+    echo "  12 caractères, une majuscule, une minuscule, un chiffre, un caractère spécial."
     fi
   else
     $KCADM delete "users/$ID_TEST" -r "$REALM"
     echo "→ compte de test test@etape.local : supprimé"
-    echo "  (renseigner KEYCLOAK_TEST_USER_PASSWORD — 12 caractères minimum — pour le conserver)"
+    echo "  (renseigner KEYCLOAK_TEST_USER_PASSWORD, conforme à la politique du realm,"
+    echo "   pour le conserver)"
   fi
 fi
 

@@ -93,7 +93,8 @@ Trois pièges tiennent au moment où ces valeurs sont lues :
 `test@etape.local` avec un mot de passe écrit en clair dans un dépôt public :
 laissé tel quel sur une instance joignable depuis Internet, c'est un accès
 publié. Sans cette variable, le compte est donc **supprimé** au déploiement ;
-avec elle (12 caractères minimum, politique du realm), il est conservé et
+avec elle (conforme à la politique du realm : 12 caractères, majuscule,
+minuscule, chiffre et caractère spécial), il est conservé et
 reçoit ce mot de passe-là.
 
 ## FranceConnect

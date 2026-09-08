@@ -9,11 +9,13 @@ import Template from "./Template";
 const UserProfileFormFields = lazy(() => import("keycloakify/login/UserProfileFormFields"));
 
 /**
- * Faire ressaisir le mot de passe à l'inscription. Keycloak ne l'impose pas ;
- * les maquettes le prévoient, et une faute de frappe sur un mot de passe de
- * douze caractères se paie par un parcours de réinitialisation.
+ * Ressaisie du mot de passe à l'inscription — écartée.
+ *
+ * Elle protégeait de la faute de frappe, mais le champ offre déjà de révéler ce
+ * qui est saisi : vérifier soi-même coûte un clic, retaper douze caractères en
+ * coûte douze. Et l'oubli reste rattrapable par « mot de passe oublié ».
  */
-const doMakeUserConfirmPassword = true;
+const doMakeUserConfirmPassword = false;
 
 const Error = lazy(() => import("./pages/Error"));
 const Info = lazy(() => import("./pages/Info"));

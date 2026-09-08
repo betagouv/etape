@@ -2,7 +2,7 @@ import { Button } from "@etape/ui/components/button";
 import { useState } from "react";
 
 import { CheckboxField, Field, FieldError, PasswordInput } from "../components/form";
-import { PasswordStrength } from "../components/user-profile-fields";
+import { PasswordRules } from "../components/user-profile-fields";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
@@ -59,7 +59,7 @@ export default function LoginUpdatePassword(
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
-            <PasswordStrength value={password} i18n={i18n} />
+            <PasswordRules value={password} i18n={i18n} />
           </Field>
 
           <Field

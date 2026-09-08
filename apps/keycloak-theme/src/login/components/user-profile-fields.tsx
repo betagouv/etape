@@ -1,6 +1,5 @@
-import { cn } from "@etape/ui/lib/utils";
 import type { FormAction, FormFieldState } from "keycloakify/login/lib/useUserProfileForm";
-import { Mail, User } from "lucide-react";
+import { Check, Circle, Mail, User } from "lucide-react";
 import type { ChangeEvent, ComponentType, ReactNode } from "react";
 
 import type { I18n } from "../i18n";
@@ -42,12 +41,27 @@ export function UserProfileFields(props: {
   formFieldStates: FormFieldState[];
   dispatchFormAction: (action: FormAction) => void;
   i18n: I18n;
-  /** Rendu sous le champ `password`, pour la jauge de robustesse. */
+  /** Rendu sous le champ `password` : les règles à respecter. */
   passwordAddon?: (value: string) => ReactNode;
+  /**
+   * Faire ressaisir le mot de passe. Quand c'est écarté, le champ n'est pas
+   * retiré mais masqué : Keycloakify l'ajoute toujours au profil et y recopie la
+   * valeur saisie, et Keycloak refuse l'inscription s'il ne le reçoit pas.
+   */
+  confirmPassword?: boolean;
 }) {
-  const { formFieldStates, dispatchFormAction, i18n, passwordAddon } = props;
+  const {
+    formFieldStates,
+    dispatchFormAction,
+    i18n,
+    passwordAddon,
+    confirmPassword = true,
+  } = props;
 
-  const hidden = formFieldStates.filter((field) => HIDDEN.includes(field.attribute.name));
+  const estMasque = (nom: string) =>
+    HIDDEN.includes(nom) || (nom === "password-confirm" && !confirmPassword);
+
+  const hidden = formFieldStates.filter((field) => estMasque(field.attribute.name));
 
   /*
    * Keycloak ordonne le profil avec l'identifiant en premier — ici l'email —
@@ -58,8 +72,7 @@ export function UserProfileFields(props: {
   const visible = [
     ...formFieldStates.filter((field) => SIDE_BY_SIDE.includes(field.attribute.name)),
     ...formFieldStates.filter(
-      (field) =>
-        !SIDE_BY_SIDE.includes(field.attribute.name) && !HIDDEN.includes(field.attribute.name),
+      (field) => !SIDE_BY_SIDE.includes(field.attribute.name) && !estMasque(field.attribute.name),
     ),
   ];
 
@@ -197,49 +210,57 @@ function UserProfileField(props: {
 }
 
 /**
- * Jauge indicative de robustesse du mot de passe.
+ * Règles du mot de passe, vérifiées à la frappe.
  *
- * Purement visuelle : la seule règle qui fait autorité est la politique du
- * realm (`length(12)`, refus du mot de passe identique à l'identifiant,
- * historique), appliquée par Keycloak au moment de l'envoi. Cette jauge aide à
- * la saisie, elle ne valide rien.
+ * Elles reprennent **exactement** la politique du realm — c'est elle qui fait
+ * autorité, et Keycloak la réapplique à l'envoi. Les deux doivent donc être
+ * modifiées ensemble : une règle affichée ici et absente du realm laisserait
+ * passer, l'inverse ferait échouer un formulaire qui paraît complet.
+ *
+ * Les tests reproduisent la lecture de Keycloak, qui s'appuie sur les
+ * catégories Unicode de Java : `é` est une lettre, donc ni un chiffre ni un
+ * caractère spécial. Un `[^A-Za-z0-9]` la compterait comme spéciale et
+ * annoncerait une règle satisfaite que le serveur refuserait ensuite.
  */
-export function PasswordStrength(props: { value: string; i18n: I18n; minLength?: number }) {
+export function PasswordRules(props: { value: string; i18n: I18n; minLength?: number }) {
   const { value, i18n, minLength = 12 } = props;
   const { msgStr } = i18n;
 
-  if (value === "") {
-    return null;
-  }
-
-  const varieties = [/[a-z]/, /[A-Z]/, /\d/, /[^\w\s]/].filter((pattern) =>
-    pattern.test(value),
-  ).length;
-
-  const score =
-    value.length < minLength ? 1 : value.length >= minLength + 4 && varieties >= 3 ? 3 : 2;
-
-  const label = [
-    msgStr("etapePasswordStrengthWeak"),
-    msgStr("etapePasswordStrengthMedium"),
-    msgStr("etapePasswordStrengthStrong"),
-  ][score - 1];
-
-  const color = ["bg-warning", "bg-primary", "bg-success"][score - 1];
+  const regles = [
+    // `length` et non le nombre de points de code : Java compte lui aussi des
+    // unités UTF-16, et c'est son décompte qui fait foi.
+    { cle: "etapePasswordRuleLength", satisfaite: value.length >= minLength },
+    { cle: "etapePasswordRuleUpper", satisfaite: /\p{Lu}/u.test(value) },
+    { cle: "etapePasswordRuleLower", satisfaite: /\p{Ll}/u.test(value) },
+    { cle: "etapePasswordRuleDigit", satisfaite: /\p{Nd}/u.test(value) },
+    { cle: "etapePasswordRuleSpecial", satisfaite: /[^\p{L}\p{N}]/u.test(value) },
+  ] as const;
 
   return (
     <div className="flex flex-col gap-1">
-      <div aria-hidden className="flex gap-1">
-        {[1, 2, 3].map((segment) => (
-          <span
-            key={segment}
-            className={cn("h-1 flex-1 rounded-full", segment <= score ? color : "bg-muted")}
-          />
+      <p className="text-body-sm text-muted-foreground">{msgStr("etapePasswordRulesTitle")}</p>
+      <ul className="flex flex-col gap-1">
+        {regles.map(({ cle, satisfaite }) => (
+          <li key={cle} className="text-body-sm flex items-center gap-2">
+            {/*
+             * L'icône est décorative et la couleur ne porte rien à elle seule :
+             * l'état est aussi écrit, pour qui ne distingue pas le vert du gris
+             * comme pour qui écoute la page.
+             */}
+            {satisfaite ? (
+              <Check aria-hidden className="text-success size-4 shrink-0" />
+            ) : (
+              <Circle aria-hidden className="text-muted-foreground size-4 shrink-0" />
+            )}
+            <span className={satisfaite ? "text-success" : "text-muted-foreground"}>
+              {msgStr(cle)}
+            </span>
+            <span className="sr-only">
+              {msgStr(satisfaite ? "etapePasswordRuleMet" : "etapePasswordRuleUnmet")}
+            </span>
+          </li>
         ))}
-      </div>
-      <p aria-live="polite" className="text-body-sm text-muted-foreground">
-        {msgStr("etapePasswordStrength")} : {label}
-      </p>
+      </ul>
     </div>
   );
 }

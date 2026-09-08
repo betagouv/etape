@@ -5,7 +5,7 @@ import { useLayoutEffect, useMemo, useState } from "react";
 import { CheckboxField, FieldError } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
 import { AccountSwitch } from "../components/prose";
-import { PasswordStrength, UserProfileFields } from "../components/user-profile-fields";
+import { PasswordRules, UserProfileFields } from "../components/user-profile-fields";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
@@ -108,7 +108,8 @@ export default function Register(props: RegisterProps) {
           formFieldStates={formState.formFieldStates}
           dispatchFormAction={dispatchFormAction}
           i18n={i18n}
-          passwordAddon={(value) => <PasswordStrength value={value} i18n={i18n} />}
+          passwordAddon={(value) => <PasswordRules value={value} i18n={i18n} />}
+          confirmPassword={doMakeUserConfirmPassword}
         />
 
         {termsAcceptanceRequired && (
@@ -164,6 +165,18 @@ export default function Register(props: RegisterProps) {
             >
               {msg("doRegister")}
             </Button>
+          )}
+
+          {/*
+           * Acceptation implicite, faute d'exigence côté realm. Quand
+           * `termsAcceptanceRequired` est activé, Keycloak impose une case à
+           * cocher et refuse l'inscription sans elle : les deux formulations
+           * cohabiteraient mal, et c'est la case qui prime.
+           */}
+          {!termsAcceptanceRequired && (
+            <p className="text-body-sm text-muted-foreground text-center">
+              {msg("etapeRegisterTerms")}
+            </p>
           )}
 
           <AccountSwitch

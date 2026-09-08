@@ -24,7 +24,7 @@
   "minimumQuickLoginWaitSeconds": 60,
   "quickLoginCheckMilliSeconds": 1000,
   "maxDeltaTimeSeconds": 43200,
-  "passwordPolicy": "length(12) and notUsername(undefined) and passwordHistory(3)",
+  "passwordPolicy": "length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername(undefined) and passwordHistory(3)",
   "ssoSessionIdleTimeout": 1800,
   "ssoSessionMaxLifespan": 36000,
   "accessTokenLifespan": 300,
@@ -80,7 +80,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "MotDePasseTest2026",
+          "value": "MotDePasseTest2026!",
           "temporary": false
         }
       ]
