@@ -48,12 +48,16 @@ Tout tient dans `apps/api/src/auth/`, et le reste de l'application ne dépend qu
 de `SessionService` et `SessionGuard` — jamais de Keycloak ni d'`openid-client`.
 Changer d'IAM revient à réécrire `OidcService` seul.
 
-| Route                    | Rôle                                            |
-| ------------------------ | ----------------------------------------------- |
-| `GET /api/auth/login`    | Démarre le parcours, redirige vers Keycloak     |
-| `GET /api/auth/callback` | Échange le code, ouvre la session               |
-| `GET /api/auth/logout`   | Ferme la session et propage la déconnexion      |
-| `GET /api/auth/session`  | État de connexion pour le front (401 si absent) |
+Sessions et transactions de connexion sont gardées en PostgreSQL : elles
+survivent au redéploiement, et deux instances de l'API voient les mêmes. Le
+détail du schéma est dans [donnees.md](donnees.md).
+
+| Route                    | Rôle                                              |
+| ------------------------ | ------------------------------------------------- |
+| `GET /api/auth/login`    | Démarre le parcours, redirige vers Keycloak       |
+| `GET /api/auth/callback` | Échange le code, crée le compte, ouvre la session |
+| `GET /api/auth/logout`   | Ferme la session et propage la déconnexion        |
+| `GET /api/auth/session`  | État de connexion pour le front (401 si absent)   |
 
 ## Le bouton FranceConnect reste dans le front
 
@@ -86,9 +90,13 @@ appliqué après coup par `kcadm`. Le détail et les pièges associés sont dans
 - `post.logout.redirect.uris` doit couvrir l'URL du front. Elle n'est pas déduite
   des `redirectUris` : oubliée, la déconnexion échoue alors même que la connexion
   fonctionne.
+- `baseUrl` est la destination des liens « retour » que Keycloak pose sur ses
+  pages d'information et d'erreur. Sans elle, la page qui clôt une
+  réinitialisation de mot de passe n'affiche **aucun bouton**.
 - Un **mapper** expose `identity_provider` dans l'`id_token`, ce qui permet à
   l'API de distinguer une identité FranceConnect d'un compte local. Sans lui,
-  `viaFranceConnect` reste toujours `false`.
+  `viaFranceConnect` reste toujours `false`, et tous les comptes sont enregistrés
+  comme locaux (`docs/donnees.md`).
 
 ### Identity provider FranceConnect
 
@@ -210,6 +218,47 @@ produit. Deux points méritent d'être connus :
   compte sans mot de passe. `Register.tsx` le déduit du contexte ; le détail est
   dans le README du thème.
 
+## Mot de passe oublié
+
+Le parcours est celui de Keycloak — `reset-credentials` — habillé par le thème.
+Rien n'est réimplémenté : le lien reçu par email porte un jeton d'action signé,
+que Keycloak vérifie et consomme.
+
+Ce qu'il a fallu régler pour qu'il tienne debout :
+
+**Le lien vit 15 minutes**, et non les 5 par défaut
+(`actionTokenGeneratedByUserLifespan`). Cinq minutes ne laissent pas le temps
+d'ouvrir sa boîte mail sur un autre appareil ; la première chose que fait la
+personne est alors d'en redemander un. L'email annonce la durée, quelle qu'elle
+soit — `linkExpirationFormatter` la met en toutes lettres.
+
+**Le parcours se termine de deux façons**, selon l'endroit où le lien est ouvert :
+
+| Lien ouvert…                           | Ce que voit la personne                        |
+| -------------------------------------- | ---------------------------------------------- |
+| dans le navigateur de la demande       | connectée directement, elle arrive sur le site |
+| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton          |
+
+Le second cas est le plus courant — on demande depuis un ordinateur et on lit
+ses emails sur un téléphone — et c'est celui qui n'avait pas d'issue : la page de
+confirmation ne propose de lien que si le client Keycloak porte une `baseUrl`, et
+`etape-api` n'en avait pas. Elle vise l'entrée de connexion de l'API plutôt que
+la racine du site, `/api/auth/login?returnTo=/compte/` : qui arrive là n'est pas
+connecté, et la marche suivante est toujours la même.
+
+**Un lien périmé mène à `error.ftl`**, qui n'a pas non plus de retour naturel vers
+le formulaire de demande. `Error.tsx` reconnaît ce cas et propose « Demander un
+nouveau lien ». Il le reconnaît en comparant le texte du message — Keycloak ne
+transmet pas la clé — ce qui ne tient que parce que les deux chaînes sortent de
+la même source : Keycloakify recopie les traductions du thème dans le paquet de
+messages dont le serveur se sert. C'est aussi pourquoi ces deux libellés-là sont
+écrits sans apostrophe, `MessageFormat` la doublant d'un côté et pas de l'autre.
+
+**L'existence d'un compte n'est pas divulguée.** Keycloak affiche le même message
+que l'adresse soit connue ou non, et n'envoie rien dans le second cas ; le
+libellé repris dans le thème dit « si un compte existe pour cette adresse » et se
+garde d'en dire plus.
+
 ## La page `/compte/`
 
 Le site expose une page qui rend compte de la session en cours : l'identité
@@ -242,11 +291,17 @@ depuis `/compte/` provoque une vraie navigation, donc l'en-tête se remet à jou
 # lui Keycloak démarre quand même, mais avec ses écrans par défaut.
 npm run build -- --filter=@etape/keycloak-theme
 
-# Keycloak et sa base. Les identifiants FranceConnect sont facultatifs : sans
-# eux tout fonctionne, seul le parcours FranceConnect reste indisponible.
+# La base applicative, Keycloak et la sienne. Identifiants FranceConnect et clé
+# SMTP sont facultatifs : sans eux tout fonctionne, seuls le parcours
+# FranceConnect et les emails (inscription, « mot de passe oublié ») restent
+# indisponibles.
 FRANCECONNECT_CLIENT_ID=… FRANCECONNECT_CLIENT_SECRET=… docker compose up -d
 
 cp apps/api/.env.example apps/api/.env
+
+# Crée les tables de la base applicative. À rejouer après chaque migration.
+npm run db:migrate --workspace=@etape/api
+
 npm run dev            # site, simulateur et API
 ```
 
@@ -260,35 +315,64 @@ simple redémarrage de Keycloak servirait l'ancien.
 | Site vitrine      | http://localhost:3000 | bouton « Se connecter » dans l'en-tête    |
 | Console Keycloak  | http://localhost:8080 | `admin` / `admin`                         |
 | Compte applicatif | —                     | `test@etape.local` / `MotDePasseTest2026` |
+| Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`           |
 
 Le secret du client est figé dans le fichier de realm et recopié tel quel dans
 `.env.example` : sans cela, Keycloak en régénère un à chaque import et il
 faudrait rouvrir la console après chaque `docker compose down -v`. Il ne protège
 qu'un Keycloak local ; les autres environnements reçoivent le leur par `kcadm`.
 
-### Pas de serveur SMTP en local
+### Les emails, en local aussi
 
-Le poste de développement n'en fait pas tourner. Deux conséquences :
+L'envoi passe par **Brevo**, dans tous les environnements. En local, il faut donc
+une clé SMTP de développement :
 
-- **`verifyEmail` est désactivé dans le realm de développement** — sinon
-  l'inscription s'arrêterait sur un email qui n'arriverait jamais. C'est un
-  réglage local : les autres environnements doivent le réactiver, la
-  vérification d'adresse étant ce qui rend sûre la liaison de comptes décrite
-  plus haut ;
-- **les gabarits d'email ne sont pas jouables ici.** Ils existent
-  (`apps/keycloak-theme/src/email`) et ont été vérifiés, mais les revoir demande
-  un SMTP. Le plus simple est d'ajouter temporairement un collecteur type
-  Mailpit au `docker-compose.yml` et de renseigner `smtpServer` dans le realm.
+```bash
+SMTP_HOST=smtp-relay.brevo.com \
+SMTP_USER=<le login affiché dans « SMTP & API → SMTP »> \
+SMTP_PASSWORD=… \
+SMTP_FROM=no-reply@etape.beta.gouv.fr \
+  docker compose up -d
+```
+
+Ces variables ne peuvent pas figurer dans le fichier de realm : il est versionné
+et public, et **l'import ne substitue aucune variable**. C'est donc le service
+`keycloak-init` qui les applique après coup, comme pour les secrets
+FranceConnect. Sans elles, `verifyEmail` reste désactivé et le parcours « mot de
+passe oublié » est fermé — les deux s'arrêteraient sur un email qui n'arriverait
+jamais.
+
+Deux choses à savoir avant de chercher longtemps :
+
+- il n'y a qu'un seul secret, la clé SMTP, dans `SMTP_PASSWORD` — et c'est bien
+  une **clé SMTP**, pas une clé API v3 (`xkeysib-…`) : cette dernière ne sert
+  qu'à l'API HTTP de Brevo, que Keycloak ne sait pas appeler. `SMTP_USER` n'est
+  pas un secret mais reste obligatoire, l'authentification SMTP étant un couple
+  identifiant / mot de passe ; c'est le login affiché dans « SMTP & API → SMTP »,
+  qui selon l'ancienneté du compte est l'email du compte ou un identifiant en
+  `@smtp-brevo.com`. Le détail est dans [`deploy/.env.example`](../deploy/.env.example) ;
+- pour vérifier qu'un envoi est bien configuré, lire le realm **sans filtre**.
+  `kcadm get realms/etape --fields smtpServer` affiche `{}` pour toute map
+  imbriquée, quel que soit le contenu réel — de quoi croire une configuration
+  perdue alors qu'elle est en place.
+
+Les gabarits vivent dans `apps/keycloak-theme/src/email`, distincts du thème de
+connexion. Ils sont écrits en tables et en styles en ligne, sans police distante :
+c'est ce que comprennent les clients de messagerie.
 
 ## Ce qui reste à faire
 
 - [ ] Fournir de vrais identifiants FranceConnect et jouer le parcours de bout en
       bout — c'est ce qui validera les deux inconnues restantes (`/userinfo` en
       JWT, propagation de la déconnexion)
-- [ ] Remplacer `InMemorySessionStore` par une implémentation persistante
-      (Redis ou Postgres) — le stockage mémoire ne survit ni au redémarrage ni à
-      une seconde instance
+- [x] Remplacer `InMemorySessionStore` par une implémentation persistante —
+      c'est fait, en PostgreSQL, en même temps que la base applicative
+      (`docs/donnees.md`)
 - [x] Thème Keycloakify — écrans et emails, cf. `apps/keycloak-theme`
+- [x] « Mot de passe oublié » de bout en bout, envoi par Brevo
+- [ ] Valider l'expéditeur `SMTP_FROM` chez Brevo (SPF, DKIM) : sans domaine
+      authentifié, le relais accepte les messages et la remise échoue ensuite,
+      sans que Keycloak en sache rien
 - [ ] Bouton FranceConnect dans le front. Le bouton « Se connecter » de
       l'en-tête du site part bien vers `/api/auth/login` ; celui de
       FranceConnect, conforme au kit, reste à poser sur l'écran qui

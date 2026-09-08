@@ -20,8 +20,8 @@ Monorepo [Turborepo](https://turbo.build/) regroupant plusieurs applications Nex
 | `apps/keycloak-theme` | Écrans de connexion et d'email | —          |
 
 Le site et le simulateur sont des exports statiques. `apps/api` est un service
-NestJS : il porte la connexion FranceConnect et les comptes locaux, et reste le
-seul composant à détenir des secrets. `apps/keycloak-theme` n'est pas un serveur
+NestJS : il porte la connexion FranceConnect et les comptes locaux, tient la base
+de données du service, et reste le seul composant à détenir des secrets. `apps/keycloak-theme` n'est pas un serveur
 mais un thème Keycloak, construit en JAR et servi par Keycloak — voir
 [docs/authentification.md](docs/authentification.md).
 
@@ -57,8 +57,10 @@ npm run dev -- --filter=@etape/site
 npm run build -- --filter=@etape/simulateur
 ```
 
-Le parcours de connexion demande en plus un Keycloak local — voir
-[docs/authentification.md](docs/authentification.md).
+Le parcours de connexion demande en plus un Keycloak et une base PostgreSQL en
+local, lancés par `docker compose up -d` — voir
+[docs/authentification.md](docs/authentification.md) pour le parcours et
+[docs/donnees.md](docs/donnees.md) pour la base.
 
 ## Déploiement
 

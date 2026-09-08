@@ -11,13 +11,14 @@ celles de l'environnement visé.
 
 ## Ce qui tourne
 
-| Service       | Rôle                                      | Exposé           |
-| ------------- | ----------------------------------------- | ---------------- |
-| `web`         | nginx : exports statiques + `/api/` → API | domaine du site  |
-| `api`         | NestJS, client OIDC confidentiel          | non              |
-| `auth`        | nginx : refuse tout sauf le realm `etape` | son sous-domaine |
-| `keycloak`    | IAM, broker FranceConnect, thème ETAPE    | non              |
-| `keycloak-db` | PostgreSQL de Keycloak                    | non              |
+| Service       | Rôle                                       | Exposé           |
+| ------------- | ------------------------------------------ | ---------------- |
+| `web`         | nginx : exports statiques + `/api/` → API  | domaine du site  |
+| `api`         | NestJS, client OIDC confidentiel           | non              |
+| `auth`        | nginx : refuse tout sauf le realm `etape`  | son sous-domaine |
+| `keycloak`    | IAM, broker FranceConnect, thème ETAPE     | non              |
+| `keycloak-db` | PostgreSQL de Keycloak                     | non              |
+| `app-db`      | PostgreSQL applicative : comptes, sessions | non              |
 
 Deux origines, et c'est voulu :
 
@@ -48,38 +49,43 @@ survit à un déménagement du front comme à un changement d'hébergeur.
 4. Variables d'environnement : voir ci-dessous.
 5. Déployer.
 
-Les cinq conteneurs doivent rester `Up`. Keycloak configure son realm
-lui-même au démarrage, en tâche de fond : les lignes préfixées `→` puis
-`✅ realm etape configuré` apparaissent dans ses journaux quelques secondes
-après le démarrage. Aucun conteneur ne doit s'arrêter — un conteneur sorti,
-même en code 0, fait échouer le `docker compose up --wait` de l'hébergeur et
-emporte toute la pile.
+Les six conteneurs doivent rester `Up`. Deux se configurent eux-mêmes au
+démarrage, en tâche de fond : Keycloak applique son realm — les lignes préfixées
+`→` puis `✅ realm etape configuré` apparaissent dans ses journaux quelques
+secondes après —, et l'API applique ses migrations avant de servir. Aucun
+conteneur ne doit s'arrêter : un conteneur sorti, même en code 0, fait échouer le
+`docker compose up --wait` de l'hébergeur et emporte toute la pile. C'est
+précisément pourquoi ces deux étapes vivent dans le conteneur qu'elles
+configurent, plutôt que dans un conteneur d'initialisation séparé.
 
 ## Variables d'environnement
 
 Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 
-| Variable                      | Obligatoire | Rôle                                                      |
-| ----------------------------- | ----------- | --------------------------------------------------------- |
-| `PUBLIC_URL`                  | oui         | `https://etape.example.org`, sans slash final             |
-| `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.example.org`, sans slash final        |
-| `KEYCLOAK_HOSTNAME`           | oui         | Nom d'hôte du précédent, sans le schéma                   |
-| `KEYCLOAK_ADMIN_USER`         | non         | `admin` par défaut                                        |
-| `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Administration de Keycloak (`kcadm`)                      |
-| `KEYCLOAK_DB_PASSWORD`        | oui         | Base de Keycloak                                          |
-| `KEYCLOAK_CLIENT_SECRET`      | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak      |
-| `FRANCECONNECT_CLIENT_ID`     | non         | Identifiant du client FranceConnect                       |
-| `FRANCECONNECT_CLIENT_SECRET` | non         | Secret du client FranceConnect                            |
-| `KEYCLOAK_TEST_USER_PASSWORD` | non         | Conserve `test@etape.local` avec ce mot de passe          |
-| `SMTP_*`                      | non         | Serveur d'envoi ; sans lui, pas de vérification d'adresse |
+| Variable                      | Obligatoire | Rôle                                                 |
+| ----------------------------- | ----------- | ---------------------------------------------------- |
+| `PUBLIC_URL`                  | oui         | `https://etape.example.org`, sans slash final        |
+| `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.example.org`, sans slash final   |
+| `KEYCLOAK_HOSTNAME`           | oui         | Nom d'hôte du précédent, sans le schéma              |
+| `KEYCLOAK_ADMIN_USER`         | non         | `admin` par défaut                                   |
+| `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Administration de Keycloak (`kcadm`)                 |
+| `KEYCLOAK_DB_PASSWORD`        | oui         | Base de Keycloak                                     |
+| `APP_DB_PASSWORD`             | oui         | Base applicative (comptes, sessions)                 |
+| `KEYCLOAK_CLIENT_SECRET`      | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak |
+| `FRANCECONNECT_CLIENT_ID`     | non         | Identifiant du client FranceConnect                  |
+| `FRANCECONNECT_CLIENT_SECRET` | non         | Secret du client FranceConnect                       |
+| `KEYCLOAK_TEST_USER_PASSWORD` | non         | Conserve `test@etape.local` avec ce mot de passe     |
+| `SMTP_*`                      | non         | Envoi par Brevo ; sans lui, pas d'email du tout      |
 
 Trois pièges tiennent au moment où ces valeurs sont lues :
 
 - `KEYCLOAK_ADMIN_PASSWORD` ne crée le compte qu'au **tout premier** démarrage.
   Le modifier ensuite n'a aucun effet — il faut passer par la console.
-- `KEYCLOAK_DB_PASSWORD` est figé quand PostgreSQL initialise son volume. Le
-  changer plus tard empêche Keycloak de se connecter, sans que rien n'indique
-  pourquoi.
+- `KEYCLOAK_DB_PASSWORD` et `APP_DB_PASSWORD` sont figés quand PostgreSQL
+  initialise son volume. Les changer plus tard empêche le service concerné de se
+  connecter, sans que rien n'indique pourquoi. `APP_DB_PASSWORD` entre de plus
+  dans une URL de connexion : le prendre alphanumérique évite d'avoir à encoder
+  `@`, `:` ou `/`, qui y changeraient de sens.
 - `KEYCLOAK_CLIENT_SECRET`, à l'inverse, est réappliqué à chaque démarrage de
   Keycloak : c'est la seule des trois qui se corrige en redéployant.
 
@@ -156,6 +162,18 @@ commentaire, sur le service `api` (`extra_hosts` vers `host-gateway`).
   passe oublié ». Or c'est la vérification d'adresse qui rend sûre la liaison
   d'un compte local à une identité FranceConnect. À régler avant d'ouvrir
   l'inscription à qui que ce soit.
+
+  L'envoi passe par Brevo. Deux points se règlent chez lui et non ici :
+  `SMTP_FROM` doit être un **expéditeur validé** sur un domaine authentifié (SPF,
+  DKIM) — faute de quoi le relais accepte le message et la remise échoue plus
+  loin, sans que Keycloak le sache — et `SMTP_PASSWORD` est une **clé SMTP**, pas
+  une clé API v3. Les identifiants exacts sont décrits dans
+  [`deploy/.env.example`](../deploy/.env.example).
+
+  Pour contrôler qu'un envoi est bien configuré, lire le realm **sans filtre** :
+  `kcadm get realms/etape --fields smtpServer` affiche `{}` pour toute map
+  imbriquée, ce qui fait croire à une configuration perdue.
+
 - **L'administration de Keycloak ne passe plus par le navigateur.** La console
   est retirée de l'image (`--features-disabled=admin`), et `auth` refuse tout
   par défaut : seuls passent le realm `etape` et les ressources du thème. Ni la

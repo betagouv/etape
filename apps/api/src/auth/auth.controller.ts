@@ -4,7 +4,9 @@ import type { Request, Response } from "express";
 import * as client from "openid-client";
 
 import type { Env } from "../config/env.js";
-import { identityClaims } from "./identity-claims.js";
+import { UtilisateursService } from "../utilisateurs/utilisateurs.service.js";
+import { fournisseurIdentite } from "./fournisseur-identite.js";
+import { claimTexte, identityClaims } from "./identity-claims.js";
 import { OidcService } from "./oidc.service.js";
 import { sanitizeReturnTo } from "./return-to.js";
 import { SessionService } from "./session/session.service.js";
@@ -21,6 +23,7 @@ export class AuthController {
   constructor(
     private readonly oidc: OidcService,
     private readonly sessions: SessionService,
+    private readonly utilisateurs: UtilisateursService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -87,20 +90,31 @@ export class AuthController {
         throw new Error("Réponse du fournisseur d'identité sans `sub` ou sans `id_token`.");
       }
 
+      // Suppose le mapper `identity_provider` sur le client. Lu une fois : le
+      // compte et la session doivent en donner la même version.
+      const fournisseur = fournisseurIdentite(claims);
+
+      // Avant la session, et dans le même `try` : une session sans compte local
+      // n'aurait aucun identifiant à donner aux routes qui manipuleront un
+      // dossier. La panne se voit donc ici, et non à la première écriture.
+      const utilisateur = await this.utilisateurs.enregistrerConnexion({
+        keycloakSub: claims.sub,
+        email: claimTexte(claims.email),
+        prenom: claimTexte(claims.given_name),
+        nom: claimTexte(claims.family_name),
+        fournisseurIdentite: fournisseur,
+      });
+
       await this.sessions.openSession(response, {
-        sub: claims.sub,
-        email: typeof claims.email === "string" ? claims.email : undefined,
-        // Suppose le mapper `identity_provider` sur le client.
-        viaFranceConnect:
-          claims.identity_provider ===
-          this.config.get("KEYCLOAK_FRANCECONNECT_ALIAS", { infer: true }),
+        utilisateurId: utilisateur.id,
+        fournisseurIdentite: fournisseur,
         claims: identityClaims(claims),
         idToken: tokens.id_token,
       });
 
       response.redirect(`${this.frontBaseUrl}${transaction.returnTo}`);
     } catch (error: unknown) {
-      this.logger.error("Échec de l'échange du code d'autorisation", error);
+      this.logger.error("Échec du retour d'authentification", error);
       response.redirect(`${this.frontBaseUrl}/?connexion=echec`);
     }
   }
@@ -132,6 +146,9 @@ export class AuthController {
     const session = await this.sessions.readSession(request);
     if (!session) throw new UnauthorizedException();
 
-    return toPublicSession(session);
+    return toPublicSession(
+      session,
+      this.config.get("KEYCLOAK_FRANCECONNECT_ALIAS", { infer: true }),
+    );
   }
 }

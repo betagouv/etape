@@ -1,0 +1,141 @@
+// Schéma de la base applicative. Elle est **distincte de celle de Keycloak** :
+// celle-ci appartient à ETAPE, celle-là à l'IAM, qui gère son schéma lui-même.
+//
+// Ce que l'on garde ici de l'identité n'est qu'une **projection** de ce que
+// détient Keycloak — voir `docs/donnees.md` pour la raison de chaque colonne.
+
+generator client {
+  provider = "prisma-client"
+
+  // Généré en TypeScript, sous `src/` : c'est `tsc` qui le compile avec le
+  // reste, d'où `rewriteRelativeImportExtensions` dans `tsconfig.json`. Le
+  // dossier est ignoré par Git, régénéré à chaque `build`.
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+// Prisma 7 n'accepte plus d'URL ici : elle est dans `prisma.config.ts` pour les
+// migrations, et passée à l'adaptateur `pg` à l'exécution.
+datasource db {
+  provider = "postgresql"
+}
+
+/// Projection locale d'un compte Keycloak.
+///
+/// Elle existe pour trois raisons, et pas pour dupliquer l'IAM : offrir une clé
+/// locale stable aux dossiers à venir, afficher une identité sans rappeler
+/// Keycloak à chaque requête, et dater les inscriptions.
+model Utilisateur {
+  /// Identifiant **applicatif** : c'est lui que référenceront les dossiers, et
+  /// non le `sub`. Sans quoi l'IAM entrerait dans toutes les tables.
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  /// Jointure vers Keycloak, immuable. La seule colonne qui sache qu'il existe.
+  keycloakSub String @unique @map("keycloak_sub")
+
+  /// Recopiés de l'`id_token` : `email`, `given_name`, `family_name`.
+  ///
+  /// Nullables parce que les champs varient d'un fournisseur d'identité à
+  /// l'autre — la même raison qui rend `claims` non typé côté API.
+  ///
+  /// **Pas d'unicité sur `email`** : elle est déjà tenue par le realm, et c'est
+  /// là qu'elle doit vivre. Lier deux comptes sur le seul email serait une prise
+  /// de contrôle de compte (cf. `docs/authentification.md`) ; ici l'email est
+  /// une copie, pas une clé, et une contrainte locale ne ferait qu'échouer sur
+  /// des cas que Keycloak autorise.
+  email  String?
+  prenom String?
+  nom    String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  /// Volontairement **sans** `@updatedAt` : Prisma le ferait bouger à chaque
+  /// écriture, y compris pour une simple reconnexion, et la colonne ne voudrait
+  /// plus rien dire. Il n'est touché que si le profil change réellement — voir
+  /// l'upsert de `UtilisateursService`.
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  /// Ce que `updatedAt` aurait signifié à tort.
+  lastLoginAt DateTime @default(now()) @map("last_login_at") @db.Timestamptz(3)
+
+  /// Alias du fournisseur d'identité de la **première** connexion : comment ce
+  /// compte est apparu. Immuable — l'upsert n'y touche plus après l'insertion.
+  ///
+  /// Keycloak ne le conserve pas. Il sait à quels fournisseurs un compte est
+  /// *lié* aujourd'hui, pas par lequel il a commencé, et le lien peut être
+  /// défait. C'est donc bien à nous de le garder.
+  creeVia String @map("cree_via")
+
+  /// Et celui de la dernière. L'écart entre les deux est le signal utile : un
+  /// compte né `local` qui arrive désormais en `franceconnect` est quelqu'un qui
+  /// a lié son compte entre-temps.
+  ///
+  /// Rangé avec `lastLoginAt` et non avec le profil : il décrit une connexion,
+  /// et ne fait donc pas bouger `updatedAt`.
+  derniereConnexionVia String @map("derniere_connexion_via")
+
+  sessions Session[]
+
+  @@map("utilisateur")
+}
+
+/// Session ouverte après un parcours OIDC réussi. Le navigateur n'en connaît
+/// que l'`id`, opaque, déposé dans un cookie `httpOnly`.
+model Session {
+  /// Repris du cookie : généré par l'application, jamais par la base.
+  id String @id @db.Uuid
+
+  utilisateurId String      @map("utilisateur_id") @db.Uuid
+  /// `Cascade` : supprimer un compte ferme ses sessions dans la même
+  /// transaction, sans quoi l'effacement laisserait des sessions valides.
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  /// Propriété de **la session**, pas de la personne : le même compte peut se
+  /// connecter par FranceConnect une fois et par mot de passe la suivante.
+  ///
+  /// L'alias tel que Keycloak le nomme, et non un booléen : ajouter ProConnect
+  /// ne demandera ni migration ni modification du code, conformément à ce que
+  /// promet `docs/authentification.md`.
+  fournisseurIdentite String @map("fournisseur_identite")
+
+  /// L'identité telle qu'elle est arrivée, que `/compte/` affiche champ par
+  /// champ. Non typée : les champs varient selon le fournisseur d'identité.
+  claims Json
+
+  /// Gardé pour le seul `id_token_hint` de la déconnexion, que FranceConnect
+  /// vérifie à l'homologation. Dépasserait les 4 Ko d'un cookie.
+  idToken String @map("id_token")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  /// Le balayage des expirées passe par là.
+  @@index([expiresAt])
+  /// PostgreSQL n'indexe pas les clés étrangères de lui-même : sans cet index,
+  /// la cascade de suppression d'un compte balaierait toute la table.
+  @@index([utilisateurId])
+  @@map("session")
+}
+
+/// État retenu entre le départ vers Keycloak et le retour sur `/auth/callback`.
+///
+/// Table à part de `Session` : elle précède toute authentification, et n'a donc
+/// aucun utilisateur à référencer.
+model TransactionConnexion {
+  id String @id @db.Uuid
+
+  /// Anti-CSRF, comparé au `state` renvoyé par Keycloak.
+  state String
+  /// Lie l'`id_token` à cette transaction précise (rejeu).
+  nonce String
+  /// PKCE : seul son challenge a transité par le navigateur.
+  codeVerifier String @map("code_verifier")
+  /// Chemin interne, validé par `sanitizeReturnTo`.
+  returnTo String @map("return_to")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("transaction_connexion")
+}

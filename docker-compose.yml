@@ -1,14 +1,37 @@
-# Keycloak de développement local, avec sa base. Voir `docker-compose.prod.yml`
-# pour le déploiement.
+# Dépendances de développement local : la base applicative, puis Keycloak avec la
+# sienne. Voir `docker-compose.prod.yml` pour le déploiement.
 #
 #   docker compose up -d
 #
 # Console d'administration : http://localhost:8080 (admin / admin)
 #
-# Aucun SMTP : `verifyEmail` est désactivé pour que l'inscription aboutisse
-# quand même, et les gabarits d'email ne sont pas jouables ici.
+# Les emails partent par Brevo, comme en production. Renseigner `SMTP_*` (voir
+# `docs/authentification.md`) active la vérification d'adresse et le parcours
+# « mot de passe oublié » ; sans ces variables, les deux restent fermés.
 
 services:
+  # Base **applicative**, séparée de celle de Keycloak et non une base de plus
+  # dans la même instance : cycles de vie et identifiants distincts, l'IAM gère
+  # son schéma lui-même, et un dump des données du service ne contient pas ses
+  # empreintes de mots de passe.
+  app-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: etape
+      POSTGRES_USER: etape
+      POSTGRES_PASSWORD: etape
+    ports:
+      # Ouvert en développement seulement : `prisma migrate` et `psql` tournent
+      # depuis l'hôte. En production, la base n'expose aucun port.
+      - "5432:5432"
+    volumes:
+      - app-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U etape"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   keycloak-db:
     image: postgres:17-alpine
     environment:
@@ -117,6 +140,11 @@ services:
     environment:
       FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
       FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@etape.beta.gouv.fr}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -137,6 +165,31 @@ services:
           echo "                renseigner FRANCECONNECT_CLIENT_ID / _SECRET puis relancer."
         fi
 
+        # Même raison que ci-dessus : la clé Brevo ne peut pas figurer dans le
+        # fichier de realm, qui est versionné et public. `verifyEmail` suit
+        # l'envoi — l'activer sans SMTP arrêterait l'inscription sur un message
+        # qui n'arriverait jamais.
+        #
+        # L'objet est envoyé d'un bloc sur l'entrée standard, comme le fait
+        # `deploy/keycloak-init.sh` — les deux environnements se règlent ainsi de
+        # la même façon. Un heredoc, lui, ne peut pas fermer ici : bash exige son
+        # délimiteur en colonne zéro, que ce bloc YAML interdit.
+        #
+        # Pour vérifier le résultat, lire le realm **sans** filtre : `kcadm get
+        # realms/etape --fields smtpServer` affiche `{}` pour toute map imbriquée,
+        # et donne à croire que rien n'a été appliqué.
+        if [ -n "$$SMTP_HOST" ]; then
+          printf '{"verifyEmail":true,"smtpServer":{"host":"%s","port":"%s","from":"%s","fromDisplayName":"ETAPE","starttls":"true","ssl":"false","auth":"true","user":"%s","password":"%s"}}' \
+            "$$SMTP_HOST" "$$SMTP_PORT" "$$SMTP_FROM" "$$SMTP_USER" "$$SMTP_PASSWORD" \
+            | $$KCADM update realms/etape -f -
+          echo "smtp : $$SMTP_HOST configuré, verifyEmail activé."
+        else
+          echo "smtp : aucun serveur d'envoi — verifyEmail reste désactivé."
+          echo "       « mot de passe oublié » et vérification d'adresse sont fermés ;"
+          echo "       renseigner SMTP_HOST / _USER / _PASSWORD / _FROM puis relancer."
+        fi
+
 volumes:
+  app-db-data:
   keycloak-db-data:
   keycloak-providers:

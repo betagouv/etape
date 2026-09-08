@@ -9,6 +9,9 @@ node_modules
 out
 dist
 
+# prisma — le client est régénéré à chaque build
+apps/api/src/generated
+
 # keycloakify — tout est régénéré à chaque build
 dist_keycloak
 apps/keycloak-theme/src/kc.gen.tsx

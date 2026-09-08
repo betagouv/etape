@@ -47,6 +47,12 @@ fi
 $KCADM update "realms/$REALM" -s sslRequired=EXTERNAL
 echo "→ realm ${REALM} : sslRequired=EXTERNAL"
 
+# Durée de vie du lien de réinitialisation reçu par email. Keycloak la fixe à
+# 5 minutes, ce qui ne laisse pas le temps d'ouvrir sa boîte mail sur un autre
+# appareil — la première chose que fait la personne est de redemander un lien.
+$KCADM update "realms/$REALM" -s actionTokenGeneratedByUserLifespan=900
+echo "→ realm ${REALM} : lien de réinitialisation valable 15 minutes"
+
 # Le realm `master` naît sans protection contre la force brute, là où `etape` la
 # porte, et c'est pourtant lui qui délivre le jeton d'administration.
 # `permanentLockout=false` : verrouiller le seul administrateur se retourne
@@ -62,6 +68,13 @@ echo "→ realm master : protection contre la force brute activée"
 # `redirectUris` doit correspondre au caractère près à ce que l'API construit.
 # `post.logout.redirect.uris` n'en est pas déduit : oublié, la déconnexion échoue
 # alors que la connexion fonctionne.
+#
+# `baseUrl` est la destination des liens « retour » que Keycloak pose sur ses
+# pages d'information et d'erreur. Sans elle, la page « votre compte a été mis à
+# jour » qui clôt une réinitialisation de mot de passe n'affiche **aucun bouton**,
+# et Keycloak se rabat sur sa propre console de compte. Elle vise l'entrée de
+# connexion de l'API, et non la racine du site : c'est là que mène le seul lien
+# de ces pages, et la personne n'y est jamais connectée.
 ID_CLIENT=$($KCADM get clients -r "$REALM" -q clientId=etape-api --fields id --format csv --noquotes)
 if [ -z "$ID_CLIENT" ]; then
   echo "✗ client etape-api absent du realm ${REALM} — l'import a-t-il eu lieu ?" >&2
@@ -72,6 +85,7 @@ $KCADM update "clients/$ID_CLIENT" -r "$REALM" -f - <<JSON
 {
   "secret": "${KEYCLOAK_CLIENT_SECRET}",
   "redirectUris": ["${PUBLIC_URL}/api/auth/callback"],
+  "baseUrl": "${PUBLIC_URL}/api/auth/login?returnTo=%2Fcompte%2F",
   "webOrigins": [],
   "attributes": {
     "pkce.code.challenge.method": "S256",
@@ -79,7 +93,7 @@ $KCADM update "clients/$ID_CLIENT" -r "$REALM" -f - <<JSON
   }
 }
 JSON
-echo "→ client etape-api : secret, redirect_uri et post-logout alignés sur ${PUBLIC_URL}"
+echo "→ client etape-api : secret, redirect_uri, base et post-logout alignés sur ${PUBLIC_URL}"
 
 # Identifiants facultatifs : sans eux, seul ce parcours est indisponible.
 #
@@ -138,9 +152,14 @@ else
   echo "→ franceconnect : aucun identifiant fourni, le fournisseur restera inutilisable"
 fi
 
-# Sans SMTP, `verifyEmail` reste désactivé : l'inscription s'arrêterait sur un
-# message qui n'arriverait jamais. Pis-aller assumé — c'est la vérification
-# d'adresse qui rend sûre la liaison d'un compte local à une identité.
+# Le serveur d'envoi. Sans lui, ni vérification d'adresse à l'inscription, ni
+# « mot de passe oublié » — les deux parcours s'arrêtent sur un email qui
+# n'arrive jamais. C'est aussi la vérification d'adresse qui rend sûre la
+# liaison d'un compte local à une identité FranceConnect.
+#
+# Le fichier de realm importé porte le collecteur du poste de développement
+# (`mailpit`), inatteignable ailleurs : il est donc soit remplacé, soit effacé.
+# Le laisser en place ferait échouer chaque envoi en silence.
 if [ -n "${SMTP_HOST:-}" ]; then
   $KCADM update "realms/$REALM" -f - <<JSON
 {
@@ -158,9 +177,10 @@ if [ -n "${SMTP_HOST:-}" ]; then
   }
 }
 JSON
-  echo "→ smtp : configuré, verifyEmail activé"
+  echo "→ smtp : ${SMTP_HOST} configuré, verifyEmail activé"
 else
-  echo "⚠ smtp : non configuré — verifyEmail reste désactivé."
+  $KCADM update "realms/$REALM" -s verifyEmail=false -s 'smtpServer={}'
+  echo "⚠ smtp : non configuré — verifyEmail désactivé, envoi effacé."
   echo "  Inscription et « mot de passe oublié » ne sont pas jouables sans lui."
 fi
 

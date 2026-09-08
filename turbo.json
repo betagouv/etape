@@ -3,13 +3,32 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "out/**", "dist/**", "dist_keycloak/**", "!.next/cache/**"],
+      /*
+       * `src/generated/**` : le client Prisma est produit par le `build` de
+       * l'API. Sans lui dans les sorties, une restauration depuis le cache
+       * laisserait `typecheck` et `lint` sans le code qu'ils vérifient.
+       */
+      "outputs": [
+        ".next/**",
+        "out/**",
+        "dist/**",
+        "dist_keycloak/**",
+        "apps/api/src/generated/**",
+        "!.next/cache/**"
+      ],
       /*
        * Les exports statiques figent ces valeurs au build : sans les déclarer,
        * Turborepo servirait depuis son cache un export construit avec l'URL
        * d'API d'un autre environnement.
        */
-      "env": ["NODE_ENV", "NEXT_PUBLIC_API_BASE_URL"]
+      "env": ["NODE_ENV", "NEXT_PUBLIC_API_BASE_URL"],
+      /*
+       * `passThroughEnv` et non `env` : `prisma generate` lit la configuration
+       * du CLI, qui mentionne cette variable, mais le client produit ne dépend
+       * pas de sa valeur. La déclarer en `env` invaliderait le cache à chaque
+       * changement d'adresse de base, sans que rien ne change en sortie.
+       */
+      "passThroughEnv": ["DATABASE_URL"]
     },
     "dev": {
       "cache": false,

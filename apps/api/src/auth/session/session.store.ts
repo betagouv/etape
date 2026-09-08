@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 
-import type { LoginTransaction, UserSession } from "./session.types.js";
+import { PrismaService } from "../../base-de-donnees/prisma.service.js";
+import { Prisma } from "../../generated/prisma/client.ts";
+import type { LoginTransaction, SessionAOuvrir, UserSession } from "./session.types.js";
 
 /**
  * Le navigateur ne reçoit qu'un identifiant opaque : la session reste révocable,
@@ -11,63 +13,126 @@ export abstract class SessionStore {
   /** Lecture unique : une transaction consommée ne se rejoue pas. */
   abstract consumeTransaction(id: string): Promise<LoginTransaction | null>;
 
-  abstract createSession(id: string, session: UserSession): Promise<void>;
+  abstract createSession(id: string, session: SessionAOuvrir): Promise<void>;
   abstract getSession(id: string): Promise<UserSession | null>;
   abstract deleteSession(id: string): Promise<void>;
 }
 
+/** Ligne absente : `delete` de Prisma lève, là où `findUnique` rend `null`. */
+function estIntrouvable(erreur: unknown): boolean {
+  return erreur instanceof Prisma.PrismaClientKnownRequestError && erreur.code === "P2025";
+}
+
 /**
- * **Développement local uniquement** : tout disparaît au redémarrage, et rien
- * n'est partagé entre instances. L'implémentation cible se substitue à celle-ci
- * dans `AuthModule`.
+ * Sessions en base plutôt qu'en mémoire : elles survivent au redéploiement, et
+ * deux instances de l'API voient les mêmes. C'est ce qui rend l'API réellement
+ * redémarrable sans déconnecter tout le monde.
  */
 @Injectable()
-export class InMemorySessionStore extends SessionStore {
-  private readonly transactions = new Map<string, LoginTransaction>();
-  private readonly sessions = new Map<string, UserSession>();
+export class PrismaSessionStore extends SessionStore {
+  constructor(private readonly prisma: PrismaService) {
+    super();
+  }
 
   async createTransaction(id: string, transaction: LoginTransaction): Promise<void> {
-    this.purge();
-    this.transactions.set(id, transaction);
+    await this.purger();
+
+    await this.prisma.transactionConnexion.create({
+      data: {
+        id,
+        state: transaction.state,
+        nonce: transaction.nonce,
+        codeVerifier: transaction.codeVerifier,
+        returnTo: transaction.returnTo,
+        expiresAt: new Date(transaction.expiresAt),
+      },
+    });
   }
 
+  /**
+   * L'unicité de la lecture est tenue par la base, pas par le code : c'est le
+   * `delete` qui la garantit, y compris si deux requêtes arrivent ensemble.
+   */
   async consumeTransaction(id: string): Promise<LoginTransaction | null> {
-    const transaction = this.transactions.get(id);
-    if (!transaction) return null;
+    const ligne = await this.prisma.transactionConnexion.delete({ where: { id } }).catch(
+      // Seule l'absence est un cas normal ; une base en panne doit remonter.
+      (erreur: unknown) => {
+        if (estIntrouvable(erreur)) return null;
+        throw erreur;
+      },
+    );
 
-    this.transactions.delete(id);
-    return transaction.expiresAt > Date.now() ? transaction : null;
+    if (!ligne || ligne.expiresAt.getTime() <= Date.now()) return null;
+
+    return {
+      state: ligne.state,
+      nonce: ligne.nonce,
+      codeVerifier: ligne.codeVerifier,
+      returnTo: ligne.returnTo,
+      expiresAt: ligne.expiresAt.getTime(),
+    };
   }
 
-  async createSession(id: string, session: UserSession): Promise<void> {
-    this.purge();
-    this.sessions.set(id, session);
+  async createSession(id: string, session: SessionAOuvrir): Promise<void> {
+    await this.purger();
+
+    await this.prisma.session.create({
+      data: {
+        id,
+        utilisateurId: session.utilisateurId,
+        fournisseurIdentite: session.fournisseurIdentite,
+        claims: session.claims as Prisma.InputJsonValue,
+        idToken: session.idToken,
+        expiresAt: new Date(session.expiresAt),
+      },
+    });
   }
 
+  /** `sub` et `email` viennent du compte lié : la session n'en garde pas de copie. */
   async getSession(id: string): Promise<UserSession | null> {
-    const session = this.sessions.get(id);
-    if (!session) return null;
+    const ligne = await this.prisma.session.findUnique({
+      where: { id },
+      include: { utilisateur: true },
+    });
 
-    if (session.expiresAt <= Date.now()) {
-      this.sessions.delete(id);
+    if (!ligne) return null;
+
+    if (ligne.expiresAt.getTime() <= Date.now()) {
+      await this.deleteSession(id);
       return null;
     }
 
-    return session;
+    return {
+      sub: ligne.utilisateur.keycloakSub,
+      utilisateurId: ligne.utilisateurId,
+      email: ligne.utilisateur.email ?? undefined,
+      fournisseurIdentite: ligne.fournisseurIdentite,
+      claims: ligne.claims as Record<string, unknown>,
+      idToken: ligne.idToken,
+      expiresAt: ligne.expiresAt.getTime(),
+    };
   }
 
+  /** `deleteMany` et non `delete` : se déconnecter deux fois n'est pas une erreur. */
   async deleteSession(id: string): Promise<void> {
-    this.sessions.delete(id);
+    await this.prisma.session.deleteMany({ where: { id } });
   }
 
-  private purge(): void {
-    const now = Date.now();
+  /**
+   * Balayage des lignes expirées, à l'écriture. Elles ne sont de toute façon
+   * jamais rendues — les lectures vérifient la date —, donc c'est du ménage et
+   * non de la correction : rien ne dépend de son passage.
+   *
+   * À l'écriture, et pas sur une minuterie : on n'écrit qu'à la connexion, ce
+   * qui est rare, et une tâche périodique demanderait `@nestjs/schedule` et un
+   * verrou pour ne pas tourner deux fois sur deux instances.
+   */
+  private async purger(): Promise<void> {
+    const maintenant = new Date();
 
-    for (const [id, transaction] of this.transactions) {
-      if (transaction.expiresAt <= now) this.transactions.delete(id);
-    }
-    for (const [id, session] of this.sessions) {
-      if (session.expiresAt <= now) this.sessions.delete(id);
-    }
+    await Promise.all([
+      this.prisma.transactionConnexion.deleteMany({ where: { expiresAt: { lte: maintenant } } }),
+      this.prisma.session.deleteMany({ where: { expiresAt: { lte: maintenant } } }),
+    ]);
   }
 }

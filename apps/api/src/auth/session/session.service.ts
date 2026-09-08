@@ -5,11 +5,14 @@ import { randomUUID } from "node:crypto";
 
 import type { Env } from "../../config/env.js";
 import { SessionStore } from "./session.store.js";
-import type { LoginTransaction, UserSession } from "./session.types.js";
+import type { LoginTransaction, SessionAOuvrir, UserSession } from "./session.types.js";
 
 // Identifiants opaques : aucune donnée utilisateur n'y transite.
 const SESSION_COOKIE = "etape.sid";
 const TRANSACTION_COOKIE = "etape.txn";
+
+/** Forme des identifiants émis par `randomUUID`. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const TRANSACTION_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
@@ -64,7 +67,7 @@ export class SessionService {
     return id ? this.store.consumeTransaction(id) : null;
   }
 
-  async openSession(response: Response, session: Omit<UserSession, "expiresAt">): Promise<void> {
+  async openSession(response: Response, session: Omit<SessionAOuvrir, "expiresAt">): Promise<void> {
     const id = randomUUID();
 
     await this.store.createSession(id, { ...session, expiresAt: Date.now() + SESSION_TTL_MS });
@@ -83,8 +86,14 @@ export class SessionService {
     response.clearCookie(SESSION_COOKIE, { path: "/" });
   }
 
+  /**
+   * Les identifiants sont des UUID que nous avons émis. Écarter ici ce qui n'en
+   * a pas la forme évite de porter jusqu'à PostgreSQL un cookie forgé, où la
+   * colonne `uuid` le refuserait par une erreur de conversion — une panne, là où
+   * il ne s'agit que d'un cookie inconnu.
+   */
   private readCookie(request: Request, name: string): string | null {
     const value: unknown = (request.cookies as Record<string, unknown> | undefined)?.[name];
-    return typeof value === "string" && value.length > 0 ? value : null;
+    return typeof value === "string" && UUID.test(value) ? value : null;
   }
 }

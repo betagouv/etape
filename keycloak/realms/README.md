@@ -9,10 +9,13 @@ contre le bruteforce. Voir [docs/authentification.md](../../docs/authentificatio
 
 Les URL qu'il contient sont celles du poste local (`localhost:3000`,
 `localhost:3001`, `localhost:3002`), il porte `sslRequired: none`, il fige le
-secret du client `etape-api` à une valeur connue, il désactive `verifyEmail`
-faute de serveur SMTP en local, et il crée un compte de test au mot de passe
-connu. Rien de tout cela n'a sa place ailleurs qu'en local — `verifyEmail` en
-particulier, dont dépend la sûreté de la liaison de comptes FranceConnect.
+secret du client `etape-api` à une valeur connue, et il crée un compte de test au
+mot de passe connu. Rien de tout cela n'a sa place ailleurs qu'en local.
+
+Il ne porte pas non plus de `smtpServer`, et laisse donc `verifyEmail` désactivé :
+la clé Brevo n'a rien à faire dans un dépôt public. L'envoi est posé après
+l'import, et c'est lui qui active la vérification d'adresse — dont dépend la
+sûreté de la liaison de comptes FranceConnect.
 
 C'est un choix subi, pas une facilité : **l'import de realm ne substitue aucune
 variable.** Ni les variables d'environnement, ni les propriétés système Java.

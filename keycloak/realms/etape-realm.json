@@ -28,6 +28,7 @@
   "ssoSessionIdleTimeout": 1800,
   "ssoSessionMaxLifespan": 36000,
   "accessTokenLifespan": 300,
+  "actionTokenGeneratedByUserLifespan": 900,
   "clients": [
     {
       "clientId": "etape-api",
@@ -38,6 +39,7 @@
       "protocol": "openid-connect",
       "publicClient": false,
       "bearerOnly": false,
+      "baseUrl": "http://localhost:3002/api/auth/login?returnTo=%2Fcompte%2F",
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,

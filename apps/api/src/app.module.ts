@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
 import { AuthModule } from "./auth/auth.module.js";
+import { BaseDeDonneesModule } from "./base-de-donnees/base-de-donnees.module.js";
 import { validateEnv } from "./config/env.js";
 
 @Module({
@@ -13,6 +14,7 @@ import { validateEnv } from "./config/env.js";
       validate: validateEnv,
       cache: true,
     }),
+    BaseDeDonneesModule,
     AuthModule,
   ],
 })

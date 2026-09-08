@@ -7,8 +7,13 @@ import type { ThemeName } from "../kc.gen";
  *
  * Tout ce qui existe déjà dans le jeu de messages de Keycloak (`doLogIn`,
  * `password`, `doForgotPassword`…) est réutilisé tel quel : ces libellés sont
- * traduits, testés et cohérents avec les emails que Keycloak envoie. Seuls les
- * textes que les maquettes ajoutent sont définis ici.
+ * traduits, testés et cohérents avec les emails que Keycloak envoie. Ne sont
+ * repris ici que les textes ajoutés par les maquettes, et le petit nombre de
+ * messages de Keycloak dont la formulation ne convient pas à ce produit.
+ *
+ * Ces derniers ne sont pas qu'affaire de rendu : Keycloakify les recopie dans
+ * le paquet de messages du thème, dont le serveur se sert pour composer
+ * `message.summary`. Les redéfinir change donc aussi ce que Keycloak écrit.
  */
 // `ofTypeI18n` n'existe que pour en dériver un type — c'est l'idiome de
 // Keycloakify, qui n'a pas d'équivalent purement statique.
@@ -28,6 +33,39 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       doLogIn: "Se connecter",
       doRegister: "Créer mon compte",
       emailVerifyTitle: "Confirmez votre adresse email",
+
+      /*
+       * Messages que Keycloak rend lui-même, repris pour ce produit.
+       *
+       * Keycloakify les recopie dans le paquet de messages du thème, côté
+       * serveur : ces traductions valent donc aussi pour ce que Keycloak place
+       * dans `message.summary`, et pas seulement pour ce que rend React.
+       *
+       * `backToApplication` porte un « &laquo; » dans le jeu d'origine, hérité
+       * d'un lien ; dans un bouton, ce chevron n'a plus de sens.
+       */
+      missingUsernameMessage: "Veuillez renseigner votre adresse email.",
+      backToApplication: "Se connecter à ETAPE",
+      /*
+       * Volontairement muet sur l'existence du compte : Keycloak affiche le même
+       * message dans les deux cas, et le contredire ici ferait de cet écran un
+       * moyen de savoir qui est inscrit.
+       */
+      emailSentMessage:
+        "Si un compte existe pour cette adresse, un lien de réinitialisation vient de partir. Pensez à regarder vos indésirables.",
+      /*
+       * Les deux formulations que Keycloak choisit selon qu'une session est
+       * ouverte ou non. Elles disent la même chose à qui les lit — le lien est
+       * mort — et `Error.tsx` s'en sert pour reconnaître ce cas.
+       *
+       * Sans apostrophe, délibérément : elles sont comparées à la chaîne rendue
+       * par le serveur, et l'échappement `MessageFormat` d'une apostrophe est un
+       * écart de trop.
+       */
+      expiredActionTokenNoSessionMessage:
+        "Ce lien de réinitialisation a expiré. Un lien reste valable 15 minutes et ne peut servir que pour une seule demande.",
+      expiredActionTokenSessionExistsMessage:
+        "Ce lien de réinitialisation a expiré. Un lien reste valable 15 minutes et ne peut servir que pour une seule demande.",
 
       etapeLoginTitle: "Une nouvelle étape pour votre avenir.",
       etapeLoginSubtitle: "Connectez-vous pour continuer votre démarche de transition.",
@@ -57,6 +95,8 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapePageExpiredRestart: "Recommencer la connexion",
       etapePageExpiredContinue: "Poursuivre là où j'en étais",
       etapeErrorSubtitle: "L'opération n'a pas pu aboutir.",
+      etapeExpiredLinkTitle: "Lien expiré",
+      etapeExpiredLinkRestart: "Demander un nouveau lien",
 
       etapePasswordStrength: "Force du mot de passe",
       etapePasswordStrengthWeak: "faible",
@@ -71,6 +111,15 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       doLogIn: "Sign in",
       doRegister: "Create my account",
       emailVerifyTitle: "Confirm your email address",
+
+      missingUsernameMessage: "Please enter your email address.",
+      backToApplication: "Sign in to ETAPE",
+      emailSentMessage:
+        "If an account exists for this address, a reset link has just been sent. Remember to check your spam folder.",
+      expiredActionTokenNoSessionMessage:
+        "This reset link has expired. A link stays valid for 15 minutes and can only be used once.",
+      expiredActionTokenSessionExistsMessage:
+        "This reset link has expired. A link stays valid for 15 minutes and can only be used once.",
 
       etapeLoginTitle: "A new step towards your future.",
       etapeLoginSubtitle: "Sign in to continue your career transition.",
@@ -97,6 +146,8 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapePageExpiredRestart: "Start over",
       etapePageExpiredContinue: "Continue where I left off",
       etapeErrorSubtitle: "The operation could not be completed.",
+      etapeExpiredLinkTitle: "Link expired",
+      etapeExpiredLinkRestart: "Request a new link",
 
       etapePasswordStrength: "Password strength",
       etapePasswordStrengthWeak: "weak",

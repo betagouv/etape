@@ -9,6 +9,7 @@ dist
 # Lockfiles et artefacts générés
 package-lock.json
 *.tsbuildinfo
+apps/api/src/generated
 
 # Fichiers spécifiques
 next-env.d.ts
