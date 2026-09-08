@@ -4,9 +4,9 @@ name: Preview
 # ouverture / push → déploiement sur https://pr-<n>.dev.certifpro.cegedim.cloud ;
 # fermeture (merge ou abandon) → destruction de l'environnement.
 #
-# Mécanique : le runner (DEBFCOETAPOPS01, label « cegedim ») construit les apps,
-# les assemble (scripts/assemble-static.mjs) puis rsync le dossier vers la VM
-# front (DEBFCOETAPFRT01). Le nginx de la VM résout `pr-<n>` par regex sur le
+# Mécanique (action .github/actions/deployer-statique, partagée avec deploy-dev.yml) :
+# le runner (DEBFCOETAPOPS01, label « cegedim ») construit les apps, les assemble
+# (scripts/assemble-static.mjs) puis rsync le dossier vers la VM front (DEBFCOETAPFRT01). Le nginx de la VM résout `pr-<n>` par regex sur le
 # hostname (infra/nginx/previews.conf) : déployer ou détruire une preview,
 # c'est créer ou supprimer un dossier — rien à recharger.
 #
@@ -60,50 +60,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
+      - name: Construire et déposer
+        # Étapes partagées avec l'environnement dev (deploy-dev.yml) :
+        # build, assemblage, rsync vers /srv/previews/pr-<n>, smoke test.
+        uses: ./.github/actions/deployer-statique
         with:
-          node-version-file: .nvmrc
-          cache: npm
-
-      - name: Install (lockfile)
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Assemblage statique
-        run: node scripts/assemble-static.mjs
-
-      - name: Déployer sur la VM de previews
-        run: |
-          ssh -o BatchMode=yes "$PREVIEW_SSH" "mkdir -p -- '$PREVIEW_ROOT/pr-$PR_NUMBER'"
-          # --chmod : les fichiers arrivent lisibles par nginx (www-data) quel que
-          # soit l'umask du runner ; sans cela, un umask durci donnerait des 403.
-          rsync -az --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
-            dist/preview/ "$PREVIEW_SSH:$PREVIEW_ROOT/pr-$PR_NUMBER/"
-
-      - name: Vérifier la preview
-        # Depuis la VM elle-même (Host forcé) : le test ne dépend ni du DNS
-        # public ni du routage entrant, seulement de nginx et des fichiers.
-        # En HTTP : le TLS est terminé sur le BigIP Cegedim, la VM n'écoute
-        # que sur le port 80. Localhost est exempté de la basic auth.
-        #
-        # Les deux apps sont sondées : un `basePath` cassé laisse la racine
-        # intacte et ne se voit que sous le préfixe du simulateur.
-        run: |
-          echec=0
-          for chemin in / /simulateur/; do
-            code="$(ssh -o BatchMode=yes "$PREVIEW_SSH" \
-              "curl -s -o /dev/null -w '%{http_code}' -H 'Host: pr-$PR_NUMBER.$PREVIEW_DOMAIN' 'http://localhost$chemin'")"
-            if [ "$code" = "200" ]; then
-              echo "ok    $chemin ($code)"
-            else
-              echo "::error::La preview répond $code au lieu de 200 sur $chemin"
-              echec=1
-            fi
-          done
-          exit "$echec"
+          dossier: pr-${{ github.event.number }}
+          hote: pr-${{ github.event.number }}.${{ env.PREVIEW_DOMAIN }}
 
       - name: Poser l'URL en commentaire de la PR
         uses: actions/github-script@v9

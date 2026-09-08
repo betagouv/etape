@@ -1,0 +1,46 @@
+name: Deploy dev
+
+# Environnement de développement : l'état de `main`, déployé à chaque merge sur
+# https://main.dev.certifpro.cegedim.cloud (le pendant de l'URL « production »
+# d'un projet Vercel). Même mécanique que les previews de PR — un dossier
+# /srv/previews/main sur la VM front, servi par nginx d'après le hostname —
+# mais jamais détruit : Preview GC ignore tout dossier qui n'est pas pr-<n>.
+#
+# Ce n'est pas la mise en production : le back, les bases et la promotion
+# vers la recette/prod arriveront avec l'infra Cegedim correspondante (DAT).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # redéploiement à la main depuis l'onglet Actions
+
+# Un déploiement à la fois ; deux merges rapprochés : seul le dernier compte.
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write # environnement GitHub « dev »
+
+env:
+  DEV_HOST: main.dev.certifpro.cegedim.cloud
+
+jobs:
+  deploy:
+    name: Déployer main sur dev
+    runs-on: [self-hosted, cegedim]
+    environment:
+      name: dev
+      url: https://main.dev.certifpro.cegedim.cloud
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Construire et déposer
+        uses: ./.github/actions/deployer-statique
+        with:
+          dossier: main
+          hote: ${{ env.DEV_HOST }}
