@@ -9,14 +9,14 @@ configurée à la main).
 Le déploiement des applications, lui, reste le rôle des workflows de CI (`preview.yml`) :
 Ansible prépare la machine, la CI y livre les versions.
 
-| Fichier                  | Rôle                                                                                                       |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `inventaire.ini`         | La liste des machines, par groupe (`front`, `back`)                                                        |
-| `group_vars/all.yml`     | Variables communes : la clé du runner, lue sur la machine opérationnelle                                   |
-| `taches/cle-runner.yml`  | Gestes communs : autoriser la clé du runner pour `deploy`                                                  |
-| `front.yml` | Socle de DEBFCOETAPFRT01 : nginx + previews de PR + environnement dev + basic auth (miroir de `docs/infra/installation-previews.md`) |
-| `back.yml`               | Socle de DEBFCOETAPAPP01 : Docker + Compose + login Harbor (préparatoire, back NestJS à venir)             |
-| `../nginx/previews.conf` | La configuration nginx déployée par `front.yml` (une seule source)                                         |
+| Fichier                  | Rôle                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `inventaire.ini`         | La liste des machines, par groupe (`front`, `back`)                                                                                  |
+| `group_vars/all.yml`     | Variables communes : la clé du runner, lue sur la machine opérationnelle                                                             |
+| `taches/cle-runner.yml`  | Gestes communs : autoriser la clé du runner pour `deploy`                                                                            |
+| `front.yml`              | Socle de DEBFCOETAPFRT01 : nginx + previews de PR + environnement dev + basic auth (miroir de `docs/infra/installation-previews.md`) |
+| `back.yml`               | Socle de DEBFCOETAPAPP01 : Docker + Compose + login Harbor (préparatoire, back NestJS à venir)                                       |
+| `../nginx/previews.conf` | La configuration nginx déployée par `front.yml` (une seule source)                                                                   |
 
 ## Comment lancer
 
