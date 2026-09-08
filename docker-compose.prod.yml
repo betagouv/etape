@@ -51,15 +51,15 @@ services:
 
       # Préfixe porté par l'application et non retiré par nginx : la
       # `redirect_uri` reste valable des deux côtés du proxy.
-      API_BASE_URL: ${PUBLIC_URL}/api
+      API_BASE_URL: ${PUBLIC_URL:?URL publique du front, sans slash final}/api
       FRONT_BASE_URL: ${PUBLIC_URL}
 
       # URL **publique** et non le nom de service interne : `openid-client` exige
       # que l'issuer coïncide avec le document de découverte. L'appel sort donc
       # du réseau Docker — voir `extra_hosts`.
-      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_PUBLIC_URL}/realms/etape
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_PUBLIC_URL:?URL publique de Keycloak, sans slash final}/realms/etape
       KEYCLOAK_CLIENT_ID: etape-api
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?secret du client etape-api, partagé avec Keycloak}
       KEYCLOAK_FRANCECONNECT_ALIAS: franceconnect
 
       # Nom de service interne, contrairement à l'issuer Keycloak : la base ne
@@ -141,7 +141,7 @@ services:
       KC_PROXY_HEADERS: xforwarded
 
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?mot de passe administrateur de Keycloak, créé au premier démarrage}
 
       # Lues par `etape-init.sh`.
       KEYCLOAK_INTERNAL_URL: http://127.0.0.1:8080
@@ -189,7 +189,7 @@ services:
     environment:
       POSTGRES_DB: etape
       POSTGRES_USER: etape
-      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD:?mot de passe de la base applicative, figé au premier démarrage}
     volumes:
       - app-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -204,7 +204,7 @@ services:
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?mot de passe de la base de Keycloak, figé au premier démarrage}
     volumes:
       - keycloak-db-data:/var/lib/postgresql/data
     healthcheck:
