@@ -1,0 +1,70 @@
+
+generator client {
+  provider = "prisma-client"
+
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Utilisateur {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  keycloakSub String @unique @map("keycloak_sub")
+
+  email  String?
+  prenom String?
+  nom    String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  lastLoginAt DateTime @default(now()) @map("last_login_at") @db.Timestamptz(3)
+
+  creeVia String @map("cree_via")
+
+  derniereConnexionVia String @map("derniere_connexion_via")
+
+  sessions Session[]
+
+  @@map("utilisateur")
+}
+
+model Session {
+  id String @id @db.Uuid
+
+  utilisateurId String      @map("utilisateur_id") @db.Uuid
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  fournisseurIdentite String @map("fournisseur_identite")
+
+  claims Json
+
+  idToken String @map("id_token")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@index([utilisateurId])
+  @@map("session")
+}
+
+model TransactionConnexion {
+  id String @id @db.Uuid
+
+  state String
+  nonce String
+  codeVerifier String @map("code_verifier")
+  returnTo String @map("return_to")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("transaction_connexion")
+}

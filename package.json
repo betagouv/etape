@@ -16,7 +16,7 @@
     "preview": "turbo run build && node scripts/vercel-out.mjs && vercel deploy --prebuilt --archive=tgz --target=preview",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}": "prettier --write"

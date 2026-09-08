@@ -1,0 +1,161 @@
+/*
+ * Feuille de style du thème Keycloak.
+ *
+ * Elle réutilise telles quelles les variables de `@etape/ui` — couleurs,
+ * rayons, échelle typographique — pour que les écrans de connexion ne dérivent
+ * pas du reste du produit. Rien n'est redéfini ici : ce qui change côté design
+ * system se propage au thème au prochain build.
+ */
+@import "@etape/ui/globals.css";
+
+/*
+ * Le front charge Open Sans via `next/font`. Keycloak n'a pas d'équivalent et
+ * une page de connexion ne doit pas dépendre d'un CDN tiers : la police est
+ * embarquée dans le thème, sous-ensemble latin uniquement.
+ */
+@import "@fontsource/open-sans/latin-400.css";
+@import "@fontsource/open-sans/latin-600.css";
+@import "@fontsource/open-sans/latin-700.css";
+
+/*
+ * Marianne, exigée par le kit d'implémentation FranceConnect pour le libellé du
+ * bouton. Les fichiers viennent de la distribution du DSFR et sont versionnés
+ * dans `src/assets/fonts` : le paquet `@gouvfr/dsfr` refuse de s'installer hors
+ * d'un projet initialisé par son propre CLI.
+ */
+@font-face {
+  font-family: "Marianne";
+  src: url("../assets/fonts/Marianne-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Marianne";
+  src: url("../assets/fonts/Marianne-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-marianne: "Marianne", "Open Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Bleu France — imposé par le kit FranceConnect, hors palette ETAPE. */
+  --color-france-blue: #000091;
+  --color-france-blue-text: #f5f5fe;
+}
+
+:root {
+  /*
+   * `@etape/ui` déclare `--font-sans: var(--font-open-sans)`, variable posée par
+   * `next/font` dans les apps Next. Ici c'est à nous de la fournir.
+   */
+  --font-open-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ------------------------------------------------------------------ */
+/* Ossature de l'écran                                                 */
+/* ------------------------------------------------------------------ */
+/*
+ * Passer de « Connexion » à « Créer un compte » change de page, et ce n'est pas
+ * un choix : Keycloak ne suit qu'une étape courante par session
+ * d'authentification et régénère son `session_code` à chaque changement.
+ * Échanger les formulaires côté client invaliderait le formulaire déjà affiché —
+ * vérifié : la soumission suivante tombe sur « La page a expiré ». Pour la même
+ * raison, ces pages ne doivent jamais être préchargées.
+ *
+ * Ce qui se supprime, en revanche, c'est le vide : ces trois classes décrivent
+ * la découpe gauche/droite. Elles sont écrites ici
+ * plutôt qu'en utilitaires Tailwind parce que `index.html` s'en sert aussi : le
+ * document peint la mise en page avant que React ne démarre, ce qui supprime la
+ * page blanche d'environ 350 ms mesurée entre deux écrans. Le gabarit React
+ * réutilise exactement les mêmes classes — un seul endroit à modifier.
+ *
+ * L'illustration est un fond et non une `<img>` : elle est décorative, n'a donc
+ * pas d'équivalent textuel à porter, et un fond se peint dès la feuille de style
+ * analysée, sans attendre le rendu de React.
+ */
+@layer components {
+  .kc-split {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--background);
+  }
+
+  .kc-illustration {
+    display: none;
+    flex-shrink: 0;
+    background-image: url("../assets/login-illustration.jpg");
+    background-position: center;
+    background-size: cover;
+  }
+
+  .kc-panel {
+    flex: 1 1 0%;
+  }
+
+  @media (width >= 64rem) {
+    .kc-illustration {
+      display: block;
+      width: 44%;
+      max-width: 640px;
+    }
+
+    .kc-panel {
+      border-left: 1px solid var(--border);
+    }
+  }
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+   * Filet de sécurité pour les écrans que nous n'avons pas dessinés (OTP,
+   * WebAuthn, consentement…). Keycloakify les rend avec son balisage par
+   * défaut ; sans la CSS de Keycloak, leurs champs et boutons seraient nus.
+   * Ces règles ne visent que l'intérieur de la carte, jamais nos composants,
+   * qui portent tous une classe explicite.
+   */
+  .kc-fallback :where(input:not([type="checkbox"]):not([type="radio"]):not([type="submit"])),
+  .kc-fallback :where(select),
+  .kc-fallback :where(textarea) {
+    min-height: calc(var(--spacing) * 11);
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background-color: var(--background);
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    font-size: var(--text-body-sm);
+  }
+
+  .kc-fallback :where(input[type="submit"]),
+  .kc-fallback :where(button:not([class])) {
+    min-height: calc(var(--spacing) * 11);
+    cursor: pointer;
+    border-radius: var(--radius-lg);
+    background-color: var(--primary);
+    padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+    font-size: var(--text-label-lg);
+    font-weight: 600;
+    color: var(--primary-foreground);
+  }
+
+  .kc-fallback :where(a) {
+    color: var(--content-accent);
+    font-weight: 600;
+  }
+
+  .kc-fallback :where(a:hover) {
+    text-decoration: underline;
+  }
+}
