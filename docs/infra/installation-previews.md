@@ -52,8 +52,13 @@ mkdir -p /srv/previews && chown deploy:deploy /srv/previews
 
 ### 2. Paquets
 
+IPv6 est désactivé sur les VM Cegedim, et le site par défaut du paquet Debian écoute sur
+`[::]:80` : installer `nginx` d'un coup fait échouer son premier démarrage, donc apt. D'où
+l'ordre : l'arborescence d'abord, retrait du site par défaut, puis le serveur.
+
 ```bash
-apt update && apt install -y nginx rsync apache2-utils
+apt update && apt install -y nginx-common rsync apache2-utils
+rm -f /etc/nginx/sites-enabled/default
 ```
 
 Si `apt` échoue (dépôts Debian non joignables), demander l'ouverture à Cegedim.
@@ -65,7 +70,6 @@ Copier le contenu de **`infra/nginx/previews.conf`** (dépôt) :
 ```bash
 nano /etc/nginx/sites-available/previews.conf     # coller le contenu du fichier du dépôt
 ln -sf /etc/nginx/sites-available/previews.conf /etc/nginx/sites-enabled/previews.conf
-rm -f /etc/nginx/sites-enabled/default            # sinon nginx -t échoue (default_server en double)
 ```
 
 ### 4. Basic auth (obligatoire : le 443 public est déjà ouvert)
@@ -82,9 +86,10 @@ Le `satisfy any` + `allow 127.0.0.1` de la conf laisse passer le smoke test du w
 identifiants ; tout accès distant les exige. (Par le playbook, le mot de passe vient du secret
 GitHub `PREVIEW_BASIC_AUTH_PASSWORD`.)
 
-### 5. Activer et tester sur place
+### 5. Installer le serveur, activer et tester sur place
 
 ```bash
+apt install -y nginx                              # démarre directement sur previews.conf
 nginx -t && systemctl reload nginx && systemctl enable nginx
 
 mkdir -p /srv/previews/pr-0 && echo '<html>ok</html>' > /srv/previews/pr-0/index.html
@@ -98,7 +103,18 @@ Garde `pr-0` en place pour l'étape 7, supprime-le ensuite (`rm -rf /srv/preview
 
 ---
 
-## Sur DEBFCOETAPOPS01 (runner), sous `github-runner` (fait le 7/09, à revérifier au besoin)
+## Sur DEBFCOETAPOPS01 (runner)
+
+### Prérequis système (une fois, avec ton compte et sudo)
+
+Le runner tourne sans sudo et sans `pip` ni `venv` : ce qu'il utilise s'installe par paquet.
+Fait le 8/09 pour les deux.
+
+```bash
+sudo apt install -y ansible-core rsync   # Setup VM (playbooks) et Preview (dépôt des fichiers)
+```
+
+### Clé du runner, sous `github-runner` (fait le 7/09, à revérifier au besoin)
 
 ```bash
 ssh -o BatchMode=yes deploy@debfcoetapfrt01.fco.cegedim.cloud 'sudo -n true && echo OK'
@@ -124,18 +140,20 @@ place. ⚠️ Quelque chose a purgé `/home/github-runner` entre le 2 et le 7/09
 
 ## Dépannage express
 
-| Symptôme                                               | Cause probable                                                                                                                  |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| Workflow : `exit 255` en 1 s à l'étape rsync/SSH       | Clé du runner absente (home OPS01 purgé : regénérer, reposer sur FRT01) ou empreinte non enregistrée                            |
-| Demande de mot de passe SSH `deploy@…`                 | Clé absente ou abîmée dans `authorized_keys`, ou permissions (700 sur `.ssh`, 600 sur le fichier, propriétaire `deploy`)        |
-| `sudo: a password is required`                         | sudo de `deploy` pas en NOPASSWD (`/etc/sudoers.d/`)                                                                            |
-| `Connection refused` port 22 soudain                   | Bannissement temporaire (fail2ban) après échecs d'authentification : attendre 10 min                                            |
-| `nginx -t` échoue sur `default_server`                 | Site par défaut non retiré (étape 3)                                                                                            |
-| 503 page Cegedim depuis l'extérieur, nginx OK en local | Pool BigIP pas branché sur FRT01:80, ou moniteur du pool qui ne reçoit pas 200 (le pointer sur `/healthz`) : demander à Cegedim |
-| 500 sur la preview à distance                          | `/etc/nginx/previews.htpasswd` absent ou illisible par `www-data` (étape 4)                                                     |
-| 401 sur la preview                                     | Normal à distance : basic auth (`etape` + mot de passe)                                                                         |
-| 404 sur `/simulateur/_next/…`                          | `basePath` cassé au build ; `scripts/assemble-static.mjs` refuse normalement de déployer dans ce cas                            |
-| 404 sur toute la preview                               | Dossier `/srv/previews/pr-<n>/` absent : le déploiement n'a pas eu lieu                                                         |
+| Symptôme                                                           | Cause probable                                                                                                                  |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Workflow : `rsync: command not found` ou `ansible-playbook` absent | Paquet manquant sur OPS01 (prérequis système ci-dessus)                                                                         |
+| Workflow : `exit 255` en 1 s à l'étape rsync/SSH                   | Clé du runner absente (home OPS01 purgé : regénérer, reposer sur FRT01) ou empreinte non enregistrée                            |
+| Demande de mot de passe SSH `deploy@…`                             | Clé absente ou abîmée dans `authorized_keys`, ou permissions (700 sur `.ssh`, 600 sur le fichier, propriétaire `deploy`)        |
+| `sudo: a password is required`                                     | sudo de `deploy` pas en NOPASSWD (`/etc/sudoers.d/`)                                                                            |
+| `Connection refused` port 22 soudain                               | Bannissement temporaire (fail2ban) après échecs d'authentification : attendre 10 min                                            |
+| `nginx -t` échoue sur `default_server`                             | Site par défaut non retiré (étape 2)                                                                                            |
+| `apt install nginx` échoue, `socket() [::]:80 failed`              | IPv6 désactivé et site par défaut encore présent : `rm -f /etc/nginx/sites-enabled/default` puis `apt install -f`               |
+| 503 page Cegedim depuis l'extérieur, nginx OK en local             | Pool BigIP pas branché sur FRT01:80, ou moniteur du pool qui ne reçoit pas 200 (le pointer sur `/healthz`) : demander à Cegedim |
+| 500 sur la preview à distance                                      | `/etc/nginx/previews.htpasswd` absent ou illisible par `www-data` (étape 4)                                                     |
+| 401 sur la preview                                                 | Normal à distance : basic auth (`etape` + mot de passe)                                                                         |
+| 404 sur `/simulateur/_next/…`                                      | `basePath` cassé au build ; `scripts/assemble-static.mjs` refuse normalement de déployer dans ce cas                            |
+| 404 sur toute la preview                                           | Dossier `/srv/previews/pr-<n>/` absent : le déploiement n'a pas eu lieu                                                         |
 
 ## Ce qui a déjà été vérifié
 

@@ -15,6 +15,11 @@ updates:
         update-types:
           - minor
           - patch
+      # Idem pour les majeures : sans ce groupe, Dependabot ouvre une PR par
+      # paquet ET par dossier du monorepo (26 PR d'un coup le 7/09).
+      major:
+        update-types:
+          - major
 
   # Mises à jour des actions GitHub utilisées par la CI.
   - package-ecosystem: github-actions
