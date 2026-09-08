@@ -34,6 +34,13 @@ RUN node scripts/assembler-statique.mjs /srv/static
 
 # Réinstallation plutôt qu'élagage : `npm ci` restaure exactement le verrou, là
 # où `npm prune` laisse ce qu'il ne sait pas rattacher.
+#
+# Les scripts d'installation doivent tourner : c'est le postinstall de
+# `@prisma/engines` qui pose les binaires du moteur. Sans eux l'image se
+# construit quand même, puis `prisma migrate deploy` tente de les télécharger au
+# démarrage et échoue faute de droits d'écriture — le conteneur ne sert jamais.
+# C'est pourquoi le `prepare` de la racine tolère l'absence de husky, que
+# `--omit=dev` n'installe pas.
 FROM deps AS api-deps
 WORKDIR /app
 RUN npm ci --omit=dev --workspace=@etape/api --include-workspace-root
