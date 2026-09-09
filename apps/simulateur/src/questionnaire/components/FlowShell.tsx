@@ -32,6 +32,12 @@ export function FlowShell() {
   const failedAttempt =
     attempt.questionId === questionId && !nav.canGoNext ? attempt.count : undefined;
 
+  const [visitedQuestionId, setVisitedQuestionId] = useState(questionId);
+  if (questionId !== visitedQuestionId) {
+    setVisitedQuestionId(questionId);
+    setAttempt({ questionId: null, count: 0 });
+  }
+
   function handleNext() {
     if (!nav.canGoNext) {
       setAttempt((previous) => ({ questionId: questionId ?? null, count: previous.count + 1 }));
