@@ -1,9 +1,12 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
+import { isFieldVisible } from "../domain/conditions";
 import type { Answers, AnswerValue, Question } from "../domain/types";
-import { FieldRenderer } from "./FieldRenderer";
+import { fieldErrors, missingFields } from "../domain/validation";
+import { FIELD_ERROR_ATTRIBUTE } from "./fields/aria";
+import { QuestionFields } from "./QuestionFields";
 import { QuestionHeader } from "./QuestionHeader";
 
 interface QuestionScreenProps {
@@ -12,7 +15,35 @@ interface QuestionScreenProps {
   answers: Answers;
   setAnswer: (name: string, value: AnswerValue) => void;
   headingRef?: RefObject<HTMLHeadingElement | null>;
-  showRequiredError?: boolean;
+  /**
+   * Numéro de la tentative de validation ayant échoué sur CETTE question, ou
+   * `undefined` si l'utilisateur n'a encore rien tenté. Il change à chaque
+   * nouvel essai : c'est ce qui redéplace le focus quand on reclique
+   * « Suivant » sans avoir corrigé.
+   */
+  failedAttempt?: number;
+}
+
+/** Éléments capables de prendre le focus, pour le repli ci-dessous. */
+const FOCUSABLE = 'input, select, textarea, button, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Amène le focus sur le premier champ fautif. C'est ce déplacement — et non un
+ * `role="alert"` — qui annonce l'erreur : le lecteur d'écran lit l'élément
+ * visé, son libellé et son message.
+ *
+ * L'élément marqué est visé DIRECTEMENT, y compris quand c'est un groupe :
+ * c'est lui qui porte le libellé de la sous-question et le message, là où un
+ * bouton radio ne porterait que son propre intitulé.
+ */
+function focusFirstInvalid(container: HTMLElement | null): void {
+  const invalid = container?.querySelector<HTMLElement>(`[${FIELD_ERROR_ATTRIBUTE}="true"]`);
+  if (!invalid) return;
+  invalid.focus();
+  // Filet : si l'élément marqué refuse le focus, viser son premier contrôle.
+  if (document.activeElement !== invalid) {
+    invalid.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+  }
 }
 
 export function QuestionScreen({
@@ -21,15 +52,42 @@ export function QuestionScreen({
   answers,
   setAnswer,
   headingRef,
-  showRequiredError = false,
+  failedAttempt,
 }: QuestionScreenProps) {
   const titleId = `${question.id}-title`;
   const subtitleId = question.subtitle ? `${question.id}-subtitle` : undefined;
-  const errorId = `${question.id}-error`;
-  const singleField = question.fields.length === 1;
 
-  const describedBy =
-    [subtitleId, showRequiredError ? errorId : undefined].filter(Boolean).join(" ") || undefined;
+  // Un écran à champ unique (Q1, Q2, Q4, Q5, Q7) porte son message une seule
+  // fois, en bas. Un écran qui en a plusieurs (Q3, Q6) garde un message sous
+  // chaque champ fautif — une ligne unique ne dirait pas LEQUEL — et se résume
+  // en bas au nombre de réponses en attente.
+  const visibles = question.fields.filter((field) => isFieldVisible(field, answers));
+  const champUnique = visibles.length === 1 ? visibles[0] : undefined;
+
+  const showErrors = failedAttempt !== undefined;
+  const errors = showErrors ? fieldErrors(question, answers) : new Map<string, string>();
+  // Une réponse absente ne se « corrige » pas, elle se donne ; une réponse
+  // incohérente est là mais fausse. Le résumé le dit avec le bon verbe.
+  const absences = showErrors ? missingFields(question, answers).length : 0;
+  const resume =
+    errors.size === absences
+      ? errors.size === 1
+        ? "Une réponse manque : complétez-la pour continuer."
+        : `${errors.size} réponses manquent : complétez-les pour continuer.`
+      : errors.size === 1
+        ? "Une réponse est à corriger pour continuer."
+        : `${errors.size} réponses sont à corriger pour continuer.`;
+
+  // Sur un écran à champ unique, cette ligne EST le message du champ : elle en
+  // porte l'`id`, celui que l'`aria-describedby` du champ désigne déjà.
+  const bilan = champUnique ? [...errors.values()][0] : resume;
+  const bilanId = champUnique ? `${champUnique.name}-error` : undefined;
+
+  const fieldsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (failedAttempt === undefined) return;
+    focusFirstInvalid(fieldsRef.current);
+  }, [failedAttempt, question.id]);
 
   return (
     <div className="flex w-full flex-col gap-8 md:gap-12">
@@ -41,28 +99,27 @@ export function QuestionScreen({
         subtitleId={subtitleId}
         headingRef={headingRef}
       />
-      <div className="flex w-full flex-col gap-6 md:gap-8">
-        {question.fields.map((field) => (
-          <FieldRenderer
-            key={field.name}
-            field={field}
-            answers={answers}
-            setAnswer={setAnswer}
-            labelledBy={singleField ? titleId : undefined}
-            describedBy={singleField ? describedBy : undefined}
-          />
-        ))}
-
-        {showRequiredError && (
-          <p
-            id={errorId}
-            role="alert"
-            className="text-destructive-text text-sm leading-5 font-semibold md:text-base md:leading-6"
-          >
-            Aucune réponse sélectionnée : choisis une option pour continuer.
-          </p>
-        )}
+      <div ref={fieldsRef}>
+        <QuestionFields
+          question={question}
+          answers={answers}
+          setAnswer={setAnswer}
+          titleId={titleId}
+          describedBy={subtitleId}
+          errors={errors}
+          inlineErrors={champUnique === undefined}
+        />
       </div>
+      {/* Le bilan est visible mais pas annoncé : le focus part sur le premier
+          champ fautif, et deux annonces se marcheraient dessus. */}
+      {errors.size > 0 && (
+        <p
+          id={bilanId}
+          className="text-destructive-text text-sm leading-5 font-semibold md:text-base md:leading-6"
+        >
+          {bilan}
+        </p>
+      )}
     </div>
   );
 }

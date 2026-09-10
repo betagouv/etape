@@ -6,7 +6,7 @@
 import type { FlagSet } from "./flags";
 
 /** Types de champs supportés. À étendre au fil des questions. */
-export type FieldType = "radio" | "city" | "checkbox";
+export type FieldType = "radio" | "checkbox" | "month" | "number" | "region" | "toggle";
 
 /** Option d'un champ à choix (radio, checkbox, select…). */
 export interface Option {
@@ -16,8 +16,9 @@ export interface Option {
   description?: string;
   /**
    * Drapeaux ajoutés à l'ensemble du parcours quand cette option est retenue.
-   * Ils pilotent le branchement (`Question.next`) et l'éligibilité (module
-   * `resultats/`). Voir `domain/flags.ts`.
+   * Ils pilotent l'applicabilité des questions (`Question.when`), les portes de
+   * sortie (`Question.outcome`) et l'éligibilité (module `resultats/`).
+   * Voir `domain/flags.ts`.
    */
   flags?: string[];
   /**
@@ -28,20 +29,11 @@ export interface Option {
 }
 
 /**
- * Commune renvoyée par l'API Adresse de l'État (geo.api.gouv.fr).
- * On conserve l'objet complet dans l'état pour les étapes suivantes.
+ * Valeur stockée pour un champ donné dans la map des réponses.
+ * `string` couvre les choix uniques, la région (code INSEE) et le mois
+ * (`YYYY-MM-01`) ; `string[]` les choix multiples ; `boolean` les cases.
  */
-export interface Commune {
-  code: string; // code INSEE
-  nom: string;
-  codesPostaux?: string[];
-  departement?: { code: string; nom: string };
-  /** Région administrative — son `code` INSEE pilote les liens régionalisés. */
-  region?: { code: string; nom: string };
-}
-
-/** Valeur stockée pour un champ donné dans la map des réponses. */
-export type AnswerValue = string | string[] | Commune | null;
+export type AnswerValue = string | string[] | boolean | null;
 
 /** Toutes les réponses du flow, indexées par `name` de champ. */
 export type Answers = Record<string, AnswerValue>;
@@ -50,6 +42,8 @@ interface BaseField {
   /** Clé dans la map des réponses. */
   name: string;
   label?: string;
+  /** Précision affichée sous le libellé (unité, exemple de saisie…). */
+  hint?: string;
   /** Requis par défaut (`true`). Passer `false` pour rendre optionnel. */
   required?: boolean;
   /**
@@ -57,6 +51,26 @@ interface BaseField {
    * renvoie `true`. Absent = toujours visible.
    */
   visibleWhen?: (answers: Answers) => boolean;
+  /**
+   * Contrôle de COHÉRENCE avec les autres réponses, évalué une fois le champ
+   * rempli et valide. Renvoie le message à afficher, ou `null` si tout va bien.
+   *
+   * À poser sur le champ posé EN DERNIER des deux : c'est celui-là que la
+   * personne vient de saisir, et le seul qu'elle puisse corriger sans être
+   * renvoyée en arrière. Le poser des deux côtés enfermerait le parcours — la
+   * traversée s'arrêterait sur la première question en erreur, sans jamais
+   * laisser atteindre l'autre.
+   */
+  coherence?: (answers: Answers) => string | null;
+  /**
+   * Sous-question : valeur(s) d'option du champ principal sous laquelle ce
+   * champ s'ouvre, dans le MÊME écran. Absent = champ de premier niveau.
+   * Une liste quand la même précision se pose sous plusieurs options (l'arrêt
+   * de travail, demandé aux salarié·es, aux agents et aux indépendant·es).
+   * Le rendu correspondant arrive à l'étape 5 ; le moteur, lui, traite un
+   * champ `sub` comme n'importe quel autre champ conditionnel.
+   */
+  sub?: string | string[];
 }
 
 export interface RadioField extends BaseField {
@@ -66,28 +80,61 @@ export interface RadioField extends BaseField {
   orientation?: "horizontal" | "vertical";
 }
 
-/** Aucune question ne l'utilise encore : anticipe une étape de localisation. */
-export interface CityField extends BaseField {
-  type: "city";
-  placeholder?: string;
-}
-
 export interface CheckboxField extends BaseField {
   type: "checkbox";
   options: Option[];
 }
 
-export type Field = RadioField | CityField | CheckboxField;
+/**
+ * Mois et année (ex. l'entrée chez l'employeur actuel). La valeur est stockée
+ * normalisée en `YYYY-MM-01` — voir `domain/month.ts`. Le futur est refusé par
+ * la validation, pas par convention d'appel.
+ */
+export interface MonthField extends BaseField {
+  type: "month";
+  /** Année la plus ancienne proposée à la saisie. */
+  minYear?: number;
+}
 
-/** Champs porteurs d'options — exclut `city`, qui n'en a pas. */
+/** Entier positif saisi au clavier (ex. un nombre d'années). */
+export interface NumberField extends BaseField {
+  type: "number";
+  /** Bornes incluses. Défauts : 0 et 99 (le ticket limite Q5 à 2 caractères). */
+  min?: number;
+  max?: number;
+  placeholder?: string;
+  /** Unité affichée après le champ (« ans »). Décorative : `aria-hidden`. */
+  suffix?: string;
+}
+
+/** Région administrative, choisie dans la liste fermée de `domain/regions.ts`. */
+export interface RegionField extends BaseField {
+  type: "region";
+  placeholder?: string;
+}
+
+/**
+ * Case à cocher unique (booléen), sans liste d'options — pour une précision du
+ * type « Je travaille dans une autre région », qui ouvre un champ à son tour.
+ */
+export interface ToggleField extends BaseField {
+  type: "toggle";
+  /** Libellé de la case elle-même : obligatoire, c'est le seul texte du champ. */
+  label: string;
+}
+
+export type Field =
+  RadioField | CheckboxField | MonthField | NumberField | RegionField | ToggleField;
+
+/** Champs porteurs d'options — les seuls dont une réponse se lit dans `options`. */
 export type OptionField = RadioField | CheckboxField;
 
 export function hasOptions(field: Field): field is OptionField {
-  return field.type !== "city";
+  return field.type === "radio" || field.type === "checkbox";
 }
 
 export interface Question {
-  /** Identifiant stable (sert aussi de clé d'étape pour le branchement). */
+  /** Identifiant stable (sert aussi de clé d'étape dans l'URL). */
   id: string;
   /** Titre affiché (heading). */
   title: string;
@@ -95,11 +142,29 @@ export interface Question {
   subtitle?: string;
   fields: Field[];
   /**
-   * Branchement basé sur les flags accumulés (option courante incluse) :
-   * renvoie l'id de l'étape suivante — une autre question ou le sentinelle
-   * `STEP_RESULTS` (écran de résultats). `null` = suivre l'ordre du tableau.
+   * Applicabilité : la question n'est posée que si ce prédicat passe. Absente,
+   * elle est toujours posée. Le parcours suit l'ordre du tableau — c'est le
+   * modèle décrit par le ticket : une séquence fixe, des questions
+   * conditionnelles, pas un graphe.
    */
-  next?: (flags: FlagSet) => string | null;
+  when?: (answers: Answers) => boolean;
+  /**
+   * Compte-t-elle dans le total affiché alors qu'elle ne s'applique pas encore ?
+   * Vrai tant que la réponse dont dépend `when` est inconnue : le compteur part
+   * ainsi du chemin le plus long et ne s'allonge jamais en cours de route.
+   */
+  pending?: (answers: Answers) => boolean;
+  /**
+   * Questions mutuellement exclusives d'une même bifurcation : une seule est
+   * comptée par le total tant que la bifurcation n'est pas tranchée.
+   */
+  branch?: string;
+  /**
+   * Porte de sortie évaluée une fois la question répondue : renvoie l'id d'un
+   * écran terminal (`outcomes`) pour interrompre le parcours, ou `null` pour
+   * continuer.
+   */
+  outcome?: (flags: FlagSet) => string | null;
 }
 
 /** Action (bouton) d'un écran terminal. */
