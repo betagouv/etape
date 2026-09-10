@@ -120,6 +120,30 @@ export function MonthYearField({
         className="focus-visible:outline-ring flex w-full max-w-md gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
       >
         <div className="flex flex-1 flex-col gap-1">
+          <span id={yearLabelId} className={smallLabelClassName}>
+            Année
+          </span>
+          <Select value={draft.year} onValueChange={selectYear}>
+            <SelectTrigger
+              id={yearTriggerId}
+              aria-labelledby={joinIds(yearLabelId, yearTriggerId)}
+              aria-describedby={error ? errorId : undefined}
+              aria-invalid={error ? true : undefined}
+              className={triggerClassName}
+            >
+              <SelectValue placeholder="Choisir" />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((year) => (
+                <SelectItem key={year} value={String(year)}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-1">
           <span id={monthLabelId} className={smallLabelClassName}>
             Mois
           </span>
@@ -139,30 +163,6 @@ export function MonthYearField({
               {MONTH_NAMES.slice(0, lastMonthOf(draft.year)).map((name, index) => (
                 <SelectItem key={name} value={String(index + 1)}>
                   {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-1">
-          <span id={yearLabelId} className={smallLabelClassName}>
-            Année
-          </span>
-          <Select value={draft.year} onValueChange={selectYear}>
-            <SelectTrigger
-              id={yearTriggerId}
-              aria-labelledby={joinIds(yearLabelId, yearTriggerId)}
-              aria-describedby={error ? errorId : undefined}
-              aria-invalid={error ? true : undefined}
-              className={triggerClassName}
-            >
-              <SelectValue placeholder="Choisir" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
                 </SelectItem>
               ))}
             </SelectContent>
