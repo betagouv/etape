@@ -1,14 +1,33 @@
 version: 2
 updates:
-  # Dépendances npm — racine + apps + packages du monorepo.
+  # Dépendances npm du monorepo. La racine suffit : Dependabot y voit les
+  # workspaces et met à jour leurs package.json ET le lockfile unique. Lister
+  # aussi /apps/* et /packages/* doublait chaque PR, sans le lockfile, donc
+  # vouées à échouer au `npm ci` (#29 à #44).
   - package-ecosystem: npm
-    directories:
-      - "/"
-      - "/apps/*"
-      - "/packages/*"
+    directory: "/"
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # Majeures bloquées tant que l'écosystème ne suit pas : retirer la ligne
+    # correspondante quand la condition est levée.
+    ignore:
+      # Aligné sur le runtime (.nvmrc) : suivre la majeure de Node, pas au-delà.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # TypeScript 7 : Next ne le reconnaît pas encore (typecheck en échec).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # ESLint 10 : eslint-plugin-react (tiré par eslint-config-next) casse
+      # (`contextOrFilename.getFilename is not a function`).
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      # Code Connect 2 : plus de parseur React, nos *.figma.tsx sont à migrer
+      # (`figma connect migrate`) avant de monter.
+      - dependency-name: "@figma/code-connect"
+        update-types: ["version-update:semver-major"]
     groups:
       # Regroupe les mises à jour mineures/patch dans une seule PR.
       minor-and-patch:
