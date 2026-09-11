@@ -8,8 +8,10 @@ import type { Answers } from "@/questionnaire/domain/types";
 
 import { CEP_URL } from "../domain/catalogue";
 import { buildProfil } from "../domain/profil";
+import { buildRecap } from "../domain/recap";
 import { selectResultats } from "../domain/selection";
 import { AnswersRecap } from "./AnswersRecap";
+import { DownloadPdfButton } from "./DownloadPdfButton";
 import { EmptyResults } from "./EmptyResults";
 import { ResultCard } from "./ResultCard";
 import { RESULTS_TOP_ID, ScrollToTopButton } from "./ScrollToTopButton";
@@ -33,6 +35,7 @@ function decompte(total: number): string {
 export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: ResultsScreenProps) {
   const profil = useMemo(() => buildProfil(answers), [answers]);
   const resultats = useMemo(() => selectResultats(profil), [profil]);
+  const recapEntries = useMemo(() => buildRecap(answers), [answers]);
 
   return (
     <main className="flex flex-1 flex-col">
@@ -51,6 +54,10 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
             qui correspondent à vos réponses. Rien n’est automatique&nbsp;: un conseiller vous
             aidera à choisir par où commencer.
           </p>
+
+          {resultats.length > 0 && (
+            <DownloadPdfButton resultats={resultats} recapEntries={recapEntries} />
+          )}
         </div>
       </header>
 
