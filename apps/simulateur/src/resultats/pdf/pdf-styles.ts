@@ -131,4 +131,9 @@ export const pdfStyles = StyleSheet.create({
     lineHeight: 1.5,
     color: COLORS.calloutText,
   },
+  // Les `Link` de react-pdf sont soulignés et bleus par défaut : on garde le
+  // soulignement (repère du lien dans un PDF) et on reprend la couleur du texte.
+  footerLink: {
+    color: COLORS.calloutText,
+  },
 });

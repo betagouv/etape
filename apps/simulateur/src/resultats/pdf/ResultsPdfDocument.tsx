@@ -1,5 +1,6 @@
-import { Document, Page, Text, View } from "@react-pdf/renderer";
+import { Document, Link, Page, Text, View } from "@react-pdf/renderer";
 
+import { CEP_URL } from "../domain/catalogue";
 import type { RecapEntry } from "../domain/recap";
 import {
   CATEGORIE_LABELS,
@@ -30,6 +31,11 @@ function categorieTitle(categorie: Categorie, count: number): string {
  * `pdf-styles.ts`. Ne recalcule rien à partir des réponses : reçoit les
  * données déjà calculées par `ResultsScreen`, pour ne jamais diverger de ce
  * que la personne a vu à l'écran.
+ *
+ * Les URL sont des `Link` (annotations cliquables) et la langue du document
+ * est déclarée. react-pdf ne produit pas de PDF balisé (PDF/UA) : la page
+ * HTML reste la version accessible des résultats, le PDF en est une copie
+ * imprimable.
  */
 export function ResultsPdfDocument({ resultats, recapEntries }: ResultsPdfDocumentProps) {
   const date = new Date().toLocaleDateString("fr-FR", {
@@ -39,7 +45,7 @@ export function ResultsPdfDocument({ resultats, recapEntries }: ResultsPdfDocume
   });
 
   return (
-    <Document title="Résultats — Simulateur ETAPE">
+    <Document title="Résultats — Simulateur ETAPE" language="fr">
       <Page size="A4" style={pdfStyles.page}>
         <View style={pdfStyles.banner}>
           <Text style={pdfStyles.bannerTitle}>ETAPE — Vos résultats</Text>
@@ -71,7 +77,9 @@ export function ResultsPdfDocument({ resultats, recapEntries }: ResultsPdfDocume
                   <View key={resultat.id} style={pdfStyles.resultat}>
                     <Text style={pdfStyles.resultatNom}>{resultat.nom}</Text>
                     <Text style={pdfStyles.resultatDescription}>{resultat.description}</Text>
-                    <Text style={[pdfStyles.resultatUrl, { color: accent }]}>{resultat.url}</Text>
+                    <Link src={resultat.url} style={[pdfStyles.resultatUrl, { color: accent }]}>
+                      {resultat.url}
+                    </Link>
                   </View>
                 ))}
               </View>
@@ -94,7 +102,11 @@ export function ResultsPdfDocument({ resultats, recapEntries }: ResultsPdfDocume
         <View style={pdfStyles.footerBox}>
           <Text style={pdfStyles.footerText}>
             Cet outil donne une orientation indicative, susceptible d’évoluer, et ne remplace pas
-            l’accompagnement personnalisé et gratuit d’un conseiller CEP.
+            l’accompagnement personnalisé et gratuit d’un{" "}
+            <Link src={CEP_URL} style={pdfStyles.footerLink}>
+              conseiller CEP
+            </Link>
+            .
           </Text>
         </View>
       </Page>
