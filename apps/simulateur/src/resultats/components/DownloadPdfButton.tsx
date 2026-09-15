@@ -19,6 +19,16 @@ type Statut = "repos" | "generation" | "termine";
 const PDF_FILENAME = "resultats-simulateur-etape.pdf";
 
 /*
+ * Révoquer l'URL du blob dans la foulée de `click()` peut annuler le
+ * téléchargement : Safari et certaines versions de Firefox résolvent l'URL de
+ * façon asynchrone, et iOS Safari ne lance le téléchargement qu'une fois que
+ * l'utilisateur a confirmé, parfois plusieurs secondes plus tard. Le délai
+ * retenu est celui de FileSaver.js ; le blob (quelques centaines de ko) reste
+ * en mémoire d'ici là, sans conséquence.
+ */
+const REVOKE_DELAY_MS = 40_000;
+
+/*
  * Messages de la région `role="status"` (aria-live polite). Le changement de
  * libellé du bouton n'est pas annoncé de façon fiable par les lecteurs
  * d'écran ; cette région, toujours présente dans le DOM, l'est.
@@ -60,8 +70,12 @@ export function DownloadPdfButton({ resultats, recapEntries }: DownloadPdfButton
       const link = document.createElement("a");
       link.href = url;
       link.download = PDF_FILENAME;
+      // Rattaché au DOM le temps du clic : les anciens Firefox ignorent
+      // `click()` sur un lien détaché.
+      document.body.append(link);
       link.click();
-      URL.revokeObjectURL(url);
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
       setStatut("termine");
     } catch {
       // Le toast porte sa propre région live : pas de doublon d'annonce.
