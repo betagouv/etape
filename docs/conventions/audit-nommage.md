@@ -12,12 +12,12 @@
 
 | Périmètre | Bloquant                          | À corriger                                         | Mineur                       | À arbitrer |
 | --------- | --------------------------------- | -------------------------------------------------- | ---------------------------- | ---------- |
-| `main`    | 0                                 | 20 lignes (~30 identifiants + 26 noms de fichiers) | 21 lignes (~55 identifiants) | 10         |
-| PR #16    | 4 (schéma Prisma, avec migration) | ~25                                                | ~10                          | 3          |
+| `main`    | 0                                 | 20 lignes (~30 identifiants + 26 noms de fichiers) | 21 lignes (~55 identifiants) | 8          |
+| PR #16    | 4 (schéma Prisma, avec migration) | ~25                                                | ~10                          | 1          |
 
 **Verdict : codebase mélangée, à dominante conforme.**
 
-- **Noms métier** : majoritairement en français — ~85-90 % des ~130 déclarations métier du simulateur, ~75 % si « réponse » et « issue » sont classés métier. Aucun accent dans un identifiant.
+- **Noms métier** : majoritairement en français — ~85-90 % des ~130 déclarations métier du simulateur (« réponse » et « issue » relèvent du moteur de questionnaire, donc de la technique : tranché le 2026-09-15). Aucun accent dans un identifiant.
 - **Grammaire du code** : majoritairement en anglais (`findQuestion`, `buildProfil`, `isRegionCode`, `hasAnswers`), avec des poches de grammaire française concentrées dans `resultats/domain/catalogue.ts`, `questionnaire/domain/questions.ts` et `QuestionScreen.tsx`.
 - **Traductions anglaises de termes métier** : famille `Results*` à côté de `Resultat`, `SCALE_*` pour « barème ».
 - **Synonymes** : plusieurs concepts ont deux ou trois noms (demandeur d'emploi, agent public, durée d'activité, lieu/résidence).
@@ -81,18 +81,18 @@ Sévérités : **bloquant** (schéma, migration, route d'API publique), **à cor
 
 ### À arbitrer
 
-| #   | Élément                                                                                              | Emplacement                                                                                                    | Question                                                                                                                        |
-| --- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| A1  | `Answers`, `answers`, `AnswerValue`, `setAnswer`, `pruneAnswers`, `AnswersRecap`… (~250 occurrences) | `questionnaire/domain/types.ts:36-39` et partout                                                               | « Réponse » est-il un terme métier ? Si oui, c'est une traduction interdite (`Reponses`). Aucun identifiant `reponse` n'existe. |
-| A2  | `Outcome`, `findOutcome`, `OUTCOME_HORS_FRANCE`, `OutcomeScreen`                                     | `questionnaire/domain/types.ts:171-186`                                                                        | Écran terminal (technique, conforme) ou sortie d'inéligibilité (métier) ? Distinct de `Resultat`.                               |
-| A3  | `CEP_URL`                                                                                            | `resultats/domain/catalogue.ts:76`                                                                             | Retenu technique (conforme). Si métier : `URL_CEP`.                                                                             |
-| A4  | `FIELD_AUTRE_REGION = "autreRegion"`                                                                 | `questions.ts:32`                                                                                              | Stocke un booléen sans préfixe : `isAutreRegionTravail` ? (clé stockée)                                                         |
-| A5  | `FLAGS.GARDER_METIER`, `FLAGS.PAS_EMPLOI`                                                            | `flags.ts:34, 24`                                                                                              | Valeurs d'enum formulées par un verbe ou une négation ; `PAS_EMPLOI` proche de `SANS_EMPLOI`.                                   |
-| A6  | `Region.nom` / `regionName`                                                                          | `regions.ts:23, 62`                                                                                            | `nom` (métier) et `name` (technique) désignent la même donnée.                                                                  |
-| A7  | id `"demission-reconversion"`                                                                        | `catalogue.ts:248`                                                                                             | Acronyme officiel `dd` selon la convention ; le site écrit « Dispositif Démissionnaire » (`apps/site/src/content/home.ts:144`). |
-| A8  | `TRANSITIONS_PRO` (un `FooterLink`)                                                                  | `apps/site/src/lib/footer.ts:36`                                                                               | Suffixe technique manquant : `TRANSITIONS_PRO_LINK` ? Enjeu faible.                                                             |
-| A9  | `"#contenu"`, `"navigation-principale"`, `"pied-de-page"`, `"haut-de-page"`                          | `packages/ui/src/components/skip-links.tsx`, `back-to-top.tsx`, `apps/site/src/lib/navigation.ts`, `footer.ts` | Fragments visibles dans l'URL après un lien d'évitement : URL publique (FR admis) ou id technique ?                             |
-| A10 | `STEP_PARAM = "q"`                                                                                   | `questionnaire/hooks/useFlowNavigation.ts:12`                                                                  | Paramètre d'URL public abrégé, alors que le concept est « étape ».                                                              |
+| #   | Élément                                                                                              | Emplacement                                                                                                    | Question                                                                                                                           |
+| --- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | `Answers`, `answers`, `AnswerValue`, `setAnswer`, `pruneAnswers`, `AnswersRecap`… (~250 occurrences) | `questionnaire/domain/types.ts:36-39` et partout                                                               | **Tranché : conforme.** Mécanisme du moteur de questionnaire, donc technique (`nommage.md`, « Cas tranchés »).                     |
+| A2  | `Outcome`, `findOutcome`, `OUTCOME_HORS_FRANCE`, `OutcomeScreen`                                     | `questionnaire/domain/types.ts:171-186`                                                                        | **Tranché : conforme.** Écran terminal du moteur ; le cas porté reste en français (`HORS_FRANCE`). Distinct de `Resultat`, métier. |
+| A3  | `CEP_URL`                                                                                            | `resultats/domain/catalogue.ts:76`                                                                             | Retenu technique (conforme). Si métier : `URL_CEP`.                                                                                |
+| A4  | `FIELD_AUTRE_REGION = "autreRegion"`                                                                 | `questions.ts:32`                                                                                              | Stocke un booléen sans préfixe : `isAutreRegionTravail` ? (clé stockée)                                                            |
+| A5  | `FLAGS.GARDER_METIER`, `FLAGS.PAS_EMPLOI`                                                            | `flags.ts:34, 24`                                                                                              | Valeurs d'enum formulées par un verbe ou une négation ; `PAS_EMPLOI` proche de `SANS_EMPLOI`.                                      |
+| A6  | `Region.nom` / `regionName`                                                                          | `regions.ts:23, 62`                                                                                            | `nom` (métier) et `name` (technique) désignent la même donnée.                                                                     |
+| A7  | id `"demission-reconversion"`                                                                        | `catalogue.ts:248`                                                                                             | Acronyme officiel `dd` selon la convention ; le site écrit « Dispositif Démissionnaire » (`apps/site/src/content/home.ts:144`).    |
+| A8  | `TRANSITIONS_PRO` (un `FooterLink`)                                                                  | `apps/site/src/lib/footer.ts:36`                                                                               | Suffixe technique manquant : `TRANSITIONS_PRO_LINK` ? Enjeu faible.                                                                |
+| A9  | `"#contenu"`, `"navigation-principale"`, `"pied-de-page"`, `"haut-de-page"`                          | `packages/ui/src/components/skip-links.tsx`, `back-to-top.tsx`, `apps/site/src/lib/navigation.ts`, `footer.ts` | Fragments visibles dans l'URL après un lien d'évitement : URL publique (FR admis) ou id technique ?                                |
+| A10 | `STEP_PARAM = "q"`                                                                                   | `questionnaire/hooks/useFlowNavigation.ts:12`                                                                  | Paramètre d'URL public abrégé, alors que le concept est « étape ».                                                                 |
 
 ## Arborescence
 
@@ -115,7 +115,7 @@ Sévérités : **bloquant** (schéma, migration, route d'API publique), **à cor
 
 Le glossaire a été complété avec les termes du code (`docs/conventions/glossaire.md`). Synonymes à résorber :
 
-- **La personne** : aucun identifiant ne la désigne sur `main`. En commentaires coexistent « utilisateur » (8), « personne » (10), « usager » (1), « bénéficiaire » (2, dont un au sens de l'obligation d'emploi). `salarie` et `demandeur` n'existent que comme **situations**. Dans la PR #16, le modèle s'appelle `Utilisateur` et la page `/compte/`. **Le glossaire définit `beneficiaire` comme « salarié déposant une demande », mais le simulateur accueille aussi des demandeurs d'emploi, agents publics et indépendants.**
+- **La personne** : aucun identifiant ne la désigne sur `main`. En commentaires coexistent « utilisateur » (8), « personne » (10), « usager » (1), « bénéficiaire » (2, dont un au sens de l'obligation d'emploi). `salarie` et `demandeur` n'existent que comme **situations**. Dans la PR #16, le modèle s'appelle `Utilisateur` et la page `/compte/`. **Le glossaire définit `beneficiaire` comme « salarié déposant une demande », mais le simulateur accueille aussi des demandeurs d'emploi, agents publics et indépendants.** **Tranché le 2026-09-15** : le compte authentifié est technique (`account`), le rôle métier est `beneficiaire` ; la définition du glossaire est élargie.
 - **Demandeur d'emploi** : `FLAGS.DE`, `SITUATION_DEMANDEUR = "demandeur"`, `demandeurEmploi`.
 - **Agent public** : `FLAGS.FONCTIONNAIRE`, `SITUATION_AGENT = "agent"`, `agentPublic`.
 - **Résultat** : `Resultat`, `selectResultats` contre `STEP_RESULTS`, `ResultsScreen`, `ResultCard`, `EmptyResults` ; « carte » en commentaires.
@@ -137,7 +137,7 @@ La PR appartient à un autre développeur : ses écarts ne sont pas détaillés 
 - **Lot Prisma (migration)** : `TransactionConnexion` / `transaction_connexion`, `fournisseur_identite`, `cree_via`, `derniere_connexion_via` (incohérent avec `last_login_at`), ainsi qu'un `$queryRaw` qui écrit ces colonnes en dur.
 - **Lot `apps/site`** (fichiers ajoutés par la PR) : `avecRetour`, `SessionPublique`, `EtatSession`, `interrogerSession`, `LIBELLES`, `formater`, `EnTete`, `Champ`.
 - **Contrats externes** : variable d'env `FRANCECONNECT_ENVIRONNEMENT`, redirections `/?connexion=expiree|echec`.
-- **Exclu, en attente de décision** : `Utilisateur` et « compte » (`/compte/`, référencée dans la configuration Keycloak).
+- **Lot compte** (décision du 2026-09-15, ajouté à l'issue) : `Utilisateur` / `utilisateur`, `utilisateurId`, `utilisateurs/`, `UtilisateursService`, `UserSession`, `COMPTE_PATH`, `CompteSession` → `Account` / `account`, `accountId`, `account/`, `AccountService`, `AccountSession`, `ACCOUNT_PATH`, `AccountDetails`. L'URL `/compte/` ne change pas.
 - **Point à vérifier avec l'auteur** : aucun workflow GitHub n'applique les migrations, mais l'image API lance `prisma migrate deploy` au démarrage et une recette Coolify a très probablement tourné sur cette branche.
 
 ## Plan de reprise
@@ -161,13 +161,13 @@ Renommages internes au code, sans effet sur les données ni les URLs.
 - `main` :
   - E14, E17 (et A4 si retenu) modifient des clés ou valeurs stockées en `sessionStorage` : incrémenter `STORAGE_KEY` (`etape.flow.v3` → `v4`), sinon les réponses concernées sont purgées sans erreur au rechargement. Enjeu limité (stockage par onglet).
   - A9, A10 : fragments et paramètre d'URL publics, à ne changer qu'après arbitrage.
-- PR #16 : `FRANCECONNECT_ENVIRONNEMENT` (à renommer chez l'hébergeur en même temps), redirections `?connexion=`, et à terme `/compte/` (configuration Keycloak).
+- PR #16 : `FRANCECONNECT_ENVIRONNEMENT` (à renommer chez l'hébergeur en même temps), redirections `?connexion=`.
 
 ## Questions ouvertes
 
-1. **La personne** : `beneficiaire`, `utilisateur` ou `user`/`account` ? Le modèle `Utilisateur` de la PR #16 est-il un compte technique ou la personne métier ? La définition « salarié déposant une demande » couvre-t-elle les demandeurs d'emploi, agents publics et indépendants du simulateur ?
-2. **« Réponse » et « issue »** (A1, A2) : métier ou technique ? Ce sont les deux plus grosses familles d'identifiants anglais du simulateur (~280 occurrences).
-3. **Langue des commits et des PR** : la convention les veut en anglais, mais tout l'historique git et le gabarit de PR (`.github/pull_request_template.md`) sont en français.
+1. ~~**La personne**~~ — **tranché le 2026-09-15** : compte authentifié = `account` (technique), rôle métier = `beneficiaire` (défini comme « personne qui dépose un dossier »). Voir `nommage.md`, « Cas tranchés ».
+2. ~~**« Réponse » et « issue »** (A1, A2)~~ — **tranché le 2026-09-15** : moteur de questionnaire, donc technique ; A1 et A2 sont conformes, aucun renommage.
+3. ~~**Langue des commits et des PR**~~ — **tranché le 2026-09-15** : commits, titres et descriptions de PR en français ; l'historique n'est pas réécrit. La convention est mise à jour.
 4. **Démission-reconversion** : `dd`, `demission_reconversion` ou « dispositif démissionnaire » ?
 5. **Casse des fichiers de composants React** (E19) : kebab-case comme le reste du monorepo, ou exception PascalCase pour les composants ?
 6. **Colonnes techniques** : `updated_at` / `deleted_at` sont-elles systématiques, ou les tables éphémères (`session`, transaction de login) en sont-elles exemptées ?

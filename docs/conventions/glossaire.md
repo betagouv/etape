@@ -9,19 +9,19 @@ Référentiel des noms métier du projet. Règles d'usage : `docs/conventions/no
 
 ## Domaine ETAPE (demande d'attestation)
 
-| Terme métier           | Identifiant           | Définition                                                                               | Source                                                                                               |
-| ---------------------- | --------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Dossier                | `dossier`             | Demande déposée par un bénéficiaire auprès d'une Transitions Pro                         | —                                                                                                    |
-| Bénéficiaire           | `beneficiaire`        | Salarié déposant une demande, identifié via FranceConnect                                | —                                                                                                    |
-| Volet CEP              | `volet_cep`           | Partie du formulaire officiel cosignée par le conseiller en évolution professionnelle    | formulaire officiel                                                                                  |
-| Opérateur CEP          | `operateur_cep`       | Structure délivrant le CEP (Avenir Actifs, APEC, Cap emploi)                             | France compétences                                                                                   |
-| Conseiller             | `conseiller`          | Personne physique du CEP ayant accompagné et cosigné                                     | —                                                                                                    |
-| Instructeur            | `instructeur`         | Agent Transitions Pro traitant le dossier                                                | —                                                                                                    |
-| Commission             | `commission`          | Instance CPIR examinant le caractère réel et sérieux                                     | art. R5422-2-1                                                                                       |
-| Dispositif             | `dispositif`          | Dispositif de transition (DD, PTP, …)                                                    | —                                                                                                    |
-| Démission-reconversion | `dd`                  | Dispositif objet du MVP. Condition relevée dans le simulateur : 5 ans d'activité, en CDI | `apps/simulateur/src/resultats/domain/catalogue.ts` (id actuel `demission-reconversion`, voir audit) |
-| Pièce justificative    | `piece_justificative` | Document déposé à l'appui du dossier                                                     | —                                                                                                    |
-| Simulateur             | `simulateur`          | Parcours public d'orientation, sans compte                                               | —                                                                                                    |
+| Terme métier           | Identifiant           | Définition                                                                                                                                                                           | Source                                                                                               |
+| ---------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Dossier                | `dossier`             | Demande déposée par un bénéficiaire auprès d'une Transitions Pro                                                                                                                     | —                                                                                                    |
+| Bénéficiaire           | `beneficiaire`        | Personne qui dépose un dossier auprès d'une Transitions Pro ; pour la démission-reconversion (MVP), un salarié en CDI. Désigne un rôle, pas un compte (`account`, voir `nommage.md`) | —                                                                                                    |
+| Volet CEP              | `volet_cep`           | Partie du formulaire officiel cosignée par le conseiller en évolution professionnelle                                                                                                | formulaire officiel                                                                                  |
+| Opérateur CEP          | `operateur_cep`       | Structure délivrant le CEP (Avenir Actifs, APEC, Cap emploi)                                                                                                                         | France compétences                                                                                   |
+| Conseiller             | `conseiller`          | Personne physique du CEP ayant accompagné et cosigné                                                                                                                                 | —                                                                                                    |
+| Instructeur            | `instructeur`         | Agent Transitions Pro traitant le dossier                                                                                                                                            | —                                                                                                    |
+| Commission             | `commission`          | Instance CPIR examinant le caractère réel et sérieux                                                                                                                                 | art. R5422-2-1                                                                                       |
+| Dispositif             | `dispositif`          | Dispositif de transition (DD, PTP, …)                                                                                                                                                | —                                                                                                    |
+| Démission-reconversion | `dd`                  | Dispositif objet du MVP. Condition relevée dans le simulateur : 5 ans d'activité, en CDI                                                                                             | `apps/simulateur/src/resultats/domain/catalogue.ts` (id actuel `demission-reconversion`, voir audit) |
+| Pièce justificative    | `piece_justificative` | Document déposé à l'appui du dossier                                                                                                                                                 | —                                                                                                    |
+| Simulateur             | `simulateur`          | Parcours public d'orientation, sans compte                                                                                                                                           | —                                                                                                    |
 
 ## Territoire et interlocuteurs
 
@@ -102,12 +102,12 @@ Définitions reprises des descriptions de `apps/simulateur/src/resultats/domain/
 | Contrat de professionnalisation | `contrat_professionnalisation` | à compléter                                                                                                                                                                          | `catalogue.ts` |
 | CFP                             | `cfp`                          | Congé de formation professionnelle                                                                                                                                                   | `catalogue.ts` |
 
-## Termes en attente de classement
+## Termes techniques proches du métier
 
-Leur nature (métier ou technique) n'est pas tranchée ; ils ne doivent pas servir de modèle tant que la question reste ouverte (voir `audit-nommage.md`, questions ouvertes).
+Ces termes ne sont **pas** métier : ils restent en anglais dans les identifiants (décision du 2026-09-15, `nommage.md`, « Cas tranchés »). Ils figurent ici pour qu'on ne les francise pas et qu'on ne les confonde pas avec un rôle métier.
 
-| Terme                | Identifiants actuels                   | Question                                                                   |
-| -------------------- | -------------------------------------- | -------------------------------------------------------------------------- |
-| Réponse              | `answers`, `Answers`, `setAnswer` (EN) | Terme métier (`reponse`) ou donnée technique de formulaire ?               |
-| Issue du parcours    | `Outcome`, `findOutcome` (EN)          | Écran terminal (technique) ou sortie d'inéligibilité (métier) ?            |
-| Utilisateur / compte | `Utilisateur`, `/compte/` (PR #16)     | Compte technique (`user`, `account`) ou personne métier (`beneficiaire`) ? |
+| Terme             | Identifiant | Pourquoi technique                                                                                                   |
+| ----------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| Compte            | `account`   | Identité authentifiée, identique quel que soit le rôle (bénéficiaire, instructeur…) ; l'URL visible reste `/compte/` |
+| Réponse           | `answers`   | Mécanisme du moteur de questionnaire ; les champs qu'il porte sont nommés en français (`FIELD_SITUATION`)            |
+| Issue du parcours | `outcome`   | Écran terminal du moteur ; le cas porté reste en français (`OUTCOME_HORS_FRANCE`)                                    |

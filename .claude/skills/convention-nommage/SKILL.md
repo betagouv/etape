@@ -36,6 +36,9 @@ description: La convention de nommage français/anglais du projet ETAPE - noms e
 - Date d'événement métier en participe (`deposeLe`, `submittedAt`) → `date` + nom (`dateDepot`)
 - Constante métier mixte (`CEP_RELANCE_DELAY_DAYS`) → tout en français (`DELAI_RELANCE_CEP_JOURS`)
 - Nom technique en français (`base-de-donnees`, `FOURNISSEUR_LOCAL`) → anglais (`database`, `LOCAL_IDENTITY_PROVIDER`)
+- Compte authentifié nommé `utilisateur` ou `user` → `account` ; le rôle métier reste `beneficiaire`, `instructeur`, `conseiller`
+- Mécanisme générique (moteur de questionnaire, formulaire, flow) → anglais (`Answers`, `Step`, `Outcome`) ; son contenu métier → français (`FIELD_SITUATION`, `Profil`, `Resultat`)
+- Commit, titre ou description de PR en anglais → français ; branche en `<prefixe-anglais>/<description-en-francais>` (`feat/mentions-legales`)
 
 ## Ce que ce skill ne fait pas
 

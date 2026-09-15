@@ -23,6 +23,7 @@ Précédent de référence : Démarches Simplifiées (DINUM) applique cette règ
 - Dates d'événement métier : `date` + nom métier : `dateDepot`, `date_commission`
 - Champs exposés dans l'API et noms d'events analytics
 - Libellés, i18n, messages d'erreur (seul endroit où les accents sont autorisés)
+- Messages de commit, titres et descriptions de PR (décidé le 2026-09-15 ; l'historique existant n'est pas réécrit)
 
 ## En anglais
 
@@ -32,10 +33,11 @@ Précédent de référence : Démarches Simplifiées (DINUM) applique cette règ
 - Suffixes d'architecture : `Service`, `Repository`, `Controller`, `Module`, `Dto`, `Guard`, `Mapper`, `Factory`, `Props`
 - Colonnes techniques systématiques : `id`, `created_at`, `updated_at`, `deleted_at`, `version`
 - Vocabulaire technique : `database`, `cache`, `queue`, `token`, `hash`, `log`, `mailer`, `storage`, `health`, `middleware`, `interceptor`, `migration`, `seed`
-- Vocabulaire d'authentification et OIDC : `session`, `login`, `logout`, `callback`, `identityProvider`, `claims` — et les routes qui le portent (`/auth/login`)
+- Vocabulaire d'authentification et OIDC : `account`, `session`, `login`, `logout`, `callback`, `identityProvider`, `claims` — et les routes d'API qui le portent (`/auth/login`)
+- Mécanismes génériques (moteur de questionnaire, formulaire, flow) : `Question`, `Field`, `Answers`, `Step`, `Flow`, `Outcome`
 - Constantes techniques : `STORAGE_KEY`, `API_PREFIX`
 - Infra, CI, scripts, configuration
-- Messages de commit et noms de branches
+- Préfixes de branche : `feat/`, `fix/`, `chore/`, `docs/` (la description qui suit est en français, voir « Cas tranchés »)
 
 ## La frontière
 
@@ -48,27 +50,57 @@ Un identifiant qui mélange les deux langues le fait toujours de la même façon
 
 Test rapide : si le mot anglais peut être remplacé par un terme du glossaire, c'est une traduction, donc un interdit.
 
+## Cas tranchés
+
+Décisions du 2026-09-15, pour les cas où la frontière métier / technique n'était pas évidente.
+
+### Compte et rôles métier
+
+**Le compte est technique, le rôle est métier.** Le compte authentifié (Keycloak, FranceConnect ou compte local) est le même quel que soit le rôle de la personne : bénéficiaire, instructeur, conseiller. Il se nomme `account` ; chaque rôle métier est une entité française reliée par `account_id`.
+
+- Autorisé : `Account` / table `account`, `AccountService`, `accountId`, `ACCOUNT_PATH` ; `Beneficiaire` avec `accountId`, `Dossier.beneficiaireId`
+- Interdit : `Utilisateur` ou `Compte` pour le compte (technique en français) ; `User` (mot réservé PostgreSQL et traduction ambiguë de `beneficiaire`) ; `Beneficiaire` pour désigner un compte qui n'a pas encore déposé de dossier
+- Les URL visibles du front restent en français (`/compte/`) : ce sont des libellés, pas des identifiants
+- Dans le simulateur, anonyme, la personne n'a pas d'identifiant ; `salarie`, `demandeur_emploi`, `agent_public`… sont des **situations**, jamais des désignations de la personne
+
+### Moteur générique et contenu métier
+
+**Un mécanisme générique est technique, même quand il transporte des données métier ; ces données sont nommées en français.** Le moteur du questionnaire pose des questions, collecte des réponses, enchaîne des étapes et s'arrête sur une issue : c'est un outil. Ce qui est métier, c'est son contenu, écrit avec la PO.
+
+| Moteur (anglais)                                                       | Contenu (français)                                                       |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `Question`, `Field`, `Answers`, `setAnswer`, `Step`, `Flow`, `Outcome` | `FIELD_SITUATION`, `Q_ANCIENNETE`, `FLAGS.SALARIE`, `Profil`, `Resultat` |
+| préfixe `OUTCOME_`, suffixe `Screen`                                   | `OUTCOME_HORS_FRANCE`, `ResultatsScreen`                                 |
+
+Garde-fou : quand des données saisies deviennent des données métier stockées (champs du formulaire de dossier, volet CEP), elles sont nommées par leur sens (`dateEntretien`, `voletCep`), jamais par un générique `answers`.
+
+### Commits, PR et branches
+
+- Messages de commit, titres et descriptions de PR : **en français**. L'historique existant n'est pas réécrit.
+- Branches : préfixe anglais + description en français, kebab-case, sans accent : `feat/mentions-legales`, `chore/retire-vercel`, `docs/convention-nommage`.
+
 ## Table de correspondance
 
-| Élément             | Casse                        | Langue                  | Exemple                                      |
-| ------------------- | ---------------------------- | ----------------------- | -------------------------------------------- |
-| Table PostgreSQL    | snake_case **singulier**     | FR                      | `volet_cep`                                  |
-| Colonne PostgreSQL  | snake_case                   | FR                      | `date_entretien`                             |
-| Colonne booléenne   | snake_case, préfixe anglais  | EN + FR                 | `is_brouillon`                               |
-| Colonne date métier | snake_case, `date_` + nom    | FR                      | `date_depot`                                 |
-| Modèle Prisma       | PascalCase + `@@map`         | FR                      | `VoletCep` → `@@map("volet_cep")`            |
-| Champ Prisma        | camelCase + `@map`           | FR                      | `dateEntretien` → `@map("date_entretien")`   |
-| Enum Prisma         | PascalCase                   | FR                      | `StatutDossier`                              |
-| Valeur d'enum       | UPPER_SNAKE_CASE             | FR                      | `EN_ATTENTE_CEP`                             |
-| Dossier / fichier   | kebab-case                   | FR métier, EN technique | `volet-cep/`, `database/`                    |
-| Classe              | PascalCase + suffixe anglais | FR + EN                 | `VoletCepService`                            |
-| Méthode             | camelCase, verbe en tête     | EN + FR                 | `findVoletCepByDossierId()`                  |
-| Booléen             | camelCase, préfixe anglais   | EN + FR                 | `isBrouillon`                                |
-| Variable locale     | camelCase                    | EN + FR                 | `currentDossier`                             |
-| Constante métier    | UPPER_SNAKE_CASE             | FR                      | `DELAI_RELANCE_CEP_JOURS`                    |
-| Constante technique | UPPER_SNAKE_CASE             | EN                      | `STORAGE_KEY`                                |
-| Route API           | kebab-case                   | FR métier, EN technique | `/volet-cep/:id/confirmation`, `/auth/login` |
-| Event analytics     | snake_case                   | FR                      | `simulateur_resultat`                        |
+| Élément              | Casse                        | Langue                  | Exemple                                      |
+| -------------------- | ---------------------------- | ----------------------- | -------------------------------------------- |
+| Table PostgreSQL     | snake_case **singulier**     | FR                      | `volet_cep`                                  |
+| Colonne PostgreSQL   | snake_case                   | FR                      | `date_entretien`                             |
+| Colonne booléenne    | snake_case, préfixe anglais  | EN + FR                 | `is_brouillon`                               |
+| Colonne date métier  | snake_case, `date_` + nom    | FR                      | `date_depot`                                 |
+| Modèle Prisma        | PascalCase + `@@map`         | FR                      | `VoletCep` → `@@map("volet_cep")`            |
+| Champ Prisma         | camelCase + `@map`           | FR                      | `dateEntretien` → `@map("date_entretien")`   |
+| Enum Prisma          | PascalCase                   | FR                      | `StatutDossier`                              |
+| Valeur d'enum        | UPPER_SNAKE_CASE             | FR                      | `EN_ATTENTE_CEP`                             |
+| Dossier / fichier    | kebab-case                   | FR métier, EN technique | `volet-cep/`, `database/`                    |
+| Classe               | PascalCase + suffixe anglais | FR + EN                 | `VoletCepService`                            |
+| Méthode              | camelCase, verbe en tête     | EN + FR                 | `findVoletCepByDossierId()`                  |
+| Booléen              | camelCase, préfixe anglais   | EN + FR                 | `isBrouillon`                                |
+| Variable locale      | camelCase                    | EN + FR                 | `currentDossier`                             |
+| Constante métier     | UPPER_SNAKE_CASE             | FR                      | `DELAI_RELANCE_CEP_JOURS`                    |
+| Constante technique  | UPPER_SNAKE_CASE             | EN                      | `STORAGE_KEY`                                |
+| Route API            | kebab-case                   | FR métier, EN technique | `/volet-cep/:id/confirmation`, `/auth/login` |
+| URL visible du front | kebab-case                   | FR                      | `/compte/`, `/mentions-legales/`             |
+| Event analytics      | snake_case                   | FR                      | `simulateur_resultat`                        |
 
 ## Règles d'écriture
 
@@ -104,6 +136,7 @@ Test rapide : si le mot anglais peut être remplacé par un terme du glossaire, 
 | Date métier en participe (`deposeLe`, `submittedAt`)                                                  | `date` + nom (`dateDepot`)                                                            |
 | Constante métier mixte (`CEP_RELANCE_DELAY_DAYS`)                                                     | tout en français (`DELAI_RELANCE_CEP_JOURS`)                                          |
 | Nom **technique** en français (`base-de-donnees`, `depot`, `intercepteur`)                            | anglais (`database`, `repository`, `interceptor`)                                     |
+| Compte authentifié nommé `utilisateur`, `compte` ou `user`                                            | `account` ; le rôle métier reste `beneficiaire`, `instructeur`, `conseiller`          |
 
 ## Exemple de référence
 
