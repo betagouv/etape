@@ -14,7 +14,13 @@ interface DownloadPdfButtonProps {
   recapEntries: RecapEntry[];
 }
 
-type Statut = "repos" | "generation" | "termine";
+/** États de la génération du PDF : mécanisme technique, identifiants en anglais. */
+const PDF_STATUS = {
+  IDLE: "idle",
+  GENERATING: "generating",
+  DONE: "done",
+} as const;
+type PdfStatus = (typeof PDF_STATUS)[keyof typeof PDF_STATUS];
 
 const PDF_FILENAME = "resultats-simulateur-etape.pdf";
 
@@ -33,10 +39,17 @@ const REVOKE_DELAY_MS = 40_000;
  * libellé du bouton n'est pas annoncé de façon fiable par les lecteurs
  * d'écran ; cette région, toujours présente dans le DOM, l'est.
  */
-const ANNONCES: Record<Statut, string> = {
-  repos: "",
-  generation: "Génération du PDF en cours.",
-  termine: "Le PDF est prêt, le téléchargement a démarré.",
+const ANNOUNCEMENTS: Record<PdfStatus, string> = {
+  [PDF_STATUS.IDLE]: "",
+  [PDF_STATUS.GENERATING]: "Génération du PDF en cours.",
+  [PDF_STATUS.DONE]: "Le PDF est prêt, le téléchargement a démarré.",
+};
+
+/** Libellé visible du bouton ; les annonces pour lecteurs d'écran restent dans `ANNOUNCEMENTS`. */
+const BUTTON_LABELS: Record<PdfStatus, string> = {
+  [PDF_STATUS.IDLE]: "Télécharger mes résultats en PDF",
+  [PDF_STATUS.GENERATING]: "Génération du PDF…",
+  [PDF_STATUS.DONE]: "Télécharger mes résultats en PDF",
 };
 
 /**
@@ -50,12 +63,12 @@ const ANNONCES: Record<Statut, string> = {
  * dans le handler empêche une seconde activation.
  */
 export function DownloadPdfButton({ resultats, recapEntries }: DownloadPdfButtonProps) {
-  const [statut, setStatut] = useState<Statut>("repos");
-  const generating = statut === "generation";
+  const [status, setStatus] = useState<PdfStatus>(PDF_STATUS.IDLE);
+  const isGenerating = status === PDF_STATUS.GENERATING;
 
   async function handleDownload() {
-    if (generating) return;
-    setStatut("generation");
+    if (isGenerating) return;
+    setStatus(PDF_STATUS.GENERATING);
     try {
       const [{ pdf }, { ResultsPdfDocument }] = await Promise.all([
         import("@react-pdf/renderer"),
@@ -76,10 +89,10 @@ export function DownloadPdfButton({ resultats, recapEntries }: DownloadPdfButton
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
-      setStatut("termine");
+      setStatus(PDF_STATUS.DONE);
     } catch {
       // Le toast porte sa propre région live : pas de doublon d'annonce.
-      setStatut("repos");
+      setStatus(PDF_STATUS.IDLE);
       toast.error("La génération du PDF a échoué. Réessayez.");
     }
   }
@@ -89,15 +102,15 @@ export function DownloadPdfButton({ resultats, recapEntries }: DownloadPdfButton
       <Button
         type="button"
         onClick={handleDownload}
-        aria-disabled={generating}
-        aria-busy={generating}
+        aria-disabled={isGenerating}
+        aria-busy={isGenerating}
         className="self-start aria-busy:cursor-progress"
       >
-        {generating && <Loader2Icon aria-hidden="true" className="size-4 animate-spin" />}
-        {generating ? "Génération du PDF…" : "Télécharger mes résultats en PDF"}
+        {isGenerating && <Loader2Icon aria-hidden="true" className="size-4 animate-spin" />}
+        {BUTTON_LABELS[status]}
       </Button>
       <p role="status" className="sr-only">
-        {ANNONCES[statut]}
+        {ANNOUNCEMENTS[status]}
       </p>
     </>
   );
