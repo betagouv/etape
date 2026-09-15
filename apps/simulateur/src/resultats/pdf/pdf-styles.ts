@@ -58,9 +58,6 @@ export const pdfStyles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.calloutBg,
   },
-  section: {
-    marginBottom: 20,
-  },
   sectionTitle: {
     fontSize: 13,
     fontWeight: 700,
@@ -68,6 +65,10 @@ export const pdfStyles = StyleSheet.create({
     paddingBottom: 6,
     borderBottomWidth: 2,
     borderBottomColor: COLORS.primary,
+  },
+  /** Titre de section qui suit une autre section (pas de `View` de section : voir le document). */
+  sectionTitleSpaced: {
+    marginTop: 20,
   },
   recapRow: {
     flexDirection: "row",
@@ -84,16 +85,17 @@ export const pdfStyles = StyleSheet.create({
     flex: 1,
     fontWeight: 600,
   },
-  categorieGroup: {
-    marginTop: 14,
-    paddingLeft: 10,
-    borderLeftWidth: 3,
-  },
+  // Le filet de catégorie est porté par chaque bloc (titre de catégorie, puis
+  // chaque résultat) ; des `padding` plutôt que des `margin` pour qu'il reste
+  // continu d'un bloc au suivant.
   categorieBadgeRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginBottom: 8,
+    marginTop: 14,
+    paddingBottom: 8,
+    paddingLeft: 10,
+    borderLeftWidth: 3,
   },
   categorieDot: {
     width: 6,
@@ -106,7 +108,9 @@ export const pdfStyles = StyleSheet.create({
     textTransform: "uppercase",
   },
   resultat: {
-    marginBottom: 10,
+    paddingBottom: 10,
+    paddingLeft: 10,
+    borderLeftWidth: 3,
   },
   resultatNom: {
     fontSize: 11,
@@ -121,7 +125,7 @@ export const pdfStyles = StyleSheet.create({
     color: COLORS.primary,
   },
   footerBox: {
-    marginTop: 8,
+    marginTop: 28,
     padding: 14,
     borderRadius: 4,
     backgroundColor: COLORS.calloutBg,

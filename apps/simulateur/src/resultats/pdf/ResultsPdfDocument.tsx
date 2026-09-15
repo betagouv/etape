@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Document, Link, Page, Text, View } from "@react-pdf/renderer";
 
 import { CEP_URL } from "../domain/catalogue";
@@ -12,6 +13,19 @@ import { registerPdfFonts } from "./fonts";
 import { CATEGORIE_COLORS, pdfStyles } from "./pdf-styles";
 
 registerPdfFonts();
+
+/**
+ * Pagination : un titre (de section ou de catégorie) ne doit pas rester seul en
+ * bas de page. `minPresenceAhead` exige qu'au moins cette hauteur (en points)
+ * de contenu le suive sur la même page — celle d'un résultat à trois lignes de
+ * description, le plus courant, pour que le premier résultat suive toujours.
+ *
+ * react-pdf n'applique cette règle qu'entre frères d'un même parent, et
+ * seulement si le titre a des frères avant lui : tous les blocs sont donc des
+ * enfants directs de `Page` (pas de `View` de section ni de groupe), et la
+ * bordure de catégorie est portée par chaque bloc.
+ */
+const MIN_PRESENCE_AHEAD = 80;
 
 interface ResultsPdfDocumentProps {
   resultats: ResultatAffiche[];
@@ -52,54 +66,66 @@ export function ResultsPdfDocument({ resultats, recapEntries }: ResultsPdfDocume
           <Text style={pdfStyles.bannerSubtitle}>Simulation du {date}</Text>
         </View>
 
-        <View style={pdfStyles.section}>
-          <Text style={pdfStyles.sectionTitle}>
-            {resultats.length <= 1
-              ? `${resultats.length} résultat correspond à votre situation`
-              : `${resultats.length} résultats correspondent à votre situation`}
-          </Text>
+        <Text style={pdfStyles.sectionTitle} minPresenceAhead={MIN_PRESENCE_AHEAD}>
+          {resultats.length <= 1
+            ? `${resultats.length} résultat correspond à votre situation`
+            : `${resultats.length} résultats correspondent à votre situation`}
+        </Text>
 
-          {CATEGORIES.map((categorie) => {
-            const items = resultats.filter((resultat) => resultat.categorie === categorie);
-            if (items.length === 0) return null;
+        {CATEGORIES.map((categorie) => {
+          const items = resultats.filter((resultat) => resultat.categorie === categorie);
+          if (items.length === 0) return null;
 
-            const accent = CATEGORIE_COLORS[categorie];
+          const bordure = { borderLeftColor: CATEGORIE_COLORS[categorie] };
+          const accent = { color: CATEGORIE_COLORS[categorie] };
 
-            return (
-              <View key={categorie} style={[pdfStyles.categorieGroup, { borderLeftColor: accent }]}>
-                <View style={pdfStyles.categorieBadgeRow}>
-                  <View style={[pdfStyles.categorieDot, { backgroundColor: accent }]} />
-                  <Text style={[pdfStyles.categorieLabel, { color: accent }]}>
-                    {categorieTitle(categorie, items.length)}
-                  </Text>
-                </View>
-                {items.map((resultat) => (
-                  <View key={resultat.id} style={pdfStyles.resultat}>
-                    <Text style={pdfStyles.resultatNom}>{resultat.nom}</Text>
-                    <Text style={pdfStyles.resultatDescription}>{resultat.description}</Text>
-                    <Link src={resultat.url} style={[pdfStyles.resultatUrl, { color: accent }]}>
-                      {resultat.url}
-                    </Link>
-                  </View>
-                ))}
+          return (
+            <Fragment key={categorie}>
+              <View
+                style={[pdfStyles.categorieBadgeRow, bordure]}
+                minPresenceAhead={MIN_PRESENCE_AHEAD}
+              >
+                <View style={[pdfStyles.categorieDot, { backgroundColor: accent.color }]} />
+                <Text style={[pdfStyles.categorieLabel, accent]}>
+                  {categorieTitle(categorie, items.length)}
+                </Text>
               </View>
-            );
-          })}
-        </View>
+              {items.map((resultat) => (
+                // Un résultat est un bloc insécable.
+                <View key={resultat.id} style={[pdfStyles.resultat, bordure]} wrap={false}>
+                  <Text style={pdfStyles.resultatNom}>{resultat.nom}</Text>
+                  <Text style={pdfStyles.resultatDescription}>{resultat.description}</Text>
+                  <Link src={resultat.url} style={[pdfStyles.resultatUrl, accent]}>
+                    {resultat.url}
+                  </Link>
+                </View>
+              ))}
+            </Fragment>
+          );
+        })}
 
         {recapEntries.length > 0 && (
-          <View style={pdfStyles.section}>
-            <Text style={pdfStyles.sectionTitle}>Récapitulatif de vos réponses</Text>
+          <>
+            <Text
+              style={[pdfStyles.sectionTitle, pdfStyles.sectionTitleSpaced]}
+              minPresenceAhead={MIN_PRESENCE_AHEAD}
+            >
+              Récapitulatif de vos réponses
+            </Text>
             {recapEntries.map((entry) => (
-              <View key={`${entry.questionId}-${entry.fieldName}`} style={pdfStyles.recapRow}>
+              <View
+                key={`${entry.questionId}-${entry.fieldName}`}
+                style={pdfStyles.recapRow}
+                wrap={false}
+              >
                 <Text style={pdfStyles.recapQuestion}>{entry.question}</Text>
                 <Text style={pdfStyles.recapAnswer}>{entry.answer}</Text>
               </View>
             ))}
-          </View>
+          </>
         )}
 
-        <View style={pdfStyles.footerBox}>
+        <View style={pdfStyles.footerBox} wrap={false}>
           <Text style={pdfStyles.footerText}>
             Cet outil donne une orientation indicative, susceptible d’évoluer, et ne remplace pas
             l’accompagnement personnalisé et gratuit d’un{" "}
