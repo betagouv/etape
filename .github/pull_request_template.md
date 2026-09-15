@@ -20,6 +20,7 @@
 
 - [ ] Build OK (`npm run build`)
 - [ ] Lint OK (`npm run lint`)
+- [ ] Conventions respectées (`docs/conventions/` : nommage, typage, accessibilité)
 - [ ] Responsive vérifié
 - [ ] Accessibilité (navigation clavier, focus visible)
 
