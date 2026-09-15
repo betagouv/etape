@@ -4,7 +4,7 @@
 **Périmètre** :
 
 - `main` (`6d02805`) : `apps/simulateur/src`, `apps/site/src`, `packages/ui/src`, `scripts/`, `paths.mjs`, `.github/`, `infra/` (fichiers suivis par git)
-- PR #16 `feat/franceconnect` (`96d97b3`) : `apps/api`, `deploy/`, docs et fichiers `apps/site` ajoutés — synthèse ici, détail dans l'issue dédiée
+- PR #16 `feat/franceconnect` (`96d97b3`) : `apps/api`, `deploy/`, docs et fichiers `apps/site` ajoutés — synthèse ici, détail dans l'issue #51
 
 **Aucun renommage n'a été effectué.** Ce rapport inventorie et propose ; les corrections passent par des PR dédiées.
 
@@ -131,7 +131,7 @@ Le glossaire a été complété avec les termes du code (`docs/conventions/gloss
 
 ## PR #16 (`feat/franceconnect`) — synthèse
 
-La PR appartient à un autre développeur : ses écarts ne sont pas détaillés ici mais dans l'issue « Aligner la PR #16 (FranceConnect) sur la convention de nommage », rédigée sous forme de prompt à exécuter sur la branche.
+La PR appartient à un autre développeur : ses écarts ne sont pas détaillés ici mais dans l'issue [#51](https://github.com/betagouv/etape/issues/51) « Aligner la PR #16 (FranceConnect) sur la convention de nommage », rédigée sous forme de prompt à exécuter sur la branche.
 
 - **Lot TypeScript (API)** : `base-de-donnees/`, `enregistrerConnexion`, `ProfilRecu`, `SessionAOuvrir`, `fournisseurIdentite`, `enDeveloppement`, `CLAIMS_DE_PROTOCOLE`, `estIntrouvable`, `purger`…
 - **Lot Prisma (migration)** : `TransactionConnexion` / `transaction_connexion`, `fournisseur_identite`, `cree_via`, `derniere_connexion_via` (incohérent avec `last_login_at`), ainsi qu'un `$queryRaw` qui écrit ces colonnes en dur.
@@ -149,7 +149,7 @@ Renommages internes au code, sans effet sur les données ni les URLs.
 - `main` : E1 à E13, E15, E16, E18 à E38, I1 à I3.
   - Une PR par module est recommandée : `resultats/`, `questionnaire/`, `apps/site`, infra.
   - E19 (casse des fichiers) dans une PR à part, pour garder un diff lisible.
-- PR #16 : lots TypeScript et `apps/site` de l'issue.
+- PR #16 : lots TypeScript et `apps/site` de l'issue #51.
 
 ### Lot 2 — migration Prisma
 
