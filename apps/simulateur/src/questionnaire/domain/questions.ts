@@ -60,7 +60,7 @@ const NON = "non";
 export const OUTCOME_HORS_FRANCE = "hors-france";
 
 /** A un employeur : les seules situations à qui l'ancienneté est demandée. */
-const aUnEmployeur = (answers: Answers) =>
+const aUnEmployeur = (answers: Answers): boolean =>
   answers[FIELD_SITUATION] === SITUATION_SALARIE || answers[FIELD_SITUATION] === SITUATION_AGENT;
 
 /**
@@ -68,10 +68,10 @@ const aUnEmployeur = (answers: Answers) =>
  * seules à qui l'on demande l'arrêt de travail et le lieu de travail — les
  * autres n'ont pas d'employeur à situer.
  */
-const enActivite = (answers: Answers) =>
+const enActivite = (answers: Answers): boolean =>
   aUnEmployeur(answers) || answers[FIELD_SITUATION] === SITUATION_INDEPENDANT;
 
-const estSalarie = (answers: Answers) => answers[FIELD_SITUATION] === SITUATION_SALARIE;
+const estSalarie = (answers: Answers): boolean => answers[FIELD_SITUATION] === SITUATION_SALARIE;
 
 /**
  * Q5 ne peut pas être inférieure à Q4 : on ne totalise pas 5 ans d'activité en

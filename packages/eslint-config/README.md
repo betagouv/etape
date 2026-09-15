@@ -11,6 +11,15 @@ Le formatage est délégué à Prettier — voir [`@etape/prettier-config`](../p
 | `@etape/eslint-config/next`           | Applications Next.js (`apps/*`).                                                           |
 | `@etape/eslint-config/react-internal` | Librairies React internes hors Next.js (ex: `packages/ui`).                                |
 
+## Règles propres au projet
+
+Elles appliquent [`docs/conventions/typescript.md`](../../docs/conventions/typescript.md).
+
+| Règle                                               | Configs                          | Portée            | Effet                                                                                                         |
+| --------------------------------------------------- | -------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `@typescript-eslint/explicit-module-boundary-types` | `base`, `next`, `react-internal` | `**/*.ts`         | Type de retour explicite sur les fonctions exportées. Les composants React (`.tsx`) gardent leur type inféré. |
+| `no-restricted-syntax` (`TSEnumDeclaration`)        | `base`, `react-internal`         | tous les fichiers | Pas d'`enum` : objet `as const` + type dérivé. Les apps Next.js l'imposent par `erasableSyntaxOnly`.          |
+
 ## Utilisation
 
 Dans le `package.json` du projet :
