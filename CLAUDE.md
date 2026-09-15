@@ -25,4 +25,13 @@ La langue suit la couche : **le domaine métier est en français, la technique e
 
 **Avant de créer une entité, une table, un enum, un module ou une migration, lis `docs/conventions/nommage.md` en entier** — il contient la table de correspondance complète et les cas particuliers. Avant d'introduire un nouveau nom métier, vérifie `docs/conventions/glossaire.md` : s'il n'y figure pas, propose-le en ajout plutôt que d'inventer un synonyme.
 
-Toute review de code inclut une vérification de cette convention (skill `convention-nommage`, commande `/review-nommage`).
+## Typage et accessibilité — règles par défaut
+
+- **Typage** (`docs/conventions/typescript.md`) : type de retour explicite sur les fonctions exportées d'un `.ts` ; valeurs finies en objet `as const` + type dérivé, jamais d'`enum` ; jamais de littéral en dur dans une condition ; correspondances en `Record<Type, …>` ; `useState` typé par l'union.
+- **Accessibilité** (`docs/conventions/accessibilite.md`) : pas de `disabled` sur un bouton d'action asynchrone (`aria-disabled` + garde) ; changements d'état annoncés dans une région `role="status"` toujours montée.
+
+Les règles détaillées se chargent depuis `.claude/rules/` quand un fichier concerné est lu.
+
+## Revue de code
+
+Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage et d'accessibilité, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation.
