@@ -39,13 +39,13 @@ import type { Resultat } from "./types";
 
 // ─── Prédicats de situation ───────────────────────────────────────────────
 // Un nom par situation : les règles ci-dessous se lisent alors comme le ticket.
-const salarie = (p: Profil) => p.flags.has(FLAGS.SALARIE);
+const salarie = (p: Profil): boolean => p.flags.has(FLAGS.SALARIE);
 const cdi = (p: Profil) => p.flags.has(FLAGS.CDI);
 const cdd = (p: Profil) => p.flags.has(FLAGS.CDD);
 const interim = (p: Profil) => p.flags.has(FLAGS.INTERIM);
 const intermittent = (p: Profil) => p.flags.has(FLAGS.INTERMITTENT);
-const demandeurEmploi = (p: Profil) => p.flags.has(FLAGS.DE);
-const agentPublic = (p: Profil) => p.flags.has(FLAGS.FONCTIONNAIRE);
+const demandeurEmploi = (p: Profil): boolean => p.flags.has(FLAGS.DE);
+const agentPublic = (p: Profil): boolean => p.flags.has(FLAGS.FONCTIONNAIRE);
 const independant = (p: Profil) => p.flags.has(FLAGS.INDEPENDANT);
 const sansEmploi = (p: Profil) => p.flags.has(FLAGS.SANS_EMPLOI);
 
@@ -55,7 +55,7 @@ const rqth = (p: Profil) => p.flags.has(FLAGS.RQTH);
 const posteMenace = (p: Profil) => p.flags.has(FLAGS.MENACE);
 
 /** Salarié·e sous contrat de droit commun : les deux se comportent pareil. */
-const cdiOuCdd = (p: Profil) => salarie(p) && (cdi(p) || cdd(p));
+const cdiOuCdd = (p: Profil): boolean => salarie(p) && (cdi(p) || cdd(p));
 
 // ─── Seuils d'ancienneté ──────────────────────────────────────────────────
 // Une durée non renseignée ne peut pas ouvrir un droit : elle vaut 0.

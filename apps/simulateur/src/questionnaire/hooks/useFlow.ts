@@ -2,18 +2,25 @@
 
 import * as React from "react";
 
+import type { FlowAction, FlowState } from "../state/flow-reducer";
 import { flowStore } from "../state/flow-store";
 
 const neverChanges = () => () => {};
 const onClient = () => true;
 const onServer = () => false;
 
+export interface UseFlowResult {
+  state: FlowState;
+  hydrated: boolean;
+  dispatch: (action: FlowAction) => void;
+}
+
 /**
  * Accès à l'état du flow (lecture réactive) et au dispatch.
  * `hydrated` est faux tant que sessionStorage n'a pas été relu : tout calcul
  * dérivé des réponses doit l'attendre, sous peine de partir d'un état vide.
  */
-export function useFlow() {
+export function useFlow(): UseFlowResult {
   const state = React.useSyncExternalStore(
     flowStore.subscribe,
     flowStore.getSnapshot,
