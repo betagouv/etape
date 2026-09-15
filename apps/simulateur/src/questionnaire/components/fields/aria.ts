@@ -19,12 +19,21 @@ export function joinIds(...ids: (string | undefined)[]): string | undefined {
  */
 export const FIELD_ERROR_ATTRIBUTE = "data-field-error";
 
+/** Attributs à étaler sur l'élément visé ; objet vide quand le champ est valide. */
+export interface FieldErrorMark {
+  [FIELD_ERROR_ATTRIBUTE]?: "true";
+}
+
+export interface FieldErrorGroupMark extends FieldErrorMark {
+  tabIndex?: -1;
+}
+
 /**
  * Marque un élément DÉJÀ focusable : un champ de saisie, un déclencheur de
  * liste, ou un `radiogroup` Radix (dont la racine porte le point d'entrée au
  * clavier — lui imposer un `tabIndex` casserait sa navigation).
  */
-export function fieldErrorMark(error: string | undefined) {
+export function fieldErrorMark(error: string | undefined): FieldErrorMark {
   return error ? { [FIELD_ERROR_ATTRIBUTE]: "true" } : {};
 }
 
@@ -33,6 +42,6 @@ export function fieldErrorMark(error: string | undefined) {
  * `tabIndex={-1}` le rend atteignable par programme sans l'ajouter à l'ordre
  * de tabulation.
  */
-export function fieldErrorGroupMark(error: string | undefined) {
+export function fieldErrorGroupMark(error: string | undefined): FieldErrorGroupMark {
   return error ? { [FIELD_ERROR_ATTRIBUTE]: "true", tabIndex: -1 } : {};
 }

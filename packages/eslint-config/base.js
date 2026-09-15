@@ -19,6 +19,27 @@ export const baseConfig = defineConfig([
     plugins: { turbo: turboPlugin },
     rules: {
       "turbo/no-undeclared-env-vars": "warn",
+      // `docs/conventions/typescript.md` : valeurs finies en objet `as const`.
+      // Les apps Next.js l'imposent par `erasableSyntaxOnly` ; ici la règle
+      // couvre aussi l'API NestJS, dont les propriétés de paramètre de
+      // constructeur excluent cette option.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "TSEnumDeclaration",
+          message:
+            "Pas d'enum TypeScript : objet `as const` + type dérivé (docs/conventions/typescript.md).",
+        },
+      ],
+    },
+  },
+  // `docs/conventions/typescript.md` : type de retour explicite sur les
+  // fonctions exportées. Limité aux `.ts` : les composants React (`.tsx`)
+  // gardent leur type de retour inféré.
+  {
+    files: ["**/*.ts"],
+    rules: {
+      "@typescript-eslint/explicit-module-boundary-types": "error",
     },
   },
   // Doit rester en dernier : neutralise les règles en conflit avec Prettier.
