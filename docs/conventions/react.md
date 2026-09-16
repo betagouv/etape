@@ -155,18 +155,41 @@ Deux sorties : regrouper les props liées en un objet nommé, ou composer avec `
 
 `answers` et `setAnswer` traversent `FlowShell` → `QuestionScreen` → `QuestionFields` → `FieldRenderer` avant d'atteindre un champ.
 
-<details><summary><strong>Exemple — un contexte justifié par écrit, tel qu'attendu</strong></summary>
+<details><summary><strong>Exemple — le seul contexte du dépôt, et le problème qu'il résout</strong></summary>
 
-Le seul contexte du dépôt (`fields/FieldError.tsx`) porte la raison de son existence, et c'est le niveau d'exigence attendu :
+**La situation** : le questionnaire a deux mises en page d'erreur, selon la question affichée.
+
+- Une question à **plusieurs champs** (« mois » et « année », une liste de cases à cocher) : chaque message s'affiche **sous son champ**, sinon on ne sait pas lequel corriger.
+- Une question à **champ unique** : le message s'affiche **une seule fois en bas de l'écran**, et c'est cette ligne-là que l'`aria-describedby` du champ désigne. Le répéter sous le champ le ferait annoncer deux fois.
+
+**Le trajet que la décision devrait faire sans contexte.** C'est `QuestionFields` qui sait combien de champs porte la question ; c'est `FieldError`, quatre niveaux plus bas, qui affiche ou non le message :
+
+```
+QuestionFields  →  FieldRenderer  →  RadioField / MonthYearField / …  →  FieldError
+    (sait)          (s'en fiche)              (s'en fiche)                (a besoin)
+```
+
+Une prop `inlineErrors` aurait donc traversé `FieldRenderer` et chacun des six composants de champ — qui n'ont rien à voir avec une décision de mise en page, et qui auraient tous eu une prop de plus à déclarer, à documenter et à relayer sans jamais l'utiliser.
+
+**Ce que le dépôt fait à la place** (`QuestionFields.tsx:112`) :
+
+```tsx
+<InlineFieldErrorProvider value={inlineErrors}>
+  <div className="flex w-full flex-col gap-6 md:gap-8">{mainFields.map(renderField)}</div>
+</InlineFieldErrorProvider>
+```
+
+et, tout en bas, `FieldError` lit la valeur au lieu de la recevoir :
+
+```tsx
+const inline = useContext(InlineFieldError);
+if (!message || !inline) return null;
+```
+
+**Le niveau d'exigence attendu**, et c'est le vrai sujet de cet exemple : la déclaration du contexte porte la raison de son existence, en toutes lettres.
 
 ```ts
 /**
- * Le message doit-il s'afficher SOUS le champ ?
- *
- * `false` sur les écrans à champ unique : le message y est affiché une seule
- * fois, en bas de l'écran, et c'est cette ligne-là qui porte l'`id` attendu par
- * l'`aria-describedby` du champ — l'annonce au lecteur d'écran est donc la même.
- *
  * Un contexte plutôt qu'une propriété : les composants traversés
  * (`FieldRenderer`, `RadioField`, `MonthYearField`…) n'ont rien à voir avec
  * cette décision de mise en page, et ne devraient pas avoir à la relayer.
@@ -174,7 +197,7 @@ Le seul contexte du dépôt (`fields/FieldError.tsx`) porte la raison de son exi
 const InlineFieldError = createContext(true);
 ```
 
-Un contexte sans ce paragraphe est un contexte de trop : il rend le flux des données invisible, et personne ne saura plus tard si on peut le retirer.
+Sans ce paragraphe, personne ne saura plus tard si on peut le retirer — et le prochain contexte s'ajoutera « parce qu'il y en a déjà un », ce qui est exactement ce qu'on veut éviter.
 
 </details>
 

@@ -33,43 +33,204 @@ Un module métier se découpe en trois responsabilités. Ce n'est pas une archit
 
 ### Les principes de frontière
 
-Ce sont eux qu'on relit en revue. Chacun est formulé pour qu'on puisse répondre par oui ou par non en regardant le code.
+Ce sont eux qu'on relit en revue. Chacun est formulé pour qu'on puisse répondre par oui ou par non en regardant le code, et porte son exemple.
 
-1. **Un type généré par Prisma ne franchit pas la frontière HTTP.** Ce que la base stocke et ce que l'API expose sont deux choses différentes, et elles évoluent à des rythmes différents.
-2. **Le service ignore le protocole.** Ni `Request`, ni `Response`, ni cookie, ni en-tête : un service qui les connaît ne peut plus être appelé par une tâche planifiée ou un autre service.
-3. **Le module métier ne connaît pas l'authentification.** Il reçoit l'identité dont il a besoin en paramètre — `beneficiaireId`, pas `req.session`.
-4. **Une couche ne saute jamais sa voisine.** Un contrôleur qui appelle un repository court-circuite l'endroit même où les règles vivent.
-5. **Un contrôleur appelle un seul service.** S'il en enchaîne deux, l'orchestration est en train de s'écrire dans la couche HTTP : elle appartient au service.
-6. **Une erreur métier remonte en exception**, jamais en valeur de retour ambiguë (`null` pour « absent » et pour « interdit »).
-7. **Le repository traduit, il ne décide pas.** Aucun `if` métier entre deux requêtes.
-8. **Ce qui entre est validé à la frontière, ce qui sort est construit explicitement.** Rien ne traverse par accident.
+<details><summary><strong>1. Un type généré par Prisma ne franchit pas la frontière HTTP</strong></summary>
 
-<details><summary><strong>Exemple — les trois couches sur une route complète</strong> (proposition)</summary>
-
-Une route de dépôt de dossier, de la requête à la base. Le point à observer : **chaque couche ignore ce que fait la suivante**.
+Ce que la base stocke et ce que l'API expose sont deux choses différentes, qui évoluent à des rythmes différents. Le modèle de base suit le schéma ; la réponse suit le contrat passé au front.
 
 ```ts
-// dossier/dossier.controller.ts — HTTP : valider, appeler, répondre
-@Post()
-async depotDossier(
-  @Body(new ZodValidationPipe(depotDossier.body)) corps: RouteBody<typeof depotDossier>,
-  @BeneficiaireId() beneficiaireId: string, // décorateur : extrait l'identité de la session
-): Promise<RouteResponse<typeof depotDossier>> {
-  const dossier = await this.dossierService.deposer(beneficiaireId, corps);
-  return toDossierResponse(dossier);
+// Non : tout ce que la table contient part vers le navigateur,
+// y compris ce qu'on y ajoutera demain.
+return this.utilisateurRepository.findById(id);
+
+// Oui : une fonction décide de ce qui sort.
+return toUtilisateurResponse(await this.utilisateurRepository.findById(id));
+```
+
+**Le jour où ça compte** : on ajoute une colonne `note_instructeur` pour un besoin interne. Avec la première forme, elle apparaît dans l'API le jour même, sans que personne ne l'ait voulu.
+
+</details>
+
+<details><summary><strong>2. Le service ignore le protocole</strong></summary>
+
+Ni `Request`, ni `Response`, ni cookie, ni en-tête. Un service qui les connaît ne peut plus être appelé ailleurs que depuis une route HTTP.
+
+```ts
+// Non : ce service ne pourra jamais être appelé par une tâche planifiée.
+async deposer(req: Request) {
+  const beneficiaireId = req.session.beneficiaireId;
+}
+
+// Oui : appelable depuis une route, une tâche, un autre service.
+async deposer(beneficiaireId: string, saisie: DepotDossier) {}
+```
+
+**Le jour où ça compte** : la relance automatique des dossiers en brouillon. Elle appelle le même service, sans requête HTTP, et n'a rien à inventer.
+
+</details>
+
+<details><summary><strong>3. Le module métier ne connaît pas l'authentification</strong></summary>
+
+Il reçoit l'identité en paramètre — `beneficiaireId` — pas le moyen de l'obtenir. Extraire l'identité est un travail de la couche HTTP, fait une fois par un décorateur.
+
+```ts
+// common/beneficiaire-id.decorator.ts
+export const BeneficiaireId = createParamDecorator(
+  (_donnee, contexte: ExecutionContext) =>
+    contexte.switchToHttp().getRequest<Request>().session.beneficiaireId,
+);
+```
+
+**Le jour où ça compte** : on passe de la session par cookie à un jeton porté par un en-tête. Un seul fichier change ; aucun service n'est touché.
+
+</details>
+
+<details><summary><strong>4. Une couche ne saute jamais sa voisine</strong></summary>
+
+Un contrôleur qui appelle un repository court-circuite l'endroit même où les règles vivent.
+
+```ts
+// Non : où ira la règle « un seul dossier en cours » quand elle arrivera ?
+@Get()
+lister() {
+  return this.dossierRepository.findAll();
 }
 ```
 
-Le contrôleur ne sait pas ce qu'est un dossier valide : il sait qu'il faut valider l'entrée, appeler **un** service, et transformer le résultat. Le décorateur `@BeneficiaireId()` existe pour que le service ne reçoive jamais la requête (principe 3).
+**Le jour où ça compte** : la lecture semble anodine — jusqu'à ce qu'il faille filtrer selon les droits de la personne. La règle atterrit alors dans le contrôleur, ou pire, est oubliée sur une seule des deux routes qui lisent la même chose.
+
+</details>
+
+<details><summary><strong>5. Un contrôleur appelle un seul service</strong></summary>
+
+S'il en enchaîne deux, l'orchestration est en train de s'écrire dans la couche HTTP.
 
 ```ts
-// dossier/dossier.service.ts — métier : les règles, et la transaction
+// Non : l'ordre des opérations et le rattrapage d'erreur vivent dans le contrôleur.
+const dossier = await this.dossierService.deposer(id, corps);
+await this.notificationService.envoyerAccuse(dossier);
+
+// Oui : le service orchestre, et peut tout mettre dans une transaction.
+return this.dossierService.deposer(id, corps);
+```
+
+**Le jour où ça compte** : l'accusé de réception échoue. Avec la première forme, le dossier est déposé mais l'utilisateur reçoit une erreur — et personne ne sait dans quel état on se trouve.
+
+</details>
+
+<details><summary><strong>6. Une erreur métier remonte en exception</strong></summary>
+
+Jamais en valeur de retour ambiguë : un `null` qui voudrait dire à la fois « absent » et « interdit » finit par produire un 404 là où il fallait un 403.
+
+```ts
+// Non
+if (!dossier) return null;
+if (dossier.beneficiaireId !== demandeur) return null;
+
+// Oui
+if (!dossier) throw new NotFoundException("Dossier introuvable.");
+if (dossier.beneficiaireId !== demandeur) throw new ForbiddenException();
+```
+
+**Le jour où ça compte** : un test de sécurité vérifie qu'un bénéficiaire ne lit pas le dossier d'un autre. Avec la première forme, le 404 donne l'illusion que tout va bien.
+
+</details>
+
+<details><summary><strong>7. Le repository traduit, il ne décide pas</strong></summary>
+
+Aucun `if` métier entre deux requêtes.
+
+```ts
+// Non : une règle métier cachée dans la couche d'accès aux données.
+async save(dossier: DossierACreer) {
+  if (dossier.statut === "BROUILLON") dossier.dateDepot = null;
+  return this.prisma.dossier.create({ data: dossier });
+}
+```
+
+**Le jour où ça compte** : quelqu'un lit le service pour comprendre quand `dateDepot` est renseignée, et n'y trouve rien. La règle est deux fichiers plus loin, dans le dernier endroit où on la chercherait.
+
+</details>
+
+<details><summary><strong>8. Ce qui entre est validé, ce qui sort est construit</strong></summary>
+
+Rien ne traverse par accident, dans aucun des deux sens.
+
+```ts
+@Body(new ZodValidationPipe(depotDossier.body)) corps: RouteBody<typeof depotDossier>
+// …
+return toDossierResponse(dossier);
+```
+
+**Le jour où ça compte** : un client envoie `{ statut: "ACCEPTE" }` dans un dépôt. Le schéma ne connaît pas ce champ, donc il disparaît avant d'atteindre le service — au lieu d'être recopié en base par un `...corps` bien intentionné.
+
+</details>
+
+<details><summary><strong>Exemple — un dépôt de dossier, du formulaire à la base</strong> (proposition)</summary>
+
+Le même cas suivi de bout en bout, sans trou : le contrat, l'écran, la route, la règle, la requête. Le point à observer : **chaque étage ignore ce que fait le suivant**.
+
+**1. Le contrat, dans `packages/api-contract`** — la seule chose que le front et l'API partagent.
+
+```ts
+// packages/api-contract/src/dossier/dossier.routes.ts
+export const depotDossier = {
+  method: "POST",
+  path: "/dossier",
+  body: DepotDossierSchema, // { dateEntretien, nomConseiller, operateurCep }
+  response: DossierResponseSchema, // { id, statut, dateDepot }
+} as const satisfies RouteDefinition;
+```
+
+**2. Le front** — il ne connaît ni la base, ni les règles : il connaît le contrat.
+
+```tsx
+// apps/simulateur/src/dossier/DepotDossierForm.tsx
+const form = useForm<DepotDossier>({ resolver: zodResolver(depotDossier.body) });
+const deposer = useDeposerDossier(); // la mutation de la décision 3 de stack-front.md
+
+async function onSubmit(valeurs: DepotDossier) {
+  try {
+    const dossier = await deposer.mutateAsync(valeurs);
+    router.push(`/dossier/${dossier.id}`);
+  } catch (erreur) {
+    // 409 : le service a refusé. Le message vient de l'API, pas d'une règle
+    // réécrite ici — sinon les deux finiraient par diverger.
+    if (erreur instanceof ApiError && erreur.statut === 409) {
+      form.setError("root", { message: erreur.message });
+    }
+  }
+}
+```
+
+**3. Le contrôleur** — valider, appeler **un** service, former la réponse.
+
+```ts
+// apps/api/src/dossier/dossier.controller.ts
+@Post()
+async depotDossier(
+  @Body(new ZodValidationPipe(depotDossier.body)) corps: RouteBody<typeof depotDossier>,
+  @BeneficiaireId() beneficiaireId: string, // l'identité, pas la requête (principe 3)
+): Promise<RouteResponse<typeof depotDossier>> {
+  const dossier = await this.dossierService.deposer(beneficiaireId, corps);
+  return toDossierResponse(dossier); // type du contrat, pas type Prisma (principe 1)
+}
+```
+
+Il ne sait pas ce qu'est un dossier valide. Il sait qu'une entrée se valide, qu'un service décide, et qu'une réponse se construit.
+
+**4. Le service** — les règles, et la transaction.
+
+```ts
+// apps/api/src/dossier/dossier.service.ts
 async deposer(beneficiaireId: string, saisie: DepotDossier): Promise<Dossier> {
   const enCours = await this.dossierRepository.findBrouillon(beneficiaireId);
-  // La règle métier vit ici, en une ligne lisible par la PO.
-  if (enCours) throw new ConflictException("Un dossier est déjà en cours pour ce bénéficiaire.");
+  // La règle métier, en une ligne lisible par la PO. C'est elle qui produit
+  // le 409 que le formulaire affiche.
+  if (enCours) throw new ConflictException("Un dossier est déjà en cours.");
 
-  // Le service déclare la transaction : deux écritures, ou aucune (principe 7).
+  // Deux écritures, ou aucune : la transaction appartient au service.
   return this.dossierRepository.transaction(async (repo) => {
     const dossier = await repo.save({ ...saisie, beneficiaireId, statut: "BROUILLON" });
     await repo.saveHistorique(dossier.id, "DEPOT");
@@ -80,8 +241,10 @@ async deposer(beneficiaireId: string, saisie: DepotDossier): Promise<Dossier> {
 
 Aucun `Request`, aucun statut HTTP, aucune requête SQL : ce fichier se lit comme la règle de gestion.
 
+**5. Le repository** — traduire, rien d'autre.
+
 ```ts
-// dossier/dossier.prisma-repository.ts — données : traduire, rien d'autre
+// apps/api/src/dossier/dossier.prisma-repository.ts
 async findBrouillon(beneficiaireId: string): Promise<Dossier | null> {
   const ligne = await this.prisma.dossier.findFirst({
     where: { beneficiaireId, statut: "BROUILLON" },
@@ -92,9 +255,16 @@ async findBrouillon(beneficiaireId: string): Promise<Dossier | null> {
 }
 ```
 
-Le repository connaît `include`, `where` et le schéma ; il ne sait pas pourquoi on cherche un brouillon.
+Il connaît `where`, `include` et le schéma ; il ne sait pas pourquoi on cherche un brouillon.
 
-**Ce que ça change concrètement** : tester la règle « un seul dossier en cours » ne demande ni base, ni HTTP — on fournit un faux repository qui renvoie un brouillon, et on vérifie l'exception.
+**Ce que le découpage produit, concrètement :**
+
+| Ce qu'on veut faire                                           | Ce qu'il faut toucher                                                                                |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Changer le message affiché quand un dossier est déjà en cours | Le service, une ligne                                                                                |
+| Ajouter un champ au formulaire                                | Le schéma du contrat — le front et l'API cessent de compiler tant qu'ils ne l'ont pas pris en compte |
+| Renommer une colonne en base                                  | Le mapper du repository                                                                              |
+| Tester « un seul dossier en cours »                           | Un faux repository qui renvoie un brouillon. Ni base, ni HTTP, ni formulaire                         |
 
 </details>
 
@@ -130,6 +300,67 @@ Ce que cette fonction protège : le jour où la table gagne une colonne — un j
 3. **La transaction appartient au service**, qui la déclare et la passe au repository.
 4. **L'abstraction décrit un besoin, pas un schéma** : `findBrouillon(beneficiaireId)`, pas `findFirstWhere(...)`.
 5. **Pas de repository pour un module qui ne touche pas la base** : il n'y a rien à séparer.
+
+<details><summary><strong>Exemple — ce que « renvoyer les types du module » veut dire, en code</strong> (proposition)</summary>
+
+Le type que Prisma génère porte le schéma : des colonnes techniques, des noms de colonnes, des relations chargées ou non selon l'`include`, et `null` partout où la base l'autorise.
+
+```ts
+// Ce que Prisma génère pour la table `utilisateur`
+type Utilisateur = {
+  id: string;
+  keycloakSub: string;
+  email: string | null;
+  prenom: string | null;
+  nom: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLoginAt: Date;
+  creeVia: string;
+  derniereConnexionVia: string;
+};
+```
+
+Le type du module porte le besoin métier. Il ne dit rien des colonnes techniques, et il ne laisse pas le service se demander ce que `creeVia` signifie :
+
+```ts
+// utilisateurs/utilisateur.types.ts — ce que le reste du code manipule
+export interface Utilisateur {
+  id: string;
+  identiteKeycloak: string;
+  email?: string;
+  nomComplet?: string;
+  premiereConnexionVia: FournisseurIdentite;
+  derniereConnexionLe: Date;
+}
+```
+
+Et la traduction vit dans le repository, à un seul endroit :
+
+```ts
+// utilisateurs/utilisateur.mapper.ts
+export function toUtilisateur(ligne: UtilisateurPrisma): Utilisateur {
+  return {
+    id: ligne.id,
+    identiteKeycloak: ligne.keycloakSub,
+    email: ligne.email ?? undefined,
+    // Le service n'a pas à recomposer un nom à chaque usage.
+    nomComplet: [ligne.prenom, ligne.nom].filter(Boolean).join(" ") || undefined,
+    premiereConnexionVia: ligne.creeVia as FournisseurIdentite,
+    derniereConnexionLe: ligne.lastLoginAt,
+  };
+}
+```
+
+**Trois choses que cette traduction achète :**
+
+- **Les `null` de la base deviennent des `undefined` optionnels**, ce qui évite au service de gérer les deux absences.
+- **Le service ne dépend plus du schéma** : renommer `cree_via` en `origine` (décision 10) ne touche que le mapper.
+- **Le test du service se lit** : on lui donne un `Utilisateur` du module, pas un objet Prisma avec dix champs dont huit sans rapport.
+
+**Le piège à éviter** : écrire `export type Utilisateur = Prisma.Utilisateur` pour « gagner du temps ». La frontière existe alors sur le papier, et chaque changement de schéma se propage jusqu'aux contrôleurs.
+
+</details>
 
 <details><summary><strong>Exemple — la forme existe déjà dans le code</strong></summary>
 
