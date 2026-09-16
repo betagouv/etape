@@ -32,6 +32,13 @@ La langue suit la couche : **le domaine métier est en français, la technique e
 
 Les règles détaillées se chargent depuis `.claude/rules/` quand un fichier concerné est lu.
 
+## Stack et architecture
+
+- **Front** (`docs/conventions/stack-front.md`) : Next.js en export statique (donc aucune Server Action), Tailwind + shadcn/ui, react-hook-form + zod pour les formulaires à venir, le moteur déclaratif du simulateur conservé.
+- **API** (`docs/conventions/architecture-api.md`) : trois couches — HTTP, métier, accès aux données. Un type Prisma ne franchit pas la frontière HTTP ; un repository ne s'extrait qu'à la demande, pas par principe.
+
+Les deux documents sont au statut « Proposé » : les questions ouvertes y sont listées en fin de page.
+
 ## Revue de code
 
 Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage et d'accessibilité, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation.
