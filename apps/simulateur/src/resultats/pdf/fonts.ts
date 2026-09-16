@@ -16,7 +16,7 @@ export const PDF_FONT_FAMILY = "Open Sans";
 let registered = false;
 
 /** Idempotent : `Font.register` ne doit être appelé qu'une fois par police. */
-export function registerPdfFonts() {
+export function registerPdfFonts(): void {
   if (registered) return;
   registered = true;
 
