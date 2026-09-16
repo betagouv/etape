@@ -5,7 +5,7 @@
 
 Objectif : une séparation des couches **minimale et tenable**, pas une clean architecture. Le nommage relève de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md). Le pendant côté front est [`stack-front.md`](./stack-front.md).
 
-Chaque décision porte un exemple tiré du code réel — ou, quand il s'agit d'une proposition, un extrait explicitement marqué comme tel.
+Chaque décision est suivie de ses **principes** — des règles courtes, vérifiables en revue — et d'un **exemple** dépliable : code réel du dépôt, ou proposition explicitement marquée.
 
 ## En place, acté
 
@@ -15,13 +15,15 @@ Chaque décision porte un exemple tiré du code réel — ou, quand il s'agit d'
 | Prisma + `@prisma/adapter-pg` | 7.10.0      | Client injecté par `PrismaService` dans un module `@Global`                                        |
 | PostgreSQL                    | —           | Seule base ; sessions et transactions de connexion y sont persistées                               |
 | **Keycloak**                  | —           | Fournisseur d'identité et courtier vers FranceConnect. L'API est le client OIDC, pas le navigateur |
-| `openid-client`               | 6.8.4       | Dialogue OIDC écrit à la main, sans Passport — assumé par `docs/authentification.md`               |
+| `openid-client`               | 6.8.4       | Dialogue OIDC écrit à la main, sans Passport                                                       |
 | `@nestjs/config` + zod        | 4.0.2 / 4.1 | Schéma d'environnement validé au démarrage (`src/config/env.ts`)                                   |
 | helmet, cookie-parser         | —           | Session par cookie opaque : aucun jeton visible du navigateur                                      |
 
-**Keycloak n'est pas une dépendance npm mais une brique d'infrastructure**, et c'est elle qui fixe deux règles structurantes, déjà documentées dans `docs/authentification.md` : l'API est le client OIDC confidentiel (le front statique ne peut pas détenir de secret), et l'API ne parle qu'à Keycloak, jamais directement à FranceConnect.
+**Comment l'API tourne**, car plusieurs décisions en dépendent : un conteneur Docker parmi six, décrit par `docker-compose.prod.yml`, construit et démarré par l'hébergeur (Cegedim). Elle n'est pas exposée directement — nginx sert les exports statiques et relaie `/api/`. Elle applique ses migrations au démarrage, avant de servir.
 
 ## Décision 1 — Les trois couches
+
+Un module métier se découpe en trois responsabilités. Ce n'est pas une architecture en couches au sens complet : c'est le minimum pour qu'on puisse lire une règle métier sans lire une requête SQL, et inversement.
 
 | Couche            | Fichier           | Responsabilité                                                                                      | Interdit                                          |
 | ----------------- | ----------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
@@ -29,14 +31,76 @@ Chaque décision porte un exemple tiré du code réel — ou, quand il s'agit d'
 | **Métier**        | `*.service.ts`    | Les règles, l'orchestration, les transactions. Ignore HTTP : ni `Request`, ni `Response`, ni cookie | Lire un cookie ou un en-tête ; dépendre d'Express |
 | **Accès données** | `*.repository.ts` | Les requêtes Prisma, et rien d'autre                                                                | Contenir une règle métier                         |
 
-**Deux règles de frontière :**
+### Les principes de frontière
 
-1. **Un type généré par Prisma ne franchit pas la frontière HTTP.**
-2. **Le module métier ne connaît pas l'authentification** : il reçoit l'identité en paramètre, pas le contexte de requête.
+Ce sont eux qu'on relit en revue. Chacun est formulé pour qu'on puisse répondre par oui ou par non en regardant le code.
 
-<details><summary><strong>Exemple — la règle 1 est déjà appliquée dans le code</strong></summary>
+1. **Un type généré par Prisma ne franchit pas la frontière HTTP.** Ce que la base stocke et ce que l'API expose sont deux choses différentes, et elles évoluent à des rythmes différents.
+2. **Le service ignore le protocole.** Ni `Request`, ni `Response`, ni cookie, ni en-tête : un service qui les connaît ne peut plus être appelé par une tâche planifiée ou un autre service.
+3. **Le module métier ne connaît pas l'authentification.** Il reçoit l'identité dont il a besoin en paramètre — `beneficiaireId`, pas `req.session`.
+4. **Une couche ne saute jamais sa voisine.** Un contrôleur qui appelle un repository court-circuite l'endroit même où les règles vivent.
+5. **Un contrôleur appelle un seul service.** S'il en enchaîne deux, l'orchestration est en train de s'écrire dans la couche HTTP : elle appartient au service.
+6. **Une erreur métier remonte en exception**, jamais en valeur de retour ambiguë (`null` pour « absent » et pour « interdit »).
+7. **Le repository traduit, il ne décide pas.** Aucun `if` métier entre deux requêtes.
+8. **Ce qui entre est validé à la frontière, ce qui sort est construit explicitement.** Rien ne traverse par accident.
 
-`auth/session/session.types.ts` : la session interne porte l'`id_token` et tous les claims ; ce qui sort vers le navigateur est un autre type, produit par une fonction de transformation.
+<details><summary><strong>Exemple — les trois couches sur une route complète</strong> (proposition)</summary>
+
+Une route de dépôt de dossier, de la requête à la base. Le point à observer : **chaque couche ignore ce que fait la suivante**.
+
+```ts
+// dossier/dossier.controller.ts — HTTP : valider, appeler, répondre
+@Post()
+async depotDossier(
+  @Body(new ZodValidationPipe(depotDossier.body)) corps: RouteBody<typeof depotDossier>,
+  @BeneficiaireId() beneficiaireId: string, // décorateur : extrait l'identité de la session
+): Promise<RouteResponse<typeof depotDossier>> {
+  const dossier = await this.dossierService.deposer(beneficiaireId, corps);
+  return toDossierResponse(dossier);
+}
+```
+
+Le contrôleur ne sait pas ce qu'est un dossier valide : il sait qu'il faut valider l'entrée, appeler **un** service, et transformer le résultat. Le décorateur `@BeneficiaireId()` existe pour que le service ne reçoive jamais la requête (principe 3).
+
+```ts
+// dossier/dossier.service.ts — métier : les règles, et la transaction
+async deposer(beneficiaireId: string, saisie: DepotDossier): Promise<Dossier> {
+  const enCours = await this.dossierRepository.findBrouillon(beneficiaireId);
+  // La règle métier vit ici, en une ligne lisible par la PO.
+  if (enCours) throw new ConflictException("Un dossier est déjà en cours pour ce bénéficiaire.");
+
+  // Le service déclare la transaction : deux écritures, ou aucune (principe 7).
+  return this.dossierRepository.transaction(async (repo) => {
+    const dossier = await repo.save({ ...saisie, beneficiaireId, statut: "BROUILLON" });
+    await repo.saveHistorique(dossier.id, "DEPOT");
+    return dossier;
+  });
+}
+```
+
+Aucun `Request`, aucun statut HTTP, aucune requête SQL : ce fichier se lit comme la règle de gestion.
+
+```ts
+// dossier/dossier.prisma-repository.ts — données : traduire, rien d'autre
+async findBrouillon(beneficiaireId: string): Promise<Dossier | null> {
+  const ligne = await this.prisma.dossier.findFirst({
+    where: { beneficiaireId, statut: "BROUILLON" },
+    include: { voletCep: true },
+  });
+
+  return ligne && toDossier(ligne); // le type du module, pas celui de Prisma
+}
+```
+
+Le repository connaît `include`, `where` et le schéma ; il ne sait pas pourquoi on cherche un brouillon.
+
+**Ce que ça change concrètement** : tester la règle « un seul dossier en cours » ne demande ni base, ni HTTP — on fournit un faux repository qui renvoie un brouillon, et on vérifie l'exception.
+
+</details>
+
+<details><summary><strong>Exemple — le principe 1 est déjà appliqué dans le code</strong></summary>
+
+`auth/session/session.types.ts`. La session interne porte l'`id_token` et tous les claims ; ce qui part vers le navigateur est un autre type, produit par une fonction qui décide de ce qui sort.
 
 ```ts
 export function toPublicSession(session: UserSession, aliasFranceConnect: string): PublicSession {
@@ -49,19 +113,27 @@ export function toPublicSession(session: UserSession, aliasFranceConnect: string
 }
 ```
 
-C'est exactement le motif attendu pour tous les modules métier : un type de sortie explicite, et une fonction qui décide de ce qui sort.
+Ce que cette fonction protège : le jour où la table gagne une colonne — un jeton de rafraîchissement, une note interne —, elle n'apparaît pas d'elle-même dans la réponse HTTP. Sans elle, `return session` aurait suffi, et la fuite serait passée en revue sans que personne ne la voie.
 
 </details>
 
 ## Décision 2 — Un repository par module, par défaut
 
-**Le service ne voit jamais Prisma.** Chaque module métier déclare une classe abstraite de repository et son implémentation Prisma, fournie par `{ provide: DossierRepository, useClass: PrismaDossierRepository }`. Le service dépend de l'abstraction.
+**Le service ne voit jamais Prisma.** Chaque module métier déclare une classe abstraite de repository et son implémentation Prisma, fournie par `{ provide: DossierRepository, useClass: PrismaDossierRepository }`.
 
-**Pourquoi, alors que ni NestJS ni Prisma ne le prescrivent** : la frontière n'est pas là pour pouvoir changer de base un jour, argument qui ne se réalise presque jamais. Elle est là parce que **le service porte encore du métier, le repository est purement technique**. Mélanger les deux, c'est écrire des règles métier au milieu d'un `include`, d'un `select` et d'un `orderBy`, et ne plus pouvoir lire les unes sans les autres.
+**Pourquoi, alors que ni NestJS ni Prisma ne le prescrivent** : la frontière n'est pas là pour changer de base un jour, argument qui ne se réalise presque jamais. Elle est là parce que **le service porte du métier, le repository est purement technique**. Mélangés, on lit des règles de gestion au milieu d'un `include`, d'un `select` et d'un `orderBy`.
 
-<details><summary><strong>Exemple — la forme existe déjà dans le code (<code>SessionStore</code>)</strong></summary>
+### Les principes
 
-`auth/session/session.store.ts` — l'abstraction décrit un besoin métier, pas un schéma de base :
+1. **Le repository renvoie les types du module, pas ceux de Prisma.** Sinon la frontière est décorative.
+2. **Aucune règle métier dans le repository** : pas de « et si le dossier est brouillon alors… ».
+3. **La transaction appartient au service**, qui la déclare et la passe au repository.
+4. **L'abstraction décrit un besoin, pas un schéma** : `findBrouillon(beneficiaireId)`, pas `findFirstWhere(...)`.
+5. **Pas de repository pour un module qui ne touche pas la base** : il n'y a rien à séparer.
+
+<details><summary><strong>Exemple — la forme existe déjà dans le code</strong></summary>
+
+`auth/session/session.store.ts` : l'abstraction est écrite en termes de besoins, et chaque méthode porte sa contrainte métier en commentaire.
 
 ```ts
 export abstract class SessionStore {
@@ -73,63 +145,55 @@ export abstract class SessionStore {
   abstract getSession(id: string): Promise<UserSession | null>;
   abstract deleteSession(id: string): Promise<void>;
 }
-
-@Injectable()
-export class PrismaSessionStore extends SessionStore {
-  constructor(private readonly prisma: PrismaService) {
-    super();
-  }
-  // …
-}
 ```
 
-Et dans `auth.module.ts` : `{ provide: SessionStore, useClass: PrismaSessionStore }`. `SessionService` ne connaît que `SessionStore` — il se teste donc avec une implémentation en mémoire, sans Prisma.
+`SessionService` ne connaît que cette classe. C'est pourquoi on peut tester la logique de session — durées de vie, révocation, rejeu — avec une implémentation en mémoire, sans base de données (décision 11).
 
 </details>
 
-**Trois règles pour que la couche tienne :**
+<details><summary><strong>Cas d'école — pourquoi <code>utilisateurs</code> garde son SQL</strong></summary>
 
-1. **Le repository renvoie les types du module, pas ceux de Prisma.** C'est lui qui traduit ; sinon la frontière est décorative et le modèle de base fuit jusque dans le service.
-2. **Aucune règle métier dans le repository** : pas de « et si le dossier est brouillon alors… ». Il lit, il écrit, il traduit.
-3. **Une transaction couvrant plusieurs écritures appartient au service**, qui la déclare et la passe au repository.
+**Le besoin métier**, documenté dans `docs/donnees.md` : deux dates qui ne veulent pas dire la même chose.
 
-**Ce que ça coûte, dit franchement** : un fichier et une fonction de traduction de plus par agrégat. **Seule exception** : un module qui ne touche pas la base n'a pas de repository.
+- `last_login_at` — « la personne est revenue ». Change à **chaque** connexion.
+- `updated_at` — « sa fiche a changé ». Ne doit changer **que** si le nom, le prénom ou le courriel renvoyés par Keycloak diffèrent de ce qu'on a en base.
 
-**Conséquence sur l'existant** : `UtilisateursService` injecte `PrismaService` et écrit directement en base — il devient non conforme et doit passer derrière un `UtilisateursRepository`.
-
-<details><summary><strong>Exemple — le SQL brut de <code>utilisateurs</code> est légitime, contrairement à ce qu'on a d'abord écrit</strong></summary>
-
-`utilisateurs/utilisateurs.service.ts` fait son upsert en `$queryRaw`. Ce n'est pas un raccourci : la requête ne met à jour `updated_at` **que si l'identité a changé**, tout en rafraîchissant `last_login_at` à chaque connexion.
+**Le code actuel** (`utilisateurs/utilisateurs.service.ts`) exprime les deux en une seule requête :
 
 ```sql
 on conflict (keycloak_sub) do update set
-  email                  = excluded.email,
-  prenom                 = excluded.prenom,
-  nom                    = excluded.nom,
-  last_login_at          = now(),
-  derniere_connexion_via = excluded.derniere_connexion_via,
+  last_login_at = now(),                      -- toujours
   updated_at    = case
                     when (utilisateur.email, utilisateur.prenom, utilisateur.nom)
                          is distinct from
                          (excluded.email, excluded.prenom, excluded.nom)
-                    then now()
+                    then now()                -- seulement si l'identité a bougé
                     else utilisateur.updated_at
                   end
 ```
 
-`prisma.utilisateur.upsert()` ne sait pas exprimer cette condition sans lire la ligne d'abord, puis décider côté application — ce qui ajoute un aller-retour et une course entre les deux requêtes. La distinction « `updated_at` = la fiche a changé » / « `last_login_at` = la personne est revenue » est documentée dans `docs/donnees.md` : c'est une règle métier, et le SQL est ici le bon outil.
+`is distinct from` compare en traitant `NULL` comme une valeur : un courriel absent hier et présent aujourd'hui compte comme un changement, là où `<>` aurait renvoyé `NULL`.
 
-**Ce qui manque** : le commentaire qui dit tout cela, à l'endroit du `$queryRaw`. La règle n'est donc pas « remplacer par `upsert` », mais « déplacer dans le repository, et commenter pourquoi c'est du SQL ».
+**Pourquoi `prisma.utilisateur.upsert()` ne suffit pas** : Prisma ne sait pas écrire un `update` dont une colonne dépend d'une comparaison entre l'ancienne et la nouvelle ligne. Il faudrait d'abord lire la ligne, comparer en TypeScript, puis écrire — donc deux allers-retours au lieu d'un, et une fenêtre pendant laquelle deux connexions simultanées peuvent se marcher dessus.
+
+**Ce qu'on en retient pour la règle** : le SQL brut n'est pas interdit, il est **argumenté**. Ici l'argument tient, mais il n'est écrit nulle part dans le fichier. La suite à donner n'est donc pas de remplacer ce SQL : c'est de **déplacer cet accès dans un `UtilisateursRepository`** (principe 1 de cette décision) et d'y écrire le commentaire qui explique le `case`.
 
 </details>
 
 ## Décision 3 — Un contrat de route partagé entre le front et l'API
 
-**Le problème à régler** : une route est décrite deux fois — dans le contrôleur d'un côté, dans le code d'appel de l'autre — et rien ne casse à la compilation quand les deux divergent.
+**Le problème** : une route est décrite deux fois — dans le contrôleur, puis dans le code qui l'appelle — et rien ne casse quand les deux divergent. On s'en aperçoit en production, sur un champ `undefined`.
 
 **Proposition** : un paquet partagé, `packages/api-contract`, qui ne dépend que de zod.
 
-<details><summary><strong>Exemple complet — le contrat, l'API, le front</strong> (proposition, forme reprise de verseau2)</summary>
+### Les principes
+
+1. **Le contrat est la source, pas un reflet** : on modifie le schéma, les deux côtés cessent de compiler.
+2. **Le contrat ne contient que des schémas et des types** : aucune dépendance à NestJS ni à React, sinon il ne peut plus être partagé.
+3. **La réponse est validée à la frontière du front**, pas supposée.
+4. **Un type de réponse n'est jamais un type Prisma** (principe 1 de la décision 1).
+
+<details><summary><strong>Exemple complet — le contrat, l'API, le front</strong> (proposition)</summary>
 
 **1. Le contrat, écrit une fois**
 
@@ -143,48 +207,45 @@ export const getDossier = {
 } as const satisfies RouteDefinition;
 ```
 
-**2. Les types dérivés, fournis par le paquet**
-
-```ts
-export type RouteParams<R> = R["params"] extends ZodType ? z.infer<R["params"]> : never;
-export type RouteResponse<R> = R["response"] extends ZodType ? z.infer<R["response"]> : never;
-export function buildRoutePath<R extends RouteDefinition>(route: R, options?: …): string;
-```
-
-**3. Côté API — la valeur de retour est contrainte par le contrat**
+**2. Côté API — la valeur de retour est contrainte par le contrat**
 
 ```ts
 @Get(":id")
 async getDossier(
   @Param(new ZodValidationPipe(getDossier.params)) params: RouteParams<typeof getDossier>,
 ): Promise<RouteResponse<typeof getDossier>> {
-  const dossier = await this.dossierService.findById(params.id);
-  return toDossierResponse(dossier);
+  return toDossierResponse(await this.dossierService.findById(params.id));
 }
 ```
 
-Si `DossierResponseSchema` gagne un champ, **ce contrôleur ne compile plus** tant que `toDossierResponse` ne le produit pas.
-
-**4. Côté front — aucun type réécrit**
+**3. Côté front — aucun type réécrit**
 
 ```ts
-const dossier = await appelApi(getDossier, { params: { id } });
-// dossier : RouteResponse<typeof getDossier>
+const dossier = await callApi(getDossier, { params: { id } });
 ```
+
+**Le scénario que ça empêche** : quelqu'un ajoute `dateCommission` au schéma de réponse. Sans contrat partagé, l'API l'envoie, le front l'ignore, et personne ne le sait. Avec, le contrôleur ne compile plus tant que la fonction de transformation ne produit pas le champ, et le front y a accès typé dès la mise à jour du paquet.
 
 </details>
 
-**Bibliothèques envisagées, et pourquoi pas elles :**
+**Bibliothèques envisagées** : **ts-rest** fait cela avec un adaptateur NestJS, mais déclare encore `zod ^3.22.3` et n'a rien publié depuis juin 2025 — nous sommes en zod 4. **oRPC** est actif et compatible NestJS 11, mais impose son style de définition à toute l'API. **tRPC** suppose un serveur qui expose ses procédures, ce qui n'est pas la forme d'une API REST derrière un client OIDC. Forme retenue : celle de [verseau2](https://github.com/MTES-MCT/verseau2) (MTES), en production.
 
-- **ts-rest** (3.52.1) fait exactement cela avec un adaptateur NestJS, mais déclare encore `zod ^3.22.3` en dépendance de pair, et n'a rien publié depuis juin 2025. Nous sommes en zod 4 : écarté.
-- **oRPC** (`@orpc/nest` 1.15.1, NestJS ≥ 11) est actif et compatible, mais impose son style de définition à toute l'API pour un besoin que soixante lignes de types couvrent.
-- **tRPC** suppose un serveur TypeScript qui expose ses procédures ; ce n'est pas la forme d'une API REST derrière un client OIDC.
+## Décision 4 — Valider les entrées, et pourquoi c'est un pipe
 
-**Précédent** : cette forme est en production sur [verseau2](https://github.com/MTES-MCT/verseau2) (MTES), avec un paquet partagé de définitions de routes, un `ZodValidationPipe` maison côté NestJS et un client `fetch` typé côté front.
+**L'état actuel** : aucune validation. Aucun `ValidationPipe` global, aucun schéma par route. Les paramètres d'URL et les corps de requête arrivent bruts jusqu'au code métier ; seule `sanitizeReturnTo()` filtre une valeur, dans le module d'authentification.
 
-## Décision 4 — Le pipe de validation
+### À quoi sert la validation d'entrée
 
-**Aujourd'hui : aucune validation.** Aucun `ValidationPipe` global dans `main.ts`, aucun schéma par route. Les paramètres d'URL sont lus bruts ; seule `sanitizeReturnTo()` filtre une valeur.
+Ce n'est pas une formalité de typage : c'est la **frontière de confiance** de l'application. Tout ce qui vient du réseau est hostile par défaut, y compris quand le front est le nôtre.
+
+1. **Le type devient vrai.** Sans validation, `params.id: string` est un mensonge du compilateur : à l'exécution, ce peut être `"../../etc"`, un tableau, ou `undefined`. Le code métier travaille alors sur des valeurs impossibles.
+2. **L'erreur est dite tôt, et clairement.** Une entrée refusée renvoie un 400 avec le champ fautif. Sans validation, la même entrée produit une erreur Prisma en 500, illisible pour l'utilisateur et bruyante dans les journaux.
+3. **La surface d'attaque se réduit.** Un schéma strict rejette les champs inconnus : personne ne peut glisser `statut: "ACCEPTE"` dans un corps de dépôt en espérant qu'il soit recopié en base.
+4. **La règle est au même endroit que le contrat** (décision 3), donc le front et l'API refusent la même chose.
+
+### Pourquoi un pipe plutôt qu'un `if` en tête de contrôleur
+
+Un pipe est le mécanisme que NestJS exécute **avant** d'entrer dans la méthode. La méthode ne s'exécute donc jamais avec une entrée invalide, et son paramètre est déjà typé par le schéma. Un `if` en tête de méthode, lui, se copie-colle, s'oublie dans la route suivante, et n'apprend rien au compilateur.
 
 | Approche                                                 | Ce que ça implique                                                                                                          |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -192,9 +253,9 @@ const dossier = await appelApi(getDossier, { params: { id } });
 | **Pipe maison** (~15 lignes)                             | Une classe qui appelle le schéma et lève une `BadRequestException` ; fonctionne dès aujourd'hui. C'est ce que fait verseau2 |
 | **`ValidationPipe` + class-validator** (voie historique) | Deux dépendances, des DTO en classes décorées, et un type qui ne découle pas du schéma : incompatible avec la décision 3    |
 
-**Proposition** : le **pipe maison maintenant**, remplacé par celui de NestJS à la montée en version 12.
+**Proposition** : le **pipe maison maintenant**, remplacé par celui de NestJS à la montée en version 12 — la validation des entrées ne doit pas attendre une montée de version majeure.
 
-<details><summary><strong>Exemple — le pipe maison, en entier</strong> (proposition)</summary>
+<details><summary><strong>Exemple — le pipe, et ce qu'il produit comme erreur</strong> (proposition)</summary>
 
 ```ts
 // common/zod-validation.pipe.ts
@@ -206,8 +267,9 @@ export class ZodValidationPipe implements PipeTransform {
     const resultat = this.schema.safeParse(valeur);
 
     if (!resultat.success) {
-      // On expose les chemins et messages, jamais la valeur reçue : elle peut
-      // contenir des données personnelles.
+      // On expose les chemins et les messages, jamais la valeur reçue :
+      // elle peut contenir des données personnelles, qui finiraient
+      // recopiées dans les journaux du proxy ou du navigateur.
       throw new BadRequestException({
         code: "ENTREE_INVALIDE",
         erreurs: resultat.error.issues.map(({ path, message }) => ({
@@ -217,43 +279,56 @@ export class ZodValidationPipe implements PipeTransform {
       });
     }
 
-    return resultat.data;
+    return resultat.data; // typé, nettoyé des champs inconnus
   }
 }
 ```
 
-C'est tout. Le jour de la montée en NestJS 12, on remplace `new ZodValidationPipe(schema)` par `new StandardSchemaValidationPipe({ schema })` et on supprime ce fichier.
+Ce que reçoit le front :
+
+```json
+{
+  "code": "ENTREE_INVALIDE",
+  "erreurs": [{ "champ": "dateEntretien", "message": "Format de date attendu : AAAA-MM-JJ" }]
+}
+```
+
+De quoi afficher le message **sous le bon champ**, au lieu d'un « une erreur est survenue » générique.
 
 </details>
 
 ## Décision 5 — OpenAPI : seulement pour un client tiers
 
-Avec le contrat de la décision 3, le front n'a pas besoin d'OpenAPI : il a les types. Le document n'a d'intérêt que le jour où un consommateur extérieur à ce dépôt appelle l'API. `@nestjs/swagger` sait alors le produire à partir des schémas zod (`zod-openapi`), sans les décrire deux fois.
+Avec le contrat de la décision 3, le front a les types : le document OpenAPI ne lui apprendrait rien. Il devient utile le jour où un consommateur extérieur au dépôt appelle l'API — `@nestjs/swagger` sait alors le produire depuis les schémas zod, via `zod-openapi`.
 
 **Versionnage** : `setGlobalPrefix("api")` sans numéro de version, tant qu'il n'y a qu'un client, déployé en même temps que l'API. `enableVersioning()` existe pour le jour où ce ne sera plus vrai.
 
 ## Décision 6 — Réponses et erreurs
 
-- **Réponses** : le type de sortie vient du contrat de route, alimenté par une fonction de transformation. Pas de `ClassSerializerInterceptor`, qui suppose class-transformer.
-- **Erreurs** : le service lève une exception HTTP de NestJS (`NotFoundException`, `ForbiddenException`…).
-- **À ajouter** : un filtre d'exception global, pour que le corps d'erreur soit le même partout et qu'aucune trace interne ne sorte.
+- **Réponses** : le type de sortie vient du contrat, alimenté par une fonction de transformation.
+- **Erreurs** : le service lève une exception HTTP de NestJS (`NotFoundException`, `ForbiddenException`…). Une hiérarchie d'erreurs métier propre au projet n'est pas justifiée à ce stade.
+- **À ajouter** : un filtre d'exception global.
 
-<details><summary><strong>Exemple — le filtre global et le corps d'erreur</strong> (proposition)</summary>
+### Les principes
+
+1. **Un message d'erreur est destiné à un humain**, dans sa langue, et ne décrit jamais l'interne.
+2. **Une erreur inattendue ne dit rien de plus que « c'est de notre côté »** — pas de trace, pas de nom de table, pas de requête.
+3. **Toute réponse d'erreur porte un identifiant de corrélation**, le même que celui des journaux.
+4. **Le corps d'erreur a la même forme partout**, pour que le front n'ait qu'un chemin de lecture.
+
+<details><summary><strong>Exemple — le filtre global</strong> (proposition)</summary>
 
 ```ts
-// common/exception.filter.ts
+// common/global-exception.filter.ts
 @Catch()
-export class FiltreExceptionGlobal implements ExceptionFilter {
+export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const reponse = host.switchToHttp().getResponse<Response>();
     const requete = host.switchToHttp().getRequest<Request>();
 
     const estHttp = exception instanceof HttpException;
-    const statut = estHttp ? exception.getStatus() : 500;
 
-    // Une erreur inattendue ne dit rien de plus que « c'est de notre côté ».
-    // L'identifiant de corrélation permet de la retrouver dans les journaux.
-    reponse.status(statut).json({
+    reponse.status(estHttp ? exception.getStatus() : 500).json({
       code: estHttp ? exception.name : "ERREUR_INTERNE",
       message: estHttp ? exception.message : "Une erreur est survenue.",
       correlationId: requete.id,
@@ -262,37 +337,44 @@ export class FiltreExceptionGlobal implements ExceptionFilter {
 }
 ```
 
-Le `correlationId` est celui posé par le logger (décision 7) : c'est ce qui relie ce qu'a vu l'utilisateur à ce qu'on lit dans les journaux.
+**Le scénario qu'il sert** : un utilisateur signale « ça ne marche pas ». Il lit à l'écran un identifiant ; on retrouve dans les journaux la requête exacte, avec sa route et sa durée, sans lui demander l'heure ni son adresse.
 
 </details>
 
 ## Décision 7 — Journalisation
 
-**Aujourd'hui** : le logger par défaut de NestJS, sans format structuré ni identifiant de requête.
+**L'état actuel** : le logger par défaut de NestJS, qui écrit du texte coloré, sans identifiant de requête ni structure exploitable.
 
-**Proposition** : `nestjs-pino` (5.2.0, sur `pino` 10.3.1), qui produit du JSON exploitable et attache un identifiant de corrélation à chaque requête.
+### Est-ce compatible avec l'hébergement Cegedim ?
 
-**Règle non négociable** : aucune donnée personnelle, aucun jeton, aucun claim FranceConnect dans les journaux.
+Oui, et sans rien demander à l'hébergeur. **L'API tourne dans un conteneur Docker**, et `docker-compose.prod.yml` ne configure aucun pilote de journalisation : les journaux partent donc sur la **sortie standard**, où Docker les collecte (`docker compose logs`). C'est exactement ce que fait `pino` : il écrit du JSON sur la sortie standard, une ligne par événement. Aucun fichier à créer, aucune rotation à gérer, aucun port à ouvrir, aucun service tiers.
 
-<details><summary><strong>Exemple — le masquage, à la configuration et non à la main</strong> (proposition)</summary>
+Deux points à vérifier avec l'exploitant, qui ne changent pas le choix mais sa configuration :
+
+- **Un collecteur lit-il ces journaux en aval** (Elastic, Loki, un agent Cegedim) et attend-il un format ou des champs précis ? Rien dans le dépôt ne le documente.
+- **Quelqu'un les lit-il à l'œil** en exploitation ? Le JSON est fait pour les machines ; `pino-pretty` rend la lecture humaine agréable, mais il ne doit tourner **qu'en développement**, jamais en production.
+
+**Proposition** : `nestjs-pino` (5.2.0, sur `pino` 10.3.1).
+
+### Les principes
+
+1. **Aucune donnée personnelle, aucun jeton, aucun claim FranceConnect** dans les journaux.
+2. **On journalise un identifiant technique** (`keycloakSub`), jamais un nom ni un courriel.
+3. **Le masquage est configuré une fois**, pas décidé à chaque appel.
+4. **Chaque requête porte un identifiant de corrélation**, renvoyé aussi dans le corps d'erreur.
+5. **Une ligne de journal est un événement**, pas une phrase : de quoi filtrer et compter.
+
+<details><summary><strong>Exemple — le masquage à la configuration</strong> (proposition)</summary>
 
 ```ts
 LoggerModule.forRoot({
   pinoHttp: {
-    // Masqué une fois pour toutes : personne n'a à y penser sur chaque appel.
+    // Masqué une fois pour toutes : aucun développeur n'a à y penser
+    // au moment où il journalise quelque chose.
     redact: {
-      paths: [
-        "req.headers.cookie",
-        "req.headers.authorization",
-        "*.idToken",
-        "*.claims",
-        "*.email",
-        "*.prenom",
-        "*.nom",
-      ],
+      paths: ["req.headers.cookie", "*.idToken", "*.claims", "*.email", "*.prenom", "*.nom"],
       censor: "[masqué]",
     },
-    // L'identifiant renvoyé dans le corps d'erreur est le même que celui du journal.
     genReqId: (req, res) => {
       const id = randomUUID();
       res.setHeader("x-request-id", id);
@@ -302,15 +384,15 @@ LoggerModule.forRoot({
 });
 ```
 
-**Ce qui se journalise** : `keycloakSub` (identifiant technique), la route, le statut, la durée. **Ce qui ne se journalise jamais** : le courriel, le nom, l'`id_token`, les claims.
+**Pourquoi le masquage par configuration plutôt que par discipline** : un `logger.info({ utilisateur })` écrit de bonne foi dans six mois ferait fuiter un courriel dans les journaux. Avec `redact`, le champ est censuré quel que soit l'endroit d'où il vient. C'est la différence entre une règle qu'on respecte et une règle qu'on ne peut pas enfreindre.
 
 </details>
 
 ## Décision 8 — Limitation de débit
 
-La PR #16 note elle-même l'absence de limitation sur `GET /auth/login`, une route anonyme qui crée une ligne en base à chaque appel.
+`GET /auth/login` est **anonyme** et **écrit en base** à chaque appel : elle crée une transaction de connexion. Sans garde-fou, une boucle suffit à faire grossir la table. La PR #16 signale elle-même ce manque.
 
-**Proposition** : `@nestjs/throttler` (6.5.0), avec une limite globale prudente et une limite plus stricte sur les routes d'authentification.
+**Proposition** : `@nestjs/throttler` (6.5.0), avec une limite globale prudente et une limite stricte sur l'authentification.
 
 <details><summary><strong>Exemple — global prudent, strict sur la connexion</strong> (proposition)</summary>
 
@@ -318,19 +400,20 @@ La PR #16 note elle-même l'absence de limitation sur `GET /auth/login`, une rou
 // app.module.ts
 ThrottlerModule.forRoot([{ name: "global", ttl: 60_000, limit: 120 }]);
 
-// auth.controller.ts — la route qui écrit en base sans être authentifiée
+// auth.controller.ts — la route anonyme qui écrit en base
 @Throttle({ global: { ttl: 60_000, limit: 10 } })
 @Get("login")
-login(/* … */) {}
 ```
 
-Dix ouvertures de connexion par minute et par adresse : largement au-dessus d'un usage humain, largement en dessous de ce qui remplit une table.
+**Comment lire ces valeurs** : 120 requêtes par minute et par adresse pour l'ensemble de l'API, soit deux par seconde — au-dessus de ce qu'un écran génère, en dessous de ce qu'un script produit. Et 10 ouvertures de connexion par minute : personne ne se connecte dix fois par minute, mais dix lignes par minute ne remplissent aucune table.
+
+**Attention à l'adresse vue par le compteur** : derrière nginx, toutes les requêtes semblent venir du proxy. Il faut que l'API fasse confiance à `X-Forwarded-For` (`app.set("trust proxy", 1)`), sinon la limite s'applique à tout le monde d'un coup.
 
 </details>
 
 ## Décision 9 — La purge des données expirées
 
-**Correction d'un constat erroné** : une purge existe déjà. `PrismaSessionStore.purger()` supprime les sessions et les transactions expirées, et elle est appelée au début de `createTransaction` et de `createSession`.
+**Ce qui existe déjà**, et qu'il faut avoir en tête avant d'en discuter : une purge est en place. `PrismaSessionStore.purger()` supprime les sessions et transactions expirées, et elle est appelée au début de `createTransaction` et de `createSession`. À quoi s'ajoute un contrôle à la lecture : `getSession` et `consumeTransaction` refusent une ligne expirée même si elle est encore en base.
 
 ```ts
 private async purger(): Promise<void> {
@@ -343,51 +426,64 @@ private async purger(): Promise<void> {
 }
 ```
 
-À quoi s'ajoute un contrôle à la lecture : `getSession` et `consumeTransaction` refusent une ligne expirée, même si elle est encore en base.
+**La question n'est donc pas « faut-il purger » mais « faut-il purger sans trafic »** :
 
-**La vraie question, donc, n'est pas « faut-il purger » mais « faut-il purger sans trafic »** :
-
-- la purge actuelle est **opportuniste** : elle ne s'exécute qu'à l'ouverture d'une connexion. Sans trafic — la nuit, un week-end, après la fermeture d'un service — les lignes expirées restent en base ;
-- ce qui reste en base, ce sont des données personnelles (claims, courriel, `id_token`). La minimisation en demande la suppression même sans trafic ;
+- cette purge est **opportuniste** : elle ne s'exécute qu'à l'ouverture d'une connexion. Une nuit, un week-end, une période creuse — les lignes expirées restent ;
+- ce qui reste, ce sont des **données personnelles** : claims, courriel, `id_token`. La minimisation en demande la suppression, pas seulement l'ignorance à la lecture ;
 - elle s'exécute **sur le chemin critique** d'une connexion : deux `deleteMany` avant chaque création.
 
-**Proposition** : garder la purge opportuniste, et ajouter une tâche planifiée avec `@nestjs/schedule` (12.0.2) pour couvrir l'absence de trafic.
+**Proposition** : garder la purge opportuniste et ajouter une tâche planifiée avec `@nestjs/schedule` (12.0.2).
 
 <details><summary><strong>Exemple — la tâche planifiée</strong> (proposition)</summary>
 
 ```ts
 @Injectable()
-export class PurgeSessionsTache {
+export class SessionPurgeTask {
   constructor(private readonly store: SessionStore) {}
 
-  // Une fois par heure : les durées de vie se comptent en minutes ou en heures.
+  // Une fois par heure : les durées de vie se comptent en minutes ou en heures,
+  // et une heure de retard sur une suppression reste une suppression.
   @Cron(CronExpression.EVERY_HOUR)
-  async purger(): Promise<void> {
-    await this.store.purgerExpirees();
+  async run(): Promise<void> {
+    await this.store.purgeExpired();
   }
 }
 ```
 
-Cela suppose d'exposer `purgerExpirees()` sur `SessionStore` — aujourd'hui `purger()` est privée. **À réévaluer si l'API tourne en plusieurs instances** : il faudra garantir qu'une seule exécute la purge.
+Cela suppose d'exposer `purgeExpired()` sur `SessionStore` — aujourd'hui `purger()` est privée, et son nom est un verbe français, ce que la convention de nommage interdit (`purge`). Le renommage se fera en même temps.
+
+**À réévaluer si l'API tourne un jour en plusieurs instances** : il faudra garantir qu'une seule exécute la purge, sinon les tâches se déclenchent en parallèle sur les mêmes lignes.
 
 </details>
 
 ## Décision 10 — Migrations
 
-- `prisma migrate dev` en local uniquement ; `prisma migrate deploy` au déploiement — c'est déjà ce que font les scripts `db:migrate` et `db:deploy`.
+- `prisma migrate dev` en local uniquement ; `prisma migrate deploy` au déploiement — ce que font déjà les scripts `db:migrate` et `db:deploy`.
 - Une migration fait partie de la PR qui en a besoin, jamais d'une PR de rattrapage.
-- Une migration qui supprime ou renomme une colonne se fait **en deux temps**.
+- **Une suppression ou un renommage de colonne se fait en deux PR successives.**
 
-<details><summary><strong>Exemple — pourquoi deux temps</strong></summary>
+<details><summary><strong>Exemple — pourquoi deux temps, et ce qui casse sinon</strong></summary>
 
-Renommer `cree_via` en `origine` d'un seul coup casse la production entre le déploiement de la migration et celui du code — et interdit tout retour arrière.
+**Le contexte** : l'API applique ses migrations **au démarrage du conteneur**, avant de servir. Pendant un déploiement, il existe donc forcément un instant où **la nouvelle base rencontre l'ancien code** — le temps que le conteneur redémarre, et bien plus longtemps si le déploiement échoue et qu'on revient en arrière.
 
-| PR  | Migration                                             | Code                                          |
-| --- | ----------------------------------------------------- | --------------------------------------------- |
-| 1   | Ajouter `origine`, recopier les valeurs de `cree_via` | Écrire dans les deux colonnes, lire `origine` |
-| 2   | Supprimer `cree_via`                                  | Ne plus écrire que `origine`                  |
+**En un seul temps** — on renomme `cree_via` en `origine` dans la même PR :
 
-Entre les deux, l'ancienne et la nouvelle version du code fonctionnent toutes les deux : le retour arrière reste possible.
+| Moment                    | Base       | Code qui tourne             | Résultat                                                        |
+| ------------------------- | ---------- | --------------------------- | --------------------------------------------------------------- |
+| T0                        | `cree_via` | ancien                      | ✅                                                              |
+| T1 — migration appliquée  | `origine`  | **ancien**, encore en place | ❌ `column "cree_via" does not exist` : chaque connexion échoue |
+| T2 — nouveau code démarré | `origine`  | nouveau                     | ✅                                                              |
+
+La fenêtre T1 est courte, mais elle existe à chaque déploiement. Et surtout : si le nouveau code plante au démarrage, **on ne peut plus revenir à l'ancien**, puisque sa colonne n'existe plus. On est coincé en avant.
+
+**En deux temps** — la colonne ajoutée avant, l'ancienne retirée après :
+
+| PR  | Migration                                | Code                                            | Retour arrière possible ?                 |
+| --- | ---------------------------------------- | ----------------------------------------------- | ----------------------------------------- |
+| 1   | Ajouter `origine`, y recopier `cree_via` | Écrit dans **les deux** colonnes, lit `origine` | ✅ l'ancien code trouve encore `cree_via` |
+| 2   | Supprimer `cree_via`                     | N'écrit plus que `origine`                      | ✅ le code de la PR 1 fonctionne encore   |
+
+À aucun moment une version du code ne rencontre une base qu'elle ne sait pas lire. C'est la même raison qui fait qu'on ajoute une colonne `NOT NULL` en trois étapes : ajouter en nullable, remplir, contraindre.
 
 </details>
 
@@ -403,16 +499,16 @@ Entre les deux, l'ancienne et la nouvelle version du code fonctionnent toutes le
 
 <details><summary><strong>Exemple — ce que la décision 2 rend possible</strong> (proposition)</summary>
 
-Parce que `SessionService` dépend de `SessionStore` et non de Prisma, son test n'a pas besoin de base :
+`SessionService` dépend de `SessionStore`, pas de Prisma : son test n'a besoin d'aucune base.
 
 ```ts
-class SessionStoreEnMemoire extends SessionStore {
+class InMemorySessionStore extends SessionStore {
   private readonly sessions = new Map<string, UserSession>();
   // … implémentation triviale
 }
 
 const module = await Test.createTestingModule({
-  providers: [SessionService, { provide: SessionStore, useClass: SessionStoreEnMemoire }],
+  providers: [SessionService, { provide: SessionStore, useClass: InMemorySessionStore }],
 }).compile();
 
 it("refuse une session expirée", async () => {
@@ -420,7 +516,7 @@ it("refuse une session expirée", async () => {
 });
 ```
 
-Sans la décision 2, il faudrait simuler `PrismaService` et ses méthodes — un test qui parle de `deleteMany` au lieu de parler de sessions.
+**La comparaison qui justifie la décision 2** : sans repository, ce test devrait simuler `PrismaService` et ses méthodes — `findUnique`, `deleteMany`, leurs arguments exacts. Il parlerait de Prisma au lieu de parler de sessions, et casserait au premier `include` ajouté, sans qu'aucun comportement n'ait changé.
 
 </details>
 
@@ -450,13 +546,13 @@ Pas de ports et adaptateurs partout — le repository de la décision 2 est la s
 
 ## Questions à trancher
 
-1. Les trois couches et les deux règles de frontière, validées telles quelles ?
-2. Repository par défaut dans chaque module qui touche la base : validé, avec les trois règles qui le rendent utile ?
-3. Contrat de route partagé dans `packages/api-contract` : validé ? Qui l'amorce, et sur quelle première route métier ?
+1. Les trois couches et les huit principes de frontière : validés tels quels ?
+2. Repository par défaut, avec ses cinq principes : validé ?
+3. Contrat de route dans `packages/api-contract` : qui l'amorce, et sur quelle première route métier ?
 4. Pipe maison maintenant, remplacé à la montée en NestJS 12 — ou on attend la montée de version ?
 5. OpenAPI réservé à un éventuel client tiers : validé ?
-6. Journalisation : `nestjs-pino`, et qui écrit la liste des champs à masquer ?
-7. Limitation de débit : quelles valeurs, et dans quelle PR ?
-8. Purge planifiée **en plus** de la purge opportuniste existante : nécessaire, ou la minimisation s'accommode-t-elle d'une suppression au prochain trafic ?
-9. Reprise de `UtilisateursService` derrière un repository — en gardant son SQL, qui est justifié, mais en le commentant : qui la prend ?
+6. Journalisation : `nestjs-pino` est techniquement sans contrainte côté hébergeur ; reste à savoir **si un collecteur lit les journaux en aval** et attend un format. Qui pose la question à Cegedim ?
+7. Limitation de débit : quelles valeurs, et qui vérifie la confiance au proxy (`trust proxy`) ?
+8. Purge planifiée **en plus** de la purge opportuniste : nécessaire pour la minimisation, ou acceptable en l'état ?
+9. Reprise de `UtilisateursService` derrière un repository, **en gardant son SQL** et en le commentant : qui la prend ?
 10. Tests : Vitest + supertest, base jetable, et à quel moment les rendre bloquants en CI ?

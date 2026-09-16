@@ -76,7 +76,13 @@ Une vue reçoit des props et rend du JSX. Pas de store, pas d'effet, pas de `fet
 
 `resultats/components/ScrollToTopButton.tsx` ressemble à un bouton ; il abonne en réalité un écouteur de défilement via `useSyncExternalStore`, et tient un état de focus.
 
-Conséquence concrète : on ne peut pas l'afficher dans un test ou une galerie de composants sans simuler le défilement de la fenêtre, et on ne peut pas le réutiliser ailleurs sans embarquer son écouteur. La sortie est la même qu'en 1.2 : un `useRetourEnHaut()` d'un côté, un bouton bête de l'autre — ou, mieux, réutiliser `BackToTop` de `packages/ui` (voir 4.4).
+**Pourquoi c'est un problème, alors que le composant fonctionne** :
+
+- **Il ne s'affiche pas hors de son contexte** : impossible de le rendre dans un test ou une galerie sans simuler le défilement de la fenêtre.
+- **Il ne se réutilise pas** : le prendre ailleurs, c'est embarquer son écouteur, même sur un écran qui n'en a pas besoin.
+- **Il cache son coût** : rien dans son nom ni dans ses props ne dit qu'il s'abonne à un événement global. Le lecteur suivant le duplique en croyant copier un bouton.
+
+La sortie est la même qu'en 1.2 : un `useBackToTop()` d'un côté, un bouton bête de l'autre — ou, mieux, réutiliser `BackToTop` de `packages/ui`, qui répond déjà au besoin (voir 4.4).
 
 </details>
 
@@ -97,9 +103,13 @@ export function ResultsView({ resultats, recapEntries, onEdit, onRestart }: Resu
 }
 ```
 
-`ResultsView` se rend dans un test avec trois résultats fabriqués, sans store, sans URL, sans `sessionStorage`.
+**Ce que le découpage achète, concrètement :**
 
-**Ce que ça n'est pas** : une couche à poser partout. Un écran sans logique n'a pas besoin d'enveloppe — `OutcomeScreen` est très bien tel quel.
+- **La vue se rend partout.** `ResultsView` s'affiche dans un test avec trois résultats fabriqués, sans store, sans URL, sans `sessionStorage` — et demain dans une galerie de composants, ou dans une capture pour la PO.
+- **Le hook se teste sans rendu.** Les règles « quels résultats, dans quel ordre » se vérifient en appelant une fonction, pas en montant un arbre React.
+- **Les deux changent séparément.** Une refonte visuelle ne touche pas le hook ; un changement de règle métier ne touche pas la vue. C'est la même idée que les trois couches de l'API : une modification, un seul fichier concerné.
+
+**Ce que ça n'est pas** : une couche à poser partout. Un écran sans logique n'a pas besoin d'enveloppe — `OutcomeScreen` est très bien tel quel. Le motif se déclenche sur le seuil de 1.2, pas par principe.
 
 </details>
 
