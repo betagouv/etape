@@ -32,6 +32,49 @@ export const nextConfig = defineConfig([
       "@typescript-eslint/explicit-module-boundary-types": "error",
     },
   },
+  /*
+   * `docs/conventions/react.md` et `accessibilite.md` : ce que les outils
+   * savent vérifier seuls passe en erreur.
+   *
+   * Les règles `jsx-a11y` sont activées par leur nom plutôt que par le preset
+   * recommandé du plugin : celui-ci arrive par `eslint-config-next` et n'est
+   * pas une dépendance déclarée d'`@etape/eslint-config`. Les activer une à
+   * une évite de l'ajouter en dépendance directe, et dit exactement ce qu'on
+   * impose. `eslint-config-next` n'en active que six, toutes en avertissement.
+   */
+  {
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      "react-hooks/exhaustive-deps": "error",
+
+      // Nom accessible et libellés
+      "jsx-a11y/alt-text": "error",
+      "jsx-a11y/anchor-has-content": "error",
+      "jsx-a11y/heading-has-content": "error",
+      "jsx-a11y/label-has-associated-control": "error",
+      "jsx-a11y/control-has-associated-label": "error",
+      "jsx-a11y/iframe-has-title": "error",
+      "jsx-a11y/html-has-lang": "error",
+
+      // ARIA valide
+      "jsx-a11y/aria-props": "error",
+      "jsx-a11y/aria-proptypes": "error",
+      "jsx-a11y/aria-role": "error",
+      "jsx-a11y/aria-unsupported-elements": "error",
+      "jsx-a11y/role-has-required-aria-props": "error",
+      "jsx-a11y/role-supports-aria-props": "error",
+      "jsx-a11y/no-redundant-roles": "error",
+
+      // Clavier et interactions
+      "jsx-a11y/anchor-is-valid": "error",
+      "jsx-a11y/click-events-have-key-events": "error",
+      "jsx-a11y/no-noninteractive-element-interactions": "error",
+      "jsx-a11y/no-static-element-interactions": "error",
+      "jsx-a11y/interactive-supports-focus": "error",
+      "jsx-a11y/tabindex-no-positive": "error",
+      "jsx-a11y/no-autofocus": "error",
+    },
+  },
   // Doit rester en dernier : neutralise les règles en conflit avec Prettier.
   eslintConfigPrettier,
   // Reprend les ignores par défaut d'eslint-config-next.

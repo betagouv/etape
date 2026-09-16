@@ -39,6 +39,15 @@ Les règles détaillées se chargent depuis `.claude/rules/` quand un fichier co
 
 Les deux documents sont au statut « Proposé » : les questions ouvertes y sont listées en fin de page.
 
+## Pratiques de code front
+
+- **React** (`docs/conventions/react.md`) : le métier reste dans `domain/`, la logique d'écran dans un hook, la vue pure ; `useEffect` réservé au monde extérieur ; six props maximum ; forage limité à deux niveaux.
+- **Design system** (`docs/conventions/react.md`, section 4) : aucune couleur hors tokens ; on **étend par variante `cva`**, on ne modifie pas par `className` — celui d'une app ne fait que de la mise en page ; on cherche dans `packages/ui` avant d'écrire une primitive. Pour ajouter ou étendre un composant : skill `composant-ui`.
+
+## Outillage des conventions
+
+`docs/conventions/outillage-agent.md` dit où chaque convention est portée et ce qui la vérifie : ESLint et CI pour ce qu'une machine décide seule, `.claude/rules/` pour le contexte automatique, skills et sous-agents pour les procédures, `docs/conventions/` pour le raisonnement. **Une convention vérifiable automatiquement descend au niveau de la CI** : c'est le seul niveau qui couvre aussi les développeurs qui n'utilisent pas Claude Code.
+
 ## Revue de code
 
-Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage et d'accessibilité, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation.
+Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage et d'accessibilité, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation. Pour un diff front, il s'appuie sur le sous-agent `revue-front`.
