@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
 import { SkipLinks } from "@etape/ui/components/skip-links";
+import { Toaster } from "@etape/ui/components/sonner";
 import "./globals.css";
 
 const openSans = Open_Sans({
@@ -40,6 +41,7 @@ export default function RootLayout({
           <div id="contenu" tabIndex={-1} className="flex flex-1 flex-col">
             {children}
           </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
