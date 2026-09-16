@@ -341,20 +341,32 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
 </details>
 
-## Décision 7 — Journalisation
+## Décision 7 — Journalisation, suivi des erreurs, et où les consulter
 
-**L'état actuel** : le logger par défaut de NestJS, qui écrit du texte coloré, sans identifiant de requête ni structure exploitable.
+**L'état actuel** : le logger par défaut de NestJS, qui écrit du texte coloré, sans identifiant de requête ni structure exploitable. Aucun suivi des erreurs.
 
-### Est-ce compatible avec l'hébergement Cegedim ?
+### Deux besoins distincts, qu'il ne faut pas confondre
 
-Oui, et sans rien demander à l'hébergeur. **L'API tourne dans un conteneur Docker**, et `docker-compose.prod.yml` ne configure aucun pilote de journalisation : les journaux partent donc sur la **sortie standard**, où Docker les collecte (`docker compose logs`). C'est exactement ce que fait `pino` : il écrit du JSON sur la sortie standard, une ligne par événement. Aucun fichier à créer, aucune rotation à gérer, aucun port à ouvrir, aucun service tiers.
+- **Le suivi des erreurs** répond à « qu'est-ce qui a cassé, et dans quel contexte ». C'est **Sentry**, brique retenue par l'équipe : `@sentry/nestjs` (10.74.0) côté API, `@sentry/browser` côté front ([`stack-front.md`](./stack-front.md), décision 11).
+- **La journalisation** répond à « que s'est-il passé pendant cette requête, même quand rien n'a cassé » : un 404 inattendu, une purge qui tourne, une connexion refusée par Keycloak. C'est **pino**, via `nestjs-pino` (5.2.0).
 
-Deux points à vérifier avec l'exploitant, qui ne changent pas le choix mais sa configuration :
+### Écrire les journaux ne suffit pas : il faut pouvoir les interroger
 
-- **Un collecteur lit-il ces journaux en aval** (Elastic, Loki, un agent Cegedim) et attend-il un format ou des champs précis ? Rien dans le dépôt ne le documente.
-- **Quelqu'un les lit-il à l'œil** en exploitation ? Le JSON est fait pour les machines ; `pino-pretty` rend la lecture humaine agréable, mais il ne doit tourner **qu'en développement**, jamais en production.
+Le besoin exprimé est de **retrouver toutes les lignes d'un même `correlationId` dans une interface**. `pino` écrit du JSON sur la sortie standard, que Docker collecte — mais `docker compose logs` ne sait que filtrer par date et chercher du texte. Sans destination consultable, la corrélation reste théorique.
 
-**Proposition** : `nestjs-pino` (5.2.0, sur `pino` 10.3.1).
+| Option                                             | Ce qu'il faut faire tourner           | Recherche par `correlationId`                        | Ce que ça coûte                                    |
+| -------------------------------------------------- | ------------------------------------- | ---------------------------------------------------- | -------------------------------------------------- |
+| **A. Sentry Logs** (`pino-sentry-transport` 1.6.0) | Rien de plus : Sentry est déjà retenu | Oui, par attribut, à côté de l'erreur correspondante | Les journaux applicatifs partent chez un tiers     |
+| **B. Loki + Grafana** (`pino-loki` 3.0.0)          | Deux conteneurs de plus dans la pile  | Oui, en LogQL                                        | Tout reste chez l'hébergeur ; une pile à exploiter |
+| **C. `docker compose logs`**                       | Rien                                  | **Non** — recherche textuelle seulement              | Gratuit, mais ne répond pas au besoin              |
+
+**Proposition : A.** Sentry étant déjà retenu pour les erreurs, y envoyer aussi les journaux évite d'introduire une seconde brique et met au même endroit l'erreur et les lignes qui l'ont précédée — recherchables par le même `correlationId`. **B** reste la réponse si l'équipe refuse que des journaux applicatifs sortent de l'hébergement, ce qui est un arbitrage légitime pour un service public.
+
+**Ce qui rend A acceptable**, et qu'il faut donc tenir : la règle 1 ci-dessous. Des journaux sans donnée personnelle peuvent partir chez un tiers ; des journaux qui contiennent un courriel, non.
+
+### Le fil qui relie tout : un seul identifiant
+
+Le même `correlationId` doit apparaître à quatre endroits : dans le corps d'erreur renvoyé au navigateur (décision 6), dans chaque ligne de journal de la requête, en étiquette sur l'événement Sentry côté API, et en étiquette côté front. C'est ce qui permet, d'un signalement utilisateur, de remonter à la requête exacte — et inversement.
 
 ### Les principes
 
@@ -551,8 +563,9 @@ Pas de ports et adaptateurs partout — le repository de la décision 2 est la s
 3. Contrat de route dans `packages/api-contract` : qui l'amorce, et sur quelle première route métier ?
 4. Pipe maison maintenant, remplacé à la montée en NestJS 12 — ou on attend la montée de version ?
 5. OpenAPI réservé à un éventuel client tiers : validé ?
-6. Journalisation : `nestjs-pino` est techniquement sans contrainte côté hébergeur ; reste à savoir **si un collecteur lit les journaux en aval** et attend un format. Qui pose la question à Cegedim ?
-7. Limitation de débit : quelles valeurs, et qui vérifie la confiance au proxy (`trust proxy`) ?
-8. Purge planifiée **en plus** de la purge opportuniste : nécessaire pour la minimisation, ou acceptable en l'état ?
-9. Reprise de `UtilisateursService` derrière un repository, **en gardant son SQL** et en le commentant : qui la prend ?
-10. Tests : Vitest + supertest, base jetable, et à quel moment les rendre bloquants en CI ?
+6. Journalisation : **où les journaux sont-ils consultables** ? Sentry Logs, qui évite une seconde brique mais envoie les journaux applicatifs chez un tiers — ou Loki et Grafana dans la pile, souverains mais à exploiter ?
+7. Sentry pour le suivi des erreurs (`@sentry/nestjs`) : SaaS en région européenne ou auto-hébergé ? Et qui écrit la liste des champs à masquer, commune au logger et à Sentry ?
+8. Limitation de débit : quelles valeurs, et qui vérifie la confiance au proxy (`trust proxy`) ?
+9. Purge planifiée **en plus** de la purge opportuniste : nécessaire pour la minimisation, ou acceptable en l'état ?
+10. Reprise de `UtilisateursService` derrière un repository, **en gardant son SQL** et en le commentant : qui la prend ?
+11. Tests : Vitest + supertest, base jetable, et à quel moment les rendre bloquants en CI ?
