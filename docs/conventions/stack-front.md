@@ -209,21 +209,21 @@ export async function callApi<R extends RouteDefinition>(
   route: R,
   options: { params?: RouteParams<R>; query?: RouteQuery<R>; body?: RouteBody<R> } = {},
 ): Promise<RouteResponse<R>> {
-  const reponse = await fetch(`${API_BASE_URL}${buildRoutePath(route, options)}`, {
+  const response = await fetch(`${API_BASE_URL}${buildRoutePath(route, options)}`, {
     method: route.method,
     credentials: "include", // le cookie de session, jamais un jeton
     headers: options.body ? { "content-type": "application/json" } : undefined,
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  if (reponse.status === 401) {
+  if (response.status === 401) {
     redirectToLogin();
     throw new ApiError("Session expirée", 401);
   }
 
-  if (!reponse.ok) throw await ApiError.from(reponse);
+  if (!response.ok) throw await ApiError.from(response);
 
-  return route.response.parse(await reponse.json());
+  return route.response.parse(await response.json());
 }
 ```
 
@@ -233,7 +233,7 @@ export async function callApi<R extends RouteDefinition>(
 - Le traitement du 401 au même endroit — sinon chaque écran invente sa façon de réagir à une session expirée.
 - `route.response.parse(...)` — la réponse est **validée à la frontière**. Une API qui change sans prévenir échoue ici, avec un message qui nomme le champ fautif, au lieu de produire un `undefined` qui plantera trois composants plus loin, au milieu d'un rendu, sans indice sur l'origine.
 
-**Le nom** : `callApi`, et non `appelApi`. La convention réserve le français aux noms métier ; une fonction d'appel HTTP est purement technique, donc anglaise — au même titre que `database` ou `interceptor`.
+**Le nom** : `callApi`, et surtout pas sa traduction française. La convention réserve le français aux noms métier ; une fonction d'appel HTTP est purement technique, donc anglaise — au même titre que `database` ou `interceptor`.
 
 </details>
 

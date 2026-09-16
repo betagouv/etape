@@ -42,10 +42,10 @@ Ce que la base stocke et ce que l'API expose sont deux choses différentes, qui 
 ```ts
 // Non : tout ce que la table contient part vers le navigateur,
 // y compris ce qu'on y ajoutera demain.
-return this.utilisateurRepository.findById(id);
+return this.accountRepository.findById(id);
 
 // Oui : une fonction décide de ce qui sort.
-return toUtilisateurResponse(await this.utilisateurRepository.findById(id));
+return toAccountResponse(await this.accountRepository.findById(id));
 ```
 
 **Le jour où ça compte** : on ajoute une colonne `note_instructeur` pour un besoin interne. Avec la première forme, elle apparaît dans l'API le jour même, sans que personne ne l'ait voulu.
@@ -194,11 +194,11 @@ async function onSubmit(valeurs: DepotDossier) {
   try {
     const dossier = await deposer.mutateAsync(valeurs);
     router.push(`/dossier/${dossier.id}`);
-  } catch (erreur) {
+  } catch (error) {
     // 409 : le service a refusé. Le message vient de l'API, pas d'une règle
     // réécrite ici — sinon les deux finiraient par diverger.
-    if (erreur instanceof ApiError && erreur.statut === 409) {
-      form.setError("root", { message: erreur.message });
+    if (error instanceof ApiError && error.statut === 409) {
+      form.setError("root", { message: error.message });
     }
   }
 }
@@ -306,8 +306,8 @@ Ce que cette fonction protège : le jour où la table gagne une colonne — un j
 Le type que Prisma génère porte le schéma : des colonnes techniques, des noms de colonnes, des relations chargées ou non selon l'`include`, et `null` partout où la base l'autorise.
 
 ```ts
-// Ce que Prisma génère pour la table `utilisateur`
-type Utilisateur = {
+// Ce que Prisma génère pour la table `account`
+type Account = {
   id: string;
   keycloakSub: string;
   email: string | null;
@@ -324,8 +324,8 @@ type Utilisateur = {
 Le type du module porte le besoin métier. Il ne dit rien des colonnes techniques, et il ne laisse pas le service se demander ce que `creeVia` signifie :
 
 ```ts
-// utilisateurs/utilisateur.types.ts — ce que le reste du code manipule
-export interface Utilisateur {
+// account/account.types.ts — ce que le reste du code manipule
+export interface Account {
   id: string;
   keycloakSub: string;
   email?: string;
@@ -338,8 +338,8 @@ export interface Utilisateur {
 Et la traduction vit dans le repository, à un seul endroit :
 
 ```ts
-// utilisateurs/utilisateur.mapper.ts
-export function toUtilisateur(ligne: UtilisateurPrisma): Utilisateur {
+// account/account.mapper.ts
+export function toAccount(ligne: AccountPrisma): Account {
   return {
     id: ligne.id,
     keycloakSub: ligne.keycloakSub,
@@ -356,11 +356,11 @@ export function toUtilisateur(ligne: UtilisateurPrisma): Utilisateur {
 
 - **Les `null` de la base deviennent des `undefined` optionnels**, ce qui évite au service de gérer les deux absences.
 - **Le service ne dépend plus du schéma** : renommer `cree_via` en `origine` (décision 10) ne touche que le mapper.
-- **Le test du service se lit** : on lui donne un `Utilisateur` du module, pas un objet Prisma avec dix champs dont huit sans rapport.
+- **Le test du service se lit** : on lui donne un `Account` du module, pas un objet Prisma avec dix champs dont huit sans rapport.
 
-**Le piège à éviter** : écrire `export type Utilisateur = Prisma.Utilisateur` pour « gagner du temps ». La frontière existe alors sur le papier, et chaque changement de schéma se propage jusqu'aux contrôleurs.
+**Le piège à éviter** : écrire `export type Account = Prisma.Account` pour « gagner du temps ». La frontière existe alors sur le papier, et chaque changement de schéma se propage jusqu'aux contrôleurs.
 
-> **Avertissement de nommage** : cet exemple reprend le nom du module existant, `utilisateurs`, qui est lui-même en écart avec [`nommage.md`](./nommage.md). La convention y est explicite : le compte authentifié se nomme **`account`**, jamais `utilisateur`, `compte` ni `user` ; `beneficiaire`, `instructeur` et `conseiller` désignent les rôles métier. Le module, le modèle Prisma `Utilisateur` et la table `utilisateur` sont donc à renommer — un chantier qui touche une migration, et qui mérite sa propre PR. Il n'est pas relevé par `audit-nommage.md`, qui a été écrit avant l'arrivée de l'API.
+> **Note de nommage** : cet exemple est écrit avec le nom **conforme**, `account`. Dans le code d'aujourd'hui, le module s'appelle `utilisateurs`, le modèle Prisma `Utilisateur` et la table `utilisateur` — un écart avec [`nommage.md`](./nommage.md), qui est explicite : le compte authentifié se nomme `account`, jamais `utilisateur`, `compte` ni `user` ; `beneficiaire`, `instructeur` et `conseiller` désignent les rôles métier. Le renommage touche une migration et mérite sa propre PR. Il n'est pas relevé par `audit-nommage.md`, écrit avant l'arrivée de l'API.
 
 </details>
 
@@ -556,15 +556,15 @@ Avec le contrat de la décision 3, le front a les types : le document OpenAPI ne
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
-    const reponse = host.switchToHttp().getResponse<Response>();
-    const requete = host.switchToHttp().getRequest<Request>();
+    const response = host.switchToHttp().getResponse<Response>();
+    const request = host.switchToHttp().getRequest<Request>();
 
     const isHttp = exception instanceof HttpException;
 
-    reponse.status(isHttp ? exception.getStatus() : 500).json({
+    response.status(isHttp ? exception.getStatus() : 500).json({
       code: isHttp ? exception.name : "ERREUR_INTERNE",
-      message: isHttp ? exception.message : "Une erreur est survenue.",
-      correlationId: requete.id,
+      message: isHttp ? exception.message : "Une error est survenue.",
+      correlationId: request.id,
     });
   }
 }
@@ -629,7 +629,7 @@ LoggerModule.forRoot({
 });
 ```
 
-**Pourquoi le masquage par configuration plutôt que par discipline** : un `logger.info({ utilisateur })` écrit de bonne foi dans six mois ferait fuiter un courriel dans les journaux. Avec `redact`, le champ est censuré quel que soit l'endroit d'où il vient. C'est la différence entre une règle qu'on respecte et une règle qu'on ne peut pas enfreindre.
+**Pourquoi le masquage par configuration plutôt que par discipline** : un `logger.info({ account })` écrit de bonne foi dans six mois ferait fuiter un courriel dans les journaux. Avec `redact`, le champ est censuré quel que soit l'endroit d'où il vient. C'est la différence entre une règle qu'on respecte et une règle qu'on ne peut pas enfreindre.
 
 </details>
 
@@ -772,7 +772,8 @@ src/
   config/                          ← technique : schéma d'environnement
   base-de-donnees/                 ← technique : PrismaService (module @Global)
   auth/                            ← technique : OIDC, session, garde
-  utilisateurs/                    ← métier
+  account/                         ← technique : le compte authentifié, quel que soit le rôle
+                                     (s'appelle `utilisateurs/` aujourd'hui — à renommer)
   dossier/                         ← métier, à venir
     dossier.controller.ts          ← HTTP
     dossier.service.ts             ← règles
@@ -800,5 +801,5 @@ Pas de ports et adaptateurs partout — le repository de la décision 2 est la s
 7. Sentry pour le suivi des erreurs (`@sentry/nestjs`) : SaaS en région européenne ou auto-hébergé ? Et qui écrit la liste des champs à masquer, commune au logger et à Sentry ?
 8. Limitation de débit : quelles valeurs, et qui vérifie la confiance au proxy (`trust proxy`) ?
 9. Purge planifiée **en plus** de la purge opportuniste : nécessaire pour la minimisation, ou acceptable en l'état ?
-10. Reprise de `UtilisateursService` derrière un repository, **en gardant son SQL** et en le commentant : qui la prend ?
+10. Reprise de `UtilisateursService` derrière un repository, **en gardant son SQL** et en le commentant — et son renommage en `account`, qui touche une migration : qui les prend, et dans quel ordre ?
 11. Tests : Vitest + supertest, base jetable, et à quel moment les rendre bloquants en CI ?
