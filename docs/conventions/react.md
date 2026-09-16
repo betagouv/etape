@@ -5,57 +5,129 @@
 
 Ce document dit **comment écrire le code**, là où [`stack-front.md`](./stack-front.md) dit **quels outils on utilise**. Le nommage relève de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md).
 
-**Comment le lire** : chaque pratique porte son statut dans le dépôt — **déjà tenu** (on l'acte pour ne pas la perdre) ou **écart** (du code existant ne la respecte pas) — et ce qui la vérifie : le lint, la revue, ou rien.
+**Comment le lire** : chaque pratique porte son statut — **déjà tenu** (on l'acte pour ne pas la perdre) ou **écart** (du code existant ne la respecte pas) — et ce qui la vérifie : le lint, la revue, ou rien. Les exemples sont dans des blocs dépliables, et viennent du code réel du dépôt sauf mention contraire.
 
 ## 1. Où vit la logique
 
 ### 1.1 Le métier vit hors des composants — _déjà tenu_
 
-Les règles métier sont des fonctions pures dans `domain/`, sans React : `selection.ts`, `validation.ts`, `flow.ts`, `catalogue.ts`. Un composant les appelle, ne les réécrit pas.
+Les règles métier sont des fonctions pures dans `domain/`, sans React. Un composant les appelle, ne les réécrit pas.
 
-C'est déjà le cas, et massivement : `questionnaire/domain/questions.ts` fait 441 lignes quand le plus gros composant du dépôt en fait 175. C'est ce qui rendra les tests possibles sans monter de rendu (voir `stack-front.md`, décision 8).
+C'est déjà le cas, et massivement : `questionnaire/domain/questions.ts` fait 441 lignes quand le plus gros composant du dépôt en fait 175.
+
+<details><summary><strong>Exemple — une règle métier se lit comme le ticket</strong></summary>
+
+`resultats/domain/catalogue.ts` : chaque carte porte sa condition d'affichage, écrite avec le vocabulaire de la PO.
+
+```ts
+{
+  id: "cep",
+  categorie: "interlocuteur",
+  nom: "CEP régional",
+  // Absent du parcours demandeur d'emploi (S7) : France Travail y est
+  // l'opérateur CEP, la carte ferait doublon et enverrait au mauvais guichet.
+  quand: (p) => salarie(p) || agentPublic(p) || sansEmploi(p) || independant(p),
+}
+```
+
+Aucun composant ne sait pourquoi le CEP n'apparaît pas à un demandeur d'emploi : il affiche ce que `selectResultats` lui donne. C'est ce qui rend la règle testable sans monter de rendu.
+
+</details>
 
 ### 1.2 La logique d'écran vit dans un hook — _écart_
 
 Un composant qui réunit ces trois traits doit être découpé : il appelle **plus d'un hook d'état**, il **manipule le DOM** (focus, mesure, écoute), et il **aiguille** le rendu entre plusieurs écrans.
 
-L'exemple à ne pas suivre est `questionnaire/components/FlowShell.tsx` : il combine `useFlow` et `useFlowNavigation`, gère le focus du titre dans un effet, tient un compteur de tentatives échouées, et choisit entre trois écrans. La logique irait dans un `useFlowShell()` qui renvoie ce que la vue affiche ; le composant deviendrait une vue.
+<details><summary><strong>Exemple — <code>FlowShell</code>, le cas à découper</strong></summary>
+
+Ce que le composant fait aujourd'hui, en 107 lignes (`questionnaire/components/FlowShell.tsx`) :
+
+```tsx
+export function FlowShell() {
+  const { state, hydrated, dispatch } = useFlow(); // 1er hook d'état
+  const nav = useFlowNavigation(); // 2e hook d'état
+  const [attempt, setAttempt] = useState(0); // compteur de tentatives
+  const [visitedQuestionId, setVisitedQuestionId] = useState(nav.question?.id);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  if (nav.question?.id !== visitedQuestionId) {
+    /* dérivation pendant le rendu */
+  }
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [nav.question?.id]); // manipulation du DOM
+
+  if (nav.isResults) return <ResultsScreen … />; // aiguillage
+  if (nav.outcome) return <OutcomeScreen … />;
+  return <QuestionScreen … />;
+}
+```
+
+La cible : un `useFlowShell()` qui renvoie `{ ecran, question, attempt, headingRef, … }`, et un composant qui ne fait plus qu'afficher. Le hook devient testable sans rendu ; le composant devient lisible d'un coup d'œil.
+
+</details>
 
 ### 1.3 Une vue est pure par défaut — _déjà tenu_
 
 Une vue reçoit des props et rend du JSX. Pas de store, pas d'effet, pas de `fetch`. Les bons exemples existent déjà : `OptionRow`, `FieldHeader`, `CategorieTag`, `ResultCard`, `EmptyResults`, `OutcomeScreen`.
 
-Le contre-exemple est `resultats/components/ScrollToTopButton.tsx` : il a l'apparence d'une vue mais abonne un écouteur de défilement. Une vue qui cache un abonnement ne se teste pas et ne se réutilise pas.
+<details><summary><strong>Contre-exemple — une vue qui cache un abonnement</strong></summary>
+
+`resultats/components/ScrollToTopButton.tsx` ressemble à un bouton ; il abonne en réalité un écouteur de défilement via `useSyncExternalStore`, et tient un état de focus.
+
+Conséquence concrète : on ne peut pas l'afficher dans un test ou une galerie de composants sans simuler le défilement de la fenêtre, et on ne peut pas le réutiliser ailleurs sans embarquer son écouteur. La sortie est la même qu'en 1.2 : un `useRetourEnHaut()` d'un côté, un bouton bête de l'autre — ou, mieux, réutiliser `BackToTop` de `packages/ui` (voir 4.4).
+
+</details>
 
 ### 1.4 L'enveloppe appelle le hook, la vue affiche — _à généraliser_
 
-Le motif à appliquer quand 1.2 se déclenche :
+<details><summary><strong>Exemple — le motif, appliqué à l'écran de résultats</strong> (proposition)</summary>
 
 ```tsx
-// resultats/components/ResultsScreen.tsx — l'enveloppe
+// L'enveloppe : elle sait d'où viennent les données.
 export function ResultsScreen(props: ResultsScreenProps) {
   const { resultats, recapEntries } = useResultats(props.answers);
   return <ResultsView resultats={resultats} recapEntries={recapEntries} {...props} />;
 }
+
+// La vue : elle ne sait rien, donc elle se rend n'importe où.
+export function ResultsView({ resultats, recapEntries, onEdit, onRestart }: ResultsViewProps) {
+  return <main>…</main>;
+}
 ```
 
-La vue est exportée à part : elle se rend dans un test avec des données fabriquées, sans store ni URL.
+`ResultsView` se rend dans un test avec trois résultats fabriqués, sans store, sans URL, sans `sessionStorage`.
 
 **Ce que ça n'est pas** : une couche à poser partout. Un écran sans logique n'a pas besoin d'enveloppe — `OutcomeScreen` est très bien tel quel.
 
+</details>
+
 ## 2. État et effets
 
-### 2.1 Rien qui soit dérivable ne devient un état — _déjà tenu_
+### 2.1 Rien qui soit dérivable ne devient un état — _déjà tenu, vérifié par le lint_
 
-Ce qui se calcule à partir des props ou d'un autre état se calcule pendant le rendu. `ResultsScreen` le fait bien : `buildProfil` puis `selectResultats`, mémoïsés, jamais stockés.
+Ce qui se calcule à partir des props ou d'un autre état se calcule pendant le rendu.
 
-**Exception documentée** : le dépôt utilise deux fois la dérivation par comparaison pendant le rendu (`FlowShell` pour `visitedQuestionId`, `MonthYearField` pour `previousValue`). C'est un motif React légitime, qui évite un rendu supplémentaire, mais il surprend à la lecture : il doit porter le commentaire qui l'explique.
+**Exception documentée** : la dérivation par comparaison pendant le rendu, utilisée deux fois dans le dépôt (`FlowShell` pour `visitedQuestionId`, `MonthYearField` pour `previousValue`). C'est un motif React légitime, qui évite un rendu supplémentaire, mais il surprend à la lecture : **il doit porter le commentaire qui l'explique**.
 
 ### 2.2 `useEffect` sert à parler au monde extérieur — _déjà tenu_
 
-Focus, `window.history`, abonnement, minuteur. Les cinq effets du dépôt sont dans ce cas : trois déplacent le focus, un écrit l'URL, un écoute un `pointerdown`.
+<details><summary><strong>Exemple — les cinq effets du dépôt, et ce qu'ils font</strong></summary>
 
-Ce qui n'est **jamais** un effet : dériver un état, charger des données de l'API (`stack-front.md`, décisions 3 et 5), réagir à un clic — ça, c'est le gestionnaire d'événement.
+| Fichier                | Ce que fait l'effet                                        | Légitime ?                               |
+| ---------------------- | ---------------------------------------------------------- | ---------------------------------------- |
+| `FlowShell.tsx`        | Déplace le focus sur le titre au changement d'étape        | Oui : DOM                                |
+| `QuestionScreen.tsx`   | Déplace le focus sur le premier champ fautif               | Oui : DOM                                |
+| `main-nav.tsx`         | Écoute un `pointerdown` global pour fermer le menu         | Oui : abonnement                         |
+| `useFlowNavigation.ts` | Réécrit l'URL quand l'étape demandée n'est pas atteignable | Oui : URL                                |
+| `HomeCta.tsx`          | Réinitialise le store quand on revient sur un cul-de-sac   | Oui : synchronisation d'un store externe |
+
+Aucun n'est là pour dériver un état ou charger des données. C'est la référence.
+
+</details>
+
+Ce qui n'est **jamais** un effet : dériver un état, charger des données de l'API ([`stack-front.md`](./stack-front.md), décisions 3 et 5), réagir à un clic — ça, c'est le gestionnaire d'événement.
 
 ### 2.3 Pas de mémoïsation manuelle sans raison — _vérifié par le lint_
 
@@ -65,68 +137,159 @@ Ce qui n'est **jamais** un effet : dériver un état, charger des données de l'
 
 ### 3.1 Six props, au-delà on compose — _écart_
 
-Trois composants sont à sept props : `FieldRenderer`, `QuestionFields`, `RadioField`. Le signal n'est pas le nombre en soi, c'est qu'il révèle deux responsabilités mélangées, ou une prop de mise en page qui traverse un composant que ça ne regarde pas.
+Trois composants sont à sept props : `FieldRenderer`, `QuestionFields`, `RadioField`. Le signal n'est pas le nombre en soi : il révèle deux responsabilités mélangées, ou une prop de mise en page qui traverse un composant que ça ne regarde pas.
 
 Deux sorties : regrouper les props liées en un objet nommé, ou composer avec `children` plutôt que passer un `render*`.
 
 ### 3.2 Le forage s'arrête à deux niveaux — _écart_
 
-`answers` et `setAnswer` traversent `FlowShell` → `QuestionScreen` → `QuestionFields` → `FieldRenderer` avant d'atteindre un champ. Au-delà de deux niveaux, deux options : remonter la lecture dans un hook appelé là où la donnée sert, ou passer par un contexte.
+`answers` et `setAnswer` traversent `FlowShell` → `QuestionScreen` → `QuestionFields` → `FieldRenderer` avant d'atteindre un champ.
 
-**Un contexte se justifie par écrit.** Le seul du dépôt, `fields/FieldError.tsx`, porte le commentaire qui dit pourquoi il existe : éviter que cinq composants relaient une prop de mise en page qui ne les concerne pas. C'est le niveau d'exigence attendu.
+<details><summary><strong>Exemple — un contexte justifié par écrit, tel qu'attendu</strong></summary>
+
+Le seul contexte du dépôt (`fields/FieldError.tsx`) porte la raison de son existence, et c'est le niveau d'exigence attendu :
+
+```ts
+/**
+ * Le message doit-il s'afficher SOUS le champ ?
+ *
+ * `false` sur les écrans à champ unique : le message y est affiché une seule
+ * fois, en bas de l'écran, et c'est cette ligne-là qui porte l'`id` attendu par
+ * l'`aria-describedby` du champ — l'annonce au lecteur d'écran est donc la même.
+ *
+ * Un contexte plutôt qu'une propriété : les composants traversés
+ * (`FieldRenderer`, `RadioField`, `MonthYearField`…) n'ont rien à voir avec
+ * cette décision de mise en page, et ne devraient pas avoir à la relayer.
+ */
+const InlineFieldError = createContext(true);
+```
+
+Un contexte sans ce paragraphe est un contexte de trop : il rend le flux des données invisible, et personne ne saura plus tard si on peut le retirer.
+
+</details>
 
 ## 4. Design system
 
 ### 4.1 Aucune couleur hors des tokens — _déjà tenu, et c'est rare_
 
-Aucune valeur hexadécimale, `rgb()` ou `hsl()` n'existe hors de `packages/ui/src/styles/globals.css` dans tout le dépôt. Les couleurs passent par les tokens (`bg-primary`, `text-info-text`), qui portent leur équivalent Figma en commentaire.
+Aucune valeur hexadécimale, `rgb()` ou `hsl()` n'existe hors de `packages/ui/src/styles/globals.css` dans tout le dépôt.
 
-La seule exception est le PDF (`resultats/pdf/pdf-styles.ts`) : `@react-pdf/renderer` a son propre moteur de styles et ne lit pas le CSS. Elle est commentée sur place.
+<details><summary><strong>Exemple — un token dit d'où il vient</strong></summary>
+
+```css
+--primary: #00796b; /* Action/Primary/Default (Teal-700) */
+--secondary: #e0f2f1; /* Surface/Base/Secondary (Teal-50) */
+--content-secondary: #434343; /* Content/Base/Secondary (Neutral-700) */
+```
+
+Le commentaire porte le nom Figma : c'est ce qui permet, devant une maquette, de retrouver le token sans deviner. Écrire `#00796b` dans un composant fait perdre ce lien, et le thème sombre avec.
+
+**Seule exception** : le PDF (`resultats/pdf/pdf-styles.ts`), car `@react-pdf/renderer` a son propre moteur de styles et ne lit pas le CSS. Elle est commentée sur place.
+
+</details>
 
 ### 4.2 On étend par variante, on ne modifie pas par `className` — _écart_
 
-Un besoin d'apparence non couvert s'ajoute **dans le composant**, comme variante `cva`, puis s'utilise partout. Le dépôt sait déjà le faire : `button.tsx` porte deux variantes maison, `inverse` et `outline-primary`, signalées comme telles en commentaire.
+Un besoin d'apparence non couvert s'ajoute **dans le composant**, comme variante `cva`, puis s'utilise partout.
 
-Les écarts à reprendre :
+<details><summary><strong>Écart n° 1 — <code>CategorieTag</code> : une couleur injectée depuis l'app</strong></summary>
 
-| Où                                                 | Ce qui est fait                                                                                   | Ce qu'il faudrait                                            |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `questionnaire/components/OutcomeScreen.tsx:19-63` | Une chaîne de classes recrée l'apparence complète d'un bouton et court-circuite les tailles `cva` | Une taille existante, ou une variante ajoutée à `button.tsx` |
-| `resultats/components/CategorieTag.tsx:14-31`      | Les couleurs par catégorie sont injectées en `className` sur `Badge`                              | Une variante de `badgeVariants` par catégorie                |
-| `app/error.tsx:20`                                 | `min-h-11 rounded-lg px-6` change hauteur et rayon                                                | La taille `xl`, qui fait déjà 44 px                          |
+Aujourd'hui, l'app décide de la couleur d'un composant du design system :
+
+```tsx
+const TAG_UI: Record<Categorie, { Icon: LucideIcon; className: string }> = {
+  interlocuteur: { Icon: UsersRoundIcon, className: "bg-secondary text-secondary-foreground" },
+  outil: { Icon: WrenchIcon, className: "bg-info-muted text-info-text" },
+  dispositif: { Icon: FileTextIcon, className: "bg-success-muted text-success-text" },
+};
+
+<Badge variant="secondary" className={`gap-1.5 px-2.5 py-1 text-xs ${className}`}>
+```
+
+Deux ennuis : `variant="secondary"` est contredit par le `className` qui suit, et la prochaine catégorie se coloriera ailleurs, autrement.
+
+La cible — les couleurs rejoignent `badgeVariants`, l'app ne décide plus que du contenu :
+
+```tsx
+// packages/ui/src/components/badge.tsx
+variant: {
+  // …
+  info: "bg-info-muted text-info-text",
+  success: "bg-success-muted text-success-text",
+}
+
+// CategorieTag.tsx
+<Badge variant={TAG_UI[categorie].variant}>
+```
+
+</details>
+
+<details><summary><strong>Écart n° 2 — <code>OutcomeScreen</code> : un bouton entièrement reconstruit</strong></summary>
+
+```tsx
+const secondaryClassName =
+  "border-primary text-primary hover:bg-secondary hover:text-secondary-foreground h-auto min-h-11 w-full rounded-lg px-6 py-4 text-sm font-semibold md:text-base";
+```
+
+Cette chaîne redéfinit la bordure, la couleur, le survol, la hauteur, le rayon, la graisse et la taille de texte — c'est-à-dire tout ce que `buttonVariants` sait déjà faire. La variante `outline-primary` existe, la taille `xl` fait déjà 44 px de haut.
+
+La cible : `<Button variant="outline-primary" size="xl" className="w-full">`. Le `w-full` reste dans l'app : c'est de la mise en page, pas de l'apparence (4.3).
+
+</details>
 
 ### 4.3 Le `className` d'une app ne fait que de la mise en page — _règle qui découle de 4.2_
 
-Autorisé : largeur, marge, `gap`, `flex`. Interdit : couleur, fond, bordure, rayon, hauteur — ces quatre-là appartiennent au composant.
+Autorisé : largeur, marge, `gap`, `flex`. Interdit : couleur, fond, bordure, rayon, hauteur — ils appartiennent au composant.
 
 ### 4.4 On utilise les primitives avant d'en écrire une — _écart_
 
-| Où                                           | Ce qui est fait                                      | Ce qui existe déjà                         |
-| -------------------------------------------- | ---------------------------------------------------- | ------------------------------------------ |
-| `resultats/components/ResultsScreen.tsx:24`  | `max-w-[1184px] px-4 md:px-10` recopié à la main     | `Container size="lg"`                      |
-| `resultats/components/ResultsScreen.tsx:45`  | `text-[28px] leading-9 md:text-[32px] md:leading-10` | Le token `text-h1`, qui vaut exactement ça |
-| `resultats/components/ResultCard.tsx:15`     | Une carte refaite en `<article>` stylé               | `Card` / `CardContent`                     |
-| `resultats/components/ScrollToTopButton.tsx` | Un second bouton de remontée en page                 | `BackToTop` de `packages/ui`               |
+<details><summary><strong>Exemple — quatre réécritures de ce qui existe déjà</strong></summary>
 
-Avant d'écrire un composant ou une classe de mise en forme : chercher dans `packages/ui/src/components/`, puis dans les tokens de `globals.css`.
+| Où                      | Ce qui est écrit                                                                           | Ce qui existe                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `ResultsScreen.tsx:24`  | `const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10"`                          | `Container size="lg"` — avec, en prime, des paliers de gouttière cohérents avec le reste du site |
+| `ResultsScreen.tsx:45`  | `text-[28px] leading-9 md:text-[32px] md:leading-10`                                       | Le token `text-h1`, qui vaut **exactement** ces valeurs, en mobile comme en desktop              |
+| `ResultCard.tsx:15`     | `<article className="border-border bg-card flex h-full flex-col … rounded-sm border p-6">` | `Card` / `CardContent`                                                                           |
+| `ScrollToTopButton.tsx` | Un bouton de remontée écrit à la main, avec son écouteur de défilement                     | `BackToTop` de `packages/ui`, déjà utilisé par `apps/site`                                       |
+
+Le cas `text-[28px]` est le plus révélateur : la valeur est juste, mais elle ne suivra pas le jour où l'échelle typographique changera. Un token n'est pas une commodité d'écriture, c'est le point de synchronisation avec la maquette.
+
+</details>
 
 ### 4.5 Un composant partagé vit dans `packages/ui` — _déjà tenu_
 
-Utilisé par plus d'une app, il va dans `packages/ui`, avec ce que font déjà tous les autres : un attribut `data-slot`, un `className` fusionné par `cn()`, ses variantes en `cva`, et `focusRing` pour tout élément focusable qui n'est ni `Button` ni `Badge`.
+Avec ce que font déjà tous les autres : un attribut `data-slot`, un `className` fusionné par `cn()`, ses variantes en `cva`, et `focusRing` pour tout élément focusable qui n'est ni `Button` ni `Badge`.
 
-La source officielle d'un composant shadcn se récupère par le **serveur MCP `shadcn`** déclaré dans `.mcp.json` — voir [`outillage-agent.md`](./outillage-agent.md).
+La source officielle d'un composant shadcn se récupère par le **serveur MCP `shadcn`** — voir le skill `composant-ui` et [`outillage-agent.md`](./outillage-agent.md).
 
 ## 5. Frontière client / serveur
 
 ### 5.1 `"use client"` le plus bas possible — _déjà tenu_
 
-19 fichiers sur 72 le portent. Les pages et les mises en page restent des composants serveur ; la directive descend au composant qui a vraiment besoin d'un état ou d'un événement. `app/questionnaire/page.tsx` en est l'exemple : elle ne fait qu'envelopper `FlowShell` dans un `Suspense`.
+19 fichiers sur 72 le portent. Les pages et les mises en page restent des composants serveur ; la directive descend au composant qui a vraiment besoin d'un état ou d'un événement.
 
-Rappel : les deux apps sont exportées statiquement, donc un composant serveur est rendu au build. Il n'y a pas de rendu serveur à l'exécution.
+<details><summary><strong>Exemple — une page qui ne fait qu'envelopper</strong></summary>
+
+`app/questionnaire/page.tsx` reste serveur ; tout l'état vit sous elle :
+
+```tsx
+export default function QuestionnairePage() {
+  // `Suspense` requis par `useSearchParams`, qui lit l'étape dans l'URL.
+  return (
+    <Suspense>
+      <FlowShell />
+    </Suspense>
+  );
+}
+```
+
+Rappel : les deux apps sont exportées statiquement, donc un composant serveur est rendu **au build**. Il n'y a pas de rendu serveur à l'exécution.
+
+</details>
 
 ### 5.2 Aucune donnée d'API dans un `useEffect` — _à venir_
 
-Quand les écrans authentifiés arriveront, les données viendront de TanStack Query au-dessus du contrat de route partagé (`stack-front.md`, décisions 3 et 5). Aucun `fetch` dans un effet.
+Les données viendront de TanStack Query au-dessus du contrat de route partagé ([`stack-front.md`](./stack-front.md), décisions 3 et 5).
 
 ## 6. Écriture
 
@@ -135,30 +298,51 @@ Ces conventions sont déjà uniformes dans le dépôt ; elles sont écrites ici 
 - `export function Composant()` — jamais une constante fléchée pour un composant.
 - `interface <Nom>Props` nommée ; `type` réservé aux unions et alias de domaine.
 - Ordre dans un fichier : directive, imports (externes, `@etape/ui`, internes), constantes, types, interface de props, JSDoc, composant.
-- Les commentaires disent **pourquoi**, jamais **quoi**, et en français. Une décision produit, d'accessibilité ou de contournement se commente sur place.
+- Les commentaires disent **pourquoi**, jamais **quoi**, et en français.
 - JSDoc sur tout ce qui est exporté.
+
+<details><summary><strong>Exemple — ce qu'est un bon commentaire ici</strong></summary>
+
+`fields/aria.ts` : le commentaire explique une décision que le code ne peut pas dire.
+
+```ts
+/**
+ * Marque l'élément à viser quand un champ est en erreur : c'est LUI qui reçoit
+ * le focus, donc lui qui est annoncé, avec son libellé et son message.
+ *
+ * Un attribut à nous plutôt que `aria-invalid` : celui-ci n'est pas valide sur
+ * un `role="group"` (l'ARIA le réserve aux widgets), or c'est justement la
+ * forme d'un groupe de cases à cocher ou d'un couple mois/année.
+ */
+export const FIELD_ERROR_ATTRIBUTE = "data-field-error";
+```
+
+Un commentaire qui aurait dit « attribut pour marquer les champs en erreur » n'aurait rien appris à personne.
+
+</details>
 
 ## Récapitulatif
 
-| Pratique                         | Statut               | Vérification                                        |
-| -------------------------------- | -------------------- | --------------------------------------------------- |
-| 1.1 Métier hors des composants   | Déjà tenu            | Revue                                               |
-| 1.2 Logique d'écran dans un hook | Écart (`FlowShell`)  | Revue                                               |
-| 1.3 Vue pure par défaut          | Déjà tenu            | Revue                                               |
-| 2.1 Pas d'état dérivable         | Déjà tenu            | Lint (`set-state-in-render`, `set-state-in-effect`) |
-| 2.2 Effet réservé à l'extérieur  | Déjà tenu            | Lint partiel                                        |
-| 2.3 Pas de mémoïsation gratuite  | Déjà tenu            | Lint (`use-memo`, `preserve-manual-memoization`)    |
-| 3.1 Six props                    | Écart (3 composants) | Revue                                               |
-| 3.2 Forage ≤ 2 niveaux           | Écart (`answers`)    | Revue                                               |
-| 4.1 Aucune couleur hors tokens   | Déjà tenu            | Revue (recherche de valeurs hexadécimales)          |
-| 4.2 Étendre par variante         | Écart (3 endroits)   | Revue                                               |
-| 4.4 Primitives avant réécriture  | Écart (4 endroits)   | Revue                                               |
-| 5.1 `"use client"` au plus bas   | Déjà tenu            | Revue                                               |
-| 6 Écriture                       | Déjà tenu            | Prettier, ESLint, revue                             |
+| Pratique                         | Statut                                               | Vérification                                        |
+| -------------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
+| 1.1 Métier hors des composants   | Déjà tenu                                            | Revue                                               |
+| 1.2 Logique d'écran dans un hook | Écart (`FlowShell`)                                  | Revue                                               |
+| 1.3 Vue pure par défaut          | Écart (`ScrollToTopButton`)                          | Revue                                               |
+| 2.1 Pas d'état dérivable         | Déjà tenu                                            | Lint (`set-state-in-render`, `set-state-in-effect`) |
+| 2.2 Effet réservé à l'extérieur  | Déjà tenu                                            | Revue                                               |
+| 2.3 Pas de mémoïsation gratuite  | Déjà tenu                                            | Lint (`use-memo`, `preserve-manual-memoization`)    |
+| 3.1 Six props                    | Écart (3 composants)                                 | Revue                                               |
+| 3.2 Forage ≤ 2 niveaux           | Écart (`answers`)                                    | Revue                                               |
+| 4.1 Aucune couleur hors tokens   | Déjà tenu                                            | Revue                                               |
+| 4.2 Étendre par variante         | Écart (`CategorieTag`, `OutcomeScreen`, `error.tsx`) | Revue                                               |
+| 4.4 Primitives avant réécriture  | Écart (4 endroits)                                   | Revue                                               |
+| 5.1 `"use client"` au plus bas   | Déjà tenu                                            | Revue                                               |
+| 6 Écriture                       | Déjà tenu                                            | Prettier, ESLint, revue                             |
 
 ## Questions à trancher
 
 1. Le seuil de découpage de 1.2 (deux hooks d'état **et** DOM **et** aiguillage) est-il le bon, ou trop permissif ?
-2. Six props maximum : seuil accepté, ou simple signal d'alerte en revue ?
-3. Les écarts cités (`FlowShell`, `MonthYearField`, `OutcomeScreen`, `CategorieTag`, `ResultsScreen`, `ResultCard`, `ScrollToTopButton`) sont-ils repris dans une PR dédiée, au fil de l'eau, ou laissés tels quels tant qu'on n'y touche pas ?
-4. Les variantes manquantes (couleurs de `Badge` par catégorie, taille de bouton d'`OutcomeScreen`) : on les ajoute au design system maintenant ?
+2. Six props maximum : seuil, ou simple signal d'alerte en revue ?
+3. Les écarts cités sont-ils repris dans une PR dédiée, au fil de l'eau, ou laissés tels quels tant qu'on n'y touche pas ?
+4. Les variantes manquantes (`info` et `success` sur `Badge`, usage de `xl` dans `OutcomeScreen`) : on les ajoute maintenant ?
+5. `ScrollToTopButton` est-il remplacé par `BackToTop`, ou les deux besoins diffèrent-ils vraiment ?

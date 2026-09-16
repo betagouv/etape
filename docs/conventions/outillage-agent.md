@@ -47,6 +47,30 @@ Ce qui manquait, et que cette PR change :
 
 ## Fichiers d'outillage
 
+<details><summary><strong>Exemple — à quoi ressemble une règle, et ce qu'elle ne fait pas</strong></summary>
+
+`.claude/rules/design-system.md` tient en une vingtaine de lignes : un en-tête qui dit quand elle se charge, puis l'essentiel, puis le renvoi.
+
+```markdown
+---
+paths:
+  - "apps/**/*.tsx"
+  - "packages/ui/**/*.tsx"
+---
+
+# Design system — règles par défaut
+
+Référence complète : `docs/conventions/react.md`, section 4.
+
+1. **Aucune couleur hors des tokens** de `globals.css`.
+2. **Étendre, ne pas modifier** : variante `cva` dans le composant, pas `className` d'apparence.
+3. **Le `className` d'une app ne fait que de la mise en page.**
+```
+
+**Ce qu'elle ne fait pas** : recopier le document. Les exemples, les contre-exemples et les raisons restent dans `react.md` — sinon les deux divergent, et personne ne sait lequel fait foi.
+
+</details>
+
 ### Règles cadrées par chemin
 
 | Fichier                          | `paths`                                 | Renvoie à             |
@@ -71,6 +95,55 @@ Une règle sans `paths` serait chargée à chaque session ; avec `paths`, elle n
 - **`lint-staged`** ne lançait que Prettier ; il lance désormais aussi `eslint --fix` sur les `.ts` et `.tsx`, **une entrée par workspace** (`npm run lint --workspace=@etape/… -- --fix`). Le détour par npm n'est pas cosmétique : lint-staged exécute ses commandes depuis la racine, où ESLint ne trouve aucune configuration, puisque chaque app et chaque package a la sienne. Passer par le workspace place le répertoire de travail au bon endroit. **C'est le garde-fou qui compte** : il s'applique à tout le monde, à chaque commit.
 - **Hook `PostToolUse`** (`.claude/settings.json`) : après chaque écriture d'un `.ts`/`.tsx` par l'agent, `.claude/hooks/eslint-fix.sh` corrige ce qui est corrigeable. Il ne remplace pas `lint-staged` ; il évite simplement de laisser des écarts derrière soi en cours de session.
 - **Permissions** : les commandes de vérification déjà utilisées en boucle (`npm run lint`, `typecheck`, `format:check`, `gh pr view`) sont autorisées d'avance, pour ne plus interrompre une session pour les valider une à une.
+
+<details><summary><strong>Exemple — pourquoi <code>lint-staged</code> passe par npm, et pas directement par <code>eslint</code></strong></summary>
+
+La version évidente **ne fonctionne pas** :
+
+```json
+"apps/**/*.{ts,tsx}": "eslint --fix"
+```
+
+```
+ESLint couldn't find an eslint.config.(js|mjs|cjs) file.
+```
+
+`lint-staged` exécute ses commandes depuis la racine du dépôt, et ESLint 9 cherche sa configuration à partir du répertoire de travail, pas du fichier qu'on lui passe. Or il n'y a pas de configuration à la racine : chaque app et chaque package a la sienne.
+
+La version qui fonctionne place le répertoire de travail dans le workspace :
+
+```json
+"apps/simulateur/**/*.{ts,tsx}": "npm run lint --workspace=@etape/simulateur -- --fix",
+"apps/site/**/*.{ts,tsx}": "npm run lint --workspace=@etape/site -- --fix",
+"packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"
+```
+
+Une entrée par workspace, à ajouter quand `apps/api` arrivera.
+
+</details>
+
+<details><summary><strong>Exemple — le hook, et pourquoi il ne bloque jamais</strong></summary>
+
+```bash
+#!/usr/bin/env bash
+set -u
+
+fichier=$(cat | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+
+case "$fichier" in
+  *.ts | *.tsx) ;;
+  *) exit 0 ;;
+esac
+
+cd "$(dirname "$fichier")" || exit 0
+npx --no-install eslint --fix "$fichier" >/dev/null 2>&1
+
+exit 0
+```
+
+Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour une erreur que `npm run lint` signalera de toute façon. Son seul rôle est d'éviter de laisser derrière soi des écarts que `--fix` sait régler.
+
+</details>
 
 ## Serveur MCP `shadcn`
 
