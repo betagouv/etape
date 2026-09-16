@@ -346,6 +346,48 @@ Aucune bibliothèque d'internationalisation. Les textes sont écrits en françai
 
 **Ce que ça engage** : le jour où une autre langue est demandée, c'est une PR dédiée qui extrait les textes. Poser une bibliothèque d'i18n « au cas où » coûterait aujourd'hui une indirection sur chaque libellé — `t("resultats.titre")` au lieu du texte lisible — pour un besoin qui n'est pas au programme.
 
+## Décision 10 — Mesure d'audience : Matomo
+
+**Brique retenue par l'équipe.** Elle n'est pas encore installée : aucune dépendance, aucune variable d'environnement, aucun appel dans le code. La convention de nommage, elle, l'anticipait déjà — un event analytics s'écrit en `snake_case` et en français (`simulateur_resultat`).
+
+**Paquet** : `@socialgouv/matomo-next` (1.14.2, juillet 2026), maintenu par la fabrique numérique des ministères sociaux. Il injecte le script côté client et suit les changements de route : c'est ce qu'il faut pour un site **exporté statiquement**, où aucun code ne tourne côté serveur.
+
+### Le vrai sujet n'est pas l'outil, c'est le consentement
+
+La CNIL publie un [guide de configuration de Matomo](https://www.cnil.fr/sites/cnil/files/atoms/files/matomo_analytics_-_exemption_-_guide_de_configuration.pdf) permettant à la mesure d'audience d'être **exemptée de consentement**. Configuré ainsi, le site n'a **pas besoin de bandeau cookies** — ce qui, sur un service public destiné à des personnes en transition professionnelle, est un gain d'usage direct : pas de fenêtre à écarter avant de commencer le questionnaire.
+
+Ce que l'exemption impose en contrepartie, d'après le guide (à relire en entier avant de configurer) : cookie de première partie uniquement, finalité strictement limitée à la mesure d'audience, aucun identifiant utilisateur, aucun recoupement avec d'autres traitements ni suivi entre sites, durées de vie et de conservation bornées, et un moyen d'opposition accessible.
+
+**Conséquence assumée** : on renonce au suivi individuel — pas de parcours nominatif, pas de `userId`. On saura combien de personnes atteignent les résultats, pas qui.
+
+### Les principes
+
+1. **Aucune donnée personnelle dans un event**, ni dans son nom ni dans ses propriétés.
+2. **Les noms d'events suivent la convention** : `snake_case`, en français.
+3. **Ce qu'on mesure est décidé avec la PO**, et listé quelque part : un event sans question à laquelle il répond ne sert à rien.
+4. **La configuration d'exemption est vérifiée**, pas supposée : c'est elle qui dispense du bandeau.
+
+**Point à reprendre** : les mentions légales actuelles annoncent que des cookies de mesure d'audience « peuvent être déposés […] après recueil du consentement lorsque cela est requis ». Ce texte vient de la maquette et devra être aligné sur ce qui sera réellement mis en place.
+
+**Question ouverte** : Matomo Cloud (hébergé à Francfort) ou auto-hébergé ? L'auto-hébergement ajoute un service PHP et une base MySQL à une pile qui en compte déjà six.
+
+## Décision 11 — Suivi des erreurs : Sentry
+
+**Brique retenue par l'équipe**, elle non plus pas encore installée. Elle répond à une question que ni les journaux ni la mesure d'audience ne traitent : **qu'est-ce qui a cassé, chez qui, et dans quel contexte**.
+
+**Paquet, côté front** : `@sentry/browser` (10.74.0) plutôt que `@sentry/nextjs`. En export statique il n'y a aucun runtime Next : le SDK Next embarquerait du code serveur et edge sans usage ici — c'était l'objet de l'[issue #12420](https://github.com/getsentry/sentry-javascript/issues/12420), close depuis. `@sentry/browser` fait exactement ce dont on a besoin, sans cette zone grise.
+
+**Ce qu'on perd** en n'utilisant pas `@sentry/nextjs` : le téléversement automatique des source maps et quelques intégrations de routage. Le premier se rattrape avec `sentry-cli` dans la CI — à instruire au moment de l'installation.
+
+### Les principes
+
+1. **`sendDefaultPii: false`**, et masquage explicite : une erreur ne doit pas emporter le courriel ou les claims de la personne.
+2. **Le `correlationId` est envoyé en étiquette** : c'est ce qui relie une erreur vue par l'utilisateur à la requête côté API (voir [`architecture-api.md`](./architecture-api.md), décision 7).
+3. **Une erreur attendue n'est pas envoyée** : un 400 de validation est un fonctionnement normal, pas un incident.
+4. **L'échantillonnage des traces est réglé bas** au départ : on cherche des erreurs, pas des performances.
+
+**Question ouverte** : Sentry SaaS en région européenne (Francfort) ou auto-hébergé ? L'auto-hébergement de Sentry demande une vingtaine de conteneurs et de l'ordre de 16 Go de mémoire d'après sa documentation — sans commune mesure avec la pile actuelle. Le SaaS suppose en revanche d'assumer un transfert vers un tiers, ce que la règle 1 rend acceptable mais qui doit être écrit dans la politique de confidentialité.
+
 ## Questions à trancher
 
 1. Option B pour les formulaires, avec le critère écrit ci-dessus ?
@@ -357,3 +399,6 @@ Aucune bibliothèque d'internationalisation. Les textes sont écrits en françai
 7. Vitest + Testing Library + Playwright : qui écrit les premiers tests, et sur quel périmètre ?
 8. Français uniquement, sans bibliothèque d'i18n : validé ?
 9. Si l'option A est retenue en décision 1, il faut retirer `react-hook-form`, `@hookform/resolvers`, `zod` et `form.tsx` de `packages/ui` dans la foulée.
+10. Matomo configuré pour l'exemption de consentement — donc **sans bandeau cookies** et sans suivi individuel : validé ? Cloud ou auto-hébergé ?
+11. Sentry : `@sentry/browser` plutôt que `@sentry/nextjs` du fait de l'export statique — validé ? SaaS en région européenne ou auto-hébergé ?
+12. Qui met à jour les mentions légales et la politique de confidentialité en conséquence, une fois ces deux points tranchés ?
