@@ -78,16 +78,20 @@ Le store du simulateur — module singleton lu par `useSyncExternalStore`, persi
 
 ## Décision 5 — Comment le front appelle l'API
 
-Le front est statique : il parle à l'API NestJS en HTTP, avec un cookie de session (`credentials: "include"`). Deux façons de tenir ce contrat :
+Le front est statique : il parle à l'API NestJS en HTTP, avec un cookie de session (`credentials: "include"`). **Le contrat de chaque route vient du paquet partagé `packages/api-contract`** — méthode, chemin, schémas des paramètres, du corps et de la réponse — décrit dans [`architecture-api.md`](./architecture-api.md), décision 3. Il n'est donc écrit qu'une fois, et l'API comme le front en dérivent leurs types.
 
-| Approche                                                         | Ce que ça implique                                                                                             |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **A.** Une fine couche `fetch` maison + schémas zod des réponses | Quelques dizaines de lignes, types sous notre contrôle, mais le contrat se maintient à la main des deux côtés  |
-| **B.** Un client généré depuis l'OpenAPI de l'API                | Contrat toujours juste, mais une génération à brancher dans la CI et un client à régénérer à chaque changement |
+Le front ajoute par-dessus une seule fonction, dans `src/api/` :
 
-**Proposition : A maintenant, B quand le contrat grossit.** Un module `src/api/` par app : une fonction qui pose l'URL de base, les cookies et la gestion du 401, et un schéma zod par réponse, validé à la frontière. Le jour où l'API expose son OpenAPI (voir [`architecture-api.md`](./architecture-api.md), décision 4), on génère.
+```ts
+const dossier = await appelApi(getDossier, { params: { id } });
+// dossier : RouteResponse<typeof getDossier>, sans qu'aucun type soit réécrit ici
+```
 
-**Ce que ça règle tout de suite** : une réponse inattendue est détectée à la frontière, pas trois composants plus loin.
+Cette fonction pose l'URL de base, construit le chemin avec `buildRoutePath`, envoie les cookies, traite le 401 (retour à la connexion) et valide la réponse avec le schéma du contrat.
+
+**Ce que ça règle** : un changement de contrat côté API casse la compilation du front, au lieu de produire un `undefined` à l'exécution trois composants plus loin. Et une réponse inattendue est détectée à la frontière.
+
+**Pas de client généré depuis l'OpenAPI** : le contrat partagé rend la génération inutile tant que l'API n'a qu'un seul consommateur, qui est ce dépôt.
 
 ## Décision 6 — Composants : une seule bibliothèque, dans `packages/ui`
 
@@ -139,7 +143,7 @@ Aucune bibliothèque d'internationalisation. Les textes sont écrits en françai
 2. Le simulateur reste-t-il sur son moteur déclaratif ? Cela fige deux approches dans le dépôt, assumées.
 3. zod partout, ou mesure préalable du bundle avant de fixer zod plutôt que valibot ?
 4. TanStack Query est acté : qui l'installe, et sur quelle première PR ?
-5. Client d'API : couche `fetch` + zod maintenant, génération depuis l'OpenAPI plus tard — ou génération d'emblée ?
+5. Contrat de route partagé (`packages/api-contract`) et une seule fonction d'appel côté front : validé ? C'est le pendant de la décision 3 de [`architecture-api.md`](./architecture-api.md) — les deux se tranchent ensemble.
 6. Preset `jsx-a11y` complet : on encaisse les écarts constatés dans la même PR ?
 7. Vitest + Testing Library + Playwright : qui écrit les premiers tests, et sur quel périmètre ?
 8. Français uniquement, sans bibliothèque d'i18n : validé ?
