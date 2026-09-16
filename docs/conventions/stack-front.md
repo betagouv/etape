@@ -298,7 +298,9 @@ Le premier cas est le plus fréquent et le plus coûteux : à la souris tout fon
 
 Sans l'association, le champ n'a **pas de nom accessible** : le lecteur d'écran annonce « zone de saisie », sans dire laquelle.
 
-**Fait vérifié** : aucune de ces 22 règles ne produit d'erreur sur le code existant. Le durcissement ne coûte rien aujourd'hui ; il empêche la régression demain.
+**Ce que le durcissement a coûté, mesuré** : une seule erreur sur tout le dépôt, dans `apps/site/src/components/main-nav.tsx` — un `onKeyDown` posé sur la `nav`, donc sur un élément non interactif. La règle avait raison sur le fond : la touche Échap ne refermait le menu que si le focus était resté dans le panneau. L'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
+
+Le reste des 22 règles ne produit aucune violation.
 
 **Ce que ces règles ne verront jamais** : la perte du focus après une action, l'ordre de tabulation, la pertinence d'une annonce. Elles vérifient la structure, pas l'expérience — d'où le test clavier en revue.
 

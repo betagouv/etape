@@ -43,6 +43,10 @@ Ce qui manquait, et que cette PR change :
 - `react-hooks/exhaustive-deps` était en avertissement → passé en erreur.
 - Les règles `jsx-a11y` actives étaient au nombre de 6, toutes en avertissement → la liste est étendue et passée en erreur.
 
+**Ce que ce durcissement a coûté, mesuré sur tout le dépôt** : deux corrections, aucune régression. Un type de retour manquant sur `registerPdfFonts`, hérité de la PR #49. Et un `onKeyDown` posé sur un élément non interactif dans `main-nav.tsx` : la règle avait raison sur le fond, puisque la touche Échap ne refermait le menu que si le focus était resté dans le panneau — l'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
+
+> **Leçon d'outillage, apprise en se trompant.** La première mesure, faite avec `turbo run lint`, avait conclu « aucune violation » : c'était un résultat servi par le **cache** de turbo, calculé avant le changement de configuration. Une vérification de ce genre se fait avec `--force`, ou en appelant le workspace directement (`npm run lint --workspace=@etape/site`). Un cache qui répond « tout va bien » est un piège d'autant plus efficace qu'il est rapide.
+
 **Pourquoi pas le preset `jsx-a11y` complet** : le plugin n'est pas une dépendance déclarée de `@etape/eslint-config`, il arrive par `eslint-config-next`. Activer ses règles **par leur nom** fonctionne, car le plugin est déjà enregistré ; importer son preset exigerait de le déclarer en dépendance directe. On a donc retenu une liste explicite, plus lisible et sans nouvelle dépendance.
 
 ## Fichiers d'outillage
