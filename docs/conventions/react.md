@@ -94,18 +94,18 @@ La sortie est la même qu'en 1.2 : un `useBackToTop()` d'un côté, un bouton b�
 // L'enveloppe : elle sait d'où viennent les données.
 export function ResultsScreen(props: ResultsScreenProps) {
   const { resultats, recapEntries } = useResultats(props.answers);
-  return <ResultsView resultats={resultats} recapEntries={recapEntries} {...props} />;
+  return <ResultatsView resultats={resultats} recapEntries={recapEntries} {...props} />;
 }
 
 // La vue : elle ne sait rien, donc elle se rend n'importe où.
-export function ResultsView({ resultats, recapEntries, onEdit, onRestart }: ResultsViewProps) {
+export function ResultatsView({ resultats, recapEntries, onEdit, onRestart }: ResultatsViewProps) {
   return <main>…</main>;
 }
 ```
 
 **Ce que le découpage achète, concrètement :**
 
-- **La vue se rend partout.** `ResultsView` s'affiche dans un test avec trois résultats fabriqués, sans store, sans URL, sans `sessionStorage` — et demain dans une galerie de composants, ou dans une capture pour la PO.
+- **La vue se rend partout.** `ResultatsView` s'affiche dans un test avec trois résultats fabriqués, sans store, sans URL, sans `sessionStorage` — et demain dans une galerie de composants, ou dans une capture pour la PO.
 - **Le hook se teste sans rendu.** Les règles « quels résultats, dans quel ordre » se vérifient en appelant une fonction, pas en montant un arbre React.
 - **Les deux changent séparément.** Une refonte visuelle ne touche pas le hook ; un changement de règle métier ne touche pas la vue. C'est la même idée que les trois couches de l'API : une modification, un seul fichier concerné.
 

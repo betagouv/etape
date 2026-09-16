@@ -77,7 +77,7 @@ Il reçoit l'identité en paramètre — `beneficiaireId` — pas le moyen de l'
 ```ts
 // common/beneficiaire-id.decorator.ts
 export const BeneficiaireId = createParamDecorator(
-  (_donnee, contexte: ExecutionContext) =>
+  (_data, contexte: ExecutionContext) =>
     contexte.switchToHttp().getRequest<Request>().session.beneficiaireId,
 );
 ```
@@ -109,7 +109,7 @@ S'il en enchaîne deux, l'orchestration est en train de s'écrire dans la couche
 ```ts
 // Non : l'ordre des opérations et le rattrapage d'erreur vivent dans le contrôleur.
 const dossier = await this.dossierService.deposer(id, corps);
-await this.notificationService.envoyerAccuse(dossier);
+await this.notificationService.sendAccuse(dossier);
 
 // Oui : le service orchestre, et peut tout mettre dans une transaction.
 return this.dossierService.deposer(id, corps);
@@ -143,7 +143,7 @@ Aucun `if` métier entre deux requêtes.
 
 ```ts
 // Non : une règle métier cachée dans la couche d'accès aux données.
-async save(dossier: DossierACreer) {
+async save(dossier: CreateDossierInput) {
   if (dossier.statut === "BROUILLON") dossier.dateDepot = null;
   return this.prisma.dossier.create({ data: dossier });
 }
@@ -327,11 +327,11 @@ Le type du module porte le besoin métier. Il ne dit rien des colonnes technique
 // utilisateurs/utilisateur.types.ts — ce que le reste du code manipule
 export interface Utilisateur {
   id: string;
-  identiteKeycloak: string;
+  keycloakSub: string;
   email?: string;
   nomComplet?: string;
-  premiereConnexionVia: FournisseurIdentite;
-  derniereConnexionLe: Date;
+  firstLoginVia: IdentityProvider;
+  lastLoginAt: Date;
 }
 ```
 
@@ -342,12 +342,12 @@ Et la traduction vit dans le repository, à un seul endroit :
 export function toUtilisateur(ligne: UtilisateurPrisma): Utilisateur {
   return {
     id: ligne.id,
-    identiteKeycloak: ligne.keycloakSub,
+    keycloakSub: ligne.keycloakSub,
     email: ligne.email ?? undefined,
     // Le service n'a pas à recomposer un nom à chaque usage.
     nomComplet: [ligne.prenom, ligne.nom].filter(Boolean).join(" ") || undefined,
-    premiereConnexionVia: ligne.creeVia as FournisseurIdentite,
-    derniereConnexionLe: ligne.lastLoginAt,
+    firstLoginVia: ligne.creeVia as IdentityProvider,
+    lastLoginAt: ligne.lastLoginAt,
   };
 }
 ```
@@ -359,6 +359,8 @@ export function toUtilisateur(ligne: UtilisateurPrisma): Utilisateur {
 - **Le test du service se lit** : on lui donne un `Utilisateur` du module, pas un objet Prisma avec dix champs dont huit sans rapport.
 
 **Le piège à éviter** : écrire `export type Utilisateur = Prisma.Utilisateur` pour « gagner du temps ». La frontière existe alors sur le papier, et chaque changement de schéma se propage jusqu'aux contrôleurs.
+
+> **Avertissement de nommage** : cet exemple reprend le nom du module existant, `utilisateurs`, qui est lui-même en écart avec [`nommage.md`](./nommage.md). La convention y est explicite : le compte authentifié se nomme **`account`**, jamais `utilisateur`, `compte` ni `user` ; `beneficiaire`, `instructeur` et `conseiller` désignent les rôles métier. Le module, le modèle Prisma `Utilisateur` et la table `utilisateur` sont donc à renommer — un chantier qui touche une migration, et qui mérite sa propre PR. Il n'est pas relevé par `audit-nommage.md`, qui a été écrit avant l'arrivée de l'API.
 
 </details>
 
@@ -557,11 +559,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const reponse = host.switchToHttp().getResponse<Response>();
     const requete = host.switchToHttp().getRequest<Request>();
 
-    const estHttp = exception instanceof HttpException;
+    const isHttp = exception instanceof HttpException;
 
-    reponse.status(estHttp ? exception.getStatus() : 500).json({
-      code: estHttp ? exception.name : "ERREUR_INTERNE",
-      message: estHttp ? exception.message : "Une erreur est survenue.",
+    reponse.status(isHttp ? exception.getStatus() : 500).json({
+      code: isHttp ? exception.name : "ERREUR_INTERNE",
+      message: isHttp ? exception.message : "Une erreur est survenue.",
       correlationId: requete.id,
     });
   }
