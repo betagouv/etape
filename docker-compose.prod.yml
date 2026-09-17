@@ -122,7 +122,7 @@ services:
       target: keycloak
     restart: unless-stopped
     # `--import-realm` crée le realm au premier démarrage et l'ignore ensuite.
-    entrypoint: ["/bin/bash", "/opt/keycloak/bin/etape-demarrer.sh"]
+    entrypoint: ["/bin/bash", "/opt/keycloak/bin/etape-keycloak-start.sh"]
     environment:
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
@@ -151,7 +151,7 @@ services:
       FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
       # Bac à sable, `..._LEGACY_V2` pour `integ01`, `PRODUCTION_STANDARD_V2` pour
       # la production. Les identifiants ne valent que pour leur environnement.
-      FRANCECONNECT_ENVIRONNEMENT: ${FRANCECONNECT_ENVIRONNEMENT:-INTEGRATION_STANDARD_V2}
+      FRANCECONNECT_ENVIRONMENT: ${FRANCECONNECT_ENVIRONMENT:-INTEGRATION_STANDARD_V2}
       FRANCECONNECT_EIDAS: ${FRANCECONNECT_EIDAS:-EIDAS1}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

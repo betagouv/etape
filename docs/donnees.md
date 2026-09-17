@@ -35,14 +35,14 @@ aujourd'hui, et la minimisation doit rester défendable à l'homologation.
 
 ## Les trois tables
 
-Le schéma est dans [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma),
-commenté colonne par colonne. En résumé :
+Le schéma est dans [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma).
+En résumé :
 
-| Table                   | Rôle                                                       |
-| ----------------------- | ---------------------------------------------------------- |
-| `utilisateur`           | Le compte local : `keycloak_sub`, identité, dates, origine |
-| `session`               | Une session ouverte, rattachée à un compte                 |
-| `transaction_connexion` | L'aller-retour vers Keycloak, avant toute authentification |
+| Table               | Rôle                                                       |
+| ------------------- | ---------------------------------------------------------- |
+| `account`           | Le compte local : `keycloak_sub`, identité, dates, origine |
+| `session`           | Une session ouverte, rattachée à un compte                 |
+| `login_transaction` | L'aller-retour vers Keycloak, avant toute authentification |
 
 Cinq décisions méritent d'être connues avant de toucher au schéma.
 
@@ -62,11 +62,11 @@ perdrait ce qu'il porte. D'où une colonne `last_login_at` distincte, et un
 
 ```sql
 updated_at = case
-               when (utilisateur.email, utilisateur.prenom, utilisateur.nom)
+               when (account.email, account.prenom, account.nom)
                     is distinct from
                     (excluded.email, excluded.prenom, excluded.nom)
                then now()
-               else utilisateur.updated_at
+               else account.updated_at
              end
 ```
 
@@ -74,15 +74,15 @@ updated_at = case
 absent, donc jamais « vrai ».
 
 C'est la seule requête écrite en SQL brut du projet
-([`utilisateurs.service.ts`](../apps/api/src/utilisateurs/utilisateurs.service.ts)).
+([`account.service.ts`](../apps/api/src/account/account.service.ts)).
 L'API de Prisma ne sait pas exprimer cette condition, et lire-puis-écrire ne
 tiendrait pas : deux onglets qui reviennent en même temps créeraient deux lignes.
 `on conflict` laisse la base trancher.
 
 ### Par où les gens passent : deux colonnes, et pas un miroir
 
-`cree_via` dit par quel fournisseur d'identité le compte est apparu, et
-`derniere_connexion_via` par lequel il est passé la dernière fois. Les valeurs
+`first_login_identity_provider` dit par quel fournisseur d'identité le compte
+est apparu, et `last_login_identity_provider` par lequel il est passé la dernière fois. Les valeurs
 sont les **alias tels que Keycloak les nomme** — `franceconnect` —, ou `local`
 quand aucun broker n'est intervenu.
 
@@ -108,7 +108,7 @@ promet qu'ajouter ProConnect pour des conseillers ne demandera aucune
 modification d'`apps/api`. Un booléen `via_france_connect` aurait obligé à
 réécrire, une énumération à migrer ; un alias inconnu s'enregistre tout seul.
 
-Le front, lui, continue de recevoir un booléen : `PublicSession.viaFranceConnect`
+Le front, lui, continue de recevoir un booléen : `PublicSession.isFranceConnectSession`
 est dérivé de l'alias au moment de répondre. Il affiche un badge, il n'a pas à
 connaître ce vocabulaire.
 
@@ -117,8 +117,9 @@ Deux détails de mise en œuvre :
 - `identity_provider` est posé par un mapper du client `etape-api` et n'existe
   dans l'`id_token` que si un broker est intervenu. Une connexion par mot de
   passe n'a pas ce claim du tout — son absence vaut `local` ;
-- `cree_via` est absent du `do update` de l'upsert : une seconde connexion ne
-  peut pas réécrire l'histoire. Et `derniere_connexion_via` ne touche pas
+- `first_login_identity_provider` est absent du `do update` de l'upsert : une
+  seconde connexion ne peut pas réécrire l'histoire. Et
+  `last_login_identity_provider` ne touche pas
   `updated_at`, puisqu'il décrit une connexion et non le profil.
 
 ### Les sessions sont en base, pas en mémoire
@@ -127,9 +128,10 @@ Elles survivent au redéploiement, et deux instances de l'API voient les mêmes.
 Le navigateur ne reçoit qu'un identifiant opaque dans un cookie `httpOnly` ;
 tout le reste vit côté serveur, et la session reste révocable.
 
-`fournisseur_identite` appartient à **la session** et non à la personne : le même
+`identity_provider` appartient à **la session** et non à la personne : le même
 compte peut se connecter par FranceConnect une fois et par mot de passe la
-suivante. Même vocabulaire que `derniere_connexion_via` ci-dessus. `sub` et `email`, eux, sont lus sur le compte lié — les recopier ici en
+suivante. Même vocabulaire que `last_login_identity_provider` ci-dessus. `sub` et
+`email`, eux, sont lus sur le compte lié — les recopier ici en
 ferait deux versions qui divergeraient dès la première mise à jour du profil.
 
 Les lignes expirées ne sont jamais rendues, les lectures vérifiant la date. Leur
@@ -153,7 +155,7 @@ npm run db:migrate    # génère la migration et l'applique en local
 npm run db:studio     # inspecter les données
 ```
 
-En déploiement, `deploy/api-demarrer.sh` lance `prisma migrate deploy` **dans le
+En déploiement, `deploy/api-start.sh` lance `prisma migrate deploy` **dans le
 conteneur de l'API**, avant de démarrer le service. Pas de conteneur
 d'initialisation séparé : un conteneur qui s'arrête est compté comme un échec par
 les hébergeurs qui attendent `docker compose up --wait` — même raison que pour
@@ -183,7 +185,7 @@ L'URL de connexion n'est plus dans le schéma — Prisma 7 la refuse. Elle est d
 
 ## Effacement
 
-Supprimer une ligne `utilisateur` ferme ses sessions dans la même transaction
+Supprimer une ligne `account` ferme ses sessions dans la même transaction
 (`on delete cascade`). Cela ne supprime **pas** le compte Keycloak, qui détient
 l'identité et les moyens de connexion : un droit à l'effacement exercé demande
 les deux. Rien n'automatise encore cet enchaînement.

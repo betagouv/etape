@@ -49,12 +49,12 @@ COPY --from=build /app/apps/api/dist ./apps/api/dist
 
 COPY apps/api/prisma ./apps/api/prisma
 COPY apps/api/prisma.config.ts ./apps/api/
-COPY --chmod=0755 deploy/api-demarrer.sh /usr/local/bin/etape-api-demarrer.sh
+COPY --chmod=0755 deploy/api-start.sh /usr/local/bin/etape-api-start.sh
 
 WORKDIR /app/apps/api
 USER node
 EXPOSE 3002
-CMD ["/usr/local/bin/etape-api-demarrer.sh"]
+CMD ["/usr/local/bin/etape-api-start.sh"]
 
 # Front statique : les deux exports assemblés, servis par nginx, qui transmet
 # aussi `/api/` — d'où une origine commune.
@@ -102,7 +102,7 @@ FROM quay.io/keycloak/keycloak:26.7 AS keycloak
 COPY --from=theme /app/apps/keycloak-theme/dist_keycloak/etape-keycloak-theme.jar /opt/keycloak/providers/
 COPY --from=franceconnect-extension /keycloak-franceconnect.jar /opt/keycloak/providers/
 COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
-COPY deploy/keycloak-demarrer.sh /opt/keycloak/bin/etape-demarrer.sh
+COPY deploy/keycloak-start.sh /opt/keycloak/bin/etape-keycloak-start.sh
 
 # Importé au premier démarrage. Décrit le poste de développement — URL en
 # `localhost`, secret public — et `etape-init.sh` le corrige ensuite.

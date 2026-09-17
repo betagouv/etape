@@ -154,11 +154,6 @@ commentaire, sur le service `api` (`extra_hosts` vers `host-gateway`).
 
 ## Limites connues de cet environnement
 
-- **Les sessions vivent en mémoire** (`InMemorySessionStore`) : un redéploiement
-  déconnecte tout le monde, et une seconde instance d'`api` déconnecterait une
-  requête sur deux. Suffisant pour une recette, à remplacer avant toute mise en
-  production — c'est déjà au programme dans
-  [`docs/authentification.md`](authentification.md).
 - **Sans `SMTP_*`, `verifyEmail` reste désactivé** : ni inscription ni « mot de
   passe oublié ». Or c'est la vérification d'adresse qui rend sûre la liaison
   d'un compte local à une identité FranceConnect. À régler avant d'ouvrir

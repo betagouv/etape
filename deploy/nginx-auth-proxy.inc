@@ -9,7 +9,7 @@ proxy_http_version 1.1;
 proxy_set_header Host              $host;
 proxy_set_header X-Real-IP         $remote_addr;
 proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-proxy_set_header X-Forwarded-Proto $etape_schema_auth;
+proxy_set_header X-Forwarded-Proto $etape_scheme_auth;
 proxy_set_header X-Forwarded-Host  $host;
 
 # Cookies Keycloak volumineux : aux tailles par défaut, nginx répond 502

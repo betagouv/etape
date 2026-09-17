@@ -95,7 +95,7 @@ appliqué après coup par `kcadm`. Le détail et les pièges associés sont dans
   réinitialisation de mot de passe n'affiche **aucun bouton**.
 - Un **mapper** expose `identity_provider` dans l'`id_token`, ce qui permet à
   l'API de distinguer une identité FranceConnect d'un compte local. Sans lui,
-  `viaFranceConnect` reste toujours `false`, et tous les comptes sont enregistrés
+  `isFranceConnectSession` reste toujours `false`, et tous les comptes sont enregistrés
   comme locaux (`docs/donnees.md`).
 
 ### Identity provider FranceConnect
@@ -149,7 +149,7 @@ correspondance, lue dans son fichier de propriétés :
 
 Les identifiants ne valent que pour l'environnement où ils ont été délivrés :
 s'y tromper produit un « client_id inconnu » (`Y04EA6EF`). La variable
-`FRANCECONNECT_ENVIRONNEMENT` permet d'en changer sans toucher au code.
+`FRANCECONNECT_ENVIRONMENT` permet d'en changer sans toucher au code.
 
 Pour savoir quel environnement connaît un `client_id` sans rien déployer, il
 suffit d'appeler son `/authorize` : `Y04EA6EF` signifie qu'il l'ignore,
