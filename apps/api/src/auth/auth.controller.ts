@@ -105,7 +105,7 @@ export class AuthController {
         identityProvider,
       });
 
-      await this.sessions.openSession(response, {
+      await this.sessions.openSession(request, response, {
         accountId: account.id,
         identityProvider,
         claims: extractIdentityClaims(claims),

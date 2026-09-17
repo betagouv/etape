@@ -92,7 +92,15 @@ export class SessionService {
     return result.data;
   }
 
-  async openSession(response: Response, session: Omit<NewSession, "expiresAt">): Promise<void> {
+  /** Remplace la session du navigateur : se reconnecter révoque la précédente. */
+  async openSession(
+    request: Request,
+    response: Response,
+    session: Omit<NewSession, "expiresAt">,
+  ): Promise<void> {
+    const previousId = this.readSessionId(request);
+    if (previousId) await this.store.deleteSession(previousId);
+
     const id = randomUUID();
 
     await this.store.createSession(id, { ...session, expiresAt: Date.now() + SESSION_TTL_MS });

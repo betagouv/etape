@@ -125,7 +125,9 @@ Deux détails de mise en œuvre :
 
 Elles survivent au redéploiement, et deux instances de l'API voient les mêmes.
 Le navigateur ne reçoit qu'un identifiant opaque dans un cookie `httpOnly` ;
-tout le reste vit côté serveur, et la session reste révocable.
+tout le reste vit côté serveur, et la session reste révocable. Se reconnecter
+dans le même navigateur supprime la session précédente : c'est le réflexe de qui
+soupçonne une fuite, et il doit suffire à la fermer.
 
 `identity_provider` appartient à **la session** et non à la personne : le même
 compte peut se connecter par FranceConnect une fois et par mot de passe la
