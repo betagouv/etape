@@ -183,6 +183,33 @@ describe("SessionService", () => {
       expect(store.sessions.has(secondId)).toBe(true);
     });
 
+    it("efface le cookie de session avant de toucher au stockage", async () => {
+      const response = new FakeResponse();
+      vi.spyOn(store, "getSession").mockRejectedValue(new Error("base injoignable"));
+
+      await expect(
+        service.closeSession(
+          createRequest({ [SESSION_COOKIE]: "5f0c8a52-6f0e-4f7a-9a39-1f1b8a6f2c11" }),
+          response as unknown as Response,
+        ),
+      ).rejects.toThrow("base injoignable");
+      expect(response.clearedCookies).toContain(SESSION_COOKIE);
+    });
+
+    it("renvoie la session fermée, pour la déconnexion chez Keycloak", async () => {
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const id = openResponse.cookies.get(SESSION_COOKIE)!.value;
+
+      const closed = await service.closeSession(
+        createRequest({ [SESSION_COOKIE]: id }),
+        new FakeResponse() as unknown as Response,
+      );
+
+      expect(closed?.idToken).toBe(newSession.idToken);
+      expect(store.sessions.has(id)).toBe(false);
+    });
+
     it("ignore un identifiant de session qui n'est pas un UUID", async () => {
       const getSession = vi.spyOn(store, "getSession");
 

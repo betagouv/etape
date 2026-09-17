@@ -131,8 +131,7 @@ export class AuthController {
   @Get("logout")
   @UseFilters(AuthFlowExceptionFilter)
   async logout(@Req() request: Request, @Res() response: Response): Promise<void> {
-    const session = await this.sessions.readSession(request);
-    await this.sessions.closeSession(request, response);
+    const session = await this.sessions.closeSession(request, response);
 
     if (!session) {
       response.redirect(this.frontBaseUrl);

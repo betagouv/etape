@@ -106,11 +106,15 @@ export class SessionService {
     return id ? this.store.getSession(id) : null;
   }
 
-  async closeSession(request: Request, response: Response): Promise<void> {
-    const id = this.readSessionId(request);
-    if (id) await this.store.deleteSession(id);
-
+  async closeSession(request: Request, response: Response): Promise<AccountSession | null> {
     response.clearCookie(SESSION_COOKIE, { path: "/" });
+
+    const id = this.readSessionId(request);
+    if (!id) return null;
+
+    const session = await this.store.getSession(id);
+    await this.store.deleteSession(id);
+    return session;
   }
 
   private readSessionId(request: Request): string | null {
