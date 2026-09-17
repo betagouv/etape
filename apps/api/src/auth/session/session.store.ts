@@ -36,7 +36,7 @@ export class PrismaSessionStore extends SessionStore {
   async createTransaction(id: string, transaction: PendingLogin): Promise<void> {
     await this.purgeExpired();
 
-    await this.prisma.transactionConnexion.create({
+    await this.prisma.loginTransaction.create({
       data: {
         id,
         state: transaction.state,
@@ -49,7 +49,7 @@ export class PrismaSessionStore extends SessionStore {
   }
 
   async consumeTransaction(id: string): Promise<PendingLogin | null> {
-    const row = await this.prisma.transactionConnexion
+    const row = await this.prisma.loginTransaction
       .delete({ where: { id } })
       .catch((error: unknown) => {
         if (isNotFoundError(error)) return null;
@@ -73,8 +73,8 @@ export class PrismaSessionStore extends SessionStore {
     await this.prisma.session.create({
       data: {
         id,
-        utilisateurId: session.accountId,
-        fournisseurIdentite: session.identityProvider,
+        accountId: session.accountId,
+        identityProvider: session.identityProvider,
         claims: session.claims as Prisma.InputJsonValue,
         idToken: session.idToken,
         expiresAt: new Date(session.expiresAt),
@@ -85,7 +85,7 @@ export class PrismaSessionStore extends SessionStore {
   async getSession(id: string): Promise<AccountSession | null> {
     const row = await this.prisma.session.findUnique({
       where: { id },
-      include: { utilisateur: true },
+      include: { account: true },
     });
 
     if (!row) return null;
@@ -96,10 +96,10 @@ export class PrismaSessionStore extends SessionStore {
     }
 
     return {
-      sub: row.utilisateur.keycloakSub,
-      accountId: row.utilisateurId,
-      email: row.utilisateur.email ?? undefined,
-      identityProvider: row.fournisseurIdentite,
+      sub: row.account.keycloakSub,
+      accountId: row.accountId,
+      email: row.account.email ?? undefined,
+      identityProvider: row.identityProvider,
       claims: row.claims as Record<string, unknown>,
       idToken: row.idToken,
       expiresAt: row.expiresAt.getTime(),
@@ -114,7 +114,7 @@ export class PrismaSessionStore extends SessionStore {
     const now = new Date();
 
     await Promise.all([
-      this.prisma.transactionConnexion.deleteMany({ where: { expiresAt: { lte: now } } }),
+      this.prisma.loginTransaction.deleteMany({ where: { expiresAt: { lte: now } } }),
       this.prisma.session.deleteMany({ where: { expiresAt: { lte: now } } }),
     ]);
   }

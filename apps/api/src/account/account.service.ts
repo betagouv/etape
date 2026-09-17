@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../database/prisma.service.js";
-import type { Utilisateur } from "../generated/prisma/client.ts";
+import type { Account } from "../generated/prisma/client.ts";
 
 export interface IdentityProfile {
   keycloakSub: string;
@@ -15,10 +15,11 @@ export interface IdentityProfile {
 export class AccountService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async recordLogin(profile: IdentityProfile): Promise<Utilisateur> {
-    const [account] = await this.prisma.$queryRaw<Utilisateur[]>`
-      insert into utilisateur (
-        keycloak_sub, email, prenom, nom, cree_via, derniere_connexion_via
+  async recordLogin(profile: IdentityProfile): Promise<Account> {
+    const [account] = await this.prisma.$queryRaw<Account[]>`
+      insert into account (
+        keycloak_sub, email, prenom, nom,
+        first_login_identity_provider, last_login_identity_provider
       )
       values (
         ${profile.keycloakSub},
@@ -29,29 +30,29 @@ export class AccountService {
         ${profile.identityProvider}
       )
       on conflict (keycloak_sub) do update set
-        email                  = excluded.email,
-        prenom                 = excluded.prenom,
-        nom                    = excluded.nom,
-        last_login_at          = now(),
-        derniere_connexion_via = excluded.derniere_connexion_via,
-        updated_at    = case
-                          when (utilisateur.email, utilisateur.prenom, utilisateur.nom)
-                               is distinct from
-                               (excluded.email, excluded.prenom, excluded.nom)
-                          then now()
-                          else utilisateur.updated_at
-                        end
+        email                        = excluded.email,
+        prenom                       = excluded.prenom,
+        nom                          = excluded.nom,
+        last_login_at                = now(),
+        last_login_identity_provider = excluded.last_login_identity_provider,
+        updated_at                   = case
+                                         when (account.email, account.prenom, account.nom)
+                                              is distinct from
+                                              (excluded.email, excluded.prenom, excluded.nom)
+                                         then now()
+                                         else account.updated_at
+                                       end
       returning
         id,
-        keycloak_sub  as "keycloakSub",
+        keycloak_sub                  as "keycloakSub",
         email,
         prenom,
         nom,
-        created_at             as "createdAt",
-        updated_at             as "updatedAt",
-        last_login_at          as "lastLoginAt",
-        cree_via               as "creeVia",
-        derniere_connexion_via as "derniereConnexionVia"
+        created_at                    as "createdAt",
+        updated_at                    as "updatedAt",
+        last_login_at                 as "lastLoginAt",
+        first_login_identity_provider as "firstLoginIdentityProvider",
+        last_login_identity_provider  as "lastLoginIdentityProvider"
     `;
 
     if (!account) {

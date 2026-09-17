@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "utilisateur" (
+CREATE TABLE "account" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "keycloak_sub" TEXT NOT NULL,
     "email" TEXT,
@@ -8,15 +8,17 @@ CREATE TABLE "utilisateur" (
     "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "last_login_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "first_login_identity_provider" TEXT NOT NULL,
+    "last_login_identity_provider" TEXT NOT NULL,
 
-    CONSTRAINT "utilisateur_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "account_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "session" (
     "id" UUID NOT NULL,
-    "utilisateur_id" UUID NOT NULL,
-    "via_france_connect" BOOLEAN NOT NULL,
+    "account_id" UUID NOT NULL,
+    "identity_provider" TEXT NOT NULL,
     "claims" JSONB NOT NULL,
     "id_token" TEXT NOT NULL,
     "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -26,7 +28,7 @@ CREATE TABLE "session" (
 );
 
 -- CreateTable
-CREATE TABLE "transaction_connexion" (
+CREATE TABLE "login_transaction" (
     "id" UUID NOT NULL,
     "state" TEXT NOT NULL,
     "nonce" TEXT NOT NULL,
@@ -35,20 +37,20 @@ CREATE TABLE "transaction_connexion" (
     "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "expires_at" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "transaction_connexion_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "login_transaction_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "utilisateur_keycloak_sub_key" ON "utilisateur"("keycloak_sub");
+CREATE UNIQUE INDEX "account_keycloak_sub_key" ON "account"("keycloak_sub");
 
 -- CreateIndex
 CREATE INDEX "session_expires_at_idx" ON "session"("expires_at");
 
 -- CreateIndex
-CREATE INDEX "session_utilisateur_id_idx" ON "session"("utilisateur_id");
+CREATE INDEX "session_account_id_idx" ON "session"("account_id");
 
 -- CreateIndex
-CREATE INDEX "transaction_connexion_expires_at_idx" ON "transaction_connexion"("expires_at");
+CREATE INDEX "login_transaction_expires_at_idx" ON "login_transaction"("expires_at");
 
 -- AddForeignKey
-ALTER TABLE "session" ADD CONSTRAINT "session_utilisateur_id_fkey" FOREIGN KEY ("utilisateur_id") REFERENCES "utilisateur"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "session" ADD CONSTRAINT "session_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
