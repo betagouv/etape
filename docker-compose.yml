@@ -168,7 +168,7 @@ services:
         fi
 
         if [ -n "$$KEYCLOAK_TEST_USER_PASSWORD" ]; then
-          if [ -z "$$($$KCADM get users -r etape -q username=test@etape.local --fields id --format csv --noquotes)" ]; then
+          if [ -z "$$($$KCADM get users -r etape -q username=test@etape.local -q exact=true --fields id --format csv --noquotes)" ]; then
             $$KCADM create users -r etape -s username=test@etape.local -s email=test@etape.local \
               -s emailVerified=true -s enabled=true -s firstName=Test -s lastName=ETAPE
           fi

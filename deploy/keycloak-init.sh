@@ -232,7 +232,7 @@ else
   fi
 fi
 
-TEST_USER_ID=$($KCADM get users -r "$REALM" -q username=test@etape.local --fields id --format csv --noquotes)
+TEST_USER_ID=$($KCADM get users -r "$REALM" -q username=test@etape.local -q exact=true --fields id --format csv --noquotes)
 
 if [ -n "${KEYCLOAK_TEST_USER_PASSWORD:-}" ]; then
   if [ -z "$TEST_USER_ID" ]; then
@@ -243,7 +243,7 @@ if [ -n "${KEYCLOAK_TEST_USER_PASSWORD:-}" ]; then
       -s enabled=false \
       -s firstName=Test \
       -s lastName=ETAPE
-    TEST_USER_ID=$($KCADM get users -r "$REALM" -q username=test@etape.local --fields id --format csv --noquotes)
+    TEST_USER_ID=$($KCADM get users -r "$REALM" -q username=test@etape.local -q exact=true --fields id --format csv --noquotes)
     echo "→ compte de test test@etape.local : créé"
   fi
 
