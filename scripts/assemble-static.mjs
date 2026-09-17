@@ -6,7 +6,8 @@
  * Les règles de routage (noindex, 308 sur le préfixe, 404 par app) ne sont
  * pas ici : elles vivent dans la conf nginx.
  *
- * À lancer depuis la racine du monorepo, après `turbo run build`.
+ * À lancer depuis la racine du monorepo, après `turbo run build`. L'image du
+ * déploiement passe sa propre destination : `node scripts/assemble-static.mjs /srv/static`.
  */
 import { access, cp, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
@@ -14,7 +15,7 @@ import path from "node:path";
 import { SIMULATEUR_BASE_PATH } from "../paths.mjs";
 
 const root = process.cwd();
-const staticDir = path.join(root, "dist/preview");
+const staticDir = path.resolve(root, process.argv[2] ?? "dist/preview");
 
 // Nom du sous-dossier où atterrit l'export du simulateur, dérivé du préfixe :
 // "/simulateur" -> "simulateur".

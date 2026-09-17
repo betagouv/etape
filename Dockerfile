@@ -30,7 +30,7 @@ WORKDIR /app
 COPY . .
 
 RUN npx turbo run build --filter=@etape/site --filter=@etape/simulateur --filter=@etape/api
-RUN node scripts/assembler-statique.mjs /srv/static
+RUN node scripts/assemble-static.mjs /srv/static
 
 # Réinstallation plutôt qu'élagage : `npm ci` restaure exactement le verrou, là
 # où `npm prune` laisse ce qu'il ne sait pas rattacher.
