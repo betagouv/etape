@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { Button } from "@etape/ui/components/button";
 
-import { avecRetour, COMPTE_PATH, LOGIN_URL } from "@/lib/auth";
+import { ACCOUNT_PATH, LOGIN_URL, withReturnTo } from "@/lib/auth";
 import { useSession } from "@/lib/use-session";
 
 /**
@@ -12,16 +12,16 @@ import { useSession } from "@/lib/use-session";
  * l'en-tête sauterait à chaque chargement de page.
  */
 export function AuthMenu() {
-  const etat = useSession();
+  const sessionState = useSession();
 
-  if (etat.etat === "chargement") {
+  if (sessionState.status === "loading") {
     return <div aria-hidden className="bg-muted h-9 w-32 shrink-0 animate-pulse rounded-md" />;
   }
 
-  if (etat.etat === "connecte") {
+  if (sessionState.status === "authenticated") {
     return (
       <Button asChild variant="outline" className="shrink-0">
-        <Link href={COMPTE_PATH}>Mon compte</Link>
+        <Link href={ACCOUNT_PATH}>Mon compte</Link>
       </Button>
     );
   }
@@ -33,7 +33,7 @@ export function AuthMenu() {
   */
   return (
     <Button asChild className="shrink-0">
-      <a href={avecRetour(LOGIN_URL, COMPTE_PATH)}>Se connecter</a>
+      <a href={withReturnTo(LOGIN_URL, ACCOUNT_PATH)}>Se connecter</a>
     </Button>
   );
 }

@@ -8,7 +8,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 /** `trailingSlash` oblige. */
-export const COMPTE_PATH = "/compte/";
+export const ACCOUNT_PATH = "/compte/";
 
 export const LOGIN_URL = `${API_BASE_URL}/auth/login`;
 /** `idp=franceconnect` court-circuite l'écran de Keycloak. */
@@ -18,16 +18,16 @@ export const LOGOUT_URL = `${API_BASE_URL}/auth/logout`;
 export const SESSION_URL = `${API_BASE_URL}/auth/session`;
 
 /** L'API n'accepte que des chemins internes. */
-export function avecRetour(urlDeConnexion: string, chemin: string): string {
-  const separateur = urlDeConnexion.includes("?") ? "&" : "?";
-  return `${urlDeConnexion}${separateur}returnTo=${encodeURIComponent(chemin)}`;
+export function withReturnTo(loginUrl: string, path: string): string {
+  const separator = loginUrl.includes("?") ? "&" : "?";
+  return `${loginUrl}${separator}returnTo=${encodeURIComponent(path)}`;
 }
 
 /** Ce que l'API expose d'une session. Aucun jeton n'en fait partie. */
-export interface SessionPublique {
+export interface PublicSession {
   sub: string;
   email?: string;
-  viaFranceConnect: boolean;
+  isFranceConnectSession: boolean;
   /** Non typée : les champs varient selon le fournisseur d'identité. */
   claims: Record<string, unknown>;
 }

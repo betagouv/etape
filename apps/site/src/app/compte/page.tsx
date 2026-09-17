@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { CompteSession } from "@/components/compte-session";
+import { AccountDetails } from "@/components/account-details";
 
 export const metadata: Metadata = {
   title: "Votre connexion — ETAPE",
@@ -10,6 +10,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function Compte() {
-  return <CompteSession />;
+export default function AccountPage() {
+  return <AccountDetails />;
 }

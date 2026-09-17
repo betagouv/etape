@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-import { SESSION_URL, type SessionPublique } from "@/lib/auth";
+import { SESSION_URL, type PublicSession } from "@/lib/auth";
 
 /**
- * `chargement` est un état à part entière : sans lui, l'interface afficherait
+ * `loading` est un état à part entière : sans lui, l'interface afficherait
  * « Se connecter » à quelqu'un qui l'est déjà, le temps d'un aller-retour.
  */
-export type EtatSession =
-  { etat: "chargement" } | { etat: "anonyme" } | { etat: "connecte"; session: SessionPublique };
+export type SessionState =
+  | { status: "loading" }
+  | { status: "anonymous" }
+  | { status: "authenticated"; session: PublicSession };
 
 /**
  * Partagée entre les composants qui interrogent la session au même instant — sur
@@ -17,39 +19,39 @@ export type EtatSession =
  * *en vol* l'est, jamais son résultat : une session expirée entre-temps est vue
  * comme telle.
  */
-let requeteEnCours: Promise<EtatSession> | null = null;
+let pendingRequest: Promise<SessionState> | null = null;
 
-function interrogerSession(): Promise<EtatSession> {
-  requeteEnCours ??= fetch(SESSION_URL, { credentials: "include" })
-    .then(async (reponse): Promise<EtatSession> => {
-      if (!reponse.ok) return { etat: "anonyme" };
-      return { etat: "connecte", session: (await reponse.json()) as SessionPublique };
+function fetchSession(): Promise<SessionState> {
+  pendingRequest ??= fetch(SESSION_URL, { credentials: "include" })
+    .then(async (response): Promise<SessionState> => {
+      if (!response.ok) return { status: "anonymous" };
+      return { status: "authenticated", session: (await response.json()) as PublicSession };
     })
-    .catch((): EtatSession => ({ etat: "anonyme" }))
+    .catch((): SessionState => ({ status: "anonymous" }))
     .finally(() => {
-      requeteEnCours = null;
+      pendingRequest = null;
     });
 
-  return requeteEnCours;
+  return pendingRequest;
 }
 
 /** `credentials: "include"` sans quoi le cookie ne partirait pas, et tout serait 401. */
-export function useSession(): EtatSession {
-  const [etat, setEtat] = useState<EtatSession>({ etat: "chargement" });
+export function useSession(): SessionState {
+  const [state, setState] = useState<SessionState>({ status: "loading" });
 
   useEffect(() => {
     // Pas d'interruption au démontage : un autre composant attend peut-être la
     // requête partagée. Seule la mise à jour d'état est abandonnée.
-    let monte = true;
+    let isMounted = true;
 
-    void interrogerSession().then((resultat) => {
-      if (monte) setEtat(resultat);
+    void fetchSession().then((result) => {
+      if (isMounted) setState(result);
     });
 
     return () => {
-      monte = false;
+      isMounted = false;
     };
   }, []);
 
-  return etat;
+  return state;
 }
