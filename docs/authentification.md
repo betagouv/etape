@@ -48,9 +48,13 @@ Tout tient dans `apps/api/src/auth/`, et le reste de l'application ne dépend qu
 de `SessionService` et `SessionGuard` — jamais de Keycloak ni d'`openid-client`.
 Changer d'IAM revient à réécrire `OidcService` seul.
 
-Sessions et transactions de connexion sont gardées en PostgreSQL : elles
-survivent au redéploiement, et deux instances de l'API voient les mêmes. Le
-détail du schéma est dans [donnees.md](donnees.md).
+Les sessions sont gardées en PostgreSQL : elles survivent au redéploiement, et
+deux instances de l'API voient les mêmes. La transaction de connexion (`state`,
+`nonce`, `code_verifier`, `returnTo`) voyage au contraire dans un cookie chiffré
+en AES-256-GCM (`COOKIE_ENCRYPTION_KEY`) : `/api/auth/login` est anonyme, et
+n'écrit donc rien en base. Les routes du parcours sont limitées à 30 appels par
+minute et par IP, les autres à 300 (`@nestjs/throttler`). Le détail du schéma
+est dans [donnees.md](donnees.md).
 
 | Route                    | Rôle                                              |
 | ------------------------ | ------------------------------------------------- |

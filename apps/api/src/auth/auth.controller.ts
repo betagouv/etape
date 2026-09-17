@@ -1,16 +1,19 @@
 import { Controller, Get, Logger, Query, Req, Res, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { minutes, Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
 import * as client from "openid-client";
 
-import type { Env } from "../config/env.js";
 import { AccountService } from "../account/account.service.js";
+import type { Env } from "../config/env.js";
 import { extractIdentityClaims, getStringClaim } from "./identity-claims.js";
 import { getIdentityProvider } from "./identity-provider.js";
 import { OidcService } from "./oidc.service.js";
 import { sanitizeReturnTo } from "./return-to.js";
 import { SessionService } from "./session/session.service.js";
 import { toPublicSession, type PublicSession } from "./session/session.types.js";
+
+const AUTH_FLOW_THROTTLE = { default: { ttl: minutes(1), limit: 30 } };
 
 /**
  * Les quatre points d'entrée du parcours. Le front n'en connaît pas davantage :
@@ -32,6 +35,7 @@ export class AuthController {
   }
 
   @Get("login")
+  @Throttle(AUTH_FLOW_THROTTLE)
   async login(
     @Query("idp") idp: string | undefined,
     @Query("returnTo") returnTo: string | undefined,
@@ -51,7 +55,7 @@ export class AuthController {
       idpHint: idp === "franceconnect" ? franceConnectAlias : undefined,
     });
 
-    await this.sessions.startTransaction(response, {
+    this.sessions.startTransaction(response, {
       state,
       nonce,
       codeVerifier,
@@ -66,8 +70,9 @@ export class AuthController {
    * l'état interne du fournisseur d'identité et restent dans les journaux.
    */
   @Get("callback")
+  @Throttle(AUTH_FLOW_THROTTLE)
   async callback(@Req() request: Request, @Res() response: Response): Promise<void> {
-    const transaction = await this.sessions.consumeTransaction(request, response);
+    const transaction = this.sessions.consumeTransaction(request, response);
 
     if (!transaction) {
       response.redirect(`${this.frontBaseUrl}/?login=expired`);

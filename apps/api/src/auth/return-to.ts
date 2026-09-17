@@ -1,6 +1,9 @@
 /** Destination par défaut si aucune n'est demandée ou si celle reçue est refusée. */
 const DEFAULT_RETURN_TO = "/";
 
+/** Borne la taille du cookie de transaction, qui transporte cette valeur. */
+export const MAX_RETURN_TO_LENGTH = 512;
+
 /**
  * Restreint la destination de retour à un chemin interne.
  *
@@ -10,6 +13,8 @@ const DEFAULT_RETURN_TO = "/";
  */
 export function sanitizeReturnTo(raw: unknown): string {
   if (typeof raw !== "string" || raw.length === 0) return DEFAULT_RETURN_TO;
+
+  if (raw.length > MAX_RETURN_TO_LENGTH) return DEFAULT_RETURN_TO;
 
   // `//exemple.test` est relatif au protocole : c'est bien une autre origine.
   if (!raw.startsWith("/") || raw.startsWith("//")) return DEFAULT_RETURN_TO;

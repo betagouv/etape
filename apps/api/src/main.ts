@@ -22,6 +22,7 @@ async function bootstrap(): Promise<void> {
   const config: ConfigService<Env, true> = app.get(ConfigService);
 
   app.setGlobalPrefix(API_PREFIX);
+  app.set("trust proxy", config.get("TRUST_PROXY_HOPS", { infer: true }));
   app.use(helmet());
   app.use(cookieParser());
 

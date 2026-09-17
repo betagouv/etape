@@ -33,18 +33,17 @@ aujourd'hui, et la minimisation doit rester défendable à l'homologation.
 **Les jetons**, hors l'`id_token` d'une session ouverte, gardé pour le seul
 `id_token_hint` de la déconnexion et effacé avec elle.
 
-## Les trois tables
+## Les deux tables
 
 Le schéma est dans [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma).
 En résumé :
 
-| Table               | Rôle                                                       |
-| ------------------- | ---------------------------------------------------------- |
-| `account`           | Le compte local : `keycloak_sub`, identité, dates, origine |
-| `session`           | Une session ouverte, rattachée à un compte                 |
-| `login_transaction` | L'aller-retour vers Keycloak, avant toute authentification |
+| Table     | Rôle                                                       |
+| --------- | ---------------------------------------------------------- |
+| `account` | Le compte local : `keycloak_sub`, identité, dates, origine |
+| `session` | Une session ouverte, rattachée à un compte                 |
 
-Cinq décisions méritent d'être connues avant de toucher au schéma.
+Six décisions méritent d'être connues avant de toucher au schéma.
 
 ### Pas d'unicité sur `email`
 
@@ -138,6 +137,14 @@ Les lignes expirées ne sont jamais rendues, les lectures vérifiant la date. Le
 suppression est du ménage, fait à l'écriture — c'est-à-dire à la connexion, donc
 rarement. Une minuterie demanderait `@nestjs/schedule` et un verrou pour ne pas
 tourner deux fois sur deux instances.
+
+### La transaction de connexion n'est pas en base
+
+`GET /api/auth/login` est anonyme. Y écrire une ligne laissait n'importe qui
+remplir la base en boucle, et gêner du même coup les sessions ouvertes. Ce que
+le retour doit retrouver tient en quelques centaines d'octets : il part dans un
+cookie chiffré et authentifié, effacé à la lecture. Keycloak refuse de rejouer
+un code, et `returnTo` est borné à 512 caractères.
 
 ### Une base séparée, pas une base de plus dans la même instance
 

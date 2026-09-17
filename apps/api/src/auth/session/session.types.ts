@@ -7,7 +7,7 @@ export interface PendingLogin {
   state: string;
   /** Lie l'`id_token` à cette transaction précise (rejeu). */
   nonce: string;
-  /** PKCE : seul son challenge a transité par le navigateur. */
+  /** PKCE : chiffré dans le cookie, seul son challenge part vers Keycloak. */
   codeVerifier: string;
   /** Chemin interne, validé. */
   returnTo: string;

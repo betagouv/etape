@@ -53,18 +53,3 @@ model Session {
   @@index([accountId])
   @@map("session")
 }
-
-model LoginTransaction {
-  id String @id @db.Uuid
-
-  state String
-  nonce String
-  codeVerifier String @map("code_verifier")
-  returnTo String @map("return_to")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
-
-  @@index([expiresAt])
-  @@map("login_transaction")
-}
