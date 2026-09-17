@@ -189,3 +189,11 @@ commentaire, sur le service `api` (`extra_hosts` vers `host-gateway`).
   Le mot de passe administrateur reste à choisir sérieusement : `/realms/master`
   n'est refusé que par le proxy, et la protection contre la force brute posée
   par `deploy/keycloak-init.sh` ralentit sans interdire.
+
+- **`auth` limite aussi le débit des formulaires publics**, par IP : 10 requêtes
+  par minute (rafale de 10) sur `login-actions` et l'inscription, qui envoient
+  les emails et reçoivent les mots de passe, et 30 par minute (rafale de 20) sur
+  `/protocol/openid-connect/auth`, où chaque départ ouvre une session
+  d'authentification en mémoire. L'IP est lue dans `X-Forwarded-For` derrière un
+  saut privé : si le proxy de l'hébergeur n'est pas sur un réseau privé, tout le
+  monde partage la même limite.
