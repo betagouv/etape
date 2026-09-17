@@ -23,6 +23,27 @@ export function withReturnTo(loginUrl: string, path: string): string {
   return `${loginUrl}${separator}returnTo=${encodeURIComponent(path)}`;
 }
 
+/** Paramètre posé par l'API quand elle renvoie au front après un échec : `?login=failed`. */
+export const AUTH_FLOW_STEP = {
+  LOGIN: "login",
+  LOGOUT: "logout",
+} as const;
+
+export type AuthFlowStep = (typeof AUTH_FLOW_STEP)[keyof typeof AUTH_FLOW_STEP];
+
+export const AUTH_FLOW_ERROR = {
+  EXPIRED: "expired",
+  FAILED: "failed",
+  UNAVAILABLE: "unavailable",
+  TOO_MANY_REQUESTS: "too-many-requests",
+} as const;
+
+export type AuthFlowError = (typeof AUTH_FLOW_ERROR)[keyof typeof AUTH_FLOW_ERROR];
+
+export function isAuthFlowError(value: string | null): value is AuthFlowError {
+  return Object.values<string | null>(AUTH_FLOW_ERROR).includes(value);
+}
+
 /** Ce que l'API expose d'une session. Aucun jeton n'en fait partie. */
 export interface PublicSession {
   sub: string;

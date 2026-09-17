@@ -4,6 +4,7 @@ import { BackToTop } from "@etape/ui/components/back-to-top";
 import { SkipLinks } from "@etape/ui/components/skip-links";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
 
+import { AuthFlowNotice } from "@/components/auth-flow-notice";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { MAIN_CONTENT_ID, SKIP_LINKS } from "@/lib/navigation";
@@ -38,6 +39,7 @@ export default function RootLayout({
           {/* Doit rester haut dans l'arbre : cf. `BackToTop`. */}
           <BackToTop targetId={MAIN_CONTENT_ID} />
           <SiteHeader />
+          <AuthFlowNotice />
           {/*
             `tabIndex={-1}` rend le contenu principal focusable par programme :
             sans lui, certains navigateurs suivent le lien d'évitement sans

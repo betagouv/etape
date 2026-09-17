@@ -63,6 +63,11 @@ est dans [donnees.md](donnees.md).
 | `GET /api/auth/logout`   | Ferme la session et propage la déconnexion        |
 | `GET /api/auth/session`  | État de connexion pour le front (401 si absent)   |
 
+Une navigation vers `login`, `callback` ou `logout` ne reçoit jamais d'erreur
+brute : l'échec renvoie au front avec son motif, `?login=<motif>` ou
+`?logout=<motif>` (`expired`, `failed`, `unavailable`, `too-many-requests`), que
+le site affiche. Le détail reste dans les journaux de l'API.
+
 ## Le bouton FranceConnect reste dans le front
 
 Dans un flux brokerisé standard, c'est Keycloak qui affiche l'écran de connexion,

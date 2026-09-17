@@ -1,4 +1,12 @@
-import { Controller, Get, Logger, Query, Req, Res, UnauthorizedException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Query,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseFilters,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { minutes, Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
@@ -6,6 +14,8 @@ import * as client from "openid-client";
 
 import { AccountService } from "../account/account.service.js";
 import type { Env } from "../config/env.js";
+import { AUTH_FLOW_ERROR, AUTH_FLOW_STEP, buildAuthFlowErrorUrl } from "./auth-flow-error.js";
+import { AuthFlowExceptionFilter } from "./auth-flow-exception.filter.js";
 import { extractIdentityClaims, getStringClaim } from "./identity-claims.js";
 import { getIdentityProvider } from "./identity-provider.js";
 import { OidcService } from "./oidc.service.js";
@@ -21,8 +31,6 @@ const AUTH_FLOW_THROTTLE = { default: { ttl: minutes(1), limit: 30 } };
  */
 @Controller("auth")
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(
     private readonly oidc: OidcService,
     private readonly sessions: SessionService,
@@ -36,6 +44,7 @@ export class AuthController {
 
   @Get("login")
   @Throttle(AUTH_FLOW_THROTTLE)
+  @UseFilters(AuthFlowExceptionFilter)
   async login(
     @Query("idp") idp: string | undefined,
     @Query("returnTo") returnTo: string | undefined,
@@ -65,58 +74,52 @@ export class AuthController {
     response.redirect(authorizationUrl.href);
   }
 
-  /**
-   * Aucune erreur n'est renvoyée telle quelle au navigateur : elles décrivent
-   * l'état interne du fournisseur d'identité et restent dans les journaux.
-   */
   @Get("callback")
   @Throttle(AUTH_FLOW_THROTTLE)
+  @UseFilters(AuthFlowExceptionFilter)
   async callback(@Req() request: Request, @Res() response: Response): Promise<void> {
     const transaction = this.sessions.consumeTransaction(request, response);
 
     if (!transaction) {
-      response.redirect(`${this.frontBaseUrl}/?login=expired`);
+      response.redirect(
+        buildAuthFlowErrorUrl(this.frontBaseUrl, AUTH_FLOW_STEP.LOGIN, AUTH_FLOW_ERROR.EXPIRED),
+      );
       return;
     }
 
     const apiBaseUrl = this.config.get("API_BASE_URL", { infer: true });
     const currentUrl = new URL(request.originalUrl, apiBaseUrl);
 
-    try {
-      const tokens = await this.oidc.exchangeCode({
-        currentUrl,
-        state: transaction.state,
-        nonce: transaction.nonce,
-        codeVerifier: transaction.codeVerifier,
-      });
+    const tokens = await this.oidc.exchangeCode({
+      currentUrl,
+      state: transaction.state,
+      nonce: transaction.nonce,
+      codeVerifier: transaction.codeVerifier,
+    });
 
-      const claims = tokens.claims();
-      if (!claims?.sub || !tokens.id_token) {
-        throw new Error("Réponse du fournisseur d'identité sans `sub` ou sans `id_token`.");
-      }
-
-      const identityProvider = getIdentityProvider(claims);
-
-      const account = await this.accountService.recordLogin({
-        keycloakSub: claims.sub,
-        email: getStringClaim(claims.email),
-        prenom: getStringClaim(claims.given_name),
-        nom: getStringClaim(claims.family_name),
-        identityProvider,
-      });
-
-      await this.sessions.openSession(request, response, {
-        accountId: account.id,
-        identityProvider,
-        claims: extractIdentityClaims(claims),
-        idToken: tokens.id_token,
-      });
-
-      response.redirect(`${this.frontBaseUrl}${transaction.returnTo}`);
-    } catch (error: unknown) {
-      this.logger.error("Échec du retour d'authentification", error);
-      response.redirect(`${this.frontBaseUrl}/?login=failed`);
+    const claims = tokens.claims();
+    if (!claims?.sub || !tokens.id_token) {
+      throw new Error("Réponse du fournisseur d'identité sans `sub` ou sans `id_token`.");
     }
+
+    const identityProvider = getIdentityProvider(claims);
+
+    const account = await this.accountService.recordLogin({
+      keycloakSub: claims.sub,
+      email: getStringClaim(claims.email),
+      prenom: getStringClaim(claims.given_name),
+      nom: getStringClaim(claims.family_name),
+      identityProvider,
+    });
+
+    await this.sessions.openSession(request, response, {
+      accountId: account.id,
+      identityProvider,
+      claims: extractIdentityClaims(claims),
+      idToken: tokens.id_token,
+    });
+
+    response.redirect(`${this.frontBaseUrl}${transaction.returnTo}`);
   }
 
   /**
@@ -124,6 +127,7 @@ export class AuthController {
    * « Se connecter » suivant reconnecter silencieusement.
    */
   @Get("logout")
+  @UseFilters(AuthFlowExceptionFilter)
   async logout(@Req() request: Request, @Res() response: Response): Promise<void> {
     const session = await this.sessions.readSession(request);
     await this.sessions.closeSession(request, response);
