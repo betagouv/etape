@@ -19,7 +19,7 @@ export class OidcService {
   private async getConfiguration(): Promise<client.Configuration> {
     // `development` et non « différent de production » : un `NODE_ENV=staging`
     // lancé par erreur doit échouer plutôt qu'accepter du non chiffré.
-    const enDeveloppement = this.config.get("NODE_ENV", { infer: true }) === "development";
+    const isDevelopment = this.config.get("NODE_ENV", { infer: true }) === "development";
 
     this.discovery ??= client
       .discovery(
@@ -27,7 +27,7 @@ export class OidcService {
         this.config.get("KEYCLOAK_CLIENT_ID", { infer: true }),
         this.config.get("KEYCLOAK_CLIENT_SECRET", { infer: true }),
         undefined,
-        enDeveloppement ? { execute: [client.allowInsecureRequests] } : undefined,
+        isDevelopment ? { execute: [client.allowInsecureRequests] } : undefined,
       )
       .catch((error: unknown) => {
         // Sans cette remise à zéro, la promesse rejetée serait servie en cache

@@ -4,9 +4,9 @@ import type { Request, Response } from "express";
 import * as client from "openid-client";
 
 import type { Env } from "../config/env.js";
-import { UtilisateursService } from "../utilisateurs/utilisateurs.service.js";
-import { fournisseurIdentite } from "./fournisseur-identite.js";
-import { claimTexte, identityClaims } from "./identity-claims.js";
+import { AccountService } from "../account/account.service.js";
+import { extractIdentityClaims, getStringClaim } from "./identity-claims.js";
+import { getIdentityProvider } from "./identity-provider.js";
 import { OidcService } from "./oidc.service.js";
 import { sanitizeReturnTo } from "./return-to.js";
 import { SessionService } from "./session/session.service.js";
@@ -23,7 +23,7 @@ export class AuthController {
   constructor(
     private readonly oidc: OidcService,
     private readonly sessions: SessionService,
-    private readonly utilisateurs: UtilisateursService,
+    private readonly accountService: AccountService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -70,7 +70,7 @@ export class AuthController {
     const transaction = await this.sessions.consumeTransaction(request, response);
 
     if (!transaction) {
-      response.redirect(`${this.frontBaseUrl}/?connexion=expiree`);
+      response.redirect(`${this.frontBaseUrl}/?login=expired`);
       return;
     }
 
@@ -90,27 +90,27 @@ export class AuthController {
         throw new Error("Réponse du fournisseur d'identité sans `sub` ou sans `id_token`.");
       }
 
-      const fournisseur = fournisseurIdentite(claims);
+      const identityProvider = getIdentityProvider(claims);
 
-      const utilisateur = await this.utilisateurs.enregistrerConnexion({
+      const account = await this.accountService.recordLogin({
         keycloakSub: claims.sub,
-        email: claimTexte(claims.email),
-        prenom: claimTexte(claims.given_name),
-        nom: claimTexte(claims.family_name),
-        fournisseurIdentite: fournisseur,
+        email: getStringClaim(claims.email),
+        prenom: getStringClaim(claims.given_name),
+        nom: getStringClaim(claims.family_name),
+        identityProvider,
       });
 
       await this.sessions.openSession(response, {
-        utilisateurId: utilisateur.id,
-        fournisseurIdentite: fournisseur,
-        claims: identityClaims(claims),
+        accountId: account.id,
+        identityProvider,
+        claims: extractIdentityClaims(claims),
         idToken: tokens.id_token,
       });
 
       response.redirect(`${this.frontBaseUrl}${transaction.returnTo}`);
     } catch (error: unknown) {
       this.logger.error("Échec du retour d'authentification", error);
-      response.redirect(`${this.frontBaseUrl}/?connexion=echec`);
+      response.redirect(`${this.frontBaseUrl}/?login=failed`);
     }
   }
 

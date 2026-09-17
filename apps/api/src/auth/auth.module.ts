@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 
-import { UtilisateursModule } from "../utilisateurs/utilisateurs.module.js";
+import { AccountModule } from "../account/account.module.js";
 import { AuthController } from "./auth.controller.js";
 import { OidcService } from "./oidc.service.js";
 import { SessionGuard } from "./session/session.guard.js";
@@ -13,7 +13,7 @@ import { PrismaSessionStore, SessionStore } from "./session/session.store.js";
  * pour le stockage des sessions, qui tient dans le seul `useClass` ci-dessous.
  */
 @Module({
-  imports: [UtilisateursModule],
+  imports: [AccountModule],
   controllers: [AuthController],
   providers: [
     OidcService,

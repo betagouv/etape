@@ -3,7 +3,7 @@
  * négatif à dessein : les champs varient d'un fournisseur d'identité à l'autre,
  * et une liste blanche en perdrait en silence.
  */
-const CLAIMS_DE_PROTOCOLE = new Set([
+const PROTOCOL_CLAIMS = new Set([
   "iss",
   "aud",
   "exp",
@@ -26,14 +26,14 @@ const CLAIMS_DE_PROTOCOLE = new Set([
 ]);
 
 /** Retient d'un `id_token` ce qui décrit la personne. */
-export function identityClaims(claims: Record<string, unknown>): Record<string, unknown> {
+export function extractIdentityClaims(claims: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(claims).filter(
-      ([nom, valeur]) => !CLAIMS_DE_PROTOCOLE.has(nom) && valeur !== undefined && valeur !== null,
+      ([name, value]) => !PROTOCOL_CLAIMS.has(name) && value !== undefined && value !== null,
     ),
   );
 }
 
-export function claimTexte(valeur: unknown): string | undefined {
-  return typeof valeur === "string" && valeur.length > 0 ? valeur : undefined;
+export function getStringClaim(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }

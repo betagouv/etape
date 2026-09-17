@@ -7,4 +7,4 @@ import { PrismaService } from "./prisma.service.js";
   providers: [PrismaService],
   exports: [PrismaService],
 })
-export class BaseDeDonneesModule {}
+export class DatabaseModule {}

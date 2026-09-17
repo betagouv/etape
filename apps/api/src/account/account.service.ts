@@ -1,32 +1,32 @@
 import { Injectable } from "@nestjs/common";
 
-import { PrismaService } from "../base-de-donnees/prisma.service.js";
+import { PrismaService } from "../database/prisma.service.js";
 import type { Utilisateur } from "../generated/prisma/client.ts";
 
-export interface ProfilRecu {
+export interface IdentityProfile {
   keycloakSub: string;
   email?: string;
   prenom?: string;
   nom?: string;
-  fournisseurIdentite: string;
+  identityProvider: string;
 }
 
 @Injectable()
-export class UtilisateursService {
+export class AccountService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async enregistrerConnexion(profil: ProfilRecu): Promise<Utilisateur> {
-    const [utilisateur] = await this.prisma.$queryRaw<Utilisateur[]>`
+  async recordLogin(profile: IdentityProfile): Promise<Utilisateur> {
+    const [account] = await this.prisma.$queryRaw<Utilisateur[]>`
       insert into utilisateur (
         keycloak_sub, email, prenom, nom, cree_via, derniere_connexion_via
       )
       values (
-        ${profil.keycloakSub},
-        ${profil.email ?? null},
-        ${profil.prenom ?? null},
-        ${profil.nom ?? null},
-        ${profil.fournisseurIdentite},
-        ${profil.fournisseurIdentite}
+        ${profile.keycloakSub},
+        ${profile.email ?? null},
+        ${profile.prenom ?? null},
+        ${profile.nom ?? null},
+        ${profile.identityProvider},
+        ${profile.identityProvider}
       )
       on conflict (keycloak_sub) do update set
         email                  = excluded.email,
@@ -54,10 +54,10 @@ export class UtilisateursService {
         derniere_connexion_via as "derniereConnexionVia"
     `;
 
-    if (!utilisateur) {
+    if (!account) {
       throw new Error("L'enregistrement du compte n'a rien renvoyé.");
     }
 
-    return utilisateur;
+    return account;
   }
 }

@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 
 import type { Env } from "../../config/env.js";
 import { SessionStore } from "./session.store.js";
-import type { LoginTransaction, SessionAOuvrir, UserSession } from "./session.types.js";
+import type { AccountSession, NewSession, PendingLogin } from "./session.types.js";
 
 // Identifiants opaques : aucune donnée utilisateur n'y transite.
 const SESSION_COOKIE = "etape.sid";
@@ -46,7 +46,7 @@ export class SessionService {
 
   async startTransaction(
     response: Response,
-    transaction: Omit<LoginTransaction, "expiresAt">,
+    transaction: Omit<PendingLogin, "expiresAt">,
   ): Promise<void> {
     const id = randomUUID();
 
@@ -59,21 +59,21 @@ export class SessionService {
   }
 
   /** Elle ne sert qu'une fois. */
-  async consumeTransaction(request: Request, response: Response): Promise<LoginTransaction | null> {
+  async consumeTransaction(request: Request, response: Response): Promise<PendingLogin | null> {
     const id = this.readCookie(request, TRANSACTION_COOKIE);
     response.clearCookie(TRANSACTION_COOKIE, { path: "/" });
 
     return id ? this.store.consumeTransaction(id) : null;
   }
 
-  async openSession(response: Response, session: Omit<SessionAOuvrir, "expiresAt">): Promise<void> {
+  async openSession(response: Response, session: Omit<NewSession, "expiresAt">): Promise<void> {
     const id = randomUUID();
 
     await this.store.createSession(id, { ...session, expiresAt: Date.now() + SESSION_TTL_MS });
     response.cookie(SESSION_COOKIE, id, this.cookieOptions(SESSION_TTL_MS));
   }
 
-  async readSession(request: Request): Promise<UserSession | null> {
+  async readSession(request: Request): Promise<AccountSession | null> {
     const id = this.readCookie(request, SESSION_COOKIE);
     return id ? this.store.getSession(id) : null;
   }

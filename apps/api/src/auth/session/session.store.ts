@@ -1,25 +1,25 @@
 import { Injectable } from "@nestjs/common";
 
-import { PrismaService } from "../../base-de-donnees/prisma.service.js";
+import { PrismaService } from "../../database/prisma.service.js";
 import { Prisma } from "../../generated/prisma/client.ts";
-import type { LoginTransaction, SessionAOuvrir, UserSession } from "./session.types.js";
+import type { AccountSession, NewSession, PendingLogin } from "./session.types.js";
 
 /**
  * Le navigateur ne reçoit qu'un identifiant opaque : la session reste révocable,
  * et l'`id_token` ne transite pas dans un cookie, où il dépasserait les 4 Ko.
  */
 export abstract class SessionStore {
-  abstract createTransaction(id: string, transaction: LoginTransaction): Promise<void>;
+  abstract createTransaction(id: string, transaction: PendingLogin): Promise<void>;
   /** Lecture unique : une transaction consommée ne se rejoue pas. */
-  abstract consumeTransaction(id: string): Promise<LoginTransaction | null>;
+  abstract consumeTransaction(id: string): Promise<PendingLogin | null>;
 
-  abstract createSession(id: string, session: SessionAOuvrir): Promise<void>;
-  abstract getSession(id: string): Promise<UserSession | null>;
+  abstract createSession(id: string, session: NewSession): Promise<void>;
+  abstract getSession(id: string): Promise<AccountSession | null>;
   abstract deleteSession(id: string): Promise<void>;
 }
 
-function estIntrouvable(erreur: unknown): boolean {
-  return erreur instanceof Prisma.PrismaClientKnownRequestError && erreur.code === "P2025";
+function isNotFoundError(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025";
 }
 
 /**
@@ -33,8 +33,8 @@ export class PrismaSessionStore extends SessionStore {
     super();
   }
 
-  async createTransaction(id: string, transaction: LoginTransaction): Promise<void> {
-    await this.purger();
+  async createTransaction(id: string, transaction: PendingLogin): Promise<void> {
+    await this.purgeExpired();
 
     await this.prisma.transactionConnexion.create({
       data: {
@@ -48,33 +48,33 @@ export class PrismaSessionStore extends SessionStore {
     });
   }
 
-  async consumeTransaction(id: string): Promise<LoginTransaction | null> {
-    const ligne = await this.prisma.transactionConnexion
+  async consumeTransaction(id: string): Promise<PendingLogin | null> {
+    const row = await this.prisma.transactionConnexion
       .delete({ where: { id } })
-      .catch((erreur: unknown) => {
-        if (estIntrouvable(erreur)) return null;
-        throw erreur;
+      .catch((error: unknown) => {
+        if (isNotFoundError(error)) return null;
+        throw error;
       });
 
-    if (!ligne || ligne.expiresAt.getTime() <= Date.now()) return null;
+    if (!row || row.expiresAt.getTime() <= Date.now()) return null;
 
     return {
-      state: ligne.state,
-      nonce: ligne.nonce,
-      codeVerifier: ligne.codeVerifier,
-      returnTo: ligne.returnTo,
-      expiresAt: ligne.expiresAt.getTime(),
+      state: row.state,
+      nonce: row.nonce,
+      codeVerifier: row.codeVerifier,
+      returnTo: row.returnTo,
+      expiresAt: row.expiresAt.getTime(),
     };
   }
 
-  async createSession(id: string, session: SessionAOuvrir): Promise<void> {
-    await this.purger();
+  async createSession(id: string, session: NewSession): Promise<void> {
+    await this.purgeExpired();
 
     await this.prisma.session.create({
       data: {
         id,
-        utilisateurId: session.utilisateurId,
-        fournisseurIdentite: session.fournisseurIdentite,
+        utilisateurId: session.accountId,
+        fournisseurIdentite: session.identityProvider,
         claims: session.claims as Prisma.InputJsonValue,
         idToken: session.idToken,
         expiresAt: new Date(session.expiresAt),
@@ -82,27 +82,27 @@ export class PrismaSessionStore extends SessionStore {
     });
   }
 
-  async getSession(id: string): Promise<UserSession | null> {
-    const ligne = await this.prisma.session.findUnique({
+  async getSession(id: string): Promise<AccountSession | null> {
+    const row = await this.prisma.session.findUnique({
       where: { id },
       include: { utilisateur: true },
     });
 
-    if (!ligne) return null;
+    if (!row) return null;
 
-    if (ligne.expiresAt.getTime() <= Date.now()) {
+    if (row.expiresAt.getTime() <= Date.now()) {
       await this.deleteSession(id);
       return null;
     }
 
     return {
-      sub: ligne.utilisateur.keycloakSub,
-      utilisateurId: ligne.utilisateurId,
-      email: ligne.utilisateur.email ?? undefined,
-      fournisseurIdentite: ligne.fournisseurIdentite,
-      claims: ligne.claims as Record<string, unknown>,
-      idToken: ligne.idToken,
-      expiresAt: ligne.expiresAt.getTime(),
+      sub: row.utilisateur.keycloakSub,
+      accountId: row.utilisateurId,
+      email: row.utilisateur.email ?? undefined,
+      identityProvider: row.fournisseurIdentite,
+      claims: row.claims as Record<string, unknown>,
+      idToken: row.idToken,
+      expiresAt: row.expiresAt.getTime(),
     };
   }
 
@@ -110,12 +110,12 @@ export class PrismaSessionStore extends SessionStore {
     await this.prisma.session.deleteMany({ where: { id } });
   }
 
-  private async purger(): Promise<void> {
-    const maintenant = new Date();
+  private async purgeExpired(): Promise<void> {
+    const now = new Date();
 
     await Promise.all([
-      this.prisma.transactionConnexion.deleteMany({ where: { expiresAt: { lte: maintenant } } }),
-      this.prisma.session.deleteMany({ where: { expiresAt: { lte: maintenant } } }),
+      this.prisma.transactionConnexion.deleteMany({ where: { expiresAt: { lte: now } } }),
+      this.prisma.session.deleteMany({ where: { expiresAt: { lte: now } } }),
     ]);
   }
 }

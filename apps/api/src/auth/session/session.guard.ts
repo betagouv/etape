@@ -2,11 +2,11 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import type { Request } from "express";
 
 import { SessionService } from "./session.service.js";
-import type { UserSession } from "./session.types.js";
+import type { AccountSession } from "./session.types.js";
 
 /** Requête à laquelle le garde a rattaché la session résolue. */
 export interface AuthenticatedRequest extends Request {
-  session: UserSession;
+  session: AccountSession;
 }
 
 /**
