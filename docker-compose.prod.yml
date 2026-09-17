@@ -165,6 +165,9 @@ services:
       SMTP_AUTH: ${SMTP_AUTH:-true}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
       SMTP_SSL: ${SMTP_SSL:-false}
+      KEYCLOAK_RECAPTCHA_SITE_KEY: ${KEYCLOAK_RECAPTCHA_SITE_KEY:-}
+      KEYCLOAK_RECAPTCHA_SECRET_KEY: ${KEYCLOAK_RECAPTCHA_SECRET_KEY:-}
+      KEYCLOAK_RECAPTCHA_V3: ${KEYCLOAK_RECAPTCHA_V3:-false}
     healthcheck:
       # Port de gestion (9000). L'image n'a ni curl ni wget, d'où ce dialogue
       # HTTP écrit à la main sur un descripteur.

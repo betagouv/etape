@@ -76,6 +76,7 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 | `FRANCECONNECT_CLIENT_SECRET` | non         | Secret du client FranceConnect                       |
 | `KEYCLOAK_TEST_USER_PASSWORD` | non         | Conserve `test@etape.local` avec ce mot de passe     |
 | `SMTP_*`                      | non         | Envoi par Brevo ; sans lui, pas d'email du tout      |
+| `KEYCLOAK_RECAPTCHA_*`        | non         | reCAPTCHA de l'inscription (voir ci-dessous)         |
 
 Trois pièges tiennent au moment où ces valeurs sont lues :
 
@@ -154,6 +155,12 @@ commentaire, sur le service `api` (`extra_hosts` vers `host-gateway`).
 
 ## Limites connues de cet environnement
 
+- **Avec `SMTP_*` mais sans `KEYCLOAK_RECAPTCHA_SITE_KEY` et
+  `KEYCLOAK_RECAPTCHA_SECRET_KEY`, l'inscription est fermée.** Ouverte, elle
+  ferait envoyer par ETAPE un email à n'importe quelle adresse, sans limite :
+  quota Brevo épuisé et réputation du domaine abîmée. Le reCAPTCHA passe par
+  `recaptcha.net`, que la CSP du realm autorise alors. C'est un service Google :
+  son usage est à valider au regard du RGPD avant l'ouverture au public.
 - **Sans `SMTP_*`, `verifyEmail` reste désactivé** : ni inscription ni « mot de
   passe oublié ». Or c'est la vérification d'adresse qui rend sûre la liaison
   d'un compte local à une identité FranceConnect. À régler avant d'ouvrir
