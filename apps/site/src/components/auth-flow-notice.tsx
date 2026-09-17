@@ -1,7 +1,8 @@
 "use client";
 
 import { CircleAlert } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 import { Callout } from "@etape/ui/components/callout";
 import { Container } from "@etape/ui/components/container";
@@ -45,9 +46,7 @@ const MESSAGES: Record<AuthFlowStep, Record<AuthFlowError, string>> = {
   },
 };
 
-function parseAuthFlowFailure(search: string): AuthFlowFailure | null {
-  const params = new URLSearchParams(search);
-
+function parseAuthFlowFailure(params: ReadonlyURLSearchParams): AuthFlowFailure | null {
   for (const step of Object.values(AUTH_FLOW_STEP)) {
     const error = params.get(step);
     if (isAuthFlowError(error)) return { step, error };
@@ -56,27 +55,26 @@ function parseAuthFlowFailure(search: string): AuthFlowFailure | null {
   return null;
 }
 
-function subscribeToHistory(onChange: () => void): () => void {
-  window.addEventListener("popstate", onChange);
-  return () => window.removeEventListener("popstate", onChange);
-}
+function AuthFlowFailureMessage() {
+  const failure = parseAuthFlowFailure(useSearchParams());
 
-const getSearch = (): string => window.location.search;
-const getServerSearch = (): string => "";
-
-export function AuthFlowNotice() {
-  const search = useSyncExternalStore(subscribeToHistory, getSearch, getServerSearch);
-  const failure = parseAuthFlowFailure(search);
+  if (!failure) return null;
 
   return (
+    <Container size="xl" className="pt-6">
+      <Callout icon={CircleAlert} title={TITLES[failure.step]}>
+        {MESSAGES[failure.step][failure.error]}
+      </Callout>
+    </Container>
+  );
+}
+
+export function AuthFlowNotice() {
+  return (
     <div role="status">
-      {failure ? (
-        <Container size="xl" className="pt-6">
-          <Callout icon={CircleAlert} title={TITLES[failure.step]}>
-            {MESSAGES[failure.step][failure.error]}
-          </Callout>
-        </Container>
-      ) : null}
+      <Suspense fallback={null}>
+        <AuthFlowFailureMessage />
+      </Suspense>
     </div>
   );
 }
