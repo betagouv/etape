@@ -29,6 +29,7 @@
   "ssoSessionMaxLifespan": 36000,
   "accessTokenLifespan": 300,
   "actionTokenGeneratedByUserLifespan": 900,
+  "accessCodeLifespanLogin": 600,
   "clients": [
     {
       "clientId": "etape-api",

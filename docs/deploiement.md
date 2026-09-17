@@ -203,3 +203,12 @@ commentaire, sur le service `api` (`extra_hosts` vers `host-gateway`).
   d'authentification en mémoire. L'IP est lue dans `X-Forwarded-For` derrière un
   saut privé : si le proxy de l'hébergeur n'est pas sur un réseau privé, tout le
   monde partage la même limite.
+
+- **Le realm `etape` ferme deux portes ouvertes par défaut.** `admin-cli` n'y
+  accepte plus de mot de passe en direct (_direct access grants_), qui
+  permettait de verrouiller un compte par script sans passer par le formulaire.
+  Et une session d'authentification ne vit que 10 minutes
+  (`accessCodeLifespanLogin`), comme la transaction de l'API. Les caches de
+  Keycloak qui les gardent en mémoire (`authenticationSessions`, `actionTokens`,
+  `loginFailures`) n'ont pas de plafond d'entrées configurable en 26.7 sans
+  fichier Infinispan dédié : c'est la limite de débit qui les protège.

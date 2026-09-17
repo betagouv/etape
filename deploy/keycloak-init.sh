@@ -50,6 +50,11 @@ echo "→ realm ${REALM} : sslRequired=EXTERNAL"
 $KCADM update "realms/$REALM" -s actionTokenGeneratedByUserLifespan=900
 echo "→ realm ${REALM} : lien de réinitialisation valable 15 minutes"
 
+# Chaque départ de connexion ouvre une session d'authentification en mémoire,
+# sans plafond d'entrées : 10 minutes, comme la transaction de l'API.
+$KCADM update "realms/$REALM" -s accessCodeLifespanLogin=600
+echo "→ realm ${REALM} : session d'authentification valable 10 minutes"
+
 $KCADM update "realms/$REALM" -s "passwordPolicy=length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername(undefined) and passwordHistory(3)"
 echo "→ realm ${REALM} : politique de mot de passe appliquée"
 
@@ -87,6 +92,15 @@ $KCADM update "clients/$API_CLIENT_UUID" -r "$REALM" -f - <<JSON
 }
 JSON
 echo "→ client etape-api : secret, redirect_uri, base et post-logout alignés sur ${PUBLIC_URL}"
+
+# Tout realm naît avec un `admin-cli` public en « direct access grants » : des
+# mots de passe essayés par script, hors du formulaire, verrouilleraient le
+# compte visé. `kcadm` passe par celui du realm `master`, qui n'est pas touché.
+ADMIN_CLI_UUID=$($KCADM get clients -r "$REALM" -q clientId=admin-cli --fields id --format csv --noquotes)
+if [ -n "$ADMIN_CLI_UUID" ]; then
+  $KCADM update "clients/$ADMIN_CLI_UUID" -r "$REALM" -s directAccessGrantsEnabled=false
+  echo "→ client admin-cli : direct access grants désactivés"
+fi
 
 # Identifiants facultatifs : sans eux, seul ce parcours est indisponible.
 #
