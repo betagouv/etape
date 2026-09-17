@@ -69,23 +69,6 @@
       ]
     }
   ],
-  "users": [
-    {
-      "username": "test@etape.local",
-      "email": "test@etape.local",
-      "emailVerified": true,
-      "enabled": true,
-      "firstName": "Test",
-      "lastName": "Utilisateur",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "MotDePasseTest2026!",
-          "temporary": false
-        }
-      ]
-    }
-  ],
   "identityProviders": [
     {
       "alias": "franceconnect",

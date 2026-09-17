@@ -74,7 +74,7 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 | `KEYCLOAK_CLIENT_SECRET`      | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak |
 | `FRANCECONNECT_CLIENT_ID`     | non         | Identifiant du client FranceConnect                  |
 | `FRANCECONNECT_CLIENT_SECRET` | non         | Secret du client FranceConnect                       |
-| `KEYCLOAK_TEST_USER_PASSWORD` | non         | Conserve `test@etape.local` avec ce mot de passe     |
+| `KEYCLOAK_TEST_USER_PASSWORD` | non         | Crée `test@etape.local` avec ce mot de passe         |
 | `SMTP_*`                      | non         | Envoi par Brevo ; sans lui, pas d'email du tout      |
 | `KEYCLOAK_RECAPTCHA_*`        | non         | reCAPTCHA de l'inscription (voir ci-dessous)         |
 
@@ -90,13 +90,12 @@ Trois pièges tiennent au moment où ces valeurs sont lues :
 - `KEYCLOAK_CLIENT_SECRET`, à l'inverse, est réappliqué à chaque démarrage de
   Keycloak : c'est la seule des trois qui se corrige en redéployant.
 
-`KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Le fichier de realm crée
-`test@etape.local` avec un mot de passe écrit en clair dans un dépôt public :
-laissé tel quel sur une instance joignable depuis Internet, c'est un accès
-publié. Sans cette variable, le compte est donc **supprimé** au déploiement ;
-avec elle (conforme à la politique du realm : 12 caractères, majuscule,
-minuscule, chiffre et caractère spécial), il est conservé et
-reçoit ce mot de passe-là.
+`KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Aucun identifiant n'est versionné :
+le fichier de realm ne crée plus de compte, et `test@etape.local` n'existe que si
+cette variable est renseignée (conforme à la politique du realm : 12 caractères,
+majuscule, minuscule, chiffre et caractère spécial). `keycloak-init.sh` le crée
+désactivé, pose le mot de passe, puis l'ouvre : il n'est jamais joignable avec un
+mot de passe connu du dépôt. Sans la variable, un compte existant est supprimé.
 
 ## FranceConnect
 

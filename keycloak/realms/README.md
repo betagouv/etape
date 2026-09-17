@@ -9,8 +9,9 @@ contre le bruteforce. Voir [docs/authentification.md](../../docs/authentificatio
 
 Les URL qu'il contient sont celles du poste local (`localhost:3000`,
 `localhost:3001`, `localhost:3002`), il porte `sslRequired: none`, il fige le
-secret du client `etape-api` à une valeur connue, et il crée un compte de test au
-mot de passe connu. Rien de tout cela n'a sa place ailleurs qu'en local.
+secret du client `etape-api` à une valeur connue. Rien de tout cela n'a sa place
+ailleurs qu'en local. Il ne crée en revanche aucun compte : le compte de test
+vient de `KEYCLOAK_TEST_USER_PASSWORD`, jamais d'un mot de passe versionné.
 
 Il ne porte pas non plus de `smtpServer`, et laisse donc `verifyEmail` désactivé :
 la clé Brevo n'a rien à faire dans un dépôt public. L'envoi est posé après
@@ -60,8 +61,7 @@ docker compose cp keycloak:/tmp/export/etape-realm.json keycloak/realms/
 
 `--users skip` n'est pas un détail : sans lui, l'export embarque les comptes de
 test du poste, et le fichier finit par contenir des données personnelles que
-personne n'a l'intention de versionner. Il faudra en revanche remettre à la main
-le compte de test défini dans `users`, que cette option écarte aussi.
+personne n'a l'intention de versionner.
 
 Le secret du client n'est pas exporté — il est régénéré à chaque import et se
 récupère dans la console (**Clients → etape-api → Credentials**) pour alimenter

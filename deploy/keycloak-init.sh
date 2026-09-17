@@ -227,31 +227,45 @@ else
   fi
 fi
 
-# Le fichier de realm crée un compte dont le mot de passe est écrit en clair dans
-# un dépôt public : il reçoit un mot de passe de l'environnement, ou il est
-# supprimé.
+# Aucun identifiant n'est versionné : le compte de test n'existe que si
+# l'environnement fournit son mot de passe. Créé désactivé, il n'est ouvert
+# qu'une fois ce mot de passe posé.
 TEST_USER_ID=$($KCADM get users -r "$REALM" -q username=test@etape.local --fields id --format csv --noquotes)
 
-if [ -n "$TEST_USER_ID" ]; then
-  if [ -n "${KEYCLOAK_TEST_USER_PASSWORD:-}" ]; then
-    # `passwordHistory(3)` fait échouer `set-password` si le script est rejoué
-    # avec le même mot de passe : le compte est déjà dans l'état voulu.
-    if error=$($KCADM set-password -r "$REALM" --userid "$TEST_USER_ID" \
-        --new-password "$KEYCLOAK_TEST_USER_PASSWORD" 2>&1); then
-      echo "→ compte de test test@etape.local : mot de passe remplacé"
-    else
-      echo "⚠ compte de test test@etape.local : mot de passe inchangé"
-      echo "  ${error}"
-      echo "  Attendu au rejeu du script, l'historique refusant le même mot de passe."
-      echo "  Sinon, vérifier KEYCLOAK_TEST_USER_PASSWORD face à la politique du realm :"
-    echo "  12 caractères, une majuscule, une minuscule, un chiffre, un caractère spécial."
-    fi
-  else
-    $KCADM delete "users/$TEST_USER_ID" -r "$REALM"
-    echo "→ compte de test test@etape.local : supprimé"
-    echo "  (renseigner KEYCLOAK_TEST_USER_PASSWORD, conforme à la politique du realm,"
-    echo "   pour le conserver)"
+if [ -n "${KEYCLOAK_TEST_USER_PASSWORD:-}" ]; then
+  if [ -z "$TEST_USER_ID" ]; then
+    $KCADM create users -r "$REALM" \
+      -s username=test@etape.local \
+      -s email=test@etape.local \
+      -s emailVerified=true \
+      -s enabled=false \
+      -s firstName=Test \
+      -s lastName=ETAPE
+    TEST_USER_ID=$($KCADM get users -r "$REALM" -q username=test@etape.local --fields id --format csv --noquotes)
+    echo "→ compte de test test@etape.local : créé"
   fi
+
+  # `passwordHistory(3)` fait échouer `set-password` si le script est rejoué
+  # avec le même mot de passe : le compte est déjà dans l'état voulu.
+  if error=$($KCADM set-password -r "$REALM" --userid "$TEST_USER_ID" \
+      --new-password "$KEYCLOAK_TEST_USER_PASSWORD" 2>&1); then
+    echo "→ compte de test test@etape.local : mot de passe posé"
+  elif [[ "$error" == *invalidPasswordHistoryMessage* ]]; then
+    echo "→ compte de test test@etape.local : mot de passe déjà en place"
+  else
+    echo "⚠ compte de test test@etape.local : mot de passe refusé, compte laissé désactivé"
+    echo "  ${error}"
+    echo "  KEYCLOAK_TEST_USER_PASSWORD doit respecter la politique du realm :"
+    echo "  12 caractères, une majuscule, une minuscule, un chiffre, un caractère spécial."
+    TEST_USER_ID=""
+  fi
+
+  if [ -n "$TEST_USER_ID" ]; then
+    $KCADM update "users/$TEST_USER_ID" -r "$REALM" -s enabled=true
+  fi
+elif [ -n "$TEST_USER_ID" ]; then
+  $KCADM delete "users/$TEST_USER_ID" -r "$REALM"
+  echo "→ compte de test test@etape.local : supprimé (KEYCLOAK_TEST_USER_PASSWORD absent)"
 fi
 
 echo "✅ realm ${REALM} configuré pour ${PUBLIC_URL}"

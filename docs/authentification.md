@@ -330,12 +330,16 @@ puis `docker compose up -d keycloak-providers && docker compose restart keycloak
 c'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions, un
 simple redémarrage de Keycloak servirait l'ancien.
 
-| Service           | Adresse               | Accès                                      |
-| ----------------- | --------------------- | ------------------------------------------ |
-| Site vitrine      | http://localhost:3000 | bouton « Se connecter » dans l'en-tête     |
-| Console Keycloak  | http://localhost:8080 | `admin` / `admin`                          |
-| Compte applicatif | —                     | `test@etape.local` / `MotDePasseTest2026!` |
-| Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`            |
+| Service           | Adresse               | Accès                                              |
+| ----------------- | --------------------- | -------------------------------------------------- |
+| Site vitrine      | http://localhost:3000 | bouton « Se connecter » dans l'en-tête             |
+| Console Keycloak  | http://localhost:8080 | `admin` / `admin`                                  |
+| Compte applicatif | —                     | `test@etape.local` / `KEYCLOAK_TEST_USER_PASSWORD` |
+| Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`                    |
+
+Aucun mot de passe n'est versionné : le compte applicatif n'est créé que si
+`KEYCLOAK_TEST_USER_PASSWORD` est renseigné, dans le `.env` à la racine ou dans
+le shell, avant `docker compose up`.
 
 Le secret du client est figé dans le fichier de realm et recopié tel quel dans
 `.env.example` : sans cela, Keycloak en régénère un à chaque import et il

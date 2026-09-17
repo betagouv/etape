@@ -135,6 +135,7 @@ services:
       SMTP_FROM: ${SMTP_FROM:-no-reply@etape.beta.gouv.fr}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -164,6 +165,18 @@ services:
           echo "smtp : aucun serveur d'envoi — verifyEmail reste désactivé."
           echo "       « mot de passe oublié » et vérification d'adresse sont fermés ;"
           echo "       renseigner SMTP_HOST / _USER / _PASSWORD / _FROM puis relancer."
+        fi
+
+        if [ -n "$$KEYCLOAK_TEST_USER_PASSWORD" ]; then
+          if [ -z "$$($$KCADM get users -r etape -q username=test@etape.local --fields id --format csv --noquotes)" ]; then
+            $$KCADM create users -r etape -s username=test@etape.local -s email=test@etape.local \
+              -s emailVerified=true -s enabled=true -s firstName=Test -s lastName=ETAPE
+          fi
+          $$KCADM set-password -r etape --username test@etape.local \
+            --new-password "$$KEYCLOAK_TEST_USER_PASSWORD" >/dev/null 2>&1 || true
+          echo "compte de test : test@etape.local, mot de passe KEYCLOAK_TEST_USER_PASSWORD."
+        else
+          echo "compte de test : KEYCLOAK_TEST_USER_PASSWORD absent, aucun compte créé."
         fi
 
 volumes:
