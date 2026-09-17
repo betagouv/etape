@@ -18,7 +18,7 @@ const USER_PROFILE_ATTRIBUTE = {
   PASSWORD_CONFIRM: "password-confirm",
 } as const;
 
-const iconByAttributeName: Record<string, IconComponent> = {
+const ICON_BY_ATTRIBUTE_NAME: Record<string, IconComponent> = {
   [USER_PROFILE_ATTRIBUTE.EMAIL]: Mail,
   [USER_PROFILE_ATTRIBUTE.USERNAME]: User,
   [USER_PROFILE_ATTRIBUTE.FIRST_NAME]: User,
@@ -56,18 +56,19 @@ export function UserProfileFields(props: {
   dispatchFormAction: (action: FormAction) => void;
   i18n: I18n;
   passwordAddon?: (value: string) => ReactNode;
-  confirmPassword?: boolean;
+  shouldConfirmPassword?: boolean;
 }) {
   const {
     formFieldStates,
     dispatchFormAction,
     i18n,
     passwordAddon,
-    confirmPassword = true,
+    shouldConfirmPassword = true,
   } = props;
 
   const isHiddenField = (name: string) =>
-    HIDDEN.includes(name) || (name === USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM && !confirmPassword);
+    HIDDEN.includes(name) ||
+    (name === USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM && !shouldConfirmPassword);
 
   const hidden = formFieldStates.filter((field) => isHiddenField(field.attribute.name));
 
@@ -213,7 +214,7 @@ function UserProfileField(props: {
         <TextInput
           {...commonProps}
           type={attribute.name === USER_PROFILE_ATTRIBUTE.EMAIL ? "email" : "text"}
-          icon={iconByAttributeName[attribute.name]}
+          icon={ICON_BY_ATTRIBUTE_NAME[attribute.name]}
         />
       )}
       {addon}

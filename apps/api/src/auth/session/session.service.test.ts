@@ -10,7 +10,7 @@ import { SessionService } from "./session.service.js";
 import type { SessionStore } from "./session.store.js";
 import type { AccountSession, NewSession } from "./session.types.js";
 
-const TRANSACTION_COOKIE = "etape.txn";
+const PENDING_LOGIN_COOKIE = "etape.txn";
 const SESSION_COOKIE = "etape.sid";
 
 const key = randomBytes(32);
@@ -84,37 +84,39 @@ describe("SessionService", () => {
   describe("transaction de connexion", () => {
     it("pose un cookie httpOnly, sécurisé et lax, puis relit la transaction", () => {
       const response = new FakeResponse();
-      service.startTransaction(response as unknown as Response, pendingLogin);
+      service.startPendingLogin(response as unknown as Response, pendingLogin);
 
-      const cookie = response.cookies.get(TRANSACTION_COOKIE);
+      const cookie = response.cookies.get(PENDING_LOGIN_COOKIE);
       expect(cookie?.options).toMatchObject({ httpOnly: true, secure: true, sameSite: "lax" });
 
-      const transaction = service.consumeTransaction(
-        createRequest({ [TRANSACTION_COOKIE]: cookie!.value }),
+      const consumed = service.consumePendingLogin(
+        createRequest({ [PENDING_LOGIN_COOKIE]: cookie!.value }),
         new FakeResponse() as unknown as Response,
       );
-      expect(transaction).toMatchObject(pendingLogin);
+      expect(consumed).toMatchObject(pendingLogin);
     });
 
     it("efface le cookie à la lecture", () => {
       const response = new FakeResponse();
-      service.consumeTransaction(createRequest({}), response as unknown as Response);
+      service.consumePendingLogin(createRequest({}), response as unknown as Response);
 
-      expect(response.clearedCookies).toContain(TRANSACTION_COOKIE);
+      expect(response.clearedCookies).toContain(PENDING_LOGIN_COOKIE);
     });
 
     it("refuse une transaction expirée", () => {
       vi.useFakeTimers();
       const response = new FakeResponse();
-      service.startTransaction(response as unknown as Response, pendingLogin);
+      service.startPendingLogin(response as unknown as Response, pendingLogin);
 
       vi.advanceTimersByTime(10 * 60 * 1000 + 1);
 
-      const transaction = service.consumeTransaction(
-        createRequest({ [TRANSACTION_COOKIE]: response.cookies.get(TRANSACTION_COOKIE)!.value }),
+      const consumed = service.consumePendingLogin(
+        createRequest({
+          [PENDING_LOGIN_COOKIE]: response.cookies.get(PENDING_LOGIN_COOKIE)!.value,
+        }),
         new FakeResponse() as unknown as Response,
       );
-      expect(transaction).toBeNull();
+      expect(consumed).toBeNull();
     });
 
     it("refuse un cookie scellé avec une autre clé", () => {
@@ -124,8 +126,8 @@ describe("SessionService", () => {
       );
 
       expect(
-        service.consumeTransaction(
-          createRequest({ [TRANSACTION_COOKIE]: sealed }),
+        service.consumePendingLogin(
+          createRequest({ [PENDING_LOGIN_COOKIE]: sealed }),
           new FakeResponse() as unknown as Response,
         ),
       ).toBeNull();
@@ -144,8 +146,8 @@ describe("SessionService", () => {
 
       for (const sealed of [tooLong, notJson]) {
         expect(
-          service.consumeTransaction(
-            createRequest({ [TRANSACTION_COOKIE]: sealed }),
+          service.consumePendingLogin(
+            createRequest({ [PENDING_LOGIN_COOKIE]: sealed }),
             new FakeResponse() as unknown as Response,
           ),
         ).toBeNull();

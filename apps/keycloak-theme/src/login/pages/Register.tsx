@@ -10,6 +10,7 @@ import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
 const REGISTRATION_CONTEXT = "REGISTRATION";
+const RECAPTCHA_CALLBACK = "onSubmitRecaptcha";
 
 type RegisterProps = EtapePageProps<Extract<KcContext, { pageId: "register.ftl" }>> & {
   doMakeUserConfirmPassword: boolean;
@@ -71,12 +72,12 @@ export default function Register(props: RegisterProps) {
   useLayoutEffect(() => {
     // Le reCAPTCHA invisible rappelle une fonction globale : elle doit exister
     // avant que son script ne s'exécute, d'où le `useLayoutEffect`.
-    (window as unknown as Record<string, unknown>)["onSubmitRecaptcha"] = () => {
+    (window as unknown as Record<string, unknown>)[RECAPTCHA_CALLBACK] = () => {
       (document.getElementById("kc-register-form") as HTMLFormElement | null)?.requestSubmit();
     };
 
     return () => {
-      delete (window as unknown as Record<string, unknown>)["onSubmitRecaptcha"];
+      delete (window as unknown as Record<string, unknown>)[RECAPTCHA_CALLBACK];
     };
   }, []);
 
@@ -111,7 +112,7 @@ export default function Register(props: RegisterProps) {
           dispatchFormAction={dispatchFormAction}
           i18n={i18n}
           passwordAddon={(value) => <PasswordRules value={value} i18n={i18n} />}
-          confirmPassword={doMakeUserConfirmPassword}
+          shouldConfirmPassword={doMakeUserConfirmPassword}
         />
 
         {termsAcceptanceRequired && (
@@ -153,7 +154,7 @@ export default function Register(props: RegisterProps) {
               size="xl"
               className="g-recaptcha w-full rounded-lg"
               data-sitekey={recaptchaSiteKey}
-              data-callback="onSubmitRecaptcha"
+              data-callback={RECAPTCHA_CALLBACK}
               data-action={recaptchaAction}
             >
               {msg("doRegister")}

@@ -401,7 +401,7 @@ c'est ce que comprennent les clients de messagerie.
 - [ ] Bouton FranceConnect dans le front. Le bouton « Se connecter » de
       l'en-tête du site part bien vers `/api/auth/login` ; celui de
       FranceConnect, conforme au kit, reste à poser sur l'écran qui
-      l'accueillera : `FRANCE_CONNECT_LOGIN_URL` (`apps/site/src/lib/auth.ts`)
+      l'accueillera : `FRANCECONNECT_LOGIN_URL` (`apps/site/src/lib/auth.ts`)
       pointe déjà où il faut
 - [ ] Décider de l'hébergement de Keycloak et de sa base, et scripter la
       configuration des environnements non locaux via `kcadm`

@@ -12,7 +12,7 @@ export const ACCOUNT_PATH = "/compte/";
 
 export const LOGIN_URL = `${API_BASE_URL}/auth/login`;
 /** `idp=franceconnect` court-circuite l'écran de Keycloak. */
-export const FRANCE_CONNECT_LOGIN_URL = `${LOGIN_URL}?idp=franceconnect`;
+export const FRANCECONNECT_LOGIN_URL = `${LOGIN_URL}?idp=franceconnect`;
 export const LOGOUT_URL = `${API_BASE_URL}/auth/logout`;
 /** 401 si personne n'est connecté. */
 export const SESSION_URL = `${API_BASE_URL}/auth/session`;

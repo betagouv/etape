@@ -66,7 +66,7 @@ export class AuthController {
       idpHint: idp === FRANCECONNECT_IDP_HINT ? franceConnectAlias : undefined,
     });
 
-    this.sessions.startTransaction(response, {
+    this.sessions.startPendingLogin(response, {
       state,
       nonce,
       codeVerifier,
@@ -80,9 +80,9 @@ export class AuthController {
   @Throttle(AUTH_FLOW_THROTTLE)
   @UseFilters(AuthFlowExceptionFilter)
   async callback(@Req() request: Request, @Res() response: Response): Promise<void> {
-    const transaction = this.sessions.consumeTransaction(request, response);
+    const pendingLogin = this.sessions.consumePendingLogin(request, response);
 
-    if (!transaction) {
+    if (!pendingLogin) {
       response.redirect(
         buildAuthFlowErrorUrl(this.frontBaseUrl, AUTH_FLOW_STEP.LOGIN, AUTH_FLOW_ERROR.EXPIRED),
       );
@@ -94,9 +94,9 @@ export class AuthController {
 
     const tokens = await this.oidc.exchangeCode({
       currentUrl,
-      state: transaction.state,
-      nonce: transaction.nonce,
-      codeVerifier: transaction.codeVerifier,
+      state: pendingLogin.state,
+      nonce: pendingLogin.nonce,
+      codeVerifier: pendingLogin.codeVerifier,
     });
 
     const claims = tokens.claims();
@@ -121,7 +121,7 @@ export class AuthController {
       idToken: tokens.id_token,
     });
 
-    response.redirect(`${this.frontBaseUrl}${transaction.returnTo}`);
+    response.redirect(`${this.frontBaseUrl}${pendingLogin.returnTo}`);
   }
 
   /**

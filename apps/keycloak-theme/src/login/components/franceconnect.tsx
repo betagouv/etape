@@ -10,7 +10,7 @@ import type { I18n } from "../i18n";
  * son alias pour lui appliquer le bouton officiel. Tout autre fournisseur (un
  * ProConnect ajouté plus tard, par exemple) retombe sur le bouton générique.
  */
-const FRANCE_CONNECT_ALIAS = "franceconnect";
+const FRANCECONNECT_ALIAS = "franceconnect";
 
 type Provider = {
   alias: string;
@@ -35,7 +35,7 @@ export function FranceConnectButton(props: { loginUrl: string; i18n: I18n }) {
   return (
     <div className="flex flex-col items-start gap-3">
       <a
-        id={`social-${FRANCE_CONNECT_ALIAS}`}
+        id={`social-${FRANCECONNECT_ALIAS}`}
         href={loginUrl}
         className="bg-france-blue focus-visible:outline-france-blue flex items-center justify-center gap-3 px-3 py-1 focus-visible:outline-2 focus-visible:outline-offset-2"
       >
@@ -91,8 +91,8 @@ export function SocialProviders(props: {
 }) {
   const { providers, separatorLabel, i18n } = props;
 
-  const franceConnect = providers?.find((provider) => provider.alias === FRANCE_CONNECT_ALIAS);
-  const others = providers?.filter((provider) => provider.alias !== FRANCE_CONNECT_ALIAS) ?? [];
+  const franceConnect = providers?.find((provider) => provider.alias === FRANCECONNECT_ALIAS);
+  const others = providers?.filter((provider) => provider.alias !== FRANCECONNECT_ALIAS) ?? [];
 
   return (
     <>

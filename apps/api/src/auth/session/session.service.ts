@@ -11,11 +11,11 @@ import { SessionStore } from "./session.store.js";
 import type { AccountSession, NewSession, PendingLogin } from "./session.types.js";
 
 const SESSION_COOKIE = "etape.sid";
-const TRANSACTION_COOKIE = "etape.txn";
+const PENDING_LOGIN_COOKIE = "etape.txn";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const TRANSACTION_TTL_MS = 10 * 60 * 1000;
+const PENDING_LOGIN_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 const pendingLoginSchema = z.object({
@@ -59,22 +59,22 @@ export class SessionService {
     };
   }
 
-  startTransaction(response: Response, transaction: Omit<PendingLogin, "expiresAt">): void {
+  startPendingLogin(response: Response, login: Omit<PendingLogin, "expiresAt">): void {
     const pendingLogin: PendingLogin = {
-      ...transaction,
-      expiresAt: Date.now() + TRANSACTION_TTL_MS,
+      ...login,
+      expiresAt: Date.now() + PENDING_LOGIN_TTL_MS,
     };
 
     response.cookie(
-      TRANSACTION_COOKIE,
+      PENDING_LOGIN_COOKIE,
       sealCookieValue(this.cookieKey, JSON.stringify(pendingLogin)),
-      this.cookieOptions(TRANSACTION_TTL_MS),
+      this.cookieOptions(PENDING_LOGIN_TTL_MS),
     );
   }
 
-  consumeTransaction(request: Request, response: Response): PendingLogin | null {
-    const sealedValue = this.readRawCookie(request, TRANSACTION_COOKIE);
-    response.clearCookie(TRANSACTION_COOKIE, { path: "/" });
+  consumePendingLogin(request: Request, response: Response): PendingLogin | null {
+    const sealedValue = this.readRawCookie(request, PENDING_LOGIN_COOKIE);
+    response.clearCookie(PENDING_LOGIN_COOKIE, { path: "/" });
 
     if (!sealedValue) return null;
 
