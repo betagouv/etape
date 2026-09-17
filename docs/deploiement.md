@@ -62,21 +62,25 @@ configurent, plutôt que dans un conteneur d'initialisation séparé.
 
 Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 
-| Variable                      | Obligatoire | Rôle                                                 |
-| ----------------------------- | ----------- | ---------------------------------------------------- |
-| `PUBLIC_URL`                  | oui         | `https://etape.example.org`, sans slash final        |
-| `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.example.org`, sans slash final   |
-| `KEYCLOAK_HOSTNAME`           | oui         | Nom d'hôte du précédent, sans le schéma              |
-| `KEYCLOAK_ADMIN_USER`         | non         | `admin` par défaut                                   |
-| `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Administration de Keycloak (`kcadm`)                 |
-| `KEYCLOAK_DB_PASSWORD`        | oui         | Base de Keycloak                                     |
-| `APP_DB_PASSWORD`             | oui         | Base applicative (comptes, sessions)                 |
-| `KEYCLOAK_CLIENT_SECRET`      | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak |
-| `FRANCECONNECT_CLIENT_ID`     | non         | Identifiant du client FranceConnect                  |
-| `FRANCECONNECT_CLIENT_SECRET` | non         | Secret du client FranceConnect                       |
-| `KEYCLOAK_TEST_USER_PASSWORD` | non         | Crée `test@etape.local` avec ce mot de passe         |
-| `SMTP_*`                      | non         | Envoi par Brevo ; sans lui, pas d'email du tout      |
-| `KEYCLOAK_RECAPTCHA_*`        | non         | reCAPTCHA de l'inscription (voir ci-dessous)         |
+| Variable                      | Obligatoire | Rôle                                                    |
+| ----------------------------- | ----------- | ------------------------------------------------------- |
+| `PUBLIC_URL`                  | oui         | `https://etape.example.org`, sans slash final           |
+| `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.example.org`, sans slash final      |
+| `KEYCLOAK_HOSTNAME`           | oui         | Nom d'hôte du précédent, sans le schéma                 |
+| `KEYCLOAK_ADMIN_USER`         | non         | `admin` par défaut                                      |
+| `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Administration de Keycloak (`kcadm`)                    |
+| `KEYCLOAK_DB_PASSWORD`        | oui         | Base de Keycloak                                        |
+| `APP_DB_PASSWORD`             | oui         | Base applicative (comptes, sessions)                    |
+| `KEYCLOAK_CLIENT_SECRET`      | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak    |
+| `COOKIE_ENCRYPTION_KEY`       | oui         | Chiffre la transaction de connexion (base64, 32 octets) |
+| `TRUST_PROXY_HOPS`            | non         | Proxys devant l'API, `2` par défaut                     |
+| `FRANCECONNECT_CLIENT_ID`     | non         | Identifiant du client FranceConnect                     |
+| `FRANCECONNECT_CLIENT_SECRET` | non         | Secret du client FranceConnect                          |
+| `FRANCECONNECT_ENVIRONMENT`   | non         | `INTEGRATION_STANDARD_V2` (bac à sable) par défaut      |
+| `FRANCECONNECT_EIDAS`         | non         | Niveau eIDAS demandé, `EIDAS1` par défaut               |
+| `KEYCLOAK_TEST_USER_PASSWORD` | non         | Crée `test@etape.local` avec ce mot de passe            |
+| `SMTP_*`                      | non         | Envoi par Brevo ; sans lui, pas d'email du tout         |
+| `KEYCLOAK_RECAPTCHA_*`        | non         | reCAPTCHA de l'inscription (voir ci-dessous)            |
 
 Trois pièges tiennent au moment où ces valeurs sont lues :
 
