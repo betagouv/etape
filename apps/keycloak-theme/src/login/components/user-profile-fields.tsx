@@ -8,15 +8,28 @@ import { getPasswordRules, PASSWORD_MIN_LENGTH } from "./password-rules";
 
 type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 
+const USER_PROFILE_ATTRIBUTE = {
+  EMAIL: "email",
+  USERNAME: "username",
+  FIRST_NAME: "firstName",
+  LAST_NAME: "lastName",
+  LOCALE: "locale",
+  PASSWORD: "password",
+  PASSWORD_CONFIRM: "password-confirm",
+} as const;
+
 const iconByAttributeName: Record<string, IconComponent> = {
-  email: Mail,
-  username: User,
-  firstName: User,
-  lastName: User,
+  [USER_PROFILE_ATTRIBUTE.EMAIL]: Mail,
+  [USER_PROFILE_ATTRIBUTE.USERNAME]: User,
+  [USER_PROFILE_ATTRIBUTE.FIRST_NAME]: User,
+  [USER_PROFILE_ATTRIBUTE.LAST_NAME]: User,
 };
 
 /** Les deux champs que les maquettes placent côte à côte, et en premier. */
-const SIDE_BY_SIDE: readonly string[] = ["firstName", "lastName"];
+const SIDE_BY_SIDE: readonly string[] = [
+  USER_PROFILE_ATTRIBUTE.FIRST_NAME,
+  USER_PROFILE_ATTRIBUTE.LAST_NAME,
+];
 
 /**
  * Attributs techniques, soumis mais jamais montrés.
@@ -25,7 +38,7 @@ const SIDE_BY_SIDE: readonly string[] = ["firstName", "lastName"];
  * Le proposer en champ de formulaire n'a pas de sens : la langue se choisit dans
  * l'en-tête, et avec une seule langue supportée le champ n'offre aucun choix.
  */
-const HIDDEN: readonly string[] = ["locale"];
+const HIDDEN: readonly string[] = [USER_PROFILE_ATTRIBUTE.LOCALE];
 
 /**
  * Rend le formulaire décrit par le *user profile* de Keycloak.
@@ -54,7 +67,7 @@ export function UserProfileFields(props: {
   } = props;
 
   const isHiddenField = (name: string) =>
-    HIDDEN.includes(name) || (name === "password-confirm" && !confirmPassword);
+    HIDDEN.includes(name) || (name === USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM && !confirmPassword);
 
   const hidden = formFieldStates.filter((field) => isHiddenField(field.attribute.name));
 
@@ -105,7 +118,8 @@ export function UserProfileFields(props: {
         dispatchFormAction={dispatchFormAction}
         i18n={i18n}
         addon={
-          fieldState.attribute.name === "password" && passwordAddon !== undefined
+          fieldState.attribute.name === USER_PROFILE_ATTRIBUTE.PASSWORD &&
+          passwordAddon !== undefined
             ? passwordAddon(
                 typeof fieldState.valueOrValues === "string" ? fieldState.valueOrValues : "",
               )
@@ -144,7 +158,9 @@ function UserProfileField(props: {
 
   const value = typeof valueOrValues === "string" ? valueOrValues : (valueOrValues[0] ?? "");
   const isInvalid = displayableErrors.length !== 0;
-  const isPassword = attribute.name === "password" || attribute.name === "password-confirm";
+  const isPassword =
+    attribute.name === USER_PROFILE_ATTRIBUTE.PASSWORD ||
+    attribute.name === USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM;
 
   const onChange = (nextValue: string) =>
     dispatchFormAction({ action: "update", name: attribute.name, valueOrValues: nextValue });
@@ -196,7 +212,7 @@ function UserProfileField(props: {
       ) : (
         <TextInput
           {...commonProps}
-          type={attribute.name === "email" ? "email" : "text"}
+          type={attribute.name === USER_PROFILE_ATTRIBUTE.EMAIL ? "email" : "text"}
           icon={iconByAttributeName[attribute.name]}
         />
       )}

@@ -3,7 +3,7 @@ import { useInitialize } from "keycloakify/login/Template.useInitialize";
 import { useSetClassName } from "keycloakify/tools/useSetClassName";
 import { useEffect, type ReactNode } from "react";
 
-import { Alert } from "./components/alert";
+import { Alert, MESSAGE_TYPE } from "./components/alert";
 import type { I18n } from "./i18n";
 import type { KcContext } from "./KcContext";
 
@@ -126,7 +126,7 @@ export default function Template(props: Props) {
            */}
           {displayMessage &&
             message !== undefined &&
-            (message.type !== "warning" || !isAppInitiatedAction) && (
+            (message.type !== MESSAGE_TYPE.WARNING || !isAppInitiatedAction) && (
               <Alert type={message.type} summary={message.summary} />
             )}
 

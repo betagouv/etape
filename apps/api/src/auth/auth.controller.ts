@@ -25,6 +25,9 @@ import { toPublicSession, type PublicSession } from "./session/session.types.js"
 
 const AUTH_FLOW_THROTTLE = { default: { ttl: minutes(1), limit: 30 } };
 
+/** Valeur de `?idp=` qui envoie directement vers FranceConnect. */
+const FRANCECONNECT_IDP_HINT = "franceconnect";
+
 /**
  * Les quatre points d'entrée du parcours. Le front n'en connaît pas davantage :
  * il ne voit jamais un jeton et ne parle jamais à Keycloak.
@@ -61,7 +64,7 @@ export class AuthController {
       state,
       nonce,
       codeChallenge,
-      idpHint: idp === "franceconnect" ? franceConnectAlias : undefined,
+      idpHint: idp === FRANCECONNECT_IDP_HINT ? franceConnectAlias : undefined,
     });
 
     this.sessions.startTransaction(response, {

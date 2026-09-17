@@ -2,12 +2,18 @@ import { z } from "zod";
 
 const COOKIE_ENCRYPTION_KEY_BYTES = 32;
 
+export const NODE_ENV = {
+  DEVELOPMENT: "development",
+  PRODUCTION: "production",
+  TEST: "test",
+} as const;
+
 /**
  * Validé au démarrage : un issuer absent doit empêcher le service de se lever,
  * pas produire une 500 au premier clic sur « Se connecter ».
  */
 const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z.enum(NODE_ENV).default(NODE_ENV.DEVELOPMENT),
   API_PORT: z.coerce.number().int().positive().default(3002),
 
   /** Sans slash final : la `redirect_uri` en dérive, au caractère près. */

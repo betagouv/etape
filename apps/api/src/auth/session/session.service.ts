@@ -4,7 +4,7 @@ import type { CookieOptions, Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
-import type { Env } from "../../config/env.js";
+import { NODE_ENV, type Env } from "../../config/env.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { openCookieValue, sealCookieValue } from "./cookie-cipher.js";
 import { SessionStore } from "./session.store.js";
@@ -53,7 +53,7 @@ export class SessionService {
     return {
       httpOnly: true,
       sameSite: "lax",
-      secure: this.config.get("NODE_ENV", { infer: true }) === "production",
+      secure: this.config.get("NODE_ENV", { infer: true }) === NODE_ENV.PRODUCTION,
       path: "/",
       maxAge: maxAgeMs,
     };

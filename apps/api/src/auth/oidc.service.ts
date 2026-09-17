@@ -2,7 +2,7 @@ import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config";
 import * as client from "openid-client";
 
-import type { Env } from "../config/env.js";
+import { NODE_ENV, type Env } from "../config/env.js";
 
 /**
  * Client OIDC vis-à-vis de **Keycloak**. FranceConnect n'apparaît pas ici : c'est
@@ -19,7 +19,7 @@ export class OidcService {
   private async getConfiguration(): Promise<client.Configuration> {
     // `development` et non « différent de production » : un `NODE_ENV=staging`
     // lancé par erreur doit échouer plutôt qu'accepter du non chiffré.
-    const isDevelopment = this.config.get("NODE_ENV", { infer: true }) === "development";
+    const isDevelopment = this.config.get("NODE_ENV", { infer: true }) === NODE_ENV.DEVELOPMENT;
 
     this.discovery ??= client
       .discovery(
@@ -73,7 +73,7 @@ export class OidcService {
     state: string;
     nonce: string;
     codeVerifier: string;
-  }) {
+  }): Promise<client.TokenEndpointResponse & client.TokenEndpointResponseHelpers> {
     const configuration = await this.getConfiguration();
 
     return client.authorizationCodeGrant(configuration, params.currentUrl, {

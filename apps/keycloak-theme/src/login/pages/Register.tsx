@@ -9,6 +9,8 @@ import { PasswordRules, UserProfileFields } from "../components/user-profile-fie
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
+const REGISTRATION_CONTEXT = "REGISTRATION";
+
 type RegisterProps = EtapePageProps<Extract<KcContext, { pageId: "register.ftl" }>> & {
   doMakeUserConfirmPassword: boolean;
 };
@@ -46,7 +48,7 @@ export default function Register(props: RegisterProps) {
    * (`context` vaut alors autre chose) : là, il n'y a effectivement rien à
    * définir, l'authentification restant du ressort du fournisseur.
    */
-  const isPasswordRequired = passwordRequired ?? profile.context === "REGISTRATION";
+  const isPasswordRequired = passwordRequired ?? profile.context === REGISTRATION_CONTEXT;
 
   /*
    * `useMemo` obligatoire : `useUserProfileForm` initialise son état à partir de

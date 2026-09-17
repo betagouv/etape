@@ -3,7 +3,7 @@ import type { CookieOptions, Request, Response } from "express";
 import { randomBytes } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Env } from "../../config/env.js";
+import { NODE_ENV, type Env } from "../../config/env.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { sealCookieValue } from "./cookie-cipher.js";
 import { SessionService } from "./session.service.js";
@@ -54,7 +54,7 @@ function createRequest(cookies: Record<string, string>): Request {
 function createService(store: SessionStore): SessionService {
   const values: Partial<Env> = {
     COOKIE_ENCRYPTION_KEY: key.toString("base64"),
-    NODE_ENV: "production",
+    NODE_ENV: NODE_ENV.PRODUCTION,
   };
   const config = { get: (name: keyof Env) => values[name] } as unknown as ConfigService<Env, true>;
 
