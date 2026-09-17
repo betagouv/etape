@@ -1,3 +1,4 @@
+#!/bin/sh
 set -e
 
 /app/node_modules/.bin/prisma migrate deploy
