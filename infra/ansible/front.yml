@@ -22,12 +22,25 @@
     previews_auth_password: "{{ lookup('env', 'PREVIEW_BASIC_AUTH_PASSWORD') }}"
 
   tasks:
-    - name: Paquets requis
+    # nginx est installé en deux temps. IPv6 est désactivé sur les VM Cegedim,
+    # or le site par défaut du paquet Debian écoute sur [::]:80 : installer
+    # `nginx` directement fait échouer son premier démarrage, donc apt
+    # (constaté le 8/09 : « socket() [::]:80 failed (97: Address family not
+    # supported) »). `nginx-common` pose l'arborescence /etc/nginx sans lancer
+    # de service ; on retire le site par défaut, on pose notre conf, et le
+    # paquet `nginx` démarre alors directement sur elle.
+    - name: Paquets requis (arborescence nginx, rsync, htpasswd)
       ansible.builtin.apt:
-        name: [nginx, rsync, apache2-utils]
+        name: [nginx-common, rsync, apache2-utils]
         state: present
         update_cache: true
         cache_valid_time: 3600
+
+    - name: Site nginx par défaut retiré (écoute [::]:80, IPv6 désactivé ; sinon default_server en double)
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Recharger nginx
 
     # Le compte deploy existe normalement déjà (créé par Cegedim, point du 2/09) ;
     # cette tâche et les suivantes garantissent son état exact quoi qu'il arrive.
@@ -112,11 +125,10 @@
         state: link
       notify: Recharger nginx
 
-    - name: Site nginx par défaut retiré (sinon default_server en double)
-      ansible.builtin.file:
-        path: /etc/nginx/sites-enabled/default
-        state: absent
-      notify: Recharger nginx
+    - name: Paquet nginx (démarre sur la conf des previews)
+      ansible.builtin.apt:
+        name: nginx
+        state: present
 
     # `nginx -s reload` (ExecReload Debian) renvoie 0 même si la nouvelle conf
     # est refusée : sans ce test, une conf cassée laisserait l'ancienne en

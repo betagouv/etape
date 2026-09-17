@@ -22,6 +22,16 @@ export const nextConfig = defineConfig([
       "turbo/no-undeclared-env-vars": "warn",
     },
   },
+  // `docs/conventions/typescript.md` : type de retour explicite sur les
+  // fonctions exportées. Limité aux `.ts` : les composants React (`.tsx`)
+  // gardent leur type de retour inféré. Les enums sont interdits par
+  // `erasableSyntaxOnly` dans le `tsconfig.json` de chaque app.
+  {
+    files: ["**/*.ts"],
+    rules: {
+      "@typescript-eslint/explicit-module-boundary-types": "error",
+    },
+  },
   // Doit rester en dernier : neutralise les règles en conflit avec Prettier.
   eslintConfigPrettier,
   // Reprend les ignores par défaut d'eslint-config-next.

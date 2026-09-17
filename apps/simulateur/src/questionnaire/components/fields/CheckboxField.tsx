@@ -4,6 +4,8 @@ import { Checkbox } from "@etape/ui/components/checkbox";
 import { Label } from "@etape/ui/components/label";
 
 import type { CheckboxField as CheckboxFieldDef, Option } from "../../domain/types";
+import { fieldErrorGroupMark, joinIds } from "./aria";
+import { FieldError } from "./FieldError";
 import { OptionRow } from "./OptionRow";
 
 interface CheckboxFieldProps {
@@ -12,6 +14,8 @@ interface CheckboxFieldProps {
   onChange: (value: string[]) => void;
   labelledBy?: string;
   describedBy?: string;
+  /** Message affiché sous le groupe quand aucune option n'est cochée. */
+  error?: string;
 }
 
 export function CheckboxField({
@@ -20,7 +24,10 @@ export function CheckboxField({
   onChange,
   labelledBy,
   describedBy,
+  error,
 }: CheckboxFieldProps) {
+  const errorId = `${field.name}-error`;
+
   const isExclusive = (optionValue: string) =>
     field.options.some((candidate) => candidate.value === optionValue && candidate.exclusive);
 
@@ -40,8 +47,9 @@ export function CheckboxField({
     <div
       role="group"
       aria-labelledby={labelledBy}
-      aria-describedby={describedBy}
-      className="flex w-full flex-col gap-6"
+      aria-describedby={joinIds(error ? errorId : undefined, describedBy)}
+      {...fieldErrorGroupMark(error)}
+      className="focus-visible:outline-ring flex w-full flex-col gap-6 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
     >
       {field.options.map((option) => {
         const id = `${field.name}-${option.value}`;
@@ -70,6 +78,7 @@ export function CheckboxField({
           </Label>
         );
       })}
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }

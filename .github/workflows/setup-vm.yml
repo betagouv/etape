@@ -54,12 +54,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Installer Ansible si absent (espace utilisateur du runner)
+      - name: Ansible disponible sur le runner
+        # Voie préférée : paquet Debian installé une fois sur OPS01
+        # (`sudo apt install -y ansible-core`). À défaut, tentative d'installation
+        # dans un venv du compte runner (le runner n'a pas sudo, et pip n'est pas
+        # forcément présent) ; sinon, échec explicite.
         run: |
-          if ! command -v ansible-playbook >/dev/null 2>&1; then
-            python3 -m pip install --user --break-system-packages ansible-core
+          if command -v ansible-playbook >/dev/null 2>&1; then
+            echo "Ansible présent : $(ansible-playbook --version | head -1)"
+            exit 0
           fi
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          VENV="$HOME/.ansible-venv"
+          if [ -x "$VENV/bin/ansible-playbook" ]; then
+            echo "$VENV/bin" >> "$GITHUB_PATH"
+            exit 0
+          fi
+          if python3 -m venv "$VENV" && "$VENV/bin/pip" install -q ansible-core; then
+            echo "$VENV/bin" >> "$GITHUB_PATH"
+            exit 0
+          fi
+          echo "::error::Ansible absent du runner et installation automatique impossible (pas de venv/pip, ou PyPI injoignable). Sur OPS01, une fois : sudo apt install -y ansible-core"
+          exit 1
 
       - name: Enregistrer les empreintes SSH des machines cibles
         run: |

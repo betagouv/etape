@@ -4,7 +4,7 @@ import { SIMULATEUR_BASE_PATH } from "../../paths.mjs";
 
 const nextConfig: NextConfig = {
   // Le simulateur est servi sous un préfixe, jamais à la racine : derrière le
-  // reverse proxy nginx de production comme sur les previews Vercel. Préfixe
+  // nginx des previews et de la production (infra/nginx/previews.conf). Préfixe
   // routes, liens `next/link` et assets `_next/` d'un seul coup.
   basePath: SIMULATEUR_BASE_PATH,
   // Génère un export 100 % statique (SSG) dans le dossier `out/`.

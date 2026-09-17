@@ -3,13 +3,32 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { maxDepthFrom, stepAfter, walkFlow, type FlowWalk } from "../domain/flow";
+import { stepAfter, totalSteps, walkFlow, type FlowWalk } from "../domain/flow";
 import { findOutcome, findQuestion, STEP_RESULTS } from "../domain/questions";
-import { isQuestionComplete } from "../domain/validation";
+import type { Outcome, Question } from "../domain/types";
+import { isQuestionComplete, missingFields } from "../domain/validation";
 import { useFlow } from "./useFlow";
 
 /** Nom du paramètre d'URL qui porte l'étape courante. */
 export const STEP_PARAM = "q";
+
+export interface UseFlowNavigationResult {
+  /** Question de l'étape courante ; absente sur un écran terminal ou les résultats. */
+  question: Question | undefined;
+  /** Écran terminal de l'étape courante, s'il y en a un. */
+  outcome: Outcome | undefined;
+  isResults: boolean;
+  stepNumber: number;
+  total: number;
+  isFirst: boolean;
+  isLast: boolean;
+  canGoNext: boolean;
+  isAnswered: boolean;
+  goNext: () => void;
+  goPrev: () => void;
+  goTo: (id: string) => void;
+  restart: () => void;
+}
 
 /** Seul point de contact avec l'historique navigateur. */
 const stepUrl = {
@@ -28,7 +47,7 @@ function isReachable(id: string, walk: FlowWalk): boolean {
  * Orchestration de la navigation : l'étape courante est lue dans l'URL, le rang
  * et la progression sont dérivés du chemin réellement emprunté (`walkFlow`).
  */
-export function useFlowNavigation() {
+export function useFlowNavigation(): UseFlowNavigationResult {
   const { state, hydrated, dispatch } = useFlow();
   const requested = useSearchParams().get(STEP_PARAM);
 
@@ -60,8 +79,15 @@ export function useFlowNavigation() {
         : undefined;
 
   const isFirst = !previousId;
-  const total = question ? stepNumber - 1 + maxDepthFrom(question.id) : walk.path.length;
+  // Total = nombre de questions du parcours (il raccourcit quand une question
+  // conditionnelle est écartée, il ne s'allonge jamais). Sur un écran terminal
+  // ou les résultats, le parcours est figé : sa longueur est celle du chemin.
+  const total = question ? totalSteps(state.answers) : walk.path.length;
   const canGoNext = question ? isQuestionComplete(question, state.answers) : false;
+  // À distinguer de `canGoNext` : une réponse peut être donnée ET incohérente
+  // (Q5 face à Q4). Le bouton ne se grise que sur une réponse ABSENTE — sinon
+  // le message qui explique l'incohérence ne serait jamais déclenché.
+  const isAnswered = question ? missingFields(question, state.answers).length === 0 : true;
   const isLast = !!question && stepAfter(question.id, state.answers) === STEP_RESULTS;
 
   function goNext() {
@@ -90,6 +116,7 @@ export function useFlowNavigation() {
     isFirst,
     isLast,
     canGoNext,
+    isAnswered,
     goNext,
     goPrev,
     goTo,
