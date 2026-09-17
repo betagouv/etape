@@ -52,10 +52,10 @@ export function UserProfileFields(props: {
     confirmPassword = true,
   } = props;
 
-  const estMasque = (nom: string) =>
-    HIDDEN.includes(nom) || (nom === "password-confirm" && !confirmPassword);
+  const isHiddenField = (name: string) =>
+    HIDDEN.includes(name) || (name === "password-confirm" && !confirmPassword);
 
-  const hidden = formFieldStates.filter((field) => estMasque(field.attribute.name));
+  const hidden = formFieldStates.filter((field) => isHiddenField(field.attribute.name));
 
   /*
    * Keycloak ordonne le profil avec l'identifiant en premier — ici l'email —
@@ -66,7 +66,8 @@ export function UserProfileFields(props: {
   const visible = [
     ...formFieldStates.filter((field) => SIDE_BY_SIDE.includes(field.attribute.name)),
     ...formFieldStates.filter(
-      (field) => !SIDE_BY_SIDE.includes(field.attribute.name) && !estMasque(field.attribute.name),
+      (field) =>
+        !SIDE_BY_SIDE.includes(field.attribute.name) && !isHiddenField(field.attribute.name),
     ),
   ];
 
@@ -207,30 +208,30 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
   const { value, i18n, minLength = 12 } = props;
   const { msgStr } = i18n;
 
-  const regles = [
-    { cle: "etapePasswordRuleLength", satisfaite: value.length >= minLength },
-    { cle: "etapePasswordRuleUpper", satisfaite: /\p{Lu}/u.test(value) },
-    { cle: "etapePasswordRuleLower", satisfaite: /\p{Ll}/u.test(value) },
-    { cle: "etapePasswordRuleDigit", satisfaite: /\p{Nd}/u.test(value) },
-    { cle: "etapePasswordRuleSpecial", satisfaite: /[^\p{L}\p{N}]/u.test(value) },
+  const rules = [
+    { messageKey: "etapePasswordRuleLength", isSatisfied: value.length >= minLength },
+    { messageKey: "etapePasswordRuleUpper", isSatisfied: /\p{Lu}/u.test(value) },
+    { messageKey: "etapePasswordRuleLower", isSatisfied: /\p{Ll}/u.test(value) },
+    { messageKey: "etapePasswordRuleDigit", isSatisfied: /\p{Nd}/u.test(value) },
+    { messageKey: "etapePasswordRuleSpecial", isSatisfied: /[^\p{L}\p{N}]/u.test(value) },
   ] as const;
 
   return (
     <div className="flex flex-col gap-1">
       <p className="text-body-sm text-muted-foreground">{msgStr("etapePasswordRulesTitle")}</p>
       <ul className="flex flex-col gap-1">
-        {regles.map(({ cle, satisfaite }) => (
-          <li key={cle} className="text-body-sm flex items-center gap-2">
-            {satisfaite ? (
+        {rules.map(({ messageKey, isSatisfied }) => (
+          <li key={messageKey} className="text-body-sm flex items-center gap-2">
+            {isSatisfied ? (
               <Check aria-hidden className="text-success size-4 shrink-0" />
             ) : (
               <Circle aria-hidden className="text-muted-foreground size-4 shrink-0" />
             )}
-            <span className={satisfaite ? "text-success" : "text-muted-foreground"}>
-              {msgStr(cle)}
+            <span className={isSatisfied ? "text-success" : "text-muted-foreground"}>
+              {msgStr(messageKey)}
             </span>
             <span className="sr-only">
-              {msgStr(satisfaite ? "etapePasswordRuleMet" : "etapePasswordRuleUnmet")}
+              {msgStr(isSatisfied ? "etapePasswordRuleMet" : "etapePasswordRuleUnmet")}
             </span>
           </li>
         ))}

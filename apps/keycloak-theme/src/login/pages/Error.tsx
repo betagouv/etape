@@ -13,13 +13,13 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
 
   // Extrait plutôt que testé sur place : `Boolean(client?.baseUrl)` en garde de
   // rendu ne dit rien au typage, et obligeait à réaffirmer l'existence en dessous.
-  const retourApplication = skipLink ? undefined : client?.baseUrl;
+  const backToApplicationUrl = skipLink ? undefined : client?.baseUrl;
 
-  const lienExpire =
+  const isExpiredLink =
     message.summary === msgStr("expiredActionTokenNoSessionMessage") ||
     message.summary === msgStr("expiredActionTokenSessionExistsMessage");
 
-  const nouvelleDemande = lienExpire ? url.loginResetCredentialsUrl : undefined;
+  const resetCredentialsUrl = isExpiredLink ? url.loginResetCredentialsUrl : undefined;
 
   return (
     <Template
@@ -28,30 +28,30 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       displayMessage={false}
-      headerNode={lienExpire ? msg("etapeExpiredLinkTitle") : msg("errorTitle")}
-      subtitle={lienExpire ? undefined : msg("etapeErrorSubtitle")}
+      headerNode={isExpiredLink ? msg("etapeExpiredLinkTitle") : msg("errorTitle")}
+      subtitle={isExpiredLink ? undefined : msg("etapeErrorSubtitle")}
     >
       <div id="kc-error-message" className="flex flex-col gap-8">
         <Prose>
           <p dangerouslySetInnerHTML={{ __html: kcSanitize(message.summary) }} />
         </Prose>
-        {(nouvelleDemande ?? retourApplication) !== undefined && (
+        {(resetCredentialsUrl ?? backToApplicationUrl) !== undefined && (
           <div className="flex flex-col gap-4">
-            {nouvelleDemande !== undefined && (
+            {resetCredentialsUrl !== undefined && (
               <Button asChild size="xl" className="w-full rounded-lg">
-                <a id="resetPasswordLink" href={nouvelleDemande}>
+                <a id="resetPasswordLink" href={resetCredentialsUrl}>
                   {msg("etapeExpiredLinkRestart")}
                 </a>
               </Button>
             )}
-            {retourApplication !== undefined && (
+            {backToApplicationUrl !== undefined && (
               <Button
                 asChild
-                variant={nouvelleDemande !== undefined ? "outline" : "default"}
+                variant={resetCredentialsUrl !== undefined ? "outline" : "default"}
                 size="xl"
                 className="w-full rounded-lg"
               >
-                <a id="backToApplication" href={retourApplication}>
+                <a id="backToApplication" href={backToApplicationUrl}>
                   {msg("backToApplication")}
                 </a>
               </Button>
