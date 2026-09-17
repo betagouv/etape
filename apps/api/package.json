@@ -9,6 +9,8 @@
     "build": "prisma generate && nest build",
     "start": "node dist/main.js",
     "lint": "eslint",
+    "typecheck": "prisma generate && tsc --noEmit",
+    "test": "prisma generate && vitest run",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio"
@@ -37,6 +39,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^20",
     "eslint": "^9",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.1"
   }
 }

@@ -4,6 +4,7 @@ import type { ChangeEvent, ComponentType, ReactNode } from "react";
 
 import type { I18n } from "../i18n";
 import { Field, FieldError, PasswordInput, TextInput } from "./form";
+import { getPasswordRules, PASSWORD_MIN_LENGTH } from "./password-rules";
 
 type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 
@@ -205,16 +206,10 @@ function UserProfileField(props: {
 }
 
 export function PasswordRules(props: { value: string; i18n: I18n; minLength?: number }) {
-  const { value, i18n, minLength = 12 } = props;
+  const { value, i18n, minLength = PASSWORD_MIN_LENGTH } = props;
   const { msgStr } = i18n;
 
-  const rules = [
-    { messageKey: "etapePasswordRuleLength", isSatisfied: value.length >= minLength },
-    { messageKey: "etapePasswordRuleUpper", isSatisfied: /\p{Lu}/u.test(value) },
-    { messageKey: "etapePasswordRuleLower", isSatisfied: /\p{Ll}/u.test(value) },
-    { messageKey: "etapePasswordRuleDigit", isSatisfied: /\p{Nd}/u.test(value) },
-    { messageKey: "etapePasswordRuleSpecial", isSatisfied: /[^\p{L}\p{N}]/u.test(value) },
-  ] as const;
+  const rules = getPasswordRules(value, minLength);
 
   return (
     <div className="flex flex-col gap-1">

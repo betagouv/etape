@@ -323,6 +323,7 @@ cp apps/api/.env.example apps/api/.env
 npm run db:migrate --workspace=@etape/api
 
 npm run dev            # site, simulateur et API
+npm run test           # tests de l'API et du thème (Vitest)
 ```
 
 Après modification du thème, `npm run build -- --filter=@etape/keycloak-theme`
