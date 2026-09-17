@@ -6,6 +6,8 @@ import type { I18n } from "../i18n";
 import { Field, FieldError, PasswordInput, TextInput } from "./form";
 import { getPasswordRules, PASSWORD_MIN_LENGTH } from "./password-rules";
 
+export const PASSWORD_RULES_ID = "password-rules";
+
 type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 
 const USER_PROFILE_ATTRIBUTE = {
@@ -185,7 +187,10 @@ function UserProfileField(props: {
     "aria-required": attribute.required,
     // Rattache le message d'erreur au champ : `aria-invalid` signale qu'il y a
     // une erreur, `aria-describedby` est ce qui en fait lire l'énoncé.
-    "aria-describedby": isInvalid ? `input-error-${attribute.name}` : undefined,
+    "aria-describedby": joinIds(
+      isInvalid ? `input-error-${attribute.name}` : undefined,
+      addon !== undefined ? PASSWORD_RULES_ID : undefined,
+    ),
   };
 
   return (
@@ -229,7 +234,7 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
   const rules = getPasswordRules(value, minLength);
 
   return (
-    <div className="flex flex-col gap-1">
+    <div id={PASSWORD_RULES_ID} className="flex flex-col gap-1">
       <p className="text-body-sm text-muted-foreground">{msgStr("etapePasswordRulesTitle")}</p>
       <ul className="flex flex-col gap-1">
         {rules.map(({ messageKey, isSatisfied }) => (
@@ -250,4 +255,9 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
       </ul>
     </div>
   );
+}
+
+function joinIds(...ids: (string | undefined)[]): string | undefined {
+  const joined = ids.filter((id) => id !== undefined).join(" ");
+  return joined === "" ? undefined : joined;
 }

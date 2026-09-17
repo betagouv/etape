@@ -24,7 +24,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
 
   const { msg, msgStr } = i18n;
 
-  const [isLoginButtonDisabled, setIsLoginButtonDisabled] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   /*
    * Keycloak ne dit jamais lequel des deux champs est en cause — répondre
@@ -63,11 +63,12 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
           id="kc-form-login"
           action={url.loginAction}
           method="post"
-          onSubmit={() => {
-            // Empêche le double envoi : le formulaire part vers Keycloak, la
-            // page reste affichée le temps de la redirection.
-            setIsLoginButtonDisabled(true);
-            return true;
+          onSubmit={(event) => {
+            if (isSubmitting) {
+              event.preventDefault();
+              return;
+            }
+            setIsSubmitting(true);
           }}
           className="flex flex-col gap-8"
         >
@@ -158,8 +159,9 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
               id="kc-login"
               name="login"
               size="xl"
-              disabled={isLoginButtonDisabled}
-              className="w-full rounded-lg"
+              aria-disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              className="w-full rounded-lg aria-busy:cursor-progress"
             >
               {msg("doLogIn")}
             </Button>

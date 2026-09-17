@@ -2,7 +2,7 @@ import { Button } from "@etape/ui/components/button";
 import { useState } from "react";
 
 import { CheckboxField, Field, FieldError, PasswordInput } from "../components/form";
-import { PasswordRules } from "../components/user-profile-fields";
+import { PASSWORD_RULES_ID, PasswordRules } from "../components/user-profile-fields";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
@@ -53,7 +53,9 @@ export default function LoginUpdatePassword(
               autoComplete="new-password"
               aria-required
               aria-describedby={
-                messagesPerField.existsError("password") ? "input-error-password" : undefined
+                messagesPerField.existsError("password")
+                  ? `input-error-password ${PASSWORD_RULES_ID}`
+                  : PASSWORD_RULES_ID
               }
               invalid={hasError}
               value={password}

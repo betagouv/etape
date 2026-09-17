@@ -33,7 +33,7 @@ export function Field(props: {
       </label>
       {children}
       {hint !== undefined && <p className="text-body-sm text-muted-foreground">{hint}</p>}
-      {error}
+      <div role="status">{error}</div>
     </div>
   );
 }
@@ -147,7 +147,6 @@ export function FieldError(props: { id: string; message: string }) {
   return (
     <span
       id={props.id}
-      aria-live="polite"
       className="text-body-sm text-destructive-text"
       dangerouslySetInnerHTML={{ __html: kcSanitize(props.message) }}
     />

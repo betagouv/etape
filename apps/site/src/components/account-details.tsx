@@ -3,10 +3,9 @@
 import { Badge } from "@etape/ui/components/badge";
 import { Button } from "@etape/ui/components/button";
 import { Section } from "@etape/ui/components/section";
-import { Separator } from "@etape/ui/components/separator";
 
 import { ACCOUNT_PATH, LOGIN_URL, LOGOUT_URL, withReturnTo } from "@/lib/auth";
-import { useSession } from "@/lib/use-session";
+import { useSession, type SessionState } from "@/lib/use-session";
 
 /**
  * Affichage seulement, jamais filtrage : un champ absent de cette table est
@@ -45,6 +44,12 @@ function PageHeader({ title, lead }: { title: string; lead: string }) {
   );
 }
 
+const SESSION_ANNOUNCEMENTS: Record<SessionState["status"], string> = {
+  loading: "Vérification de la session en cours.",
+  anonymous: "Session vérifiée : aucune connexion en cours.",
+  authenticated: "Session vérifiée : connexion en cours.",
+};
+
 function ClaimRow({ name, value }: { name: string; value: unknown }) {
   const label = CLAIM_LABELS[name];
 
@@ -66,12 +71,21 @@ function ClaimRow({ name, value }: { name: string; value: unknown }) {
 export function AccountDetails() {
   const sessionState = useSession();
 
+  return (
+    <>
+      <p role="status" className="sr-only">
+        {SESSION_ANNOUNCEMENTS[sessionState.status]}
+      </p>
+      <AccountDetailsContent sessionState={sessionState} />
+    </>
+  );
+}
+
+function AccountDetailsContent({ sessionState }: { sessionState: SessionState }) {
   if (sessionState.status === "loading") {
     return (
       <Section>
-        <p className="text-muted-foreground" aria-live="polite">
-          Vérification de la session…
-        </p>
+        <p className="text-muted-foreground">Vérification de la session…</p>
       </Section>
     );
   }
@@ -104,14 +118,10 @@ export function AccountDetails() {
         {session.isFranceConnectSession ? "Connecté via FranceConnect" : "Compte ETAPE"}
       </Badge>
 
-      <dl className="mt-8">
+      <dl className="divide-border mt-8 divide-y">
         <ClaimRow name="sub" value={session.sub} />
-        <Separator />
-        {claims.map(([name, value], index) => (
-          <div key={name}>
-            <ClaimRow name={name} value={value} />
-            {index < claims.length - 1 ? <Separator /> : null}
-          </div>
+        {claims.map(([name, value]) => (
+          <ClaimRow key={name} name={name} value={value} />
         ))}
       </dl>
 
