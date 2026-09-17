@@ -1,7 +1,6 @@
 /** Destination par défaut si aucune n'est demandée ou si celle reçue est refusée. */
 const DEFAULT_RETURN_TO = "/";
 
-/** Borne la taille du cookie de transaction, qui transporte cette valeur. */
 export const MAX_RETURN_TO_LENGTH = 512;
 
 /**

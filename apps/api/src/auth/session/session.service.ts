@@ -59,10 +59,6 @@ export class SessionService {
     };
   }
 
-  /**
-   * Chiffrée dans le cookie plutôt qu'écrite en base : la route de départ est
-   * anonyme, et rien de ce qu'elle reçoit ne doit pouvoir remplir le stockage.
-   */
   startTransaction(response: Response, transaction: Omit<PendingLogin, "expiresAt">): void {
     const pendingLogin: PendingLogin = {
       ...transaction,
@@ -76,7 +72,6 @@ export class SessionService {
     );
   }
 
-  /** Le cookie est effacé dès la lecture ; Keycloak refuse de rejouer un code. */
   consumeTransaction(request: Request, response: Response): PendingLogin | null {
     const sealedValue = this.readRawCookie(request, TRANSACTION_COOKIE);
     response.clearCookie(TRANSACTION_COOKIE, { path: "/" });
@@ -92,7 +87,6 @@ export class SessionService {
     return result.data;
   }
 
-  /** Remplace la session du navigateur : se reconnecter révoque la précédente. */
   async openSession(
     request: Request,
     response: Response,

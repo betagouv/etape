@@ -50,8 +50,6 @@ echo "→ realm ${REALM} : sslRequired=EXTERNAL"
 $KCADM update "realms/$REALM" -s actionTokenGeneratedByUserLifespan=900
 echo "→ realm ${REALM} : lien de réinitialisation valable 15 minutes"
 
-# Chaque départ de connexion ouvre une session d'authentification en mémoire,
-# sans plafond d'entrées : 10 minutes, comme la transaction de l'API.
 $KCADM update "realms/$REALM" -s accessCodeLifespanLogin=600
 echo "→ realm ${REALM} : session d'authentification valable 10 minutes"
 
@@ -93,9 +91,6 @@ $KCADM update "clients/$API_CLIENT_UUID" -r "$REALM" -f - <<JSON
 JSON
 echo "→ client etape-api : secret, redirect_uri, base et post-logout alignés sur ${PUBLIC_URL}"
 
-# Tout realm naît avec un `admin-cli` public en « direct access grants » : des
-# mots de passe essayés par script, hors du formulaire, verrouilleraient le
-# compte visé. `kcadm` passe par celui du realm `master`, qui n'est pas touché.
 ADMIN_CLI_UUID=$($KCADM get clients -r "$REALM" -q clientId=admin-cli --fields id --format csv --noquotes)
 if [ -n "$ADMIN_CLI_UUID" ]; then
   $KCADM update "clients/$ADMIN_CLI_UUID" -r "$REALM" -s directAccessGrantsEnabled=false
@@ -186,13 +181,10 @@ else
   echo "  Inscription et « mot de passe oublié » ne sont pas jouables sans lui."
 fi
 
-# Une inscription qui envoie un email sans reCAPTCHA fait d'ETAPE un relais
-# anonyme : avec SMTP et sans clés, elle est fermée.
 RECAPTCHA_EXECUTION=$($KCADM get authentication/flows/registration/executions -r "$REALM" \
   --fields id,providerId,priority,authenticationConfig --format csv --noquotes \
   | grep '^[^,]*,registration-recaptcha-action,' || true)
 RECAPTCHA_EXECUTION_ID=$(echo "$RECAPTCHA_EXECUTION" | cut -d, -f1)
-# Reposée à chaque mise à jour : l'API la remet sinon à 0, en tête du formulaire.
 RECAPTCHA_PRIORITY=$(echo "$RECAPTCHA_EXECUTION" | cut -d, -f3)
 RECAPTCHA_CONFIG_ID=$(echo "$RECAPTCHA_EXECUTION" | cut -d, -f4)
 
@@ -220,7 +212,6 @@ if [ -n "${KEYCLOAK_RECAPTCHA_SITE_KEY:-}" ] && [ -n "${KEYCLOAK_RECAPTCHA_SECRE
 
   $KCADM update authentication/flows/registration/executions -r "$REALM" \
     -b "{\"id\": \"${RECAPTCHA_EXECUTION_ID}\", \"requirement\": \"REQUIRED\", \"priority\": ${RECAPTCHA_PRIORITY}}"
-  # Le widget est une iframe de recaptcha.net, que la CSP par défaut refuse.
   $KCADM update "realms/$REALM" \
     -s registrationAllowed=true \
     -s "browserSecurityHeaders.contentSecurityPolicy=frame-src 'self' https://www.recaptcha.net; frame-ancestors 'self'; object-src 'none';"
@@ -241,9 +232,6 @@ else
   fi
 fi
 
-# Aucun identifiant n'est versionné : le compte de test n'existe que si
-# l'environnement fournit son mot de passe. Créé désactivé, il n'est ouvert
-# qu'une fois ce mot de passe posé.
 TEST_USER_ID=$($KCADM get users -r "$REALM" -q username=test@etape.local --fields id --format csv --noquotes)
 
 if [ -n "${KEYCLOAK_TEST_USER_PASSWORD:-}" ]; then

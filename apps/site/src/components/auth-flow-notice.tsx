@@ -64,10 +64,6 @@ function subscribeToHistory(onChange: () => void): () => void {
 const getSearch = (): string => window.location.search;
 const getServerSearch = (): string => "";
 
-/**
- * L'API renvoie ici après un échec du parcours. La région reste montée, vide au
- * repos, pour que le message soit annoncé quand il apparaît.
- */
 export function AuthFlowNotice() {
   const search = useSyncExternalStore(subscribeToHistory, getSearch, getServerSearch);
   const failure = parseAuthFlowFailure(search);

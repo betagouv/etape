@@ -16,7 +16,6 @@ export interface PasswordRule {
   isSatisfied: boolean;
 }
 
-/** Même lecture que la politique du realm : `length`, `upperCase`, `lowerCase`, `digits`, `specialChars`. */
 export function getPasswordRules(value: string, minLength = PASSWORD_MIN_LENGTH): PasswordRule[] {
   return [
     { messageKey: PASSWORD_RULE_MESSAGE_KEY.LENGTH, isSatisfied: value.length >= minLength },

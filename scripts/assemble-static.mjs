@@ -6,8 +6,7 @@
  * Les règles de routage (noindex, 308 sur le préfixe, 404 par app) ne sont
  * pas ici : elles vivent dans la conf nginx.
  *
- * À lancer depuis la racine du monorepo, après `turbo run build`. L'image du
- * déploiement passe sa propre destination : `node scripts/assemble-static.mjs /srv/static`.
+ * À lancer depuis la racine du monorepo, après `turbo run build`.
  */
 import { access, cp, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";

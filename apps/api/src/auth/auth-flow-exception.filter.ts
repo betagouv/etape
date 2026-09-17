@@ -20,11 +20,6 @@ import {
   type AuthFlowStep,
 } from "./auth-flow-error.js";
 
-/**
- * Les routes du parcours sont des navigations de premier niveau : une erreur
- * rendue en JSON s'afficherait telle quelle. Elle redevient une redirection vers
- * le front, avec un motif, et son détail reste dans les journaux.
- */
 @Catch()
 @Injectable()
 export class AuthFlowExceptionFilter implements ExceptionFilter {

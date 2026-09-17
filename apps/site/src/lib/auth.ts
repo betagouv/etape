@@ -23,7 +23,6 @@ export function withReturnTo(loginUrl: string, path: string): string {
   return `${loginUrl}${separator}returnTo=${encodeURIComponent(path)}`;
 }
 
-/** Paramètre posé par l'API quand elle renvoie au front après un échec : `?login=failed`. */
 export const AUTH_FLOW_STEP = {
   LOGIN: "login",
   LOGOUT: "logout",

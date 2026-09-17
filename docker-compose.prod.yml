@@ -63,7 +63,6 @@ services:
       KEYCLOAK_FRANCECONNECT_ALIAS: franceconnect
 
       COOKIE_ENCRYPTION_KEY: ${COOKIE_ENCRYPTION_KEY:?32 octets en base64, openssl rand -base64 32}
-      # Le proxy de l'hébergeur, qui termine TLS, puis le nginx du service `web`.
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-2}
 
       DATABASE_URL: postgresql://etape:${APP_DB_PASSWORD}@app-db:5432/etape

@@ -29,14 +29,12 @@ const envSchema = z.object({
   /** Transmis en `kc_idp_hint`. */
   KEYCLOAK_FRANCECONNECT_ALIAS: z.string().min(1).default("franceconnect"),
 
-  /** 32 octets en base64 : `openssl rand -base64 32`. */
   COOKIE_ENCRYPTION_KEY: z
     .base64()
     .refine((value) => Buffer.from(value, "base64").length === COOKIE_ENCRYPTION_KEY_BYTES, {
       message: "32 octets encodés en base64 attendus (openssl rand -base64 32)",
     }),
 
-  /** Proxys devant l'API : sans eux, toutes les requêtes partagent l'IP du dernier. */
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
 
   DATABASE_URL: z.url(),

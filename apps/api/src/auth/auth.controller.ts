@@ -25,7 +25,6 @@ import { toPublicSession, type PublicSession } from "./session/session.types.js"
 
 const AUTH_FLOW_THROTTLE = { default: { ttl: minutes(1), limit: 30 } };
 
-/** Valeur de `?idp=` qui envoie directement vers FranceConnect. */
 const FRANCECONNECT_IDP_HINT = "franceconnect";
 
 /**
