@@ -1,0 +1,23 @@
+{
+  "name": "@etape/api-contract",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "prettier": "@etape/prettier-config",
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@etape/eslint-config": "*",
+    "@etape/prettier-config": "*",
+    "eslint": "^9",
+    "typescript": "^5"
+  }
+}
