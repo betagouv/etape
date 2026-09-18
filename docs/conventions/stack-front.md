@@ -3,11 +3,11 @@
 **Statut** : Proposé · **Date** : 2026-09-16 · **À arbitrer avec l'équipe**
 **Portée** : `apps/site`, `apps/simulateur`, `packages/ui`
 
-Ce document valide les outils du front : ce qui est en place et n'est pas rediscuté, ce qui reste à trancher, et selon quels critères. Le nommage relève de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md). Le pendant côté API est [`architecture-api.md`](./architecture-api.md).
+Ce document valide les outils du front. La façon d'écrire le code relève de [`react.md`](./react.md), le nommage de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md).
+
+Chaque décision est suivie de ses **principes** quand il y en a, et d'un **exemple** dépliable : code réel du dépôt, ou proposition explicitement marquée.
 
 ## En place, acté
-
-Ces briques sont installées, utilisées, et ne sont pas remises en question ici.
 
 | Brique               | Version     | Rôle                                                       |
 | -------------------- | ----------- | ---------------------------------------------------------- |
@@ -21,14 +21,71 @@ Ces briques sont installées, utilisées, et ne sont pas remises en question ici
 | Turborepo            | 2.10.12     | Orchestration du monorepo                                  |
 | ESLint, Prettier     | 9.39, 3.9   | Configs partagées dans `packages/`                         |
 
-**Conséquence structurante de l'export statique** : aucune Server Action, aucun endpoint Next. Tout ce qui n'est pas calculable au build se fait dans le navigateur, ou via l'API NestJS. Les recommandations React 19 autour de `useActionState` et des actions serveur ne s'appliquent donc pas ici.
+**Conséquence structurante de l'export statique** : aucune Server Action, aucun endpoint Next. Ce qui n'est pas calculable au build se fait dans le navigateur, ou via l'API NestJS. Les recommandations React 19 autour de `useActionState` et des actions serveur ne s'appliquent donc pas ici.
 
 ## Décision 1 — Bibliothèque de formulaires
 
-### Situation actuelle : deux approches, dont une inutilisée
+### La situation à trancher
 
-- `packages/ui` déclare `react-hook-form` ^7.87, `@hookform/resolvers` ^5.9 et `zod` ^4.5, et contient le composant shadcn `form.tsx` (câblage `FormField` / `FormLabel` / `FormMessage`). **Aucune app ne l'importe** à ce jour.
-- Le simulateur n'utilise aucune bibliothèque : ses questions sont des données (`questionnaire/domain/questions.ts`), rendues par `FieldRenderer`, validées par un `switch` maison (`questionnaire/domain/validation.ts`), et stockées dans un store maison persisté en `sessionStorage`.
+Le dépôt contient **deux approches, dont une n'a jamais servi** :
+
+- `packages/ui` déclare `react-hook-form` ^7.87, `@hookform/resolvers` ^5.9 et `zod` ^4.5, et contient le composant shadcn `form.tsx`. **Aucune app ne l'importe.**
+- Le simulateur n'utilise aucune bibliothèque : ses questions sont des données, validées par un `switch` maison.
+
+Ce n'est pas un détail de goût : tant que rien n'est écrit, le prochain formulaire partira dans une direction ou dans l'autre selon qui l'écrit.
+
+<details><summary><strong>Exemple — à quoi ressemblent les deux approches</strong></summary>
+
+**Ce que fait le simulateur aujourd'hui** (code réel). Une question est une **donnée**, pas du JSX : c'est ce qui permet à la PO de relire le parcours, et au moteur de dériver d'une seule déclaration la progression, la validation et le récapitulatif.
+
+```ts
+{
+  id: "Q4",
+  fields: [{ name: FIELD_ANCIENNETE, type: "month", label: "Depuis quand ?" }],
+  quand: (answers) => aUnEmployeur(answers),
+}
+```
+
+La validation est un `switch` sur le type de champ, écrit une fois pour les six types existants :
+
+```ts
+function isFieldComplete(field: Field, answers: Answers): boolean {
+  switch (field.type) {
+    case "number":
+      return /^\d+$/.test(String(answers[field.name] ?? ""));
+    case "month":
+      return parseMonth(answers[field.name]) !== null;
+    // …
+  }
+}
+```
+
+**Ce que donnerait react-hook-form + zod** sur un futur formulaire de dépôt (proposition). Ici les champs sont fixes, connus à l'avance, et écrits directement en JSX :
+
+```tsx
+const schema = z.object({
+  dateEntretien: z.iso.date(),
+  nomConseiller: z.string().min(1, "Indiquez le nom du conseiller."),
+});
+
+<FormField
+  control={form.control}
+  name="nomConseiller"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Nom du conseiller</FormLabel>
+      <FormControl>
+        <Input {...field} />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>;
+```
+
+**Ce que l'exemple montre** : `FormLabel`, `FormControl` et `FormMessage` génèrent et relient `id`, `aria-describedby` et `aria-invalid` entre eux. C'est exactement le travail que le simulateur fait à la main dans `fields/aria.ts` — une vingtaine de lignes qu'il faudrait réécrire, et surtout ne pas oublier, sur chaque nouveau formulaire.
+
+</details>
 
 ### Options
 
@@ -40,84 +97,216 @@ Ces briques sont installées, utilisées, et ne sont pas remises en question ici
 
 ### Proposition : option B, avec un critère explicite
 
-**react-hook-form + zod, via le composant `form.tsx` de `packages/ui`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API. C'est le cas des futurs formulaires de dépôt de dossier.
+**react-hook-form + zod, via `form.tsx`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API.
 
-**Le simulateur garde son moteur déclaratif.** Ce n'est pas un formulaire : une question par écran, une navigation dérivée de l'URL, des réponses persistées entre les sessions, et des règles de cohérence entre questions. react-hook-form gère l'état d'un formulaire monté ; il n'apporterait rien ici et supprimerait le caractère déclaratif des questions.
+**Le simulateur garde son moteur déclaratif.** Ce n'est pas un formulaire : une question par écran, une navigation dérivée de l'URL, des réponses persistées entre les sessions, des règles de cohérence entre questions. react-hook-form gère l'état d'un formulaire monté — il n'a rien à apporter ici, et ferait perdre le caractère déclaratif des questions.
 
-**Pourquoi react-hook-form plutôt que TanStack Form** : le composant `Form` de shadcn/ui, sur lequel repose déjà notre bibliothèque de composants, est écrit pour react-hook-form. Choisir TanStack Form (1.33.5, projet actif et sérieux) voudrait dire réécrire ce câblage nous-mêmes, pour un gain que nous ne savons pas justifier aujourd'hui.
+**Pourquoi react-hook-form plutôt que TanStack Form** : le composant `Form` de shadcn/ui, sur lequel repose déjà notre bibliothèque, est écrit pour react-hook-form. Choisir TanStack Form (1.33.5, projet actif et sérieux) voudrait dire réécrire ce câblage nous-mêmes, pour un gain que nous ne savons pas nommer aujourd'hui.
 
-**À la charge du développeur, quoi qu'il arrive** : react-hook-form ne fournit ni style ni ARIA. Le composant `form.tsx` relie libellé, message d'erreur et champ ; il ne gère pas le déplacement du focus vers le premier champ en erreur, qui reste à écrire.
+**Ce qui reste à notre charge dans les deux cas** : react-hook-form ne fournit ni style ni ARIA, et `form.tsx` ne déplace pas le focus vers le premier champ en erreur — ce que le simulateur, lui, fait déjà (`QuestionScreen`, `focusFirstInvalid`).
 
 ## Décision 2 — Validation de schéma : zod
 
-**zod v4**, déjà présent côté `packages/ui` (^4.5) et côté API (^4.1, pour valider l'environnement). Une seule bibliothèque de schémas des deux côtés, donc un seul vocabulaire et, le jour où un schéma décrit un échange, une seule source.
+**zod v4**, déjà présent côté `packages/ui` (^4.5) et côté API (^4.1, pour l'environnement). Une seule bibliothèque de schémas des deux côtés : c'est la condition du contrat de route partagé (décision 5), qui suppose qu'API et front lisent le même objet.
 
-**Alternative écartée pour l'instant** : valibot (1.5.0) est plus léger — de l'ordre du kilo-octet une fois compressé, contre plusieurs pour zod. À reconsidérer seulement si une mesure du bundle du simulateur, pensé comme un widget embarquable, montre que zod y pèse. Le simulateur n'embarque aujourd'hui aucune des deux.
+**Alternative écartée pour l'instant** : valibot (1.5.0) pèse de l'ordre du kilo-octet une fois compressé, contre plusieurs pour zod. À reconsidérer seulement si une mesure du bundle du simulateur — pensé comme un widget embarquable — montre que zod y pèse. Aujourd'hui, le simulateur n'embarque ni l'un ni l'autre.
 
-**Porte de sortie** : zod, valibot et arktype implémentent [Standard Schema](https://standardschema.dev/). `@hookform/resolvers` 5.x et NestJS acceptent cette interface. Changer de bibliothèque de schémas plus tard ne rejouerait donc pas le câblage.
+<details><summary><strong>Exemple — un schéma qui sert des deux côtés</strong> (proposition)</summary>
+
+```ts
+// packages/api-contract/src/dossier/dossier.schema.ts
+export const DepotDossierSchema = z.object({
+  dateEntretien: z.iso.date(),
+  nomConseiller: z.string().min(1),
+  operateurCep: z.enum(["avenir_actifs", "apec", "cap_emploi"]),
+});
+
+export type DepotDossier = z.infer<typeof DepotDossierSchema>;
+```
+
+**Ce que ça change** : le front s'en sert comme resolver de formulaire — les messages d'erreur s'affichent sous les champs sans appel réseau —, l'API s'en sert comme pipe de validation. La règle « l'opérateur CEP fait partie de ces trois-là » est écrite **une fois**.
+
+**Le scénario que ça évite** : la PO ajoute un opérateur. Sans schéma partagé, on le liste côté front, on oublie côté API, et la soumission échoue en 400 sur un choix que le formulaire proposait lui-même. Avec, l'oubli n'est pas possible : c'est le même fichier.
+
+</details>
 
 ## Décision 3 — Données venant de l'API : TanStack Query
 
-**TanStack Query est la brique retenue** pour tout ce qui vient de l'API : cache, revalidation, déduplication des requêtes, états de chargement et d'erreur, nouvelle tentative. C'est l'outil que l'équipe connaît et veut garder ; le document acte ce choix plutôt que de le rouvrir.
+**Brique retenue par l'équipe** pour tout ce qui vient de l'API : cache, revalidation, déduplication des requêtes, états de chargement et d'erreur, nouvelle tentative.
 
-**Point de fait** : il n'est **pas encore installé dans ce dépôt** — aucune déclaration dans un `package.json`, aucune entrée dans `package-lock.json`, aucun `useQuery` dans le code. C'est normal : aucun écran n'appelle encore l'API. Version actuelle au moment d'écrire : `@tanstack/react-query` 5.103.0.
+**Point de fait à connaître avant d'en parler** : elle n'est **pas encore installée** — aucune déclaration dans un `package.json`, aucune entrée dans `package-lock.json`, aucun `useQuery` dans le code. C'est normal, aucun écran n'appelle encore l'API. Version actuelle : `@tanstack/react-query` 5.103.0.
 
-**La règle qui en découle** :
+### Les principes
 
-- **Toute donnée qui vient de l'API passe par TanStack Query.** Pas de `fetch` dans un `useEffect`, pas de donnée serveur recopiée dans un state local « pour l'avoir sous la main ».
-- **Le store maison ne stocke jamais de donnée serveur** (voir décision 4). L'un porte l'état de l'écran, l'autre le cache du serveur.
-- Les clés de requête sont construites à un seul endroit par module, pour que l'invalidation après une écriture reste lisible.
+1. **Toute donnée qui vient de l'API passe par TanStack Query.** Pas de `fetch` dans un `useEffect`.
+2. **Le store maison ne stocke jamais de donnée serveur** (décision 4) : une donnée a un seul propriétaire.
+3. **Les clés de requête d'un module sont déclarées au même endroit.**
+4. **Une écriture invalide explicitement ce qu'elle a rendu faux**, sinon l'écran continue d'afficher l'ancien état.
 
-**À installer** dans la première PR qui appelle l'API, avec le client décrit à la décision 5.
+<details><summary><strong>Exemple — les clés au même endroit, et pourquoi</strong> (proposition)</summary>
+
+```ts
+// dossier/api/dossier.queries.ts
+export const dossierKeys = {
+  tous: ["dossier"] as const,
+  detail: (id: string) => [...dossierKeys.tous, id] as const,
+};
+
+export function useDossier(id: string) {
+  return useQuery({
+    queryKey: dossierKeys.detail(id),
+    queryFn: () => callApi(getDossier, { params: { id } }),
+  });
+}
+
+export function useDeposerDossier() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (corps: DepotDossier) => callApi(depotDossier, { body: corps }),
+    onSuccess: () => client.invalidateQueries({ queryKey: dossierKeys.tous }),
+  });
+}
+```
+
+**Pourquoi centraliser les clés** : une clé est une valeur écrite à deux endroits — là où on lit, là où on invalide après une écriture. Écrites de mémoire, elles finissent par diverger (`["dossiers"]` d'un côté, `["dossier"]` de l'autre) et l'invalidation ne fait plus rien. Le symptôme est déroutant : le dépôt fonctionne, mais la liste ne se met à jour qu'au rechargement, et rien n'échoue. Déclarées une fois, les deux usages ne peuvent plus se désynchroniser.
+
+**À noter sur le nommage** : `dossierKeys` mélange un nom métier français et un mot technique anglais — c'est exactement ce que la convention autorise (grammaire anglaise, nom métier français).
+
+</details>
 
 ## Décision 4 — État local : le store maison reste
 
-Le store du simulateur — module singleton lu par `useSyncExternalStore`, persisté en `sessionStorage` — est conservé pour l'état de l'écran et du parcours. Ni Redux, ni Zustand, ni Jotai : l'état tient en un reducer et une clé de stockage.
+Le store du simulateur est conservé pour l'état de l'écran et du parcours. Ni Redux, ni Zustand, ni Jotai : l'état tient en un reducer et une clé de stockage.
 
-**Frontière avec la décision 3** : ce store porte ce que la personne a saisi et où elle en est. Dès qu'une donnée vient du serveur, elle appartient à TanStack Query.
+<details><summary><strong>Exemple — ce que fait le store, et ce qu'il ne fera jamais</strong></summary>
+
+Code réel (`questionnaire/state/flow-store.ts`) : un module singleton, lu par `useSyncExternalStore`, persisté en `sessionStorage` sous une clé **versionnée**.
+
+```ts
+/** À incrémenter dès que la forme de `FlowState` change. */
+const STORAGE_KEY = "etape.flow.v3";
+
+export const flowStore = { subscribe, getSnapshot, getServerSnapshot, dispatch };
+```
+
+**Pourquoi la clé porte un numéro** : les réponses survivent au rechargement. Si la forme de l'état change — un champ renommé, un type modifié —, une session ouverte avant le déploiement relirait un objet qu'elle ne sait plus interpréter. Incrémenter la clé revient à déclarer l'ancien contenu illisible : la personne repart d'un questionnaire vierge plutôt que de tomber sur un écran cassé.
+
+**La frontière avec la décision 3** : ce store porte ce que la personne a saisi et où elle en est — des données qui n'existent que dans son navigateur, dont personne d'autre ne détient la vérité. Un dossier renvoyé par l'API, lui, appartient au cache de TanStack Query, qui sait quand il est périmé. Recopier l'un dans l'autre créerait deux vérités, et la question « laquelle est à jour ? » n'aurait pas de réponse.
+
+</details>
 
 ## Décision 5 — Comment le front appelle l'API
 
-Le front est statique : il parle à l'API NestJS en HTTP, avec un cookie de session (`credentials: "include"`). **Le contrat de chaque route vient du paquet partagé `packages/api-contract`** — méthode, chemin, schémas des paramètres, du corps et de la réponse — décrit dans [`architecture-api.md`](./architecture-api.md), décision 3. Il n'est donc écrit qu'une fois, et l'API comme le front en dérivent leurs types.
+Le front est statique : il parle à l'API NestJS en HTTP, avec un cookie de session. **Le contrat de chaque route vient du paquet partagé `packages/api-contract`** — méthode, chemin, schémas des paramètres, du corps et de la réponse — décrit dans [`architecture-api.md`](./architecture-api.md), décision 3.
 
-Le front ajoute par-dessus une seule fonction, dans `src/api/` :
+Le front n'ajoute par-dessus qu'**une seule fonction**, et c'est volontaire : un seul endroit sait où est l'API, comment s'envoient les cookies, et ce qu'on fait d'un 401.
+
+<details><summary><strong>Exemple — la fonction d'appel, en entier</strong> (proposition)</summary>
 
 ```ts
-const dossier = await appelApi(getDossier, { params: { id } });
-// dossier : RouteResponse<typeof getDossier>, sans qu'aucun type soit réécrit ici
+// src/api/call-api.ts
+export async function callApi<R extends RouteDefinition>(
+  route: R,
+  options: { params?: RouteParams<R>; query?: RouteQuery<R>; body?: RouteBody<R> } = {},
+): Promise<RouteResponse<R>> {
+  const response = await fetch(`${API_BASE_URL}${buildRoutePath(route, options)}`, {
+    method: route.method,
+    credentials: "include", // le cookie de session, jamais un jeton
+    headers: options.body ? { "content-type": "application/json" } : undefined,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+
+  if (response.status === 401) {
+    redirectToLogin();
+    throw new ApiError("Session expirée", 401);
+  }
+
+  if (!response.ok) throw await ApiError.from(response);
+
+  return route.response.parse(await response.json());
+}
 ```
 
-Cette fonction pose l'URL de base, construit le chemin avec `buildRoutePath`, envoie les cookies, traite le 401 (retour à la connexion) et valide la réponse avec le schéma du contrat.
+**Ce que chaque ligne règle, et qu'il faudrait réécrire sinon :**
 
-**Ce que ça règle** : un changement de contrat côté API casse la compilation du front, au lieu de produire un `undefined` à l'exécution trois composants plus loin. Et une réponse inattendue est détectée à la frontière.
+- `credentials: "include"` — la session est un cookie `httpOnly`. Oublié une fois, l'appel part anonyme et répond 401 sans raison apparente.
+- Le traitement du 401 au même endroit — sinon chaque écran invente sa façon de réagir à une session expirée.
+- `route.response.parse(...)` — la réponse est **validée à la frontière**. Une API qui change sans prévenir échoue ici, avec un message qui nomme le champ fautif, au lieu de produire un `undefined` qui plantera trois composants plus loin, au milieu d'un rendu, sans indice sur l'origine.
+
+**Le nom** : `callApi`, et surtout pas sa traduction française. La convention réserve le français aux noms métier ; une fonction d'appel HTTP est purement technique, donc anglaise — au même titre que `database` ou `interceptor`.
+
+</details>
 
 **Pas de client généré depuis l'OpenAPI** : le contrat partagé rend la génération inutile tant que l'API n'a qu'un seul consommateur, qui est ce dépôt.
 
 ## Décision 6 — Composants : une seule bibliothèque, dans `packages/ui`
 
-**shadcn/ui sur Radix, copié dans `packages/ui/src/components/`** — c'est l'existant, il est acté. Ce qui se décide ici, c'est la règle d'ajout :
+**shadcn/ui sur Radix, copié dans `packages/ui/src/components/`** — c'est l'existant. Ce qui se décide ici, c'est la règle d'ajout : un composant utilisé par plus d'une app va dans `packages/ui` ; **pas de seconde bibliothèque de composants** ; les tokens de `globals.css` sont la seule source de couleur.
 
-- un composant utilisé par plus d'une app va dans `packages/ui` ; un composant propre à un écran reste dans son app ;
-- **pas de seconde bibliothèque de composants** (MUI, Ant, Chakra…). Un besoin non couvert se résout avec Radix, qui fournit le comportement et l'accessibilité, puis nos styles Tailwind ;
-- les tokens de couleur, d'espacement et de typographie vivent dans `globals.css` ; aucune valeur de couleur en dur dans un composant.
+<details><summary><strong>Exemple — étendre par variante, comme le dépôt le fait déjà</strong></summary>
 
-**Le cas du PDF est l'exception assumée** : `@react-pdf/renderer` a son propre moteur de styles et ne lit pas les tokens CSS ; ses couleurs sont donc recopiées dans `pdf-styles.ts`, avec le commentaire qui l'explique.
+Code réel, `packages/ui/src/components/button.tsx`. Deux variantes n'existent pas chez shadcn ; le commentaire dit d'où elles viennent, ce qui évite qu'on les prenne un jour pour une erreur de copie.
+
+```ts
+// Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
+// CTA posés sur un fond coloré.
+inverse: "bg-background text-primary shadow-xs hover:bg-background/90",
+"outline-primary": "border border-primary bg-background text-primary hover:bg-secondary",
+```
+
+Et les tokens qu'elles utilisent portent leur équivalent Figma :
+
+```css
+--primary: #00796b; /* Action/Primary/Default (Teal-700) */
+--secondary: #e0f2f1; /* Surface/Base/Secondary (Teal-50) */
+```
+
+**Ce que le commentaire Figma permet concrètement** : devant une maquette, on retrouve le token par son nom au lieu de comparer des codes hexadécimaux à l'œil. Et le jour où la charte change une couleur, une seule ligne bouge — tous les composants suivent, thème sombre compris.
+
+**Le contre-exemple correspondant** — un `className` d'app qui recrée l'apparence complète d'un bouton — est détaillé dans [`react.md`](./react.md), section 4.2.
+
+</details>
 
 ## Décision 7 — Accessibilité outillée
 
-Le [document d'accessibilité](./accessibilite.md) fixe les règles ; il manque de quoi les vérifier.
+Le [document d'accessibilité](./accessibilite.md) fixe les règles ; il manquait de quoi les vérifier.
 
-**Constat mesuré** : `eslint-config-next` n'active aujourd'hui que **6 règles `jsx-a11y`** (`alt-text`, `aria-props`, `aria-proptypes`, `aria-unsupported-elements`, `role-has-required-aria-props`, `role-supports-aria-props`). Le plugin complet est déjà installé, en dépendance transitive.
+**Constat mesuré** : `eslint-config-next` n'activait que **6 règles `jsx-a11y`**, toutes en avertissement — donc invisibles en CI, qui n'échoue que sur les erreurs. Le plugin complet était déjà installé, en dépendance transitive.
 
-**Proposition** :
+**Mise en œuvre** (voir [`outillage-agent.md`](./outillage-agent.md)) : 22 règles activées **en erreur**, `@axe-core/playwright` sur les parcours une fois Playwright installé, et pas de `vitest-axe` (0.1.0, projet immature).
 
-- activer le preset recommandé d'`eslint-plugin-jsx-a11y` dans `packages/eslint-config/next.js`, en traitant les écarts constatés dans la même PR ;
-- ajouter `@axe-core/playwright` (4.13.0) aux parcours end-to-end, une fois Playwright installé — un scan par écran clé ;
-- ne pas compter sur `vitest-axe` (0.1.0, projet immature) : l'analyse automatique se fait dans un vrai navigateur.
+<details><summary><strong>Exemple — ce que les nouvelles règles attrapent, et ce qu'elles ne verront jamais</strong></summary>
 
-**Ce que l'outillage ne dira jamais** : la perte du focus, l'ordre de tabulation, la pertinence d'une annonce. Ça reste la revue et le test clavier.
+```tsx
+// Refusé : click-events-have-key-events, no-static-element-interactions
+<div onClick={ouvrir}>Voir le détail</div>
 
-## Décision 8 — Tests
+// Accepté : focusable, actionnable au clavier, annoncé comme bouton
+<button type="button" onClick={ouvrir}>Voir le détail</button>
+```
+
+Le premier cas est le plus fréquent et le plus coûteux : à la souris tout fonctionne, donc le défaut passe la recette. Au clavier, l'élément n'est pas atteignable ; au lecteur d'écran, un texte est annoncé sans qu'on sache qu'il est cliquable.
+
+```tsx
+// Refusé : label-has-associated-control
+<label>Ancienneté</label>
+<input id="anciennete" />
+
+// Accepté
+<label htmlFor="anciennete">Ancienneté</label>
+```
+
+Sans l'association, le champ n'a **pas de nom accessible** : le lecteur d'écran annonce « zone de saisie », sans dire laquelle.
+
+**Ce que le durcissement a coûté, mesuré** : une seule erreur sur tout le dépôt, dans `apps/site/src/components/main-nav.tsx` — un `onKeyDown` posé sur la `nav`, donc sur un élément non interactif. La règle avait raison sur le fond : la touche Échap ne refermait le menu que si le focus était resté dans le panneau. L'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
+
+Le reste des 22 règles ne produit aucune violation.
+
+**Ce que ces règles ne verront jamais** : la perte du focus après une action, l'ordre de tabulation, la pertinence d'une annonce. Elles vérifient la structure, pas l'expérience — d'où le test clavier en revue.
+
+</details>
+
+## Décision 8 — Tests : à installer
 
 **Il n'existe aujourd'hui aucun test dans le dépôt** : aucun runner, aucun fichier, et la CI ne fait que `format:check`, `lint`, `typecheck` et `build`.
 
@@ -127,15 +316,79 @@ Le [document d'accessibilité](./accessibilite.md) fixe les règles ; il manque 
 | Composants (rendu, clavier, ARIA)                                                       | **Vitest** + **@testing-library/react** 16 + jsdom   |
 | Parcours complet dans un navigateur                                                     | **Playwright** 1.63, sur quelques parcours seulement |
 
-**Par où commencer** : le domaine du simulateur. Ce sont des fonctions pures, déjà isolées de React, qui portent les règles métier écrites avec la PO — le meilleur rapport valeur/effort. Les composants ensuite, en priorité ceux dont l'accessibilité est un engagement (champs, bouton de téléchargement).
+<details><summary><strong>Exemple — le premier test à écrire, et pourquoi celui-là</strong> (proposition)</summary>
+
+```ts
+// resultats/domain/selection.test.ts
+it("n'affiche pas le CEP à un demandeur d'emploi", () => {
+  // France Travail y est l'opérateur CEP : la carte ferait doublon
+  // et enverrait au mauvais guichet.
+  const profil = buildProfil({ [FIELD_SITUATION]: SITUATION_DEMANDEUR_EMPLOI });
+
+  const ids = selectResultats(profil).map((resultat) => resultat.id);
+
+  expect(ids).not.toContain("cep");
+  expect(ids).toContain("france-travail");
+});
+```
+
+**Pourquoi commencer ici plutôt que par les composants :**
+
+- **C'est ce qui fait mal en cas de régression.** Un défaut de style se voit ; une carte affichée au mauvais public ne se voit pas, et envoie quelqu'un au mauvais guichet.
+- **C'est déjà testable sans effort** : `selectResultats` est une fonction pure, sans React, sans DOM, sans store. Aucune infrastructure de test à inventer.
+- **Le test dit la règle métier dans le vocabulaire de la PO**, et sert de documentation vérifiée : `catalogue.ts` porte les neuf scénarios du ticket, et rien ne les contrôle aujourd'hui.
+
+</details>
 
 **Condition pour que ça tienne** : ajouter `npm run test` à la CI dans la même PR que les premiers tests, sinon ils pourrissent sans que personne ne le voie.
 
 ## Décision 9 — Langue de l'interface : français uniquement
 
-Aucune bibliothèque d'internationalisation. Les textes sont écrits en français dans les composants et les données de contenu ; les accents et apostrophes vivent dans les libellés, jamais dans les identifiants ([`nommage.md`](./nommage.md)).
+Aucune bibliothèque d'internationalisation. Les textes sont écrits en français dans les composants et les données de contenu ; les accents vivent dans les libellés, jamais dans les identifiants ([`nommage.md`](./nommage.md)).
 
-**Ce que ça engage** : le jour où une autre langue est demandée, c'est une PR dédiée qui extrait les textes. Poser une bibliothèque d'i18n « au cas où » coûterait aujourd'hui une indirection sur chaque libellé, sans bénéfice.
+**Ce que ça engage** : le jour où une autre langue est demandée, c'est une PR dédiée qui extrait les textes. Poser une bibliothèque d'i18n « au cas où » coûterait aujourd'hui une indirection sur chaque libellé — `t("resultats.titre")` au lieu du texte lisible — pour un besoin qui n'est pas au programme.
+
+## Décision 10 — Mesure d'audience : Matomo
+
+**Brique retenue par l'équipe.** Elle n'est pas encore installée : aucune dépendance, aucune variable d'environnement, aucun appel dans le code. La convention de nommage, elle, l'anticipait déjà — un event analytics s'écrit en `snake_case` et en français (`simulateur_resultat`).
+
+**Paquet** : `@socialgouv/matomo-next` (1.14.2, juillet 2026), maintenu par la fabrique numérique des ministères sociaux. Il injecte le script côté client et suit les changements de route : c'est ce qu'il faut pour un site **exporté statiquement**, où aucun code ne tourne côté serveur.
+
+### Le vrai sujet n'est pas l'outil, c'est le consentement
+
+La CNIL publie un [guide de configuration de Matomo](https://www.cnil.fr/sites/cnil/files/atoms/files/matomo_analytics_-_exemption_-_guide_de_configuration.pdf) permettant à la mesure d'audience d'être **exemptée de consentement**. Configuré ainsi, le site n'a **pas besoin de bandeau cookies** — ce qui, sur un service public destiné à des personnes en transition professionnelle, est un gain d'usage direct : pas de fenêtre à écarter avant de commencer le questionnaire.
+
+Ce que l'exemption impose en contrepartie, d'après le guide (à relire en entier avant de configurer) : cookie de première partie uniquement, finalité strictement limitée à la mesure d'audience, aucun identifiant utilisateur, aucun recoupement avec d'autres traitements ni suivi entre sites, durées de vie et de conservation bornées, et un moyen d'opposition accessible.
+
+**Conséquence assumée** : on renonce au suivi individuel — pas de parcours nominatif, pas de `userId`. On saura combien de personnes atteignent les résultats, pas qui.
+
+### Les principes
+
+1. **Aucune donnée personnelle dans un event**, ni dans son nom ni dans ses propriétés.
+2. **Les noms d'events suivent la convention** : `snake_case`, en français.
+3. **Ce qu'on mesure est décidé avec la PO**, et listé quelque part : un event sans question à laquelle il répond ne sert à rien.
+4. **La configuration d'exemption est vérifiée**, pas supposée : c'est elle qui dispense du bandeau.
+
+**Point à reprendre** : les mentions légales actuelles annoncent que des cookies de mesure d'audience « peuvent être déposés […] après recueil du consentement lorsque cela est requis ». Ce texte vient de la maquette et devra être aligné sur ce qui sera réellement mis en place.
+
+**Question ouverte** : Matomo Cloud (hébergé à Francfort) ou auto-hébergé ? L'auto-hébergement ajoute un service PHP et une base MySQL à une pile qui en compte déjà six.
+
+## Décision 11 — Suivi des erreurs : Sentry
+
+**Brique retenue par l'équipe**, elle non plus pas encore installée. Elle répond à une question que ni les journaux ni la mesure d'audience ne traitent : **qu'est-ce qui a cassé, chez qui, et dans quel contexte**.
+
+**Paquet, côté front** : `@sentry/browser` (10.74.0) plutôt que `@sentry/nextjs`. En export statique il n'y a aucun runtime Next : le SDK Next embarquerait du code serveur et edge sans usage ici — c'était l'objet de l'[issue #12420](https://github.com/getsentry/sentry-javascript/issues/12420), close depuis. `@sentry/browser` fait exactement ce dont on a besoin, sans cette zone grise.
+
+**Ce qu'on perd** en n'utilisant pas `@sentry/nextjs` : le téléversement automatique des source maps et quelques intégrations de routage. Le premier se rattrape avec `sentry-cli` dans la CI — à instruire au moment de l'installation.
+
+### Les principes
+
+1. **`sendDefaultPii: false`**, et masquage explicite : une erreur ne doit pas emporter le courriel ou les claims de la personne.
+2. **Le `correlationId` est envoyé en étiquette** : c'est ce qui relie une erreur vue par l'utilisateur à la requête côté API (voir [`architecture-api.md`](./architecture-api.md), décision 7).
+3. **Une erreur attendue n'est pas envoyée** : un 400 de validation est un fonctionnement normal, pas un incident.
+4. **L'échantillonnage des traces est réglé bas** au départ : on cherche des erreurs, pas des performances.
+
+**Question ouverte** : Sentry SaaS en région européenne (Francfort) ou auto-hébergé ? L'auto-hébergement de Sentry demande une vingtaine de conteneurs et de l'ordre de 16 Go de mémoire d'après sa documentation — sans commune mesure avec la pile actuelle. Le SaaS suppose en revanche d'assumer un transfert vers un tiers, ce que la règle 1 rend acceptable mais qui doit être écrit dans la politique de confidentialité.
 
 ## Questions à trancher
 
@@ -143,8 +396,11 @@ Aucune bibliothèque d'internationalisation. Les textes sont écrits en françai
 2. Le simulateur reste-t-il sur son moteur déclaratif ? Cela fige deux approches dans le dépôt, assumées.
 3. zod partout, ou mesure préalable du bundle avant de fixer zod plutôt que valibot ?
 4. TanStack Query est acté : qui l'installe, et sur quelle première PR ?
-5. Contrat de route partagé (`packages/api-contract`) et une seule fonction d'appel côté front : validé ? C'est le pendant de la décision 3 de [`architecture-api.md`](./architecture-api.md) — les deux se tranchent ensemble.
-6. Preset `jsx-a11y` complet : on encaisse les écarts constatés dans la même PR ?
+5. Contrat de route partagé et fonction `callApi` unique : validé ? Se tranche avec la décision 3 de [`architecture-api.md`](./architecture-api.md).
+6. Les 22 règles `jsx-a11y` en erreur : validées ?
 7. Vitest + Testing Library + Playwright : qui écrit les premiers tests, et sur quel périmètre ?
 8. Français uniquement, sans bibliothèque d'i18n : validé ?
-9. Si l'option A est retenue en décision 1, il faut retirer `react-hook-form`, `@hookform/resolvers`, `zod` et `form.tsx` de `packages/ui` dans la foulée, pour ne pas laisser un choix fantôme dans le dépôt.
+9. Si l'option A est retenue en décision 1, il faut retirer `react-hook-form`, `@hookform/resolvers`, `zod` et `form.tsx` de `packages/ui` dans la foulée.
+10. Matomo configuré pour l'exemption de consentement — donc **sans bandeau cookies** et sans suivi individuel : validé ? Cloud ou auto-hébergé ?
+11. Sentry : `@sentry/browser` plutôt que `@sentry/nextjs` du fait de l'export statique — validé ? SaaS en région européenne ou auto-hébergé ?
+12. Qui met à jour les mentions légales et la politique de confidentialité en conséquence, une fois ces deux points tranchés ?

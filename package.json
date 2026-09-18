@@ -18,7 +18,10 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}": "prettier --write"
+    "*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}": "prettier --write",
+    "apps/simulateur/**/*.{ts,tsx}": "npm run lint --workspace=@etape/simulateur -- --fix",
+    "apps/site/**/*.{ts,tsx}": "npm run lint --workspace=@etape/site -- --fix",
+    "packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"
   },
   "devDependencies": {
     "@etape/prettier-config": "*",
