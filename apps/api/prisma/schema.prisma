@@ -1,0 +1,55 @@
+
+generator client {
+  provider = "prisma-client"
+
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  keycloakSub String @unique @map("keycloak_sub")
+
+  email  String?
+  prenom String?
+  nom    String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  lastLoginAt DateTime @default(now()) @map("last_login_at") @db.Timestamptz(3)
+
+  firstLoginIdentityProvider String @map("first_login_identity_provider")
+
+  lastLoginIdentityProvider String @map("last_login_identity_provider")
+
+  sessions Session[]
+
+  @@map("account")
+}
+
+model Session {
+  id String @id @db.Uuid
+
+  accountId String  @map("account_id") @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  identityProvider String @map("identity_provider")
+
+  claims Json
+
+  idToken String @map("id_token")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@index([accountId])
+  @@map("session")
+}

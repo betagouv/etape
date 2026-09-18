@@ -1,0 +1,218 @@
+# Déploiement
+
+Tout part de [`docker-compose.prod.yml`](../docker-compose.prod.yml), qui
+construit ses images depuis le [`Dockerfile`](../Dockerfile) du dépôt. Rien à
+préparer sur la machine : l'hébergeur clone, construit, démarre — n'importe
+lequel sait le faire, dès lors qu'il accepte un `docker-compose` et sait placer
+un domaine devant un service.
+
+Les adresses données ici en exemple (`etape.example.org`) sont à remplacer par
+celles de l'environnement visé.
+
+## Ce qui tourne
+
+| Service       | Rôle                                       | Exposé           |
+| ------------- | ------------------------------------------ | ---------------- |
+| `web`         | nginx : exports statiques + `/api/` → API  | domaine du site  |
+| `api`         | NestJS, client OIDC confidentiel           | non              |
+| `auth`        | nginx : refuse tout sauf le realm `etape`  | son sous-domaine |
+| `keycloak`    | IAM, broker FranceConnect, thème ETAPE     | non              |
+| `keycloak-db` | PostgreSQL de Keycloak                     | non              |
+| `app-db`      | PostgreSQL applicative : comptes, sessions | non              |
+
+Deux origines, et c'est voulu :
+
+**Le front et l'API partagent la leur**, derrière nginx. Pas de CORS, pas de
+`SameSite=None` : le cookie de session reste en `Lax`, et le préfixe `/api` est
+porté par l'application elle-même plutôt que réécrit par le proxy — les chemins
+vus par Nest sont ceux vus par le navigateur, donc la `redirect_uri` déclarée
+dans Keycloak reste valable des deux côtés.
+
+**Keycloak a la sienne.** Ni le même domaine ni un préfixe de chemin : l'adresse
+du broker est celle que FranceConnect met en liste blanche, et la faire changer
+demande de repasser par le portail partenaires. Sur un sous-domaine dédié, elle
+survit à un déménagement du front comme à un changement d'hébergeur.
+
+## Configurer l'hébergeur
+
+1. Une ressource **Docker Compose**, sur ce dépôt et la branche à déployer.
+2. Fichier de composition : `/docker-compose.prod.yml`.
+3. Domaines, sur les deux seuls services exposés :
+   - `web` → `https://etape.example.org`
+   - `auth` → `https://auth.etape.example.org` (port 80)
+
+   Le sous-domaine va bien sur **`auth`**, et non sur `keycloak` : c'est le
+   proxy qui refuse l'administration. Sur une pile déjà déployée, c'est un
+   domaine à déplacer d'un service à l'autre. `keycloak` n'expose plus aucun
+   port, ce qui rend l'erreur visible tout de suite plutôt que silencieuse.
+
+4. Variables d'environnement : voir ci-dessous.
+5. Déployer.
+
+Les six conteneurs doivent rester `Up`. Deux se configurent eux-mêmes au
+démarrage, en tâche de fond : Keycloak applique son realm — les lignes préfixées
+`→` puis `✅ realm etape configuré` apparaissent dans ses journaux quelques
+secondes après —, et l'API applique ses migrations avant de servir. Aucun
+conteneur ne doit s'arrêter : un conteneur sorti, même en code 0, fait échouer le
+`docker compose up --wait` de l'hébergeur et emporte toute la pile. C'est
+précisément pourquoi ces deux étapes vivent dans le conteneur qu'elles
+configurent, plutôt que dans un conteneur d'initialisation séparé.
+
+## Variables d'environnement
+
+Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
+
+| Variable                      | Obligatoire | Rôle                                                    |
+| ----------------------------- | ----------- | ------------------------------------------------------- |
+| `PUBLIC_URL`                  | oui         | `https://etape.example.org`, sans slash final           |
+| `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.example.org`, sans slash final      |
+| `KEYCLOAK_HOSTNAME`           | oui         | Nom d'hôte du précédent, sans le schéma                 |
+| `KEYCLOAK_ADMIN_USER`         | non         | `admin` par défaut                                      |
+| `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Administration de Keycloak (`kcadm`)                    |
+| `KEYCLOAK_DB_PASSWORD`        | oui         | Base de Keycloak                                        |
+| `APP_DB_PASSWORD`             | oui         | Base applicative (comptes, sessions)                    |
+| `KEYCLOAK_CLIENT_SECRET`      | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak    |
+| `COOKIE_ENCRYPTION_KEY`       | oui         | Chiffre la transaction de connexion (base64, 32 octets) |
+| `TRUST_PROXY_HOPS`            | non         | Proxys devant l'API, `2` par défaut                     |
+| `FRANCECONNECT_CLIENT_ID`     | non         | Identifiant du client FranceConnect                     |
+| `FRANCECONNECT_CLIENT_SECRET` | non         | Secret du client FranceConnect                          |
+| `FRANCECONNECT_ENVIRONMENT`   | non         | `INTEGRATION_STANDARD_V2` (bac à sable) par défaut      |
+| `FRANCECONNECT_EIDAS`         | non         | Niveau eIDAS demandé, `EIDAS1` par défaut               |
+| `KEYCLOAK_TEST_USER_PASSWORD` | non         | Crée `test@etape.local` avec ce mot de passe            |
+| `SMTP_*`                      | non         | Envoi par Brevo ; sans lui, pas d'email du tout         |
+| `KEYCLOAK_RECAPTCHA_*`        | non         | reCAPTCHA de l'inscription (voir ci-dessous)            |
+
+Trois pièges tiennent au moment où ces valeurs sont lues :
+
+- `KEYCLOAK_ADMIN_PASSWORD` ne crée le compte qu'au **tout premier** démarrage.
+  Le modifier ensuite n'a aucun effet — il faut passer par la console.
+- `KEYCLOAK_DB_PASSWORD` et `APP_DB_PASSWORD` sont figés quand PostgreSQL
+  initialise son volume. Les changer plus tard empêche le service concerné de se
+  connecter, sans que rien n'indique pourquoi. `APP_DB_PASSWORD` entre de plus
+  dans une URL de connexion : le prendre alphanumérique évite d'avoir à encoder
+  `@`, `:` ou `/`, qui y changeraient de sens.
+- `KEYCLOAK_CLIENT_SECRET`, à l'inverse, est réappliqué à chaque démarrage de
+  Keycloak : c'est la seule des trois qui se corrige en redéployant.
+
+`KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Aucun identifiant n'est versionné :
+le fichier de realm ne crée plus de compte, et `test@etape.local` n'existe que si
+cette variable est renseignée (conforme à la politique du realm : 12 caractères,
+majuscule, minuscule, chiffre et caractère spécial). `keycloak-init.sh` le crée
+désactivé, pose le mot de passe, puis l'ouvre : il n'est jamais joignable avec un
+mot de passe connu du dépôt. Sans la variable, un compte existant est supprimé.
+
+## FranceConnect
+
+Les identifiants viennent du portail partenaires, environnement d'intégration.
+Renseignés chez l'hébergeur, ils sont posés sur l'identity provider au
+démarrage de Keycloak — jamais dans le fichier de realm, qui est versionné.
+
+Les URL à déclarer côté FranceConnect sont celles du **broker**, pas celles de
+l'API :
+
+```
+redirect_uri       https://auth.etape.example.org/realms/etape/broker/franceconnect/endpoint
+post_logout_uri    https://auth.etape.example.org/realms/etape/broker/franceconnect/endpoint/logout_response
+```
+
+C'est tout l'intérêt du brokerage : FranceConnect ne voit qu'une adresse, fixe
+par environnement, là où des URL de preview mouvantes seraient impossibles à
+mettre en liste blanche.
+
+Les URL d'intégration présentes dans le fichier de realm (`fcp-low.integ01`)
+sont à confronter au portail, qui fait foi.
+
+## Vérifier après déploiement
+
+```bash
+# Les adresses de l'environnement visé, pour les commandes qui suivent
+PUBLIC_URL=https://etape.example.org
+KEYCLOAK_PUBLIC_URL=https://auth.etape.example.org
+
+# Le front et l'API répondent (401 sans cookie, c'est la bonne réponse)
+curl -sI "$PUBLIC_URL/" | head -1
+curl -s -o /dev/null -w '%{http_code}\n' "$PUBLIC_URL/api/auth/session"
+
+# Keycloak annonce le bon émetteur — s'il annonce autre chose, l'API refusera
+# l'échange de jetons
+curl -s "$KEYCLOAK_PUBLIC_URL/realms/etape/.well-known/openid-configuration" \
+  | grep -o '"issuer":"[^"]*"'
+
+# Rien d'autre que le realm `etape` n'est joignable : les quatre doivent
+# répondre 404. La racine est la sonde du refus par défaut ; un 200 ou un 401
+# ici signale un sous-domaine encore branché sur `keycloak`.
+for chemin in / /admin/master/console/ /admin/realms /realms/master/protocol/openid-connect/token; do
+  printf '%s -> ' "$chemin"
+  curl -s -o /dev/null -w '%{http_code}\n' "$KEYCLOAK_PUBLIC_URL$chemin"
+done
+```
+
+Puis, dans le navigateur : « Se connecter » dans l'en-tête du site part vers
+Keycloak, et le retour dépose sur l'accueil.
+
+Si l'API répond « Le fournisseur d'identité est injoignable », c'est qu'elle
+n'arrive pas à joindre l'URL publique de Keycloak depuis l'intérieur du réseau
+Docker : certains hôtes ne routent pas vers eux-mêmes une requête adressée à
+leur propre adresse publique. `docker-compose.prod.yml` porte le correctif en
+commentaire, sur le service `api` (`extra_hosts` vers `host-gateway`).
+
+## Limites connues de cet environnement
+
+- **Avec `SMTP_*` mais sans `KEYCLOAK_RECAPTCHA_SITE_KEY` et
+  `KEYCLOAK_RECAPTCHA_SECRET_KEY`, l'inscription est fermée.** Ouverte, elle
+  ferait envoyer par ETAPE un email à n'importe quelle adresse, sans limite :
+  quota Brevo épuisé et réputation du domaine abîmée. Le reCAPTCHA passe par
+  `recaptcha.net`, que la CSP du realm autorise alors. C'est un service Google :
+  son usage est à valider au regard du RGPD avant l'ouverture au public.
+- **Sans `SMTP_*`, `verifyEmail` reste désactivé** : ni inscription ni « mot de
+  passe oublié ». Or c'est la vérification d'adresse qui rend sûre la liaison
+  d'un compte local à une identité FranceConnect. À régler avant d'ouvrir
+  l'inscription à qui que ce soit.
+
+  L'envoi passe par Brevo. Deux points se règlent chez lui et non ici :
+  `SMTP_FROM` doit être un **expéditeur validé** sur un domaine authentifié (SPF,
+  DKIM) — faute de quoi le relais accepte le message et la remise échoue plus
+  loin, sans que Keycloak le sache — et `SMTP_PASSWORD` est une **clé SMTP**, pas
+  une clé API v3. Les identifiants exacts sont décrits dans
+  [`deploy/.env.example`](../deploy/.env.example).
+
+  Pour contrôler qu'un envoi est bien configuré, lire le realm **sans filtre** :
+  `kcadm get realms/etape --fields smtpServer` affiche `{}` pour toute map
+  imbriquée, ce qui fait croire à une configuration perdue.
+
+- **L'administration de Keycloak ne passe plus par le navigateur.** La console
+  est retirée de l'image (`--features-disabled=admin`), et `auth` refuse tout
+  par défaut : seuls passent le realm `etape` et les ressources du thème. Ni la
+  console, ni l'API qui partage son préfixe, ni le realm `master` ne sont
+  joignables depuis Internet — pas davantage qu'un point d'entrée ajouté par une
+  version ultérieure de Keycloak, qui arriverait fermé plutôt qu'ouvert.
+
+  Pour administrer, depuis la machine :
+
+  ```bash
+  docker exec -it <conteneur-keycloak> /opt/keycloak/bin/kcadm.sh \
+    config credentials --server http://127.0.0.1:8080 --realm master \
+    --user "$KEYCLOAK_ADMIN_USER" --password "$KEYCLOAK_ADMIN_PASSWORD"
+  docker exec -it <conteneur-keycloak> /opt/keycloak/bin/kcadm.sh get realms/etape
+  ```
+
+  Le mot de passe administrateur reste à choisir sérieusement : `/realms/master`
+  n'est refusé que par le proxy, et la protection contre la force brute posée
+  par `deploy/keycloak-init.sh` ralentit sans interdire.
+
+- **`auth` limite aussi le débit des formulaires publics**, par IP : 10 requêtes
+  par minute (rafale de 10) sur `login-actions` et l'inscription, qui envoient
+  les emails et reçoivent les mots de passe, et 30 par minute (rafale de 20) sur
+  `/protocol/openid-connect/auth`, où chaque départ ouvre une session
+  d'authentification en mémoire. L'IP est lue dans `X-Forwarded-For` derrière un
+  saut privé : si le proxy de l'hébergeur n'est pas sur un réseau privé, tout le
+  monde partage la même limite.
+
+- **Le realm `etape` ferme deux portes ouvertes par défaut.** `admin-cli` n'y
+  accepte plus de mot de passe en direct (_direct access grants_), qui
+  permettait de verrouiller un compte par script sans passer par le formulaire.
+  Et une session d'authentification ne vit que 10 minutes
+  (`accessCodeLifespanLogin`), comme la transaction de l'API. Les caches de
+  Keycloak qui les gardent en mémoire (`authenticationSessions`, `actionTokens`,
+  `loginFailures`) n'ont pas de plafond d'entrées configurable en 26.7 sans
+  fichier Infinispan dédié : c'est la limite de débit qui les protège.

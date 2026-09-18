@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Qualité (format, lint, types, build)
+    name: Qualité (format, lint, types, tests, build)
     runs-on: [self-hosted, cegedim]
     env:
       # Pas d'installation des hooks git en CI.
@@ -38,6 +38,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Tests
+        run: npm run test
 
       - name: Build
         run: npm run build

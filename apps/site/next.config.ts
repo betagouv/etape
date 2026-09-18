@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 import { SIMULATEUR_BASE_PATH } from "../../paths.mjs";
 
+// Figée au build : l'export étant statique, rien ne la relira au démarrage. Un
+// chemin relatif suffit en production, l'origine étant commune.
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  (process.env.NODE_ENV === "development" ? "http://localhost:3002/api" : "/api");
+
 const nextConfig: NextConfig = {
   // Génère un export 100 % statique (SSG) dans le dossier `out/`.
   output: "export",
@@ -15,7 +21,10 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@etape/ui"],
   // Le simulateur est un build séparé : le site ne peut pas résoudre ses routes,
   // il a donc besoin du préfixe pour construire ses liens vers lui.
-  env: { NEXT_PUBLIC_SIMULATEUR_PATH: SIMULATEUR_BASE_PATH },
+  env: {
+    NEXT_PUBLIC_SIMULATEUR_PATH: SIMULATEUR_BASE_PATH,
+    NEXT_PUBLIC_API_BASE_URL: API_BASE_URL,
+  },
 };
 
 export default nextConfig;

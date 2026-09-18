@@ -12,10 +12,11 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
     "start": "turbo run start",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}": "prettier --write"
