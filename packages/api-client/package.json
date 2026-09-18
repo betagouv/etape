@@ -1,0 +1,24 @@
+{
+  "name": "@etape/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "prettier": "@etape/prettier-config",
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.103.1",
+    "axios": "^1.20.0"
+  },
+  "devDependencies": {
+    "@etape/eslint-config": "*",
+    "@etape/prettier-config": "*",
+    "eslint": "^9",
+    "typescript": "^5"
+  }
+}
