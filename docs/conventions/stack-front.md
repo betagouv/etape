@@ -83,7 +83,7 @@ Le front est statique : il parle à l'API NestJS en HTTP, avec un cookie de sess
 Le front ajoute par-dessus une seule fonction, dans `src/api/` :
 
 ```ts
-const dossier = await appelApi(getDossier, { params: { id } });
+const dossier = await callApi(getDossier, { params: { id } });
 // dossier : RouteResponse<typeof getDossier>, sans qu'aucun type soit réécrit ici
 ```
 
