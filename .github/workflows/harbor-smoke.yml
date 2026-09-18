@@ -1,0 +1,70 @@
+name: Harbor smoke test
+
+# Test de bout en bout du registre Harbor avec une image factice : build (sans
+# aucun téléchargement externe, base scratch), push vers Harbor, suppression
+# locale puis pull depuis Harbor. Valide le compte robot, les flux et Docker
+# sur le runner avant l'arrivée du vrai back.
+# Déclenchement manuel uniquement. Prérequis : Docker installé sur OPS01 et le
+# secret HARBOR_ROBOT_PASSWORD défini dans le dépôt.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harbor-smoke
+  cancel-in-progress: false
+
+env:
+  HARBOR_URL: fco.repo.cegedim.cloud
+  HARBOR_LOGIN: robot$betagouvetape
+  IMAGE: fco.repo.cegedim.cloud/etape/smoke-test
+
+jobs:
+  smoke:
+    name: Aller-retour Harbor
+    runs-on: [self-hosted, cegedim]
+    steps:
+      - name: Docker disponible sur le runner
+        run: |
+          docker version
+          docker info >/dev/null
+
+      - name: Harbor joignable depuis le runner
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://$HARBOR_URL/v2/")
+          echo "GET https://$HARBOR_URL/v2/ -> HTTP $code"
+          # 401 = joignable et authentification exigée (attendu) ; 200 = joignable.
+          [ "$code" = "401" ] || [ "$code" = "200" ] || { echo "::error::Harbor injoignable (HTTP $code) : flux sortant à vérifier"; exit 1; }
+
+      - name: Authentification (compte robot)
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_ROBOT_PASSWORD }}
+        run: |
+          [ -n "$HARBOR_PASSWORD" ] || { echo "::error::Secret HARBOR_ROBOT_PASSWORD absent du depot"; exit 1; }
+          printf '%s' "$HARBOR_PASSWORD" | docker login "$HARBOR_URL" -u "$HARBOR_LOGIN" --password-stdin
+
+      - name: Construire l'image factice (aucun telechargement externe)
+        run: |
+          d=$(mktemp -d)
+          echo "ETAPE Harbor smoke test - run ${{ github.run_number }} - $(date -u +%FT%TZ)" > "$d/hello.txt"
+          printf 'FROM scratch\nCOPY hello.txt /hello.txt\n' > "$d/Dockerfile"
+          docker build -t "$IMAGE:run-${{ github.run_number }}" "$d"
+          rm -rf "$d"
+
+      - name: Pousser vers Harbor
+        run: docker push "$IMAGE:run-${{ github.run_number }}"
+
+      - name: Supprimer localement puis re-tirer depuis Harbor
+        run: |
+          docker rmi "$IMAGE:run-${{ github.run_number }}"
+          docker pull "$IMAGE:run-${{ github.run_number }}"
+          echo "Aller-retour complet valide."
+
+      - name: Nettoyage
+        if: always()
+        run: |
+          docker rmi -f "$IMAGE:run-${{ github.run_number }}" 2>/dev/null || true
+          docker logout "$HARBOR_URL" 2>/dev/null || true
