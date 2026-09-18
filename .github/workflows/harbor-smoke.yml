@@ -4,8 +4,9 @@ name: Harbor smoke test
 # aucun téléchargement externe, base scratch), push vers Harbor, suppression
 # locale puis pull depuis Harbor. Valide le compte robot, les flux et Docker
 # sur le runner avant l'arrivée du vrai back.
-# Déclenchement manuel uniquement. Prérequis : Docker installé sur OPS01 et le
-# secret HARBOR_ROBOT_PASSWORD défini dans le dépôt.
+# Déclenchement manuel uniquement. Prérequis : Docker installé sur OPS01, la
+# variable HARBOR_ROBOT_LOGIN et le secret HARBOR_ROBOT_PASSWORD définis dans le
+# dépôt (les mêmes que ceux lus par infra/ansible/back.yml).
 
 on:
   workflow_dispatch:
@@ -19,7 +20,7 @@ concurrency:
 
 env:
   HARBOR_URL: fco.repo.cegedim.cloud
-  HARBOR_LOGIN: robot$betagouvetape
+  HARBOR_LOGIN: ${{ vars.HARBOR_ROBOT_LOGIN }}
   IMAGE: fco.repo.cegedim.cloud/etape/smoke-test
 
 jobs:
@@ -43,6 +44,7 @@ jobs:
         env:
           HARBOR_PASSWORD: ${{ secrets.HARBOR_ROBOT_PASSWORD }}
         run: |
+          [ -n "$HARBOR_LOGIN" ] || { echo "::error::Variable HARBOR_ROBOT_LOGIN absente du depot"; exit 1; }
           [ -n "$HARBOR_PASSWORD" ] || { echo "::error::Secret HARBOR_ROBOT_PASSWORD absent du depot"; exit 1; }
           printf '%s' "$HARBOR_PASSWORD" | docker login "$HARBOR_URL" -u "$HARBOR_LOGIN" --password-stdin
 
