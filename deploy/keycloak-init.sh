@@ -154,33 +154,6 @@ else
   echo "→ franceconnect : aucun identifiant fourni, le fournisseur restera inutilisable"
 fi
 
-# Sans SMTP, `verifyEmail` reste désactivé : l'inscription s'arrêterait sur un
-# message qui n'arriverait jamais. Pis-aller assumé — c'est la vérification
-# d'adresse qui rend sûre la liaison d'un compte local à une identité.
-if [ -n "${SMTP_HOST:-}" ]; then
-  $KCADM update "realms/$REALM" -f - <<JSON
-{
-  "verifyEmail": true,
-  "smtpServer": {
-    "host": "${SMTP_HOST}",
-    "port": "${SMTP_PORT:-587}",
-    "from": "${SMTP_FROM:-no-reply@etape.beta.gouv.fr}",
-    "fromDisplayName": "ETAPE",
-    "starttls": "${SMTP_STARTTLS:-true}",
-    "ssl": "${SMTP_SSL:-false}",
-    "auth": "${SMTP_AUTH:-true}",
-    "user": "${SMTP_USER:-}",
-    "password": "${SMTP_PASSWORD:-}"
-  }
-}
-JSON
-  echo "→ smtp : ${SMTP_HOST} configuré, verifyEmail activé"
-else
-  $KCADM update "realms/$REALM" -s verifyEmail=false -s 'smtpServer={}'
-  echo "⚠ smtp : non configuré — verifyEmail désactivé, envoi effacé."
-  echo "  Inscription et « mot de passe oublié » ne sont pas jouables sans lui."
-fi
-
 RECAPTCHA_EXECUTION=$($KCADM get authentication/flows/registration/executions -r "$REALM" \
   --fields id,providerId,priority,authenticationConfig --format csv --noquotes \
   | grep '^[^,]*,registration-recaptcha-action,' || true)
@@ -230,6 +203,33 @@ else
     $KCADM update "realms/$REALM" -s registrationAllowed=true
     echo "→ inscription : ouverte, sans reCAPTCHA (aucun email envoyé sans SMTP)"
   fi
+fi
+
+# Sans SMTP, `verifyEmail` reste désactivé : l'inscription s'arrêterait sur un
+# message qui n'arriverait jamais. Pis-aller assumé — c'est la vérification
+# d'adresse qui rend sûre la liaison d'un compte local à une identité.
+if [ -n "${SMTP_HOST:-}" ]; then
+  $KCADM update "realms/$REALM" -f - <<JSON
+{
+  "verifyEmail": true,
+  "smtpServer": {
+    "host": "${SMTP_HOST}",
+    "port": "${SMTP_PORT:-587}",
+    "from": "${SMTP_FROM:-no-reply@etape.beta.gouv.fr}",
+    "fromDisplayName": "ETAPE",
+    "starttls": "${SMTP_STARTTLS:-true}",
+    "ssl": "${SMTP_SSL:-false}",
+    "auth": "${SMTP_AUTH:-true}",
+    "user": "${SMTP_USER:-}",
+    "password": "${SMTP_PASSWORD:-}"
+  }
+}
+JSON
+  echo "→ smtp : ${SMTP_HOST} configuré, verifyEmail activé"
+else
+  $KCADM update "realms/$REALM" -s verifyEmail=false -s 'smtpServer={}'
+  echo "⚠ smtp : non configuré — verifyEmail désactivé, envoi effacé."
+  echo "  Inscription et « mot de passe oublié » ne sont pas jouables sans lui."
 fi
 
 TEST_USER_ID=$($KCADM get users -r "$REALM" -q username=test@etape.local -q exact=true --fields id --format csv --noquotes)
