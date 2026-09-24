@@ -26,7 +26,11 @@ const buttonVariants = cva(
         // Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
         // CTA posés sur un fond coloré.
         inverse: "bg-background text-primary shadow-xs hover:bg-background/90",
-        "outline-primary": "border border-primary bg-background text-primary hover:bg-secondary",
+        // `hover:text-secondary-foreground` n'est pas décoratif : sans lui, le
+        // libellé reste en `text-primary` sur le fond `secondary` du survol, et
+        // le contraste tombe de 5,70:1 à 4,65:1.
+        "outline-primary":
+          "border border-primary bg-background text-primary hover:bg-secondary hover:text-secondary-foreground",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

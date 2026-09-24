@@ -37,8 +37,17 @@ Les règles détaillées se chargent depuis `.claude/rules/` quand un fichier co
 - **Front** (`docs/conventions/stack-front.md`) : Next.js en export statique (donc aucune Server Action), Tailwind + shadcn/ui, react-hook-form + zod pour les formulaires à venir, le moteur déclaratif du simulateur conservé.
 - **API** (`docs/conventions/architecture-api.md`) : trois couches — HTTP, métier, accès aux données. Un type Prisma ne franchit pas la frontière HTTP ; un repository ne s'extrait qu'à la demande, pas par principe.
 
-Les deux documents sont au statut « Proposé » : les questions ouvertes y sont listées en fin de page.
+Les quatre documents de conventions (`stack-front.md`, `architecture-api.md`, `react.md`, `outillage-agent.md`) sont au statut **« Décidé »** depuis la réunion d'arbitrage du 22 septembre 2026 : chacun se termine par son **relevé d'arbitrage**, qui dit ce qui a été répondu, et par les rares points **restés ouverts** — l'instance Sentry, le choix du pipe de validation, `trust proxy`, le périmètre des règles `jsx-a11y`, les porteurs de TanStack Query et de `packages/api-contract`, et le doublon éventuel entre `revue-front` et `review-pr`. Ne pas rouvrir une décision qui y figure comme tranchée.
+
+## Pratiques de code front
+
+- **React** (`docs/conventions/react.md`) : le métier reste dans `domain/`, la logique d'écran dans un hook, la vue pure ; `useEffect` réservé au monde extérieur ; six props maximum ; forage limité à deux niveaux.
+- **Design system** (`docs/conventions/react.md`, section 4) : aucune couleur hors tokens ; on **étend par variante `cva`**, on ne modifie pas par `className` — celui d'une app ne fait que de la mise en page ; on cherche dans `packages/ui` avant d'écrire une primitive. Pour ajouter ou étendre un composant : skill `composant-ui`.
+
+## Outillage des conventions
+
+`docs/conventions/outillage-agent.md` dit où chaque convention est portée et ce qui la vérifie : ESLint et CI pour ce qu'une machine décide seule, `.claude/rules/` pour le contexte automatique, skills et sous-agents pour les procédures, `docs/conventions/` pour le raisonnement. **Une convention vérifiable automatiquement descend au niveau de la CI** : c'est le seul niveau qui couvre aussi les développeurs qui n'utilisent pas Claude Code.
 
 ## Revue de code
 
-Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage et d'accessibilité, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation.
+Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage et d'accessibilité, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation. Pour un diff front, il s'appuie sur le sous-agent `revue-front`.

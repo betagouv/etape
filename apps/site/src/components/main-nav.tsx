@@ -29,8 +29,14 @@ export function MainNav() {
   const navRef = React.useRef<HTMLElement>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
 
-  // Referme le panneau lors d'un clic en dehors de la navigation. L'écouteur
-  // n'est attaché que pendant l'ouverture.
+  // Referme le panneau lors d'un clic en dehors de la navigation, ou sur Échap.
+  // Les écouteurs ne sont attachés que pendant l'ouverture.
+  //
+  // Échap est écouté sur le document et non sur la `nav` : le focus peut avoir
+  // quitté le panneau — un lien d'évitement, un clic ailleurs —, et la touche
+  // doit refermer quand même. Un `onKeyDown` posé sur la `nav` ne se déclenche
+  // que si le focus est dedans, ce que `jsx-a11y` signale par ailleurs comme un
+  // écouteur clavier sur un élément non interactif.
   React.useEffect(() => {
     if (!isOpen) return;
 
@@ -39,17 +45,21 @@ export function MainNav() {
       setIsOpen(false);
     }
 
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [isOpen]);
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setIsOpen(false);
+      // Sans quoi le focus resterait sur un élément devenu invisible.
+      triggerRef.current?.focus();
+    }
 
-  // Échap referme le panneau et rend le focus à la bascule, sans quoi le focus
-  // resterait sur un élément devenu invisible.
-  function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
-    if (event.key !== "Escape" || !isOpen) return;
-    setIsOpen(false);
-    triggerRef.current?.focus();
-  }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   return (
     <nav
@@ -66,7 +76,6 @@ export function MainNav() {
       // maquette, qui fait foi. L'instance posée sur l'écran colle la nav au
       // logo, mais cette surcharge d'alignement n'était pas voulue.
       className="ml-auto focus:outline-none"
-      onKeyDown={handleKeyDown}
     >
       <button
         ref={triggerRef}

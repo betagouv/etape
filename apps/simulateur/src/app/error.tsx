@@ -17,14 +17,10 @@ export default function Error({ unstable_retry }: { unstable_retry: () => void }
           les réponses déjà saisies.
         </p>
         <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-          <Button type="button" onClick={unstable_retry} className="min-h-11 rounded-lg px-6">
+          <Button type="button" size="xl" onClick={unstable_retry}>
             Réessayer
           </Button>
-          <Button
-            asChild
-            variant="outline"
-            className="border-primary text-primary hover:bg-secondary hover:text-secondary-foreground min-h-11 rounded-lg px-6"
-          >
+          <Button asChild variant="outline-primary" size="xl">
             <Link href="/">Retour à l’accueil</Link>
           </Button>
         </div>
