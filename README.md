@@ -27,8 +27,8 @@ mais un thème Keycloak, construit en JAR et servi par Keycloak — voir
 
 ### Prérequis
 
-- [Node.js](https://nodejs.org/) >= 20
-- npm >= 10
+- [Node.js](https://nodejs.org/) >= 24 (version épinglée dans `.nvmrc`)
+- npm 11.17.0 (`packageManager` du `package.json`)
 
 ### Installation
 
@@ -68,3 +68,17 @@ La pile est décrite par [`docker-compose.prod.yml`](docker-compose.prod.yml) et
 tient sur tout hébergeur capable de construire et lancer un `docker-compose`.
 Variables d'environnement, identifiants FranceConnect et vérifications :
 [docs/deploiement.md](docs/deploiement.md).
+
+## Travailler avec Claude Code
+
+Les conventions du projet sont portées par des règles et des skills versionnés — voir [`docs/conventions/outillage-agent.md`](./docs/conventions/outillage-agent.md). Une seule manipulation est à faire sur ton poste.
+
+**Activer le serveur MCP `shadcn`.** Il donne accès aux sources officielles des composants shadcn, ce dont le skill `composant-ui` a besoin pour ne pas les retaper de mémoire. Le dépôt le déclare (`.mcp.json`) et l'autorise (`.claude/settings.json`), mais ton fichier personnel `.claude/settings.local.json` — non versionné — peut le désactiver :
+
+```json
+{ "disabledMcpjsonServers": ["shadcn"] }
+```
+
+Retire l'entrée `"shadcn"` de ce tableau. Sans cela, le serveur reste muet et le skill échoue sans dire pourquoi.
+
+> Cette section a vocation à rejoindre le `CONTRIBUTING.md` prévu par l'issue #6.

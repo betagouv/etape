@@ -1,6 +1,6 @@
 # Architecture de l'API — ETAPE
 
-**Statut** : Proposé · **Date** : 2026-09-16 · **À arbitrer avec l'équipe**
+**Statut** : Décidé · **Décidé le** : 2026-09-22 · **Par** : l'équipe, en réunion d'arbitrage
 **Portée** : `apps/api` (NestJS + Prisma + PostgreSQL), introduite par la PR #16
 
 Objectif : une séparation des couches **minimale et tenable**, pas une clean architecture. Le nommage relève de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md). Le pendant côté front est [`stack-front.md`](./stack-front.md).
@@ -9,15 +9,17 @@ Chaque décision est suivie de ses **principes** — des règles courtes, vérif
 
 ## En place, acté
 
-| Brique                        | Version     | Remarque                                                                                           |
-| ----------------------------- | ----------- | -------------------------------------------------------------------------------------------------- |
-| NestJS                        | 11.1.28     | La version 12 est sortie (voir décision 4)                                                         |
-| Prisma + `@prisma/adapter-pg` | 7.10.0      | Client injecté par `PrismaService` dans un module `@Global`                                        |
-| PostgreSQL                    | —           | Seule base ; sessions et transactions de connexion y sont persistées                               |
-| **Keycloak**                  | —           | Fournisseur d'identité et courtier vers FranceConnect. L'API est le client OIDC, pas le navigateur |
-| `openid-client`               | 6.8.4       | Dialogue OIDC écrit à la main, sans Passport                                                       |
-| `@nestjs/config` + zod        | 4.0.2 / 4.1 | Schéma d'environnement validé au démarrage (`src/config/env.ts`)                                   |
-| helmet, cookie-parser         | —           | Session par cookie opaque : aucun jeton visible du navigateur                                      |
+| Brique                        | Version         | Remarque                                                                                           |
+| ----------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
+| NestJS                        | 12.1.0          | Montée de la 11 par la PR #59                                                                      |
+| Prisma + `@prisma/adapter-pg` | 7.10.0          | Client injecté par `PrismaService` dans un module `@Global`                                        |
+| PostgreSQL                    | —               | Seule base ; sessions et transactions de connexion y sont persistées                               |
+| **Keycloak**                  | —               | Fournisseur d'identité et courtier vers FranceConnect. L'API est le client OIDC, pas le navigateur |
+| `openid-client`               | 6.8.4           | Dialogue OIDC écrit à la main, sans Passport                                                       |
+| `@nestjs/config` + zod        | 12.0.1 / 4.1.13 | Schéma d'environnement validé au démarrage (`src/config/env.ts`)                                   |
+| helmet, cookie-parser         | —               | Session par cookie opaque : aucun jeton visible du navigateur                                      |
+| `@nestjs/throttler`           | 6.7.1           | Limitation de débit **déjà en place**, en garde globale (décision 8)                               |
+| Vitest                        | 5.0.1           | **Cinq fichiers de test** dans `auth/`, lancés par `npm run test`, bloquants en CI (décision 11)   |
 
 **Comment l'API tourne**, car plusieurs décisions en dépendent : un conteneur Docker parmi six, décrit par `docker-compose.prod.yml`, construit et démarré par l'hébergeur (Cegedim). Elle n'est pas exposée directement — nginx sert les exports statiques et relaie `/api/`. Elle applique ses migrations au démarrage, avant de servir.
 
@@ -360,7 +362,7 @@ export function toAccount(ligne: AccountPrisma): Account {
 
 **Le piège à éviter** : écrire `export type Account = Prisma.Account` pour « gagner du temps ». La frontière existe alors sur le papier, et chaque changement de schéma se propage jusqu'aux contrôleurs.
 
-> **Note de nommage** : cet exemple est écrit avec le nom **conforme**, `account`. Dans le code d'aujourd'hui, le module s'appelle `utilisateurs`, le modèle Prisma `Utilisateur` et la table `utilisateur` — un écart avec [`nommage.md`](./nommage.md), qui est explicite : le compte authentifié se nomme `account`, jamais `utilisateur`, `compte` ni `user` ; `beneficiaire`, `instructeur` et `conseiller` désignent les rôles métier. Le renommage touche une migration et mérite sa propre PR. Il n'est pas relevé par `audit-nommage.md`, écrit avant l'arrivée de l'API.
+> **Note de nommage** : cet exemple emploie `account`, et c'est désormais aussi le nom du code — module `account/`, modèle Prisma `Account`, table `account`. L'écart signalé par les versions précédentes de ce document est **résorbé** : l'issue #51 l'a traité, migration comprise. La règle reste énoncée ici parce qu'elle vaut pour la suite : le compte authentifié se nomme `account`, jamais `utilisateur`, `compte` ni `user` ; `beneficiaire`, `instructeur` et `conseiller` désignent les rôles métier.
 
 </details>
 
@@ -384,32 +386,32 @@ export abstract class SessionStore {
 
 </details>
 
-<details><summary><strong>Cas d'école — pourquoi <code>utilisateurs</code> garde son SQL</strong></summary>
+<details><summary><strong>Cas d'école — pourquoi <code>account</code> garde son SQL</strong></summary>
 
 **Le besoin métier**, documenté dans `docs/donnees.md` : deux dates qui ne veulent pas dire la même chose.
 
 - `last_login_at` — « la personne est revenue ». Change à **chaque** connexion.
 - `updated_at` — « sa fiche a changé ». Ne doit changer **que** si le nom, le prénom ou le courriel renvoyés par Keycloak diffèrent de ce qu'on a en base.
 
-**Le code actuel** (`utilisateurs/utilisateurs.service.ts`) exprime les deux en une seule requête :
+**Le code actuel** (`account/account.service.ts`, méthode `recordLogin`) exprime les deux en une seule requête :
 
 ```sql
 on conflict (keycloak_sub) do update set
   last_login_at = now(),                      -- toujours
   updated_at    = case
-                    when (utilisateur.email, utilisateur.prenom, utilisateur.nom)
+                    when (account.email, account.prenom, account.nom)
                          is distinct from
                          (excluded.email, excluded.prenom, excluded.nom)
                     then now()                -- seulement si l'identité a bougé
-                    else utilisateur.updated_at
+                    else account.updated_at
                   end
 ```
 
 `is distinct from` compare en traitant `NULL` comme une valeur : un courriel absent hier et présent aujourd'hui compte comme un changement, là où `<>` aurait renvoyé `NULL`.
 
-**Pourquoi `prisma.utilisateur.upsert()` ne suffit pas** : Prisma ne sait pas écrire un `update` dont une colonne dépend d'une comparaison entre l'ancienne et la nouvelle ligne. Il faudrait d'abord lire la ligne, comparer en TypeScript, puis écrire — donc deux allers-retours au lieu d'un, et une fenêtre pendant laquelle deux connexions simultanées peuvent se marcher dessus.
+**Pourquoi `prisma.account.upsert()` ne suffit pas** : Prisma ne sait pas écrire un `update` dont une colonne dépend d'une comparaison entre l'ancienne et la nouvelle ligne. Il faudrait d'abord lire la ligne, comparer en TypeScript, puis écrire — donc deux allers-retours au lieu d'un, et une fenêtre pendant laquelle deux connexions simultanées peuvent se marcher dessus.
 
-**Ce qu'on en retient pour la règle** : le SQL brut n'est pas interdit, il est **argumenté**. Ici l'argument tient, mais il n'est écrit nulle part dans le fichier. La suite à donner n'est donc pas de remplacer ce SQL : c'est de **déplacer cet accès dans un `UtilisateursRepository`** (principe 1 de cette décision) et d'y écrire le commentaire qui explique le `case`.
+**Ce qu'on en retient pour la règle** : le SQL brut n'est pas interdit, il est **argumenté**. Ici l'argument tient, mais il n'est écrit nulle part dans le fichier. La suite à donner n'est donc pas de remplacer ce SQL : c'est de **déplacer cet accès dans un `AccountRepository`** (principe 1 de cette décision) et d'y écrire le commentaire qui explique le `case`. C'est l'objet de l'issue #61 — `AccountService` dépend encore directement de `PrismaService`.
 
 </details>
 
@@ -417,7 +419,9 @@ on conflict (keycloak_sub) do update set
 
 **Le problème** : une route est décrite deux fois — dans le contrôleur, puis dans le code qui l'appelle — et rien ne casse quand les deux divergent. On s'en aperçoit en production, sur un champ `undefined`.
 
-**Proposition** : un paquet partagé, `packages/api-contract`, qui ne dépend que de zod.
+**Décidé** : un paquet partagé, `packages/api-contract`, qui ne dépend que de zod. Se tranche avec la décision 5 de [`stack-front.md`](./stack-front.md), validée en même temps.
+
+**Reste à attribuer** : qui amorce le paquet, et sur quelle première route métier. L'arbitrage a validé le principe sans désigner de porteur.
 
 ### Les principes
 
@@ -465,7 +469,7 @@ const dossier = await callApi(getDossier, { params: { id } });
 
 ## Décision 4 — Valider les entrées, et pourquoi c'est un pipe
 
-**L'état actuel** : aucune validation. Aucun `ValidationPipe` global, aucun schéma par route. Les paramètres d'URL et les corps de requête arrivent bruts jusqu'au code métier ; seule `sanitizeReturnTo()` filtre une valeur, dans le module d'authentification.
+**L'état actuel**, vérifié sur `main` : aucune validation. Aucun `ValidationPipe` global, aucun schéma par route. Les paramètres d'URL et les corps de requête arrivent bruts jusqu'au code métier ; seule `sanitizeReturnTo()` filtre une valeur, dans le module d'authentification.
 
 ### À quoi sert la validation d'entrée
 
@@ -482,11 +486,15 @@ Un pipe est le mécanisme que NestJS exécute **avant** d'entrer dans la méthod
 
 | Approche                                                 | Ce que ça implique                                                                                                          |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **`StandardSchemaValidationPipe`** (intégré à NestJS 12) | Rien à écrire ni à installer — mais **absent de `@nestjs/common` 11.1.28**, la version de l'API : il est apparu en 12       |
+| **`StandardSchemaValidationPipe`** (intégré à NestJS 12) | Rien à écrire ni à installer, et **disponible** : l'API est en `@nestjs/common` 12.1.0 depuis la PR #59                     |
 | **Pipe maison** (~15 lignes)                             | Une classe qui appelle le schéma et lève une `BadRequestException` ; fonctionne dès aujourd'hui. C'est ce que fait verseau2 |
 | **`ValidationPipe` + class-validator** (voie historique) | Deux dépendances, des DTO en classes décorées, et un type qui ne découle pas du schéma : incompatible avec la décision 3    |
 
-**Proposition** : le **pipe maison maintenant**, remplacé par celui de NestJS à la montée en version 12 — la validation des entrées ne doit pas attendre une montée de version majeure.
+**Décidé** : les entrées sont validées **par un pipe**, et la validation ne doit pas attendre. C'est le fond de la décision, et il n'a pas bougé.
+
+**Lequel des deux pipes reste ouvert, et la raison a changé.** L'arbitrage avait posé le choix en ces termes : pipe maison maintenant, quitte à le remplacer à la montée en NestJS 12, dont l'évaluation revenait à Herbert. **La montée est faite** — la PR #59 a migré l'API en 12.1.0 — donc la condition qui imposait le pipe maison est levée, et `StandardSchemaValidationPipe` est disponible.
+
+Le choix **se tranche à la première route qui validera une entrée**, et sur un critère précis : le pipe intégré sait-il produire le corps d'erreur que le front attend, `{ code: "ENTREE_INVALIDE", erreurs: [{ champ, message }] }` ? C'est lui qui permet d'afficher le message sous le bon champ (décision 6). S'il le sait, on n'écrit pas les quinze lignes maison ; s'il ne le sait pas, on les écrit. Aucune route ne validant d'entrée aujourd'hui, la question n'est pas urgente — mais elle ne doit pas être tranchée par défaut, en recopiant l'exemple ci-dessous sans se la poser.
 
 <details><summary><strong>Exemple — le pipe, et ce qu'il produit comme erreur</strong> (proposition)</summary>
 
@@ -532,7 +540,7 @@ De quoi afficher le message **sous le bon champ**, au lieu d'un « une erreur es
 
 ## Décision 5 — OpenAPI : seulement pour un client tiers
 
-Avec le contrat de la décision 3, le front a les types : le document OpenAPI ne lui apprendrait rien. Il devient utile le jour où un consommateur extérieur au dépôt appelle l'API — `@nestjs/swagger` sait alors le produire depuis les schémas zod, via `zod-openapi`.
+**Décidé : on n'utilise pas OpenAPI.** Avec le contrat de la décision 3, le front a les types : le document OpenAPI ne lui apprendrait rien, et l'entretenir coûterait sans rien apporter. Il devient utile le jour où un consommateur extérieur au dépôt appelle l'API — `@nestjs/swagger` sait alors le produire depuis les schémas zod, via `zod-openapi`. Pas avant.
 
 **Versionnage** : `setGlobalPrefix("api")` sans numéro de version, tant qu'il n'y a qu'un client, déployé en même temps que l'API. `enableVersioning()` existe pour le jour où ce ne sera plus vrai.
 
@@ -580,7 +588,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
 ### Deux besoins distincts, qu'il ne faut pas confondre
 
-- **Le suivi des erreurs** répond à « qu'est-ce qui a cassé, et dans quel contexte ». C'est **Sentry**, brique retenue par l'équipe : `@sentry/nestjs` (10.74.0) côté API, `@sentry/browser` côté front ([`stack-front.md`](./stack-front.md), décision 11).
+- **Le suivi des erreurs** répond à « qu'est-ce qui a cassé, et dans quel contexte ». C'est **Sentry**, brique actée : `@sentry/nestjs` (10.74.0) côté API, `@sentry/browser` côté front ([`stack-front.md`](./stack-front.md), décision 11).
 - **La journalisation** répond à « que s'est-il passé pendant cette requête, même quand rien n'a cassé » : un 404 inattendu, une purge qui tourne, une connexion refusée par Keycloak. C'est **pino**, via `nestjs-pino` (5.2.0).
 
 ### Écrire les journaux ne suffit pas : il faut pouvoir les interroger
@@ -593,9 +601,11 @@ Le besoin exprimé est de **retrouver toutes les lignes d'un même `correlationI
 | **B. Loki + Grafana** (`pino-loki` 3.0.0)          | Deux conteneurs de plus dans la pile  | Oui, en LogQL                                        | Tout reste chez l'hébergeur ; une pile à exploiter |
 | **C. `docker compose logs`**                       | Rien                                  | **Non** — recherche textuelle seulement              | Gratuit, mais ne répond pas au besoin              |
 
-**Proposition : A.** Sentry étant déjà retenu pour les erreurs, y envoyer aussi les journaux évite d'introduire une seconde brique et met au même endroit l'erreur et les lignes qui l'ont précédée — recherchables par le même `correlationId`. **B** reste la réponse si l'équipe refuse que des journaux applicatifs sortent de l'hébergement, ce qui est un arbitrage légitime pour un service public.
+**Retenu : A.** Sentry étant déjà acté pour les erreurs, y envoyer aussi les journaux évite d'introduire une seconde brique et met au même endroit l'erreur et les lignes qui l'ont précédée — recherchables par le même `correlationId`. **C est écartée** : elle ne répond pas au besoin.
 
 **Ce qui rend A acceptable**, et qu'il faut donc tenir : la règle 1 ci-dessous. Des journaux sans donnée personnelle peuvent partir chez un tiers ; des journaux qui contiennent un courriel, non.
+
+> **Cette option est suspendue à un choix qui n'est pas encore fait.** L'instance Sentry n'est pas tranchée ([`stack-front.md`](./stack-front.md), décision 11) : SaaS en région européenne, ou l'instance mutualisée de betagouv. **Rien n'établit à ce jour que celle de betagouv expose Sentry Logs.** Si elle ne l'expose pas, c'est **B** qui devient la réponse — les deux conteneurs de Loki et Grafana étant alors le prix à payer pour un besoin qui, lui, reste entier. La question est posée à betagouv et au coaching dans l'**issue #64** ; elle se règle avant toute installation, pas au moment de brancher le transport.
 
 ### Le fil qui relie tout : un seul identifiant
 
@@ -605,7 +615,7 @@ Le même `correlationId` doit apparaître à quatre endroits : dans le corps d'e
 
 1. **Aucune donnée personnelle, aucun jeton, aucun claim FranceConnect** dans les journaux.
 2. **On journalise un identifiant technique** (`keycloakSub`), jamais un nom ni un courriel.
-3. **Le masquage est configuré une fois**, pas décidé à chaque appel.
+3. **Le masquage est configuré une fois**, pas décidé à chaque appel. **C'est le `LoggerModule` qui en porte la responsabilité** : la liste des champs à masquer vit dans sa configuration, et non dans une consigne de revue ni dans la tête de quelqu'un. C'est la réponse de l'arbitrage à la question « qui écrit cette liste ? » — la réponse désigne un endroit du code, pas une personne, et c'est ce qui la rend tenable. La même liste sert au masquage Sentry, pour que les deux destinations ne divergent pas.
 4. **Chaque requête porte un identifiant de corrélation**, renvoyé aussi dans le corps d'erreur.
 5. **Une ligne de journal est un événement**, pas une phrase : de quoi filtrer et compter.
 
@@ -635,33 +645,40 @@ LoggerModule.forRoot({
 
 ## Décision 8 — Limitation de débit
 
-`GET /auth/login` est **anonyme** et **écrit en base** à chaque appel : elle crée une transaction de connexion. Sans garde-fou, une boucle suffit à faire grossir la table. La PR #16 signale elle-même ce manque.
+`GET /auth/login` est **anonyme** et **écrit en base** à chaque appel : elle crée une transaction de connexion. Sans garde-fou, une boucle suffit à faire grossir la table.
 
-**Proposition** : `@nestjs/throttler` (6.5.0), avec une limite globale prudente et une limite stricte sur l'authentification.
+**Décidé, et déjà en place** : `@nestjs/throttler` (6.7.1). `app.module.ts` déclare
+`ThrottlerModule.forRoot({ throttlers: [{ ttl: minutes(1), limit: 300 }] })` et pose `ThrottlerGuard` en `APP_GUARD`, donc la limite s'applique à toutes les routes sans qu'on ait à la répéter.
+
+**Ce qui manque encore** : la **limite stricte sur l'authentification**. 300 requêtes par minute conviennent à une navigation ordinaire, mais laissent passer 300 créations de transaction de connexion par minute et par adresse — ce qui est précisément le scénario que cette décision voulait fermer.
+
+**Les valeurs se définissent au cas par cas, par route** : l'arbitrage a refusé d'en figer un barème dans ce document. Une route anonyme qui écrit en base et une route de lecture authentifiée n'ont pas de raison de partager la même limite. L'exemple ci-dessous montre la forme d'une limite par route ; ses chiffres sont des points de départ argumentés, pas une norme à recopier.
 
 <details><summary><strong>Exemple — global prudent, strict sur la connexion</strong> (proposition)</summary>
 
 ```ts
-// app.module.ts
-ThrottlerModule.forRoot([{ name: "global", ttl: 60_000, limit: 120 }]);
+// app.module.ts — en place aujourd'hui
+ThrottlerModule.forRoot({ throttlers: [{ ttl: minutes(1), limit: 300 }] });
+// …
+providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }];
 
-// auth.controller.ts — la route anonyme qui écrit en base
-@Throttle({ global: { ttl: 60_000, limit: 10 } })
+// auth.controller.ts — ce qui reste à poser : la route anonyme qui écrit en base
+@Throttle({ default: { ttl: minutes(1), limit: 10 } })
 @Get("login")
 ```
 
-**Comment lire ces valeurs** : 120 requêtes par minute et par adresse pour l'ensemble de l'API, soit deux par seconde — au-dessus de ce qu'un écran génère, en dessous de ce qu'un script produit. Et 10 ouvertures de connexion par minute : personne ne se connecte dix fois par minute, mais dix lignes par minute ne remplissent aucune table.
+**Comment lire ces valeurs** : 300 requêtes par minute et par adresse pour l'ensemble de l'API — au-dessus de ce qu'un écran génère, en dessous de ce qu'un script produit. Et 10 ouvertures de connexion par minute : personne ne se connecte dix fois par minute, mais dix lignes par minute ne remplissent aucune table. C'est cette seconde limite qui protège la table des transactions, et c'est elle qui manque.
 
-**Attention à l'adresse vue par le compteur** : derrière nginx, toutes les requêtes semblent venir du proxy. Il faut que l'API fasse confiance à `X-Forwarded-For` (`app.set("trust proxy", 1)`), sinon la limite s'applique à tout le monde d'un coup.
+**Attention à l'adresse vue par le compteur** : derrière nginx, toutes les requêtes semblent venir du proxy. Il faut que l'API fasse confiance à `X-Forwarded-For` (`app.set("trust proxy", 1)`), sinon la limite s'applique à tout le monde d'un coup. **Qui vérifie cette configuration côté hébergeur n'a pas été tranché** : le point reste ouvert, et il conditionne l'efficacité réelle de la limitation.
 
 </details>
 
 ## Décision 9 — La purge des données expirées
 
-**Ce qui existe déjà**, et qu'il faut avoir en tête avant d'en discuter : une purge est en place. `PrismaSessionStore.purger()` supprime les sessions et transactions expirées, et elle est appelée au début de `createTransaction` et de `createSession`. À quoi s'ajoute un contrôle à la lecture : `getSession` et `consumeTransaction` refusent une ligne expirée même si elle est encore en base.
+**Ce qui existe déjà**, et qu'il faut avoir en tête avant d'en discuter : une purge est en place. `PrismaSessionStore.purgeExpired()` supprime les sessions et transactions expirées, et elle est appelée au début de `createTransaction` et de `createSession`. À quoi s'ajoute un contrôle à la lecture : `getSession` et `consumeTransaction` refusent une ligne expirée même si elle est encore en base.
 
 ```ts
-private async purger(): Promise<void> {
+private async purgeExpired(): Promise<void> {
   const maintenant = new Date();
 
   await Promise.all([
@@ -677,7 +694,7 @@ private async purger(): Promise<void> {
 - ce qui reste, ce sont des **données personnelles** : claims, courriel, `id_token`. La minimisation en demande la suppression, pas seulement l'ignorance à la lecture ;
 - elle s'exécute **sur le chemin critique** d'une connexion : deux `deleteMany` avant chaque création.
 
-**Proposition** : garder la purge opportuniste et ajouter une tâche planifiée avec `@nestjs/schedule` (12.0.2).
+**Décidé** : la purge opportuniste est gardée. **L'ajout d'une tâche planifiée n'est pas tranché** — l'arbitrage a renvoyé le point à l'issue #60, le temps de peser ce que la minimisation exige réellement face à un conteneur qui exécute un `deleteMany` toutes les heures pour rien la plupart du temps. La proposition instruite dans cette issue est une tâche `@nestjs/schedule` (12.0.2) ; l'exemple ci-dessous la décrit.
 
 <details><summary><strong>Exemple — la tâche planifiée</strong> (proposition)</summary>
 
@@ -695,7 +712,7 @@ export class SessionPurgeTask {
 }
 ```
 
-Cela suppose d'exposer `purgeExpired()` sur `SessionStore` — aujourd'hui `purger()` est privée, et son nom est un verbe français, ce que la convention de nommage interdit (`purge`). Le renommage se fera en même temps.
+Cela suppose d'**exposer** `purgeExpired()` sur `SessionStore` : la méthode existe et porte déjà le bon nom — le verbe français `purger()` a été corrigé par l'issue #51 — mais elle est encore `private`.
 
 **À réévaluer si l'API tourne un jour en plusieurs instances** : il faudra garantir qu'une seule exécute la purge, sinon les tâches se déclenchent en parallèle sur les mêmes lignes.
 
@@ -734,7 +751,11 @@ La fenêtre T1 est courte, mais elle existe à chaque déploiement. Et surtout :
 
 ## Décision 11 — Tests
 
-**Il n'existe aujourd'hui aucun test dans l'API** : ni dépendance, ni fichier, ni script.
+**L'état actuel, vérifié sur `main`** : les tests de l'API **existent et sont déjà bloquants**. `apps/api` déclare Vitest 5.0.1 et un script `test`, cinq fichiers de test couvrent `auth/` (`identity-claims`, `identity-provider`, `return-to`, `cookie-cipher`, `session.service`), `turbo.json` porte une tâche `test`, et `.github/workflows/ci.yml` lance `npm run test` entre `typecheck` et `build`.
+
+La question que l'arbitrage renvoyait à une issue — « à quel moment les rendre bloquants en CI » — **est donc déjà tranchée par les faits, côté API** : ils le sont. Ce qui reste ouvert est ailleurs : **le front n'a aucun test** (voir [`stack-front.md`](./stack-front.md), décision 8), et aucun test d'intégration de repository ne tourne, faute de base PostgreSQL jetable en CI.
+
+Les outils ci-dessous restent la cible pour les couches qui ne sont pas encore couvertes.
 
 | Besoin                | Outil                                                                                             |
 | --------------------- | ------------------------------------------------------------------------------------------------- |
@@ -770,10 +791,9 @@ it("refuse une session expirée", async () => {
 ```
 src/
   config/                          ← technique : schéma d'environnement
-  base-de-donnees/                 ← technique : PrismaService (module @Global)
+  database/                        ← technique : PrismaService (module @Global)
   auth/                            ← technique : OIDC, session, garde
   account/                         ← technique : le compte authentifié, quel que soit le rôle
-                                     (s'appelle `utilisateurs/` aujourd'hui — à renommer)
   dossier/                         ← métier, à venir
     dossier.controller.ts          ← HTTP
     dossier.service.ts             ← règles
@@ -790,16 +810,28 @@ Un sous-dossier n'apparaît que quand un module dépasse la poignée de fichiers
 
 Pas de ports et adaptateurs partout — le repository de la décision 2 est la seule abstraction imposée —, pas de CQRS, pas de cas d'usage en classes, pas de microservices. Une petite équipe, un MVP.
 
-## Questions à trancher
+## Relevé d'arbitrage du 22 septembre 2026
 
-1. Les trois couches et les huit principes de frontière : validés tels quels ?
-2. Repository par défaut, avec ses cinq principes : validé ?
-3. Contrat de route dans `packages/api-contract` : qui l'amorce, et sur quelle première route métier ?
-4. Pipe maison maintenant, remplacé à la montée en NestJS 12 — ou on attend la montée de version ?
-5. OpenAPI réservé à un éventuel client tiers : validé ?
-6. Journalisation : **où les journaux sont-ils consultables** ? Sentry Logs, qui évite une seconde brique mais envoie les journaux applicatifs chez un tiers — ou Loki et Grafana dans la pile, souverains mais à exploiter ?
-7. Sentry pour le suivi des erreurs (`@sentry/nestjs`) : SaaS en région européenne ou auto-hébergé ? Et qui écrit la liste des champs à masquer, commune au logger et à Sentry ?
-8. Limitation de débit : quelles valeurs, et qui vérifie la confiance au proxy (`trust proxy`) ?
-9. Purge planifiée **en plus** de la purge opportuniste : nécessaire pour la minimisation, ou acceptable en l'état ?
-10. Reprise de `UtilisateursService` derrière un repository, **en gardant son SQL** et en le commentant — et son renommage en `account`, qui touche une migration : qui les prend, et dans quel ordre ?
-11. Tests : Vitest + supertest, base jetable, et à quel moment les rendre bloquants en CI ?
+Les onze questions que portait ce document, et ce que l'équipe a répondu.
+
+| Question posée                                               | Réponse                                                                                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Les trois couches et les huit principes de frontière         | **Oui, tels quels** — décision 1                                                                                                |
+| Repository par défaut, avec ses cinq principes               | **Oui** — décision 2                                                                                                            |
+| Contrat de route dans `packages/api-contract` : qui l'amorce | Principe validé ; **porteur et première route restent à attribuer**                                                             |
+| Pipe maison maintenant, ou on attend NestJS 12               | **Pipe maison maintenant** — mais NestJS 12 est arrivé depuis (PR #59), donc **le choix du pipe redevient ouvert** (décision 4) |
+| OpenAPI réservé à un client tiers                            | **Oui** : on n'utilise pas OpenAPI — décision 5                                                                                 |
+| Où les journaux sont-ils consultables                        | **Non posée en séance**, mais tranchée par la validation de la décision 7 : **Sentry Logs**, sous la réserve ci-dessous         |
+| Qui écrit la liste des champs à masquer                      | **Le `LoggerModule`** en porte la responsabilité — un endroit du code, pas une personne                                         |
+| Limitation de débit : quelles valeurs                        | **Au cas par cas, par route**, à l'installation — décision 8                                                                    |
+| Purge planifiée en plus de la purge opportuniste             | **À réfléchir** → issue #60                                                                                                     |
+| Reprise d'`AccountService` derrière un repository            | **À réfléchir** → issue #61. Le **renommage en `account`** est fait (issue #51 close)                                           |
+| Tests : à quel moment bloquants en CI                        | **À réfléchir** → **déjà tranché par les faits côté API** : ils sont bloquants en CI (décision 11)                              |
+
+### Ce qui reste ouvert
+
+1. **L'instance Sentry** — **issue #64**, qui pose la question à betagouv et au coaching. Elle est tranchée dans [`stack-front.md`](./stack-front.md) (décision 11), et la décision 7 de ce document en dépend : Sentry Logs n'est pas garanti sur l'instance de betagouv.
+2. **Qui vérifie la confiance au proxy** (`trust proxy`) pour que la limitation de débit compte les bonnes adresses (décision 8).
+3. **Le porteur de `packages/api-contract`**, et la première route métier sur laquelle il s'amorce.
+4. **Lequel des deux pipes de validation** (décision 4) : celui de NestJS 12, désormais disponible, ou le pipe maison. Se tranche à la première route qui validera une entrée, sur le format du corps d'erreur.
+5. **Les tests du front** : l'API est couverte et bloquante en CI, le front n'a aucun test (voir [`stack-front.md`](./stack-front.md), décision 8).

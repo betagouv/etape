@@ -1,11 +1,13 @@
 # Pratiques React — ETAPE
 
-**Statut** : Proposé · **Date** : 2026-09-16 · **À arbitrer avec l'équipe**
+**Statut** : Décidé · **Décidé le** : 2026-09-22 · **Par** : l'équipe, en réunion d'arbitrage
 **Portée** : `apps/site`, `apps/simulateur`, `packages/ui`
 
 Ce document dit **comment écrire le code**, là où [`stack-front.md`](./stack-front.md) dit **quels outils on utilise**. Le nommage relève de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md).
 
 **Comment le lire** : chaque pratique porte son statut — **déjà tenu** (on l'acte pour ne pas la perdre) ou **écart** (du code existant ne la respecte pas) — et ce qui la vérifie : le lint, la revue, ou rien. Les exemples sont dans des blocs dépliables, et viennent du code réel du dépôt sauf mention contraire.
+
+**Ce qu'un écart n'est pas : un motif de blocage.** L'équipe a tranché ce point explicitement. Un écart cité dans ce document **ne bloque pas une PR** en revue : on le signale, on le reprend **au fil de l'eau** quand on touche au fichier concerné. Ce qui bloque, c'est ce que la CI décide seule — le lint, le typage, le format. La raison est simple : une règle de style qui bloque une revue se contourne, alors qu'une règle qu'on applique en passant finit par être tenue. Les écarts listés au récapitulatif ne sont donc pas une dette à solder d'un coup, mais une liste de lieux où le prochain passage améliore les choses.
 
 ## 1. Où vit la logique
 
@@ -37,6 +39,8 @@ Aucun composant ne sait pourquoi le CEP n'apparaît pas à un demandeur d'emploi
 ### 1.2 La logique d'écran vit dans un hook — _écart_
 
 Un composant qui réunit ces trois traits doit être découpé : il appelle **plus d'un hook d'état**, il **manipule le DOM** (focus, mesure, écoute), et il **aiguille** le rendu entre plusieurs écrans.
+
+**Le seuil a été validé tel quel.** La question posée en arbitrage était de savoir s'il n'était pas trop permissif ; la réponse est non. C'est la **conjonction des trois** qui déclenche le découpage, pas un seul des traits : un composant qui pose un `useEffect` de focus n'a rien à découper, et un écran qui aiguille sans état non plus.
 
 <details><summary><strong>Exemple — <code>FlowShell</code>, le cas à découper</strong></summary>
 
@@ -72,17 +76,17 @@ La cible : un `useFlowShell()` qui renvoie `{ ecran, question, attempt, headingR
 
 Une vue reçoit des props et rend du JSX. Pas de store, pas d'effet, pas de `fetch`. Les bons exemples existent déjà : `OptionRow`, `FieldHeader`, `CategorieTag`, `ResultCard`, `EmptyResults`, `OutcomeScreen`.
 
-<details><summary><strong>Contre-exemple — une vue qui cache un abonnement</strong></summary>
+<details><summary><strong>Contre-exemple — une vue qui cachait un abonnement</strong> (corrigé)</summary>
 
-`resultats/components/ScrollToTopButton.tsx` ressemble à un bouton ; il abonne en réalité un écouteur de défilement via `useSyncExternalStore`, et tient un état de focus.
+`resultats/components/ScrollToTopButton.tsx` ressemblait à un bouton ; il abonnait en réalité un écouteur de défilement via `useSyncExternalStore`, et tenait un état de focus. **Le fichier est supprimé** : `ResultsScreen` monte désormais `BackToTop`.
 
-**Pourquoi c'est un problème, alors que le composant fonctionne** :
+**Pourquoi c'était un problème, alors que le composant fonctionnait** — c'est la forme du défaut qu'il faut retenir, pas ce cas précis :
 
-- **Il ne s'affiche pas hors de son contexte** : impossible de le rendre dans un test ou une galerie sans simuler le défilement de la fenêtre.
-- **Il ne se réutilise pas** : le prendre ailleurs, c'est embarquer son écouteur, même sur un écran qui n'en a pas besoin.
-- **Il cache son coût** : rien dans son nom ni dans ses props ne dit qu'il s'abonne à un événement global. Le lecteur suivant le duplique en croyant copier un bouton.
+- **Il ne s'affichait pas hors de son contexte** : impossible de le rendre dans un test ou une galerie sans simuler le défilement de la fenêtre.
+- **Il ne se réutilisait pas** : le prendre ailleurs, c'était embarquer son écouteur, même sur un écran qui n'en a pas besoin.
+- **Il cachait son coût** : rien dans son nom ni dans ses props ne disait qu'il s'abonnait à un événement global. Le lecteur suivant le duplique en croyant copier un bouton.
 
-La sortie est la même qu'en 1.2 : un `useBackToTop()` d'un côté, un bouton bête de l'autre — ou, mieux, réutiliser `BackToTop` de `packages/ui`, qui répond déjà au besoin (voir 4.4).
+La sortie retenue est la dernière des trois envisagées : plutôt qu'un `useBackToTop()` d'un côté et un bouton bête de l'autre, **réutiliser `BackToTop` de `packages/ui`**, qui répondait déjà au besoin (voir 4.4). Écrire le hook aurait été corriger la forme du défaut sans supprimer le doublon.
 
 </details>
 
@@ -150,6 +154,8 @@ Ce qui n'est **jamais** un effet : dériver un état, charger des données de l'
 Trois composants sont à sept props : `FieldRenderer`, `QuestionFields`, `RadioField`. Le signal n'est pas le nombre en soi : il révèle deux responsabilités mélangées, ou une prop de mise en page qui traverse un composant que ça ne regarde pas.
 
 Deux sorties : regrouper les props liées en un objet nommé, ou composer avec `children` plutôt que passer un `render*`.
+
+**Six est un seuil, pas un signal d'alerte** — c'est ce que l'arbitrage a tranché. Au-delà de six, on compose : la question n'est pas « est-ce gênant ici ? » mais « par laquelle des deux sorties passe-t-on ? ». Le seuil ne bloque pas une PR pour autant, comme tout écart de ce document.
 
 ### 3.2 Le forage s'arrête à deux niveaux — _écart_
 
@@ -221,13 +227,15 @@ Le commentaire porte le nom Figma : c'est ce qui permet, devant une maquette, de
 
 </details>
 
-### 4.2 On étend par variante, on ne modifie pas par `className` — _écart_
+### 4.2 On étend par variante, on ne modifie pas par `className` — _écarts refermés_
 
 Un besoin d'apparence non couvert s'ajoute **dans le composant**, comme variante `cva`, puis s'utilise partout.
 
-<details><summary><strong>Écart n° 1 — <code>CategorieTag</code> : une couleur injectée depuis l'app</strong></summary>
+L'arbitrage a décidé de **refermer ces écarts tout de suite**, plutôt que de les laisser en exemple : un document de conventions dont les contre-exemples restent vrais dans le code enseigne mal. Les trois cas ci-dessous sont corrigés ; ils sont conservés parce qu'ils montrent la forme du défaut, qui se reproduira.
 
-Aujourd'hui, l'app décide de la couleur d'un composant du design system :
+<details><summary><strong>Écart n° 1 — <code>CategorieTag</code> : une couleur injectée depuis l'app</strong> (corrigé)</summary>
+
+Ce que l'app faisait — décider de la couleur d'un composant du design system :
 
 ```tsx
 const TAG_UI: Record<Categorie, { Icon: LucideIcon; className: string }> = {
@@ -239,34 +247,40 @@ const TAG_UI: Record<Categorie, { Icon: LucideIcon; className: string }> = {
 <Badge variant="secondary" className={`gap-1.5 px-2.5 py-1 text-xs ${className}`}>
 ```
 
-Deux ennuis : `variant="secondary"` est contredit par le `className` qui suit, et la prochaine catégorie se coloriera ailleurs, autrement.
+Deux ennuis : `variant="secondary"` était contredit par le `className` qui suit, et la prochaine catégorie se serait coloriée ailleurs, autrement.
 
-La cible — les couleurs rejoignent `badgeVariants`, l'app ne décide plus que du contenu :
+Ce qui est en place — les couleurs ont rejoint `badgeVariants`, l'app ne décide plus que du contenu :
 
 ```tsx
 // packages/ui/src/components/badge.tsx
 variant: {
   // …
-  info: "bg-info-muted text-info-text",
-  success: "bg-success-muted text-success-text",
+  info: "bg-info-muted text-info-text [a&]:hover:bg-info-muted/80",
+  success: "bg-success-muted text-success-text [a&]:hover:bg-success-muted/80",
 }
 
 // CategorieTag.tsx
 <Badge variant={TAG_UI[categorie].variant}>
 ```
 
+Le `Record` de l'app ne porte plus que ce qui la regarde : une icône et le nom d'une variante, typé par `ComponentProps<typeof Badge>["variant"]` — donc une variante inexistante ne compile pas.
+
 </details>
 
-<details><summary><strong>Écart n° 2 — <code>OutcomeScreen</code> : un bouton entièrement reconstruit</strong></summary>
+<details><summary><strong>Écart n° 2 — <code>OutcomeScreen</code> et <code>error.tsx</code> : un bouton entièrement reconstruit</strong> (corrigé)</summary>
 
 ```tsx
 const secondaryClassName =
   "border-primary text-primary hover:bg-secondary hover:text-secondary-foreground h-auto min-h-11 w-full rounded-lg px-6 py-4 text-sm font-semibold md:text-base";
 ```
 
-Cette chaîne redéfinit la bordure, la couleur, le survol, la hauteur, le rayon, la graisse et la taille de texte — c'est-à-dire tout ce que `buttonVariants` sait déjà faire. La variante `outline-primary` existe, la taille `xl` fait déjà 44 px de haut.
+Cette chaîne redéfinissait la bordure, la couleur, le survol, la hauteur, le rayon, la graisse et la taille de texte — c'est-à-dire tout ce que `buttonVariants` sait déjà faire. La variante `outline-primary` existait, la taille `xl` faisait déjà 44 px de haut.
 
-La cible : `<Button variant="outline-primary" size="xl" className="w-full">`. Le `w-full` reste dans l'app : c'est de la mise en page, pas de l'apparence (4.3).
+Ce qui est en place : `<Button variant="outline-primary" size="xl" className="w-full">`. Le `w-full` reste dans l'app : c'est de la mise en page, pas de l'apparence (4.3). Le choix de la variante selon le rôle de l'action passe par un `Record` (`ACTION_VARIANTS`), pas par un ternaire — [`typescript.md`](./typescript.md), règle 4.
+
+`apps/simulateur/src/app/error.tsx` portait le même défaut, sur ses deux boutons, sans être cité dans la question posée en arbitrage. Il est corrigé aussi : laisser un seul cas debout aurait suffi à maintenir la pratique en écart.
+
+**Ce que le remplacement change à l'écran**, et qu'il faut savoir : `size="xl"` fixe la hauteur à 44 px et le rayon à `rounded-md`, là où les `className` donnaient `h-auto min-h-11` et `rounded-lg`. Les libellés du dépôt sont courts et le bouton est en `whitespace-nowrap` : aucun ne passait sur deux lignes, donc la hauteur fixe ne coupe rien.
 
 </details>
 
@@ -276,16 +290,18 @@ Autorisé : largeur, marge, `gap`, `flex`. Interdit : couleur, fond, bordure, ra
 
 ### 4.4 On utilise les primitives avant d'en écrire une — _écart_
 
-<details><summary><strong>Exemple — quatre réécritures de ce qui existe déjà</strong></summary>
+<details><summary><strong>Exemple — quatre réécritures de ce qui existe déjà, dont une corrigée</strong></summary>
 
-| Où                      | Ce qui est écrit                                                                           | Ce qui existe                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `ResultsScreen.tsx:24`  | `const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10"`                          | `Container size="lg"` — avec, en prime, des paliers de gouttière cohérents avec le reste du site |
-| `ResultsScreen.tsx:45`  | `text-[28px] leading-9 md:text-[32px] md:leading-10`                                       | Le token `text-h1`, qui vaut **exactement** ces valeurs, en mobile comme en desktop              |
-| `ResultCard.tsx:15`     | `<article className="border-border bg-card flex h-full flex-col … rounded-sm border p-6">` | `Card` / `CardContent`                                                                           |
-| `ScrollToTopButton.tsx` | Un bouton de remontée écrit à la main, avec son écouteur de défilement                     | `BackToTop` de `packages/ui`, déjà utilisé par `apps/site`                                       |
+| Où                                        | Ce qui est écrit                                                                           | Ce qui existe                                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `ResultsScreen.tsx:24`                    | `const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10"`                          | `Container size="lg"` — avec, en prime, des paliers de gouttière cohérents avec le reste du site |
+| `ResultsScreen.tsx:45`                    | `text-[28px] leading-9 md:text-[32px] md:leading-10`                                       | Le token `text-h1`, qui vaut **exactement** ces valeurs, en mobile comme en desktop              |
+| `ResultCard.tsx:15`                       | `<article className="border-border bg-card flex h-full flex-col … rounded-sm border p-6">` | `Card` / `CardContent`                                                                           |
+| ~~`ScrollToTopButton.tsx`~~ — **corrigé** | Un bouton de remontée écrit à la main, avec son écouteur de défilement                     | `BackToTop` de `packages/ui`, déjà utilisé par `apps/site`                                       |
 
 Le cas `text-[28px]` est le plus révélateur : la valeur est juste, mais elle ne suivra pas le jour où l'échelle typographique changera. Un token n'est pas une commodité d'écriture, c'est le point de synchronisation avec la maquette.
+
+**Ce que le remplacement de `ScrollToTopButton` a changé de visible**, puisque les deux composants n'étaient pas équivalents : le seuil d'apparition passe de 400 px de défilement à **une hauteur d'écran** (`BackToTop` observe une sentinelle de `h-svh` au lieu d'écouter le `scroll`), et la remontée est animée en respectant `prefers-reduced-motion`. Le `md:hidden` d'origine est conservé — la remontée ne sert qu'en mobile, où la liste est en une colonne —, et il reste légitime au titre de 4.3 : c'est de la mise en page, pas de l'apparence. Les trois autres réécritures restent à faire, au fil de l'eau.
 
 </details>
 
@@ -356,26 +372,32 @@ Un commentaire qui aurait dit « attribut pour marquer les champs en erreur » n
 
 ## Récapitulatif
 
-| Pratique                         | Statut                                               | Vérification                                        |
-| -------------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
-| 1.1 Métier hors des composants   | Déjà tenu                                            | Revue                                               |
-| 1.2 Logique d'écran dans un hook | Écart (`FlowShell`)                                  | Revue                                               |
-| 1.3 Vue pure par défaut          | Écart (`ScrollToTopButton`)                          | Revue                                               |
-| 2.1 Pas d'état dérivable         | Déjà tenu                                            | Lint (`set-state-in-render`, `set-state-in-effect`) |
-| 2.2 Effet réservé à l'extérieur  | Déjà tenu                                            | Revue                                               |
-| 2.3 Pas de mémoïsation gratuite  | Déjà tenu                                            | Lint (`use-memo`, `preserve-manual-memoization`)    |
-| 3.1 Six props                    | Écart (3 composants)                                 | Revue                                               |
-| 3.2 Forage ≤ 2 niveaux           | Écart (`answers`)                                    | Revue                                               |
-| 4.1 Aucune couleur hors tokens   | Déjà tenu                                            | Revue                                               |
-| 4.2 Étendre par variante         | Écart (`CategorieTag`, `OutcomeScreen`, `error.tsx`) | Revue                                               |
-| 4.4 Primitives avant réécriture  | Écart (4 endroits)                                   | Revue                                               |
-| 5.1 `"use client"` au plus bas   | Déjà tenu                                            | Revue                                               |
-| 6 Écriture                       | Déjà tenu                                            | Prettier, ESLint, revue                             |
+| Pratique                         | Statut                                           | Vérification                                        |
+| -------------------------------- | ------------------------------------------------ | --------------------------------------------------- |
+| 1.1 Métier hors des composants   | Déjà tenu                                        | Revue                                               |
+| 1.2 Logique d'écran dans un hook | Écart (`FlowShell`)                              | Revue                                               |
+| 1.3 Vue pure par défaut          | Déjà tenu (`ScrollToTopButton` supprimé)         | Revue                                               |
+| 2.1 Pas d'état dérivable         | Déjà tenu                                        | Lint (`set-state-in-render`, `set-state-in-effect`) |
+| 2.2 Effet réservé à l'extérieur  | Déjà tenu                                        | Revue                                               |
+| 2.3 Pas de mémoïsation gratuite  | Déjà tenu                                        | Lint (`use-memo`, `preserve-manual-memoization`)    |
+| 3.1 Six props                    | Écart (3 composants)                             | Revue                                               |
+| 3.2 Forage ≤ 2 niveaux           | Écart (`answers`)                                | Revue                                               |
+| 4.1 Aucune couleur hors tokens   | Déjà tenu                                        | Revue                                               |
+| 4.2 Étendre par variante         | Déjà tenu (3 écarts refermés ici)                | Revue                                               |
+| 4.4 Primitives avant réécriture  | Écart (3 endroits ; `ScrollToTopButton` corrigé) | Revue                                               |
+| 5.1 `"use client"` au plus bas   | Déjà tenu                                        | Revue                                               |
+| 6 Écriture                       | Déjà tenu                                        | Prettier, ESLint, revue                             |
 
-## Questions à trancher
+## Relevé d'arbitrage du 22 septembre 2026
 
-1. Le seuil de découpage de 1.2 (deux hooks d'état **et** DOM **et** aiguillage) est-il le bon, ou trop permissif ?
-2. Six props maximum : seuil, ou simple signal d'alerte en revue ?
-3. Les écarts cités sont-ils repris dans une PR dédiée, au fil de l'eau, ou laissés tels quels tant qu'on n'y touche pas ?
-4. Les variantes manquantes (`info` et `success` sur `Badge`, usage de `xl` dans `OutcomeScreen`) : on les ajoute maintenant ?
-5. `ScrollToTopButton` est-il remplacé par `BackToTop`, ou les deux besoins diffèrent-ils vraiment ?
+Les cinq questions que portait ce document, et ce que l'équipe a répondu. **Aucune ne reste ouverte.**
+
+| Question posée                                                      | Réponse                                                                                         |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Le seuil de découpage de 1.2 est-il le bon, ou trop permissif       | **Le bon, tel quel** — c'est la conjonction des trois traits qui déclenche le découpage (1.2)   |
+| Six props : seuil, ou simple signal d'alerte                        | **Un seuil** (3.1)                                                                              |
+| Les écarts : PR dédiée, au fil de l'eau, ou laissés tels quels      | **Au fil de l'eau, et sans bloquer une PR** en revue — voir « Comment le lire » en tête de page |
+| Les variantes manquantes : on les ajoute maintenant                 | **Oui, maintenant**, par le skill `composant-ui` — fait ici (4.2)                               |
+| `ScrollToTopButton` remplacé par `BackToTop`, ou besoins différents | **Remplacé** — fait ici, le fichier est supprimé (1.3 et 4.4)                                   |
+
+Les écarts qui subsistent au récapitulatif ne sont donc pas des points en attente d'arbitrage : ce sont des lieux identifiés, à reprendre quand on y passera.

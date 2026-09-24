@@ -1,6 +1,6 @@
 # Outillage : faire appliquer les conventions — ETAPE
 
-**Statut** : Proposé · **Date** : 2026-09-16 · **À arbitrer avec l'équipe**
+**Statut** : Décidé · **Décidé le** : 2026-09-22 · **Par** : l'équipe, en réunion d'arbitrage
 **Portée** : tout le dépôt
 
 Les conventions du projet sont écrites dans `docs/conventions/`. Ce document dit **où chacune est portée dans le dépôt** pour qu'elle s'applique sans qu'on ait à la relire, et **ce qui la vérifie**. Une convention qu'aucun mécanisme ne porte est un vœu.
@@ -40,14 +40,14 @@ Autrement dit, « pas d'état dérivable », « pas de `setState` dans un effet 
 
 Ce qui manquait, et que cette PR change :
 
-- `react-hooks/exhaustive-deps` était en avertissement → passé en erreur.
-- Les règles `jsx-a11y` actives étaient au nombre de 6, toutes en avertissement → la liste est étendue et passée en erreur.
+- `react-hooks/exhaustive-deps` était en avertissement → **passé en erreur**. L'arbitrage n'a pas validé ce point sur parole mais demandé de le **vérifier** : mesuré avec `turbo run lint --force`, le passage en erreur ne produit **aucune violation** sur le dépôt. Il est donc acté sur une mesure, pas sur une intention.
+- Les règles `jsx-a11y` actives étaient au nombre de 6, toutes en avertissement → **21 règles, toutes en erreur**, listées explicitement dans `packages/eslint-config/next.js`.
 
 **Ce que ce durcissement a coûté, mesuré sur tout le dépôt** : deux corrections, aucune régression. Un type de retour manquant sur `registerPdfFonts`, hérité de la PR #49. Et un `onKeyDown` posé sur un élément non interactif dans `main-nav.tsx` : la règle avait raison sur le fond, puisque la touche Échap ne refermait le menu que si le focus était resté dans le panneau — l'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
 
 > **Leçon d'outillage, apprise en se trompant.** La première mesure, faite avec `turbo run lint`, avait conclu « aucune violation » : c'était un résultat servi par le **cache** de turbo, calculé avant le changement de configuration. Une vérification de ce genre se fait avec `--force`, ou en appelant le workspace directement (`npm run lint --workspace=@etape/site`). Un cache qui répond « tout va bien » est un piège d'autant plus efficace qu'il est rapide.
 
-**Pourquoi pas le preset `jsx-a11y` complet** : le plugin n'est pas une dépendance déclarée de `@etape/eslint-config`, il arrive par `eslint-config-next`. Activer ses règles **par leur nom** fonctionne, car le plugin est déjà enregistré ; importer son preset exigerait de le déclarer en dépendance directe. On a donc retenu une liste explicite, plus lisible et sans nouvelle dépendance.
+**Pourquoi pas le preset `jsx-a11y` complet** : le plugin n'est pas une dépendance déclarée de `@etape/eslint-config`, il arrive par `eslint-config-next`. Activer ses règles **par leur nom** fonctionne, car le plugin est déjà enregistré ; importer son preset exigerait de le déclarer en dépendance directe. **L'arbitrage a tranché pour la liste explicite** : plus lisible, sans nouvelle dépendance, et chaque règle activée l'est parce qu'on a su dire ce qu'elle attrape.
 
 ## Fichiers d'outillage
 
@@ -97,7 +97,7 @@ Une règle sans `paths` serait chargée à chaque session ; avec `paths`, elle n
 ### Automatisations
 
 - **`lint-staged`** ne lançait que Prettier ; il lance désormais aussi `eslint --fix` sur les `.ts` et `.tsx`, **une entrée par workspace** (`npm run lint --workspace=@etape/… -- --fix`). Le détour par npm n'est pas cosmétique : lint-staged exécute ses commandes depuis la racine, où ESLint ne trouve aucune configuration, puisque chaque app et chaque package a la sienne. Passer par le workspace place le répertoire de travail au bon endroit. **C'est le garde-fou qui compte** : il s'applique à tout le monde, à chaque commit.
-- **Hook `PostToolUse`** (`.claude/settings.json`) : après chaque écriture d'un `.ts`/`.tsx` par l'agent, `.claude/hooks/eslint-fix.sh` corrige ce qui est corrigeable. Il ne remplace pas `lint-staged` ; il évite simplement de laisser des écarts derrière soi en cours de session.
+- **Hook `PostToolUse`** (`.claude/settings.json`) : après chaque écriture d'un `.ts`/`.tsx` par l'agent, `.claude/hooks/eslint-fix.sh` corrige ce qui est corrigeable. Il ne remplace pas `lint-staged` ; il évite simplement de laisser des écarts derrière soi en cours de session. **L'arbitrage a décidé de le garder** — c'était le point le plus discutable de la PR, puisque `lint-staged` suffirait et couvre tout le monde. Les deux coexistent donc, avec des rôles distincts : le hook travaille pendant la session, `lint-staged` est le garde-fou du commit. Si le hook devient gênant, c'est lui qu'on retire, pas `lint-staged`.
 - **Permissions** : les commandes de vérification déjà utilisées en boucle (`npm run lint`, `typecheck`, `format:check`, `gh pr view`) sont autorisées d'avance, pour ne plus interrompre une session pour les valider une à une.
 
 <details><summary><strong>Exemple — pourquoi <code>lint-staged</code> passe par npm, et pas directement par <code>eslint</code></strong></summary>
@@ -139,6 +139,8 @@ case "$fichier" in
   *) exit 0 ;;
 esac
 
+[ -f "$fichier" ] || exit 0
+
 cd "$(dirname "$fichier")" || exit 0
 npx --no-install eslint --fix "$fichier" >/dev/null 2>&1
 
@@ -153,7 +155,9 @@ Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour un
 
 `.mcp.json` déclare le serveur (`npx shadcn@latest mcp`) et `.claude/settings.json` l'autorise. Il donne accès aux sources officielles des composants shadcn, ce qui évite de les retaper de mémoire.
 
-> **Il est aujourd'hui inutilisable en l'état** : `.claude/settings.local.json` — le fichier personnel, non versionné — le désactive (`disabledMcpjsonServers: ["shadcn"]`). Chacun doit retirer cette entrée de son fichier local pour que le skill `composant-ui` fonctionne.
+> **Il peut être inutilisable en l'état** : `.claude/settings.local.json` — le fichier personnel, non versionné — peut le désactiver (`disabledMcpjsonServers: ["shadcn"]`). Chacun doit retirer cette entrée de son fichier local pour que le skill `composant-ui` fonctionne.
+
+**L'arbitrage a décidé de le documenter à la prise en main**, et non de laisser chacun le découvrir en tombant sur un serveur muet : le `README.md` porte désormais une section « Travailler avec Claude Code » qui dit quoi retirer. Sa place définitive est le `CONTRIBUTING.md` prévu par l'issue #6. **Qui s'en charge pour son propre poste n'a pas été nommé** — c'est une manipulation locale, à faire une fois par personne.
 
 ## Ce qui n'est pas outillé, et pourquoi
 
@@ -171,10 +175,16 @@ Ces cinq-là sont vérifiées **en revue**, par le skill `review-pr` et le sous-
 
 Les niveaux 2 et 3 ne servent qu'aux agents. Ce qui couvre tout le monde, ce sont le niveau 1 (compilateur, ESLint, `lint-staged`, CI) et la revue de PR. C'est la raison de la deuxième règle de tenue : dès qu'une convention devient vérifiable automatiquement, elle doit descendre au niveau 1.
 
-## Questions à trancher
+## Relevé d'arbitrage du 22 septembre 2026
 
-1. Le hook `PostToolUse` ajoute une exécution d'ESLint après chaque écriture de fichier par l'agent. On le garde, ou on s'en tient à `lint-staged` ?
-2. `exhaustive-deps` en erreur : accepté, ou maintenu en avertissement ?
-3. Liste `jsx-a11y` explicite, ou on déclare `eslint-plugin-jsx-a11y` en dépendance directe pour activer son preset complet ?
-4. Le sous-agent `revue-front` fait-il double emploi avec le skill `review-pr`, ou la séparation « méthode » / « audit front » est-elle la bonne ?
-5. Qui réactive le MCP `shadcn` dans son `settings.local.json`, et est-ce qu'on le documente dans le README d'onboarding ?
+| Question posée                                                        | Réponse                                                                                       |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Le hook `PostToolUse` : on le garde, ou `lint-staged` suffit          | **On le garde**, les deux coexistent avec des rôles distincts                                 |
+| `exhaustive-deps` en erreur : accepté                                 | **À vérifier** → vérifié : aucune violation sur le dépôt, donc acté                           |
+| Liste `jsx-a11y` explicite, ou preset complet                         | **Liste explicite** — pas de dépendance directe au plugin                                     |
+| Le sous-agent `revue-front` fait-il double emploi avec `review-pr`    | **Non abordée en séance** — reste ouverte, ci-dessous                                         |
+| Qui réactive le MCP `shadcn`, et le documente-t-on à la prise en main | **Oui pour la documentation** (`README.md`) ; la manipulation locale reste à faire par chacun |
+
+### Question restée ouverte
+
+**Le sous-agent `revue-front` fait-il double emploi avec le skill `review-pr`**, ou la séparation « méthode de revue » / « audit front » est-elle la bonne ? Cette question n'a pas été posée en réunion — elle n'est donc ni validée ni écartée, et c'est écrit ici pour qu'on ne la croie pas tranchée. Les deux mécanismes coexistent en attendant : `review-pr` appelle `revue-front` sur un diff front.

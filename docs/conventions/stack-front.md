@@ -1,6 +1,6 @@
 # Stack front — ETAPE
 
-**Statut** : Proposé · **Date** : 2026-09-16 · **À arbitrer avec l'équipe**
+**Statut** : Décidé · **Décidé le** : 2026-09-22 · **Par** : l'équipe, en réunion d'arbitrage
 **Portée** : `apps/site`, `apps/simulateur`, `packages/ui`
 
 Ce document valide les outils du front. La façon d'écrire le code relève de [`react.md`](./react.md), le nommage de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md).
@@ -25,14 +25,14 @@ Chaque décision est suivie de ses **principes** quand il y en a, et d'un **exem
 
 ## Décision 1 — Bibliothèque de formulaires
 
-### La situation à trancher
+### La situation qui a motivé la décision
 
 Le dépôt contient **deux approches, dont une n'a jamais servi** :
 
 - `packages/ui` déclare `react-hook-form` ^7.87, `@hookform/resolvers` ^5.9 et `zod` ^4.5, et contient le composant shadcn `form.tsx`. **Aucune app ne l'importe.**
 - Le simulateur n'utilise aucune bibliothèque : ses questions sont des données, validées par un `switch` maison.
 
-Ce n'est pas un détail de goût : tant que rien n'est écrit, le prochain formulaire partira dans une direction ou dans l'autre selon qui l'écrit.
+Ce n'était pas un détail de goût : tant que rien n'était écrit, le prochain formulaire partait dans une direction ou dans l'autre selon qui l'écrivait.
 
 <details><summary><strong>Exemple — à quoi ressemblent les deux approches</strong></summary>
 
@@ -87,15 +87,20 @@ const schema = z.object({
 
 </details>
 
-### Options
+### Options écartées, et pourquoi
 
-| Option                                                                                    | Coût                                                                                         |
-| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| **A.** Tout en maison ; retirer react-hook-form et `form.tsx`                             | Jeter un composant déjà là ; réécrire à la main le câblage ARIA pour chaque futur formulaire |
-| **B.** react-hook-form + zod pour les nouveaux formulaires ; le simulateur reste tel quel | Deux approches cohabitent, avec un critère écrit pour savoir laquelle s'applique             |
-| **C.** Tout migrer sur react-hook-form, simulateur compris                                | Réécrire un moteur qui fonctionne, sans bénéfice utilisateur                                 |
+Écrites ici pour que le débat ne se rouvre pas dans six mois.
 
-### Proposition : option B, avec un critère explicite
+| Option écartée                                                | Pourquoi                                                                                     |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **A.** Tout en maison ; retirer react-hook-form et `form.tsx` | Jeter un composant déjà là ; réécrire à la main le câblage ARIA pour chaque futur formulaire |
+| **C.** Tout migrer sur react-hook-form, simulateur compris    | Réécrire un moteur qui fonctionne, sans bénéfice utilisateur                                 |
+
+**Conséquence de l'abandon de l'option A** : `react-hook-form`, `@hookform/resolvers`, `zod` et `form.tsx` **restent dans `packages/ui`**. Ils n'ont pas encore de consommateur, et c'est normal : aucun écran de dépôt n'existe. Ce n'est pas du code mort à nettoyer.
+
+### La règle : react-hook-form + zod, avec un critère explicite
+
+Deux approches cohabitent donc dans le dépôt, assumées, avec un critère écrit pour savoir laquelle s'applique.
 
 **react-hook-form + zod, via `form.tsx`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API.
 
@@ -107,9 +112,9 @@ const schema = z.object({
 
 ## Décision 2 — Validation de schéma : zod
 
-**zod v4**, déjà présent côté `packages/ui` (^4.5) et côté API (^4.1, pour l'environnement). Une seule bibliothèque de schémas des deux côtés : c'est la condition du contrat de route partagé (décision 5), qui suppose qu'API et front lisent le même objet.
+**zod v4**, déjà présent côté `packages/ui` (^4.5) et côté API (^4.1.13, pour l'environnement). Une seule bibliothèque de schémas des deux côtés : c'est la condition du contrat de route partagé (décision 5), qui suppose qu'API et front lisent le même objet.
 
-**Alternative écartée pour l'instant** : valibot (1.5.0) pèse de l'ordre du kilo-octet une fois compressé, contre plusieurs pour zod. À reconsidérer seulement si une mesure du bundle du simulateur — pensé comme un widget embarquable — montre que zod y pèse. Aujourd'hui, le simulateur n'embarque ni l'un ni l'autre.
+**Alternative écartée** : valibot (1.5.0) pèse de l'ordre du kilo-octet une fois compressé, contre plusieurs pour zod. L'équipe a tranché **zod partout, sans mesure préalable du bundle** : le gain hypothétique ne justifiait pas de retarder le contrat partagé, ni d'entretenir deux bibliothèques de schémas. Le sujet ne se rouvre que si une mesure du bundle du simulateur — pensé comme un widget embarquable — montre un jour que zod y pèse. Aujourd'hui, le simulateur n'embarque ni l'un ni l'autre.
 
 <details><summary><strong>Exemple — un schéma qui sert des deux côtés</strong> (proposition)</summary>
 
@@ -132,9 +137,11 @@ export type DepotDossier = z.infer<typeof DepotDossierSchema>;
 
 ## Décision 3 — Données venant de l'API : TanStack Query
 
-**Brique retenue par l'équipe** pour tout ce qui vient de l'API : cache, revalidation, déduplication des requêtes, états de chargement et d'erreur, nouvelle tentative.
+**Brique actée** pour tout ce qui vient de l'API : cache, revalidation, déduplication des requêtes, états de chargement et d'erreur, nouvelle tentative.
 
 **Point de fait à connaître avant d'en parler** : elle n'est **pas encore installée** — aucune déclaration dans un `package.json`, aucune entrée dans `package-lock.json`, aucun `useQuery` dans le code. C'est normal, aucun écran n'appelle encore l'API. Version actuelle : `@tanstack/react-query` 5.103.0.
+
+**Reste à attribuer** : qui l'installe, et sur quelle première PR. L'arbitrage a validé la brique sans désigner de porteur.
 
 ### Les principes
 
@@ -176,7 +183,13 @@ export function useDeposerDossier() {
 
 ## Décision 4 — État local : le store maison reste
 
-Le store du simulateur est conservé pour l'état de l'écran et du parcours. Ni Redux, ni Zustand, ni Jotai : l'état tient en un reducer et une clé de stockage.
+Le store du simulateur est conservé pour l'état de l'écran et du parcours. Aucune bibliothèque d'état aujourd'hui : l'état tient en un reducer et une clé de stockage.
+
+**La réserve posée en arbitrage** — la seule de toute la séance : **si le store prend de l'importance, on passe à Zustand** plutôt que de faire grossir le store maison. Le signal de bascule n'est pas la taille du fichier mais la nature de l'état : le jour où il cesse d'être local au questionnaire — plusieurs modules qui y écrivent, plusieurs tranches d'état indépendantes, un besoin de sélecteurs pour éviter les rendus inutiles —, un reducer maison devient un mauvais choix par rapport à une bibliothèque qui fait ce travail depuis longtemps.
+
+**Ce qu'il faudra regarder ce jour-là** : la persistance. Le store actuel est lu par `useSyncExternalStore` et persisté en `sessionStorage` sous une clé versionnée ; Zustand couvre les deux (son `persist` accepte `sessionStorage` comme `storage`, et son store s'abonne sans passer par `useSyncExternalStore` à la main), mais **le versionnement de la clé doit être reporté**, sans quoi une session ouverte avant le déploiement relira un état qu'elle ne sait plus interpréter. La PR de Louis, à venir, servira de référence sur ce point.
+
+Ni Redux ni Jotai ne sont en discussion.
 
 <details><summary><strong>Exemple — ce que fait le store, et ce qu'il ne fera jamais</strong></summary>
 
@@ -273,7 +286,7 @@ Le [document d'accessibilité](./accessibilite.md) fixe les règles ; il manquai
 
 **Constat mesuré** : `eslint-config-next` n'activait que **6 règles `jsx-a11y`**, toutes en avertissement — donc invisibles en CI, qui n'échoue que sur les erreurs. Le plugin complet était déjà installé, en dépendance transitive.
 
-**Mise en œuvre** (voir [`outillage-agent.md`](./outillage-agent.md)) : 22 règles activées **en erreur**, `@axe-core/playwright` sur les parcours une fois Playwright installé, et pas de `vitest-axe` (0.1.0, projet immature).
+**Mise en œuvre, validée en arbitrage** (voir [`outillage-agent.md`](./outillage-agent.md)) : **21 règles activées en erreur**, listées explicitement dans `packages/eslint-config/next.js`. `@axe-core/playwright` viendra avec Playwright, dont l'installation est différée (décision 8) ; pas de `vitest-axe` (0.1.0, projet immature).
 
 <details><summary><strong>Exemple — ce que les nouvelles règles attrapent, et ce qu'elles ne verront jamais</strong></summary>
 
@@ -300,21 +313,25 @@ Sans l'association, le champ n'a **pas de nom accessible** : le lecteur d'écran
 
 **Ce que le durcissement a coûté, mesuré** : une seule erreur sur tout le dépôt, dans `apps/site/src/components/main-nav.tsx` — un `onKeyDown` posé sur la `nav`, donc sur un élément non interactif. La règle avait raison sur le fond : la touche Échap ne refermait le menu que si le focus était resté dans le panneau. L'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
 
-Le reste des 22 règles ne produit aucune violation.
+Le reste des 21 règles ne produit aucune violation.
 
 **Ce que ces règles ne verront jamais** : la perte du focus après une action, l'ordre de tabulation, la pertinence d'une annonce. Elles vérifient la structure, pas l'expérience — d'où le test clavier en revue.
 
 </details>
 
-## Décision 8 — Tests : à installer
+## Décision 8 — Tests : le domaine et les composants maintenant, l'E2E ensuite
 
-**Il n'existe aujourd'hui aucun test dans le dépôt** : aucun runner, aucun fichier, et la CI ne fait que `format:check`, `lint`, `typecheck` et `build`.
+**Il n'existe aujourd'hui aucun test du front** : ni dans `apps/site`, ni dans `apps/simulateur`, ni dans `packages/ui`. L'outillage, lui, existe déjà — `apps/api` est testé avec Vitest, `turbo.json` porte une tâche `test` et la CI lance `npm run test` de façon bloquante. **Il n'y a donc pas d'infrastructure à monter, seulement des tests à écrire** et Vitest à déclarer dans les workspaces du front.
 
-| Besoin                                                                                  | Outil                                                |
-| --------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Domaine du simulateur (fonctions pures : validation, parcours, sélection des résultats) | **Vitest** 5                                         |
-| Composants (rendu, clavier, ARIA)                                                       | **Vitest** + **@testing-library/react** 16 + jsdom   |
-| Parcours complet dans un navigateur                                                     | **Playwright** 1.63, sur quelques parcours seulement |
+L'arbitrage a tranché le **périmètre**, et il est volontairement en deux temps :
+
+| Besoin                                                                                  | Outil                                              | Quand                                                 |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------- |
+| Domaine du simulateur (fonctions pures : validation, parcours, sélection des résultats) | **Vitest** 5                                       | **Maintenant**                                        |
+| Composants (rendu, clavier, ARIA)                                                       | **Vitest** + **@testing-library/react** 16 + jsdom | **Maintenant**                                        |
+| Parcours complet dans un navigateur                                                     | **Playwright** 1.63                                | **Différé**, et seulement sur les scénarios critiques |
+
+**Pourquoi ce découpage** : les deux premiers s'écrivent sans infrastructure et couvrent ce qui fait mal en cas de régression. L'E2E coûte un navigateur en CI et se périme vite ; le réserver aux scénarios critiques, une fois qu'ils sont identifiés, évite d'entretenir une suite fragile avant d'avoir des tests utiles.
 
 <details><summary><strong>Exemple — le premier test à écrire, et pourquoi celui-là</strong> (proposition)</summary>
 
@@ -340,7 +357,7 @@ it("n'affiche pas le CEP à un demandeur d'emploi", () => {
 
 </details>
 
-**Condition pour que ça tienne** : ajouter `npm run test` à la CI dans la même PR que les premiers tests, sinon ils pourrissent sans que personne ne le voie.
+**Condition pour que ça tienne** : elle est déjà remplie côté CI — `npm run test` y est une étape bloquante. Un test de front écrit dans un workspace qui déclare Vitest sera donc exécuté et bloquant dès sa première PR, sans rien ajouter au pipeline.
 
 ## Décision 9 — Langue de l'interface : français uniquement
 
@@ -369,15 +386,25 @@ Ce que l'exemption impose en contrepartie, d'après le guide (à relire en entie
 3. **Ce qu'on mesure est décidé avec la PO**, et listé quelque part : un event sans question à laquelle il répond ne sert à rien.
 4. **La configuration d'exemption est vérifiée**, pas supposée : c'est elle qui dispense du bandeau.
 
-**Point à reprendre** : les mentions légales actuelles annoncent que des cookies de mesure d'audience « peuvent être déposés […] après recueil du consentement lorsque cela est requis ». Ce texte vient de la maquette et devra être aligné sur ce qui sera réellement mis en place.
+### L'instance : celle de betagouv
 
-**Question ouverte** : Matomo Cloud (hébergé à Francfort) ou auto-hébergé ? L'auto-hébergement ajoute un service PHP et une base MySQL à une pile qui en compte déjà six.
+**Décidé** : ni Matomo Cloud, ni auto-hébergement — on utilise l'**instance mutualisée de betagouv**, [`stats.beta.gouv.fr`](https://stats.beta.gouv.fr).
+
+Ce choix règle trois choses d'un coup :
+
+- **Il ne coûte rien à la pile.** L'auto-hébergement aurait ajouté un service PHP et une base MySQL à une infrastructure qui compte déjà six conteneurs.
+- **Il conforte l'exemption plutôt que de la fragiliser.** beta.gouv.fr annonce son instance comme paramétrée pour la recommandation « Cookies » de la CNIL, avec anonymisation de l'adresse IP avant enregistrement. La configuration d'exemption n'est donc pas à construire de zéro, mais à **vérifier** pour notre site — c'est le principe 4 ci-dessus, et il reste entier.
+- **Il évite un transfert vers un tiers commercial**, donc un paragraphe de plus dans la politique de confidentialité.
+
+**Ce qu'il reste à faire à l'installation** : demander un compte et un site à l'incubateur (canal `#incubateur-ops`), puis renseigner le `MATOMO_URL` et le `SITE_ID` obtenus. `@socialgouv/matomo-next` n'est pas remis en cause : il pointe vers l'instance qu'on lui donne.
+
+**Point à reprendre** : les mentions légales actuelles annoncent que des cookies de mesure d'audience « peuvent être déposés […] après recueil du consentement lorsque cela est requis » — l'inverse de ce qui est décidé ici. Ce texte vient de la maquette. Son alignement a été **explicitement différé** en arbitrage (« à voir dans un second temps »), mais il doit précéder la mise en production de la mesure d'audience : annoncer un consentement qu'on ne recueille pas est un écart, pas une approximation.
 
 ## Décision 11 — Suivi des erreurs : Sentry
 
-**Brique retenue par l'équipe**, elle non plus pas encore installée. Elle répond à une question que ni les journaux ni la mesure d'audience ne traitent : **qu'est-ce qui a cassé, chez qui, et dans quel contexte**.
+**Brique actée**, elle non plus pas encore installée. Elle répond à une question que ni les journaux ni la mesure d'audience ne traitent : **qu'est-ce qui a cassé, chez qui, et dans quel contexte**.
 
-**Paquet, côté front** : `@sentry/browser` (10.74.0) plutôt que `@sentry/nextjs`. En export statique il n'y a aucun runtime Next : le SDK Next embarquerait du code serveur et edge sans usage ici — c'était l'objet de l'[issue #12420](https://github.com/getsentry/sentry-javascript/issues/12420), close depuis. `@sentry/browser` fait exactement ce dont on a besoin, sans cette zone grise.
+**Paquet, côté front — décidé** : `@sentry/browser` (10.74.0) plutôt que `@sentry/nextjs`. En export statique il n'y a aucun runtime Next : le SDK Next embarquerait du code serveur et edge sans usage ici — c'était l'objet de l'[issue #12420](https://github.com/getsentry/sentry-javascript/issues/12420), close depuis. `@sentry/browser` fait exactement ce dont on a besoin, sans cette zone grise.
 
 **Ce qu'on perd** en n'utilisant pas `@sentry/nextjs` : le téléversement automatique des source maps et quelques intégrations de routage. Le premier se rattrape avec `sentry-cli` dans la CI — à instruire au moment de l'installation.
 
@@ -388,19 +415,40 @@ Ce que l'exemption impose en contrepartie, d'après le guide (à relire en entie
 3. **Une erreur attendue n'est pas envoyée** : un 400 de validation est un fonctionnement normal, pas un incident.
 4. **L'échantillonnage des traces est réglé bas** au départ : on cherche des erreurs, pas des performances.
 
-**Question ouverte** : Sentry SaaS en région européenne (Francfort) ou auto-hébergé ? L'auto-hébergement de Sentry demande une vingtaine de conteneurs et de l'ordre de 16 Go de mémoire d'après sa documentation — sans commune mesure avec la pile actuelle. Le SaaS suppose en revanche d'assumer un transfert vers un tiers, ce que la règle 1 rend acceptable mais qui doit être écrit dans la politique de confidentialité.
+### Question ouverte — l'instance
 
-## Questions à trancher
+Le SDK est tranché, **l'hébergement ne l'est pas** — la question est posée à betagouv et au coaching dans l'issue #64. L'auto-hébergement complet est en revanche écarté : il demande une vingtaine de conteneurs et de l'ordre de 16 Go de mémoire d'après la documentation de Sentry, sans commune mesure avec la pile actuelle. Restent deux options :
 
-1. Option B pour les formulaires, avec le critère écrit ci-dessus ?
-2. Le simulateur reste-t-il sur son moteur déclaratif ? Cela fige deux approches dans le dépôt, assumées.
-3. zod partout, ou mesure préalable du bundle avant de fixer zod plutôt que valibot ?
-4. TanStack Query est acté : qui l'installe, et sur quelle première PR ?
-5. Contrat de route partagé et fonction `callApi` unique : validé ? Se tranche avec la décision 3 de [`architecture-api.md`](./architecture-api.md).
-6. Les 22 règles `jsx-a11y` en erreur : validées ?
-7. Vitest + Testing Library + Playwright : qui écrit les premiers tests, et sur quel périmètre ?
-8. Français uniquement, sans bibliothèque d'i18n : validé ?
-9. Si l'option A est retenue en décision 1, il faut retirer `react-hook-form`, `@hookform/resolvers`, `zod` et `form.tsx` de `packages/ui` dans la foulée.
-10. Matomo configuré pour l'exemption de consentement — donc **sans bandeau cookies** et sans suivi individuel : validé ? Cloud ou auto-hébergé ?
-11. Sentry : `@sentry/browser` plutôt que `@sentry/nextjs` du fait de l'export statique — validé ? SaaS en région européenne ou auto-hébergé ?
-12. Qui met à jour les mentions légales et la politique de confidentialité en conséquence, une fois ces deux points tranchés ?
+| Option                                                                                        | Ce qu'elle apporte                                                                                                                 | Ce qu'elle coûte                                                                                                                        |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sentry SaaS**, région européenne                                                            | Toutes les fonctionnalités, dont Sentry Logs ; aucune limite de débit à anticiper                                                  | Un transfert vers un tiers, que la règle 1 rend acceptable mais qui **doit être écrit dans la politique de confidentialité**            |
+| **Instance mutualisée de betagouv**, [`sentry.incubateur.net`](https://sentry.incubateur.net) | Pas de tiers commercial, donc rien à ajouter à la politique de confidentialité ; accès demandé par l'espace membre de l'incubateur | Une limite de débit annoncée à **10 événements/s par IP**, rafale de 20, **les événements excédentaires sont perdus sans mise en file** |
+
+**Ce point commande une autre décision, et c'est pour cela qu'il ne peut pas rester en suspens longtemps** : la décision 7 de [`architecture-api.md`](./architecture-api.md) retient **Sentry Logs** pour consulter les journaux. Rien n'établit à ce jour que l'instance de betagouv expose cette fonctionnalité. Si elle ne l'expose pas, c'est l'option Loki + Grafana qui redevient la réponse côté API — **à vérifier avant d'installer quoi que ce soit**.
+
+## Relevé d'arbitrage du 22 septembre 2026
+
+Les douze questions que portait ce document, et ce que l'équipe a répondu.
+
+| Question posée                                                         | Réponse                                                                                                             |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Option B pour les formulaires, avec le critère écrit                   | **Oui** — décision 1                                                                                                |
+| Le simulateur garde-t-il son moteur déclaratif                         | **Oui** — les deux approches cohabitent, assumées                                                                   |
+| zod partout, ou mesure du bundle avant de trancher contre valibot      | **zod partout**, sans mesure préalable — décision 2                                                                 |
+| TanStack Query : qui l'installe, sur quelle PR                         | Brique confirmée ; **porteur et PR restent à attribuer**                                                            |
+| Contrat de route partagé et `callApi` unique                           | **Oui** — avec la décision 3 de [`architecture-api.md`](./architecture-api.md)                                      |
+| Les règles `jsx-a11y` en erreur                                        | **Oui** — les 21 règles, listées explicitement                                                                      |
+| Qui écrit les premiers tests, et sur quel périmètre                    | **Périmètre tranché** : domaine et composants maintenant, E2E différé aux scénarios critiques ; porteur non désigné |
+| Français uniquement, sans i18n                                         | **Oui** — décision 9                                                                                                |
+| Retirer react-hook-form si l'option A est retenue                      | **Sans objet** : l'option B a été retenue, donc `react-hook-form` et `form.tsx` restent                             |
+| Matomo exempté de consentement, sans bandeau ; Cloud ou auto-hébergé   | **Oui** pour l'exemption ; **instance de betagouv** pour l'hébergement                                              |
+| `@sentry/browser` plutôt que `@sentry/nextjs` ; SaaS ou auto-hébergé   | **Oui** pour le SDK ; **l'instance reste à trancher** (décision 11)                                                 |
+| Qui met à jour les mentions légales et la politique de confidentialité | **Différé** — « à voir dans un second temps »                                                                       |
+
+### Ce qui reste ouvert
+
+1. **L'instance Sentry** : SaaS en région européenne ou `sentry.incubateur.net` (décision 11) — **issue #64**, qui pose la question à betagouv. Ce choix commande la décision 7 de [`architecture-api.md`](./architecture-api.md), qui suppose Sentry Logs.
+2. **Le porteur de l'installation de TanStack Query**, et la PR sur laquelle elle se fait.
+3. **Les mentions légales et la politique de confidentialité**, à aligner avant la mise en production de la mesure d'audience.
+
+Suites ouvertes par ailleurs : **#60** (purge planifiée), **#61** (repository d'`AccountService`), **#62** (premiers tests du front).

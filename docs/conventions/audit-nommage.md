@@ -6,14 +6,16 @@
 - `main` (`6d02805`) : `apps/simulateur/src`, `apps/site/src`, `packages/ui/src`, `scripts/`, `paths.mjs`, `.github/`, `infra/` (fichiers suivis par git)
 - PR #16 `feat/franceconnect` (`96d97b3`) : `apps/api`, `deploy/`, docs et fichiers `apps/site` ajoutés — synthèse ici, détail dans l'issue #51
 
-**Aucun renommage n'a été effectué.** Ce rapport inventorie et propose ; les corrections passent par des PR dédiées.
+**Ce rapport inventoriait et proposait ; il ne renommait rien.** Depuis, une partie du plan a été exécutée.
+
+> **Mise à jour du 2026-09-24** — **le lot PR #16 est intégralement traité** : l'issue [#51](https://github.com/betagouv/etape/issues/51) est close comme terminée, et les identifiants qu'elle visait ont été vérifiés un à un sur `main` — aucun ne subsiste. **Le lot `main` (E1 à E38, I1 à I3) reste entier**, à l'exception notée en E6.
 
 ## Synthèse
 
-| Périmètre | Bloquant                          | À corriger                                         | Mineur                       | À arbitrer |
-| --------- | --------------------------------- | -------------------------------------------------- | ---------------------------- | ---------- |
-| `main`    | 0                                 | 20 lignes (~30 identifiants + 26 noms de fichiers) | 21 lignes (~55 identifiants) | 8          |
-| PR #16    | 4 (schéma Prisma, avec migration) | ~25                                                | ~10                          | 1          |
+| Périmètre | Bloquant     | À corriger                                         | Mineur                       | À arbitrer |
+| --------- | ------------ | -------------------------------------------------- | ---------------------------- | ---------- |
+| `main`    | 0            | 20 lignes (~30 identifiants + 26 noms de fichiers) | 21 lignes (~55 identifiants) | 8          |
+| PR #16    | ~~4~~ traité | ~~~25~~ traité                                     | ~~~10~~ traité               | ~~1~~      |
 
 **Verdict : codebase mélangée, à dominante conforme.**
 
@@ -21,7 +23,7 @@
 - **Grammaire du code** : majoritairement en anglais (`findQuestion`, `buildProfil`, `isRegionCode`, `hasAnswers`), avec des poches de grammaire française concentrées dans `resultats/domain/catalogue.ts`, `questionnaire/domain/questions.ts` et `QuestionScreen.tsx`.
 - **Traductions anglaises de termes métier** : famille `Results*` à côté de `Resultat`, `SCALE_*` pour « barème ».
 - **Synonymes** : plusieurs concepts ont deux ou trois noms (demandeur d'emploi, agent public, durée d'activité, lieu/résidence).
-- **PR #16** : le vocabulaire technique d'authentification y est en grande partie en français (`fournisseurIdentite`, `TransactionConnexion`, `base-de-donnees/`), ce que la convention classe en anglais.
+- **PR #16** : le vocabulaire technique d'authentification y était en grande partie en français (`fournisseurIdentite`, `TransactionConnexion`, `base-de-donnees/`), ce que la convention classe en anglais. **Corrigé depuis** — voir la mise à jour en tête de page.
 - **Events analytics** : aucun dans le code (sans objet).
 
 ## Écarts sur `main`
@@ -37,7 +39,7 @@ Sévérités : **bloquant** (schéma, migration, route d'API publique), **à cor
 | E3  | `ResultsScreen`, `ResultsScreenProps`                                                  | `resultats/components/ResultsScreen.tsx:33`                                                | idem                                                                                      | `ResultatsScreen`                                         | non                               |
 | E4  | `ResultCard`                                                                           | `resultats/components/ResultCard.tsx:11`                                                   | idem                                                                                      | `ResultatCard`                                            | non                               |
 | E5  | `EmptyResults`                                                                         | `resultats/components/EmptyResults.tsx:9`                                                  | idem                                                                                      | `EmptyResultats`                                          | non                               |
-| E6  | `RESULTS_TOP_ID` (valeur `"resultats-haut"`)                                           | `resultats/components/ScrollToTopButton.tsx:6`                                             | nom traduit ; valeur d'id technique en français                                           | `RESULTATS_TOP_ID`, valeur `"resultats-top"`              | non                               |
+| E6  | `RESULTS_TOP_ID` (valeur `"resultats-haut"`)                                           | `resultats/components/ResultsScreen.tsx` (`ScrollToTopButton.tsx` a été supprimé depuis)   | nom traduit ; valeur d'id technique en français                                           | `RESULTATS_TOP_ID`, valeur `"resultats-top"`              | non                               |
 | E7  | `ResultatAffiche`                                                                      | `resultats/domain/types.ts:51`                                                             | qualificatif français (participe)                                                         | `DisplayedResultat`                                       | non                               |
 | E8  | `Resultat.quand`                                                                       | `resultats/domain/types.ts:47`                                                             | mot grammatical français ; synonyme de `Question.when`                                    | `when`                                                    | non                               |
 | E9  | `Region.outreMer`                                                                      | `questionnaire/domain/regions.ts:25`                                                       | booléen sans préfixe                                                                      | `isOutreMer`                                              | non                               |
@@ -131,7 +133,9 @@ Le glossaire a été complété avec les termes du code (`docs/conventions/gloss
 
 ## PR #16 (`feat/franceconnect`) — synthèse
 
-La PR appartient à un autre développeur : ses écarts ne sont pas détaillés ici mais dans l'issue [#51](https://github.com/betagouv/etape/issues/51) « Aligner la PR #16 (FranceConnect) sur la convention de nommage », rédigée sous forme de prompt à exécuter sur la branche.
+La PR appartenait à un autre développeur : ses écarts n'étaient pas détaillés ici mais dans l'issue [#51](https://github.com/betagouv/etape/issues/51) « Aligner la PR #16 (FranceConnect) sur la convention de nommage », rédigée sous forme de prompt à exécuter sur la branche.
+
+**Cette issue est close, et le travail est fait.** Les lots ci-dessous sont conservés comme trace de ce qui a été corrigé ; aucun des identifiants cités ne subsiste dans `apps/` ni `packages/`. Le compte authentifié se nomme désormais `account`, le module d'accès aux données `database/`, et `purgeExpired()` a remplacé `purger()`.
 
 - **Lot TypeScript (API)** : `base-de-donnees/`, `enregistrerConnexion`, `ProfilRecu`, `SessionAOuvrir`, `fournisseurIdentite`, `enDeveloppement`, `CLAIMS_DE_PROTOCOLE`, `estIntrouvable`, `purger`…
 - **Lot Prisma (migration)** : `TransactionConnexion` / `transaction_connexion`, `fournisseur_identite`, `cree_via`, `derniere_connexion_via` (incohérent avec `last_login_at`), ainsi qu'un `$queryRaw` qui écrit ces colonnes en dur.
