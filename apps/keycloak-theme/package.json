@@ -6,7 +6,8 @@
   "prettier": "@etape/prettier-config",
   "scripts": {
     "dev": "vite",
-    "build": "keycloakify sync-extensions && tsc --noEmit && vite build && keycloakify build",
+    "build": "npm run build:bundle && keycloakify build",
+    "build:bundle": "keycloakify sync-extensions && tsc --noEmit && vite build",
     "lint": "eslint",
     "test": "vitest run",
     "storybook": "keycloakify start-keycloak"

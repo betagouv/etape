@@ -43,4 +43,7 @@ jobs:
         run: npm run test
 
       - name: Build
-        run: npm run build
+        run: npx turbo run build --filter='!@etape/keycloak-theme'
+
+      - name: Build du thème Keycloak, sans le JAR
+        run: npm run build:bundle --workspace @etape/keycloak-theme
