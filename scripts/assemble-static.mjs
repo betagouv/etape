@@ -14,7 +14,7 @@ import path from "node:path";
 import { SIMULATEUR_BASE_PATH } from "../paths.mjs";
 
 const root = process.cwd();
-const staticDir = path.join(root, "dist/preview");
+const staticDir = path.resolve(root, process.argv[2] ?? "dist/preview");
 
 // Nom du sous-dossier où atterrit l'export du simulateur, dérivé du préfixe :
 // "/simulateur" -> "simulateur".

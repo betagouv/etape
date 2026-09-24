@@ -34,7 +34,7 @@ runs:
 
     - name: Build
       shell: bash
-      run: npm run build
+      run: npx turbo run build --filter=@etape/site --filter=@etape/simulateur
 
     - name: Assemblage statique
       shell: bash

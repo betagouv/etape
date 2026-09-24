@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 # Annule les runs superflus quand on pousse plusieurs fois sur une même PR/branche.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -12,7 +15,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Qualité (format, lint, types, build)
+    name: Qualité (format, lint, types, tests, build)
     runs-on: [self-hosted, cegedim]
     env:
       # Pas d'installation des hooks git en CI.
@@ -39,5 +42,11 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Tests
+        run: npm run test
+
       - name: Build
-        run: npm run build
+        run: npx turbo run build --filter='!@etape/keycloak-theme'
+
+      - name: Build du thème Keycloak, sans le JAR
+        run: npm run build:bundle --workspace @etape/keycloak-theme

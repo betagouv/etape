@@ -9,7 +9,7 @@ Monorepo Turborepo :
 - `packages/ui`, `packages/eslint-config`, `packages/prettier-config` — composants et configuration partagés
 - API NestJS + Prisma + PostgreSQL, authentification Keycloak / FranceConnect : en cours dans `apps/api` (PR #16)
 
-Commandes : `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm run format:check` (vérifié en CI).
+Commandes : `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run format:check` (vérifié en CI).
 
 Messages de commit, titres et descriptions de PR : en français. Branches : préfixe anglais + description en français (`feat/mentions-legales`).
 
