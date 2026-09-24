@@ -290,15 +290,15 @@ Ce qui est en place : `<Button variant="outline-primary" size="xl" className="w-
 
 `apps/simulateur/src/app/error.tsx` et le bouton « Recommencer la simulation » de `ResultsScreen.tsx` portaient le même défaut sans être cités dans la question posée en arbitrage. Ils sont repris aussi.
 
-**Ce que le remplacement change à l'écran**, et qu'il faut savoir — le mesurer vaut mieux que de supposer que `min-h-11` valait déjà 44 px :
+**Ce que le remplacement change à l'écran**, **mesuré dans le navigateur** et non déduit — supposer que `min-h-11` valait déjà 44 px aurait été faux, et supposer que `rounded-lg` valait 8 px aussi :
 
-|                                         | Avant                                                                                  | Après (`size="xl"`)                                                                                                      |
-| --------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Hauteur, `OutcomeScreen`                | `py-4` + `text-sm` = **52 px**, et **56 px** au-delà de `md` ; `min-h-11` ne liait pas | **44 px** fixes                                                                                                          |
-| Hauteur, `error.tsx` et `ResultsScreen` | `min-h-11` liait vraiment : **44 px**                                                  | **44 px** — inchangé                                                                                                     |
-| Graisse                                 | `font-semibold` (600)                                                                  | `font-medium` (500), la base de `buttonVariants`                                                                         |
-| Rayon                                   | `rounded-lg` (8 px)                                                                    | `rounded-md`                                                                                                             |
-| Bascule typographique                   | `md:text-base`, à **768 px**                                                           | `text-label-lg`, qui bascule 14 → 16 px à **1024 px** (`--type-label-lg` n'est redéfini qu'en `@media (width >= 64rem)`) |
+|                                         | Avant                                                                                   | Après (`size="xl"`)                                                                                                      |
+| --------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Hauteur, `OutcomeScreen`                | **52 px** mesurés — `py-4` + `text-sm`, `min-h-11` ne liait pas ; 56 px au-delà de `md` | **44 px** fixes                                                                                                          |
+| Hauteur, `error.tsx` et `ResultsScreen` | `min-h-11` liait vraiment : **44 px**                                                   | **44 px** — inchangé                                                                                                     |
+| Graisse                                 | `font-semibold` (600)                                                                   | `font-medium` (500), la base de `buttonVariants`                                                                         |
+| Rayon                                   | `rounded-lg` — **12 px**, le thème redéfinissant l'échelle par `--radius: .75rem`       | `rounded-md` — **10 px**                                                                                                 |
+| Bascule typographique                   | `md:text-base`, à **768 px**                                                            | `text-label-lg`, qui bascule 14 → 16 px à **1024 px** (`--type-label-lg` n'est redéfini qu'en `@media (width >= 64rem)`) |
 
 Les libellés du dépôt sont courts et le bouton est en `whitespace-nowrap` : aucun ne passait sur deux lignes, donc la hauteur fixe ne coupe rien. Les deux derniers écarts — la graisse et le point de bascule — sont **le prix du passage au design system** : si les maquettes veulent 600 sur les CTA, cela s'ajoute à la variante, pas dans l'app.
 
