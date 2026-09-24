@@ -11,12 +11,12 @@ Chaque décision est suivie de ses **principes** quand il y en a, et d'un **exem
 
 | Brique               | Version     | Rôle                                                       |
 | -------------------- | ----------- | ---------------------------------------------------------- |
-| Next.js              | 16.3.4      | Les deux apps en **export statique** (`output: "export"`)  |
-| React                | 19.2.8      | —                                                          |
+| Next.js              | 16.3.5      | Les deux apps en **export statique** (`output: "export"`)  |
+| React                | 19.3.0      | —                                                          |
 | TypeScript           | 5.9.3       | `strict` activé                                            |
 | Tailwind CSS         | 4.3.3       | Thème par tokens dans `packages/ui/src/styles/globals.css` |
 | shadcn/ui sur Radix  | radix 1.6.7 | Composants copiés dans `packages/ui/src/components/`       |
-| lucide-react, sonner | 1.44, 2.0.8 | Icônes, notifications                                      |
+| lucide-react, sonner | 1.46, 2.0.8 | Icônes, notifications                                      |
 | next-themes          | 0.4.6       | Thème clair / sombre                                       |
 | Turborepo            | 2.10.12     | Orchestration du monorepo                                  |
 | ESLint, Prettier     | 9.39, 3.9   | Configs partagées dans `packages/`                         |
@@ -288,6 +288,10 @@ Le [document d'accessibilité](./accessibilite.md) fixe les règles ; il manquai
 
 **Mise en œuvre, validée en arbitrage** (voir [`outillage-agent.md`](./outillage-agent.md)) : **21 règles activées en erreur**, listées explicitement dans `packages/eslint-config/next.js`. `@axe-core/playwright` viendra avec Playwright, dont l'installation est différée (décision 8) ; pas de `vitest-axe` (0.1.0, projet immature).
 
+> **Le périmètre n'est pas tout le dépôt, et il faut le savoir.** Ces 21 règles vivent dans `nextConfig`, donc elles ne s'appliquent qu'à **`apps/site` et `apps/simulateur`**. `packages/ui` et `apps/keycloak-theme` utilisent `reactInternalConfig`, qui n'enregistre pas le plugin `jsx-a11y` — celui-ci n'arrive que par `eslint-config-next`. **Le design system et les écrans de connexion ne sont donc vérifiés par aucune de ces règles**, alors que ce sont des composants de formulaire. Même chose pour `exhaustive-deps`, laissé en avertissement par le preset de `react-hooks` dans ces deux workspaces.
+>
+> Étendre la couverture suppose de déclarer `eslint-plugin-jsx-a11y` en dépendance directe d'`@etape/eslint-config` — l'option que l'arbitrage a écartée en retenant la liste explicite. La question se repose donc, avec cette conséquence en main.
+
 <details><summary><strong>Exemple — ce que les nouvelles règles attrapent, et ce qu'elles ne verront jamais</strong></summary>
 
 ```tsx
@@ -313,7 +317,7 @@ Sans l'association, le champ n'a **pas de nom accessible** : le lecteur d'écran
 
 **Ce que le durcissement a coûté, mesuré** : une seule erreur sur tout le dépôt, dans `apps/site/src/components/main-nav.tsx` — un `onKeyDown` posé sur la `nav`, donc sur un élément non interactif. La règle avait raison sur le fond : la touche Échap ne refermait le menu que si le focus était resté dans le panneau. L'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
 
-Le reste des 21 règles ne produit aucune violation.
+Le reste des 21 règles ne produit aucune violation — sur les deux apps Next, seul périmètre où elles s'appliquent.
 
 **Ce que ces règles ne verront jamais** : la perte du focus après une action, l'ordre de tabulation, la pertinence d'une annonce. Elles vérifient la structure, pas l'expérience — d'où le test clavier en revue.
 
@@ -450,5 +454,6 @@ Les douze questions que portait ce document, et ce que l'équipe a répondu.
 1. **L'instance Sentry** : SaaS en région européenne ou `sentry.incubateur.net` (décision 11) — **issue #64**, qui pose la question à betagouv. Ce choix commande la décision 7 de [`architecture-api.md`](./architecture-api.md), qui suppose Sentry Logs.
 2. **Le porteur de l'installation de TanStack Query**, et la PR sur laquelle elle se fait.
 3. **Les mentions légales et la politique de confidentialité**, à aligner avant la mise en production de la mesure d'audience.
+4. **Le périmètre des règles `jsx-a11y`** : elles ne couvrent aujourd'hui que les deux apps Next, pas `packages/ui` ni `apps/keycloak-theme` (décision 7).
 
 Suites ouvertes par ailleurs : **#60** (purge planifiée), **#61** (repository d'`AccountService`), **#62** (premiers tests du front).

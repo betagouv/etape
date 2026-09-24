@@ -15,14 +15,19 @@ import { CATEGORIE_LABELS, type Categorie } from "../domain/types";
  */
 const TAG_UI: Record<
   Categorie,
-  { Icon: LucideIcon; variant: ComponentProps<typeof Badge>["variant"] }
+  { Icon: LucideIcon; variant: NonNullable<ComponentProps<typeof Badge>["variant"]> }
 > = {
   interlocuteur: { Icon: UsersRoundIcon, variant: "secondary" },
   outil: { Icon: WrenchIcon, variant: "info" },
   dispositif: { Icon: FileTextIcon, variant: "success" },
 };
 
-export function CategorieTag({ categorie }: { categorie: Categorie }) {
+interface CategorieTagProps {
+  categorie: Categorie;
+}
+
+/** Tag de catégorie d'un résultat : icône, libellé et couleur de la variante. */
+export function CategorieTag({ categorie }: CategorieTagProps) {
   const { Icon, variant } = TAG_UI[categorie];
 
   return (

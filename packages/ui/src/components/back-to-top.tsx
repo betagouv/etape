@@ -24,6 +24,14 @@ export function BackToTop({
 }) {
   const sentinel = React.useRef<HTMLDivElement>(null);
   const [visible, setVisible] = React.useState(false);
+  /*
+   * Le bouton refuse de se démonter tant qu'il a le focus. Sans cette garde,
+   * une personne au clavier qui l'atteint puis remonte la page aux flèches — un
+   * défilement qui ne déplace pas le focus — le verrait disparaître sous son
+   * focus, qui retomberait alors sur `<body>` : la tabulation suivante
+   * repartirait du début du document.
+   */
+  const [focused, setFocused] = React.useState(false);
 
   React.useEffect(() => {
     const node = sentinel.current;
@@ -58,12 +66,14 @@ export function BackToTop({
         />
       </div>
 
-      {visible ? (
+      {visible || focused ? (
         <Button
           type="button"
           variant="outline"
           size="icon"
           onClick={scrollToTop}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           className={cn(
             // Sans les zones sûres, le bouton passe sous l'indicateur d'accueil
             // et la barre d'outils de Safari en iOS.

@@ -25,7 +25,7 @@ Les conventions du projet sont écrites dans `docs/conventions/`. Ce document di
 | ---------------- | --------------------- | ------------------------------------------------------------------------------ | --------------------------------- | -------------------------- |
 | Nommage FR/EN    | `nommage.md`          | —                                                                              | —                                 | Skill `convention-nommage` |
 | Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax` | `.claude/rules/typescript.md`     | —                          |
-| Accessibilité    | `accessibilite.md`    | `jsx-a11y` (partiel)                                                           | `.claude/rules/accessibilite.md`  | —                          |
+| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**         | `.claude/rules/accessibilite.md`  | —                          |
 | Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`   | `.claude/rules/react.md`          | Sous-agent `revue-front`   |
 | Design system    | `react.md` §4         | —                                                                              | `.claude/rules/design-system.md`  | Skill `composant-ui`       |
 | Stack front      | `stack-front.md`      | —                                                                              | `.claude/rules/react.md` (renvoi) | —                          |
@@ -43,11 +43,15 @@ Ce qui manquait, et que cette PR change :
 - `react-hooks/exhaustive-deps` était en avertissement → **passé en erreur**. L'arbitrage n'a pas validé ce point sur parole mais demandé de le **vérifier** : mesuré avec `turbo run lint --force`, le passage en erreur ne produit **aucune violation** sur le dépôt. Il est donc acté sur une mesure, pas sur une intention.
 - Les règles `jsx-a11y` actives étaient au nombre de 6, toutes en avertissement → **21 règles, toutes en erreur**, listées explicitement dans `packages/eslint-config/next.js`.
 
+> **Trou de couverture, à ne pas masquer.** Ces deux durcissements sont posés dans `nextConfig`, donc ils ne couvrent que `apps/site` et `apps/simulateur`. `packages/ui` et `apps/keycloak-theme` utilisent `reactInternalConfig`, qui n'enregistre ni `eslint-plugin-jsx-a11y` (il n'arrive que par `eslint-config-next`) ni `exhaustive-deps` en erreur. **Le design system et les écrans de connexion Keycloak — c'est-à-dire des formulaires — ne sont vérifiés par aucune des 21 règles.** C'est exactement le genre d'écart que ce document existe pour empêcher, et l'annoncer comme un garde-fou de niveau 1 sans cette réserve serait faux.
+
 **Ce que ce durcissement a coûté, mesuré sur tout le dépôt** : deux corrections, aucune régression. Un type de retour manquant sur `registerPdfFonts`, hérité de la PR #49. Et un `onKeyDown` posé sur un élément non interactif dans `main-nav.tsx` : la règle avait raison sur le fond, puisque la touche Échap ne refermait le menu que si le focus était resté dans le panneau — l'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
 
 > **Leçon d'outillage, apprise en se trompant.** La première mesure, faite avec `turbo run lint`, avait conclu « aucune violation » : c'était un résultat servi par le **cache** de turbo, calculé avant le changement de configuration. Une vérification de ce genre se fait avec `--force`, ou en appelant le workspace directement (`npm run lint --workspace=@etape/site`). Un cache qui répond « tout va bien » est un piège d'autant plus efficace qu'il est rapide.
 
-**Pourquoi pas le preset `jsx-a11y` complet** : le plugin n'est pas une dépendance déclarée de `@etape/eslint-config`, il arrive par `eslint-config-next`. Activer ses règles **par leur nom** fonctionne, car le plugin est déjà enregistré ; importer son preset exigerait de le déclarer en dépendance directe. **L'arbitrage a tranché pour la liste explicite** : plus lisible, sans nouvelle dépendance, et chaque règle activée l'est parce qu'on a su dire ce qu'elle attrape.
+**Pourquoi pas le preset `jsx-a11y` complet** : le plugin n'est pas une dépendance déclarée de `@etape/eslint-config`, il arrive par `eslint-config-next`. Activer ses règles **par leur nom** fonctionne dans `nextConfig`, car le plugin y est déjà enregistré ; importer son preset exigerait de le déclarer en dépendance directe. **L'arbitrage a tranché pour la liste explicite** : plus lisible, sans nouvelle dépendance, et chaque règle activée l'est parce qu'on a su dire ce qu'elle attrape.
+
+**Ce que cette réponse impliquait, et qui n'était pas sur la table au moment de la trancher** : refuser la dépendance directe, c'est aussi renoncer à couvrir `packages/ui` et `apps/keycloak-theme`, puisque leur configuration n'a aucun moyen d'atteindre le plugin. Le choix reste défendable — il faut seulement qu'il soit fait en connaissance de cause.
 
 ## Fichiers d'outillage
 
@@ -122,7 +126,7 @@ La version qui fonctionne place le répertoire de travail dans le workspace :
 "packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"
 ```
 
-Une entrée par workspace, à ajouter quand `apps/api` arrivera.
+Une entrée par workspace. Les cinq y sont désormais, `apps/api` et `apps/keycloak-theme` compris — un workspace oublié ici est un workspace qui commite sans `eslint --fix`.
 
 </details>
 
@@ -185,6 +189,7 @@ Les niveaux 2 et 3 ne servent qu'aux agents. Ce qui couvre tout le monde, ce son
 | Le sous-agent `revue-front` fait-il double emploi avec `review-pr`    | **Non abordée en séance** — reste ouverte, ci-dessous                                         |
 | Qui réactive le MCP `shadcn`, et le documente-t-on à la prise en main | **Oui pour la documentation** (`README.md`) ; la manipulation locale reste à faire par chacun |
 
-### Question restée ouverte
+### Ce qui reste ouvert
 
-**Le sous-agent `revue-front` fait-il double emploi avec le skill `review-pr`**, ou la séparation « méthode de revue » / « audit front » est-elle la bonne ? Cette question n'a pas été posée en réunion — elle n'est donc ni validée ni écartée, et c'est écrit ici pour qu'on ne la croie pas tranchée. Les deux mécanismes coexistent en attendant : `review-pr` appelle `revue-front` sur un diff front.
+1. **Le sous-agent `revue-front` fait-il double emploi avec le skill `review-pr`**, ou la séparation « méthode de revue » / « audit front » est-elle la bonne ? Cette question n'a pas été posée en réunion — elle n'est donc ni validée ni écartée, et c'est écrit ici pour qu'on ne la croie pas tranchée. Les deux mécanismes coexistent en attendant : `review-pr` appelle `revue-front` sur un diff front.
+2. **Étend-on les 21 règles `jsx-a11y` à `packages/ui` et `apps/keycloak-theme`**, au prix d'une dépendance directe à `eslint-plugin-jsx-a11y` ? L'arbitrage a retenu la liste explicite sans que ce trou de couverture soit connu. Laisser le design system hors de portée des règles d'accessibilité est le point le plus discutable de l'outillage actuel.

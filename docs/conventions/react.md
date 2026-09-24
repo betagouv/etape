@@ -1,7 +1,7 @@
 # Pratiques React — ETAPE
 
 **Statut** : Décidé · **Décidé le** : 2026-09-22 · **Par** : l'équipe, en réunion d'arbitrage
-**Portée** : `apps/site`, `apps/simulateur`, `packages/ui`
+**Portée** : `apps/site`, `apps/simulateur`, `packages/ui`. **`apps/keycloak-theme` n'y est pas** : le thème Keycloak est construit par Keycloakify, une bonne part de son code est générée, et il n'a pas été audité contre ce document — ses écarts ne sont donc pas listés ici. À rattacher à la portée le jour où il sera repris à la main.
 
 Ce document dit **comment écrire le code**, là où [`stack-front.md`](./stack-front.md) dit **quels outils on utilise**. Le nommage relève de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md).
 
@@ -72,7 +72,7 @@ La cible : un `useFlowShell()` qui renvoie `{ ecran, question, attempt, headingR
 
 </details>
 
-### 1.3 Une vue est pure par défaut — _déjà tenu_
+### 1.3 Une vue est pure par défaut — _déjà tenu dans les apps_
 
 Une vue reçoit des props et rend du JSX. Pas de store, pas d'effet, pas de `fetch`. Les bons exemples existent déjà : `OptionRow`, `FieldHeader`, `CategorieTag`, `ResultCard`, `EmptyResults`, `OutcomeScreen`.
 
@@ -227,11 +227,21 @@ Le commentaire porte le nom Figma : c'est ce qui permet, devant une maquette, de
 
 </details>
 
-### 4.2 On étend par variante, on ne modifie pas par `className` — _écarts refermés_
+### 4.2 On étend par variante, on ne modifie pas par `className` — _écart, partiellement repris_
 
 Un besoin d'apparence non couvert s'ajoute **dans le composant**, comme variante `cva`, puis s'utilise partout.
 
-L'arbitrage a décidé de **refermer ces écarts tout de suite**, plutôt que de les laisser en exemple : un document de conventions dont les contre-exemples restent vrais dans le code enseigne mal. Les trois cas ci-dessous sont corrigés ; ils sont conservés parce qu'ils montrent la forme du défaut, qui se reproduira.
+L'arbitrage a décidé de **reprendre ces écarts tout de suite**, plutôt que de les laisser en exemple : un document de conventions dont les contre-exemples restent vrais dans le code enseigne mal.
+
+**Trois fichiers sur cinq sont repris** — `CategorieTag.tsx`, `OutcomeScreen.tsx`, `error.tsx`, plus le bouton « Recommencer la simulation » de `ResultsScreen.tsx`. **Trois boutons restent à migrer**, et le dire vaut mieux que de prétendre l'inverse :
+
+| Où                                            | Ce qui subsiste                                                                                                                  |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `questionnaire/components/QuestionCta.tsx:43` | Bouton secondaire, même chaîne                                                                                                   |
+| `questionnaire/components/QuestionCta.tsx:55` | Bouton primaire, `min-h-11 rounded-lg px-4 py-3 font-semibold`                                                                   |
+| `questionnaire/components/HomeCta.tsx:49`     | `h-14 px-8 text-lg` — la hauteur de 56 px n'a pas de taille correspondante dans `buttonVariants`, il faudrait une variante `2xl` |
+
+Ils se reprennent au fil de l'eau, comme tout écart de ce document. Les deux exemples ci-dessous montrent la forme du défaut, qui se reproduira.
 
 <details><summary><strong>Écart n° 1 — <code>CategorieTag</code> : une couleur injectée depuis l'app</strong> (corrigé)</summary>
 
@@ -263,7 +273,7 @@ variant: {
 <Badge variant={TAG_UI[categorie].variant}>
 ```
 
-Le `Record` de l'app ne porte plus que ce qui la regarde : une icône et le nom d'une variante, typé par `ComponentProps<typeof Badge>["variant"]` — donc une variante inexistante ne compile pas.
+Le `Record` de l'app ne porte plus que ce qui la regarde : une icône et le nom d'une variante, typé par `NonNullable<ComponentProps<typeof Badge>["variant"]>` — donc une variante inexistante ne compile pas. Le `NonNullable` n'est pas décoratif : sans lui, le type produit par `cva` accepte aussi `undefined` et `null`, qui compilent et retombent silencieusement sur la variante par défaut.
 
 </details>
 
@@ -274,13 +284,23 @@ const secondaryClassName =
   "border-primary text-primary hover:bg-secondary hover:text-secondary-foreground h-auto min-h-11 w-full rounded-lg px-6 py-4 text-sm font-semibold md:text-base";
 ```
 
-Cette chaîne redéfinissait la bordure, la couleur, le survol, la hauteur, le rayon, la graisse et la taille de texte — c'est-à-dire tout ce que `buttonVariants` sait déjà faire. La variante `outline-primary` existait, la taille `xl` faisait déjà 44 px de haut.
+Cette chaîne redéfinissait la bordure, la couleur, le survol, la hauteur, le rayon et la taille de texte — presque tout ce que `buttonVariants` sait déjà faire. La variante `outline-primary` existait, et la taille `xl` fait 44 px de haut. **La graisse fait exception** : `buttonVariants` n'a aucun axe de graisse, sa base est `font-medium`, et aucune taille ne la change.
 
 Ce qui est en place : `<Button variant="outline-primary" size="xl" className="w-full">`. Le `w-full` reste dans l'app : c'est de la mise en page, pas de l'apparence (4.3). Le choix de la variante selon le rôle de l'action passe par un `Record` (`ACTION_VARIANTS`), pas par un ternaire — [`typescript.md`](./typescript.md), règle 4.
 
-`apps/simulateur/src/app/error.tsx` portait le même défaut, sur ses deux boutons, sans être cité dans la question posée en arbitrage. Il est corrigé aussi : laisser un seul cas debout aurait suffi à maintenir la pratique en écart.
+`apps/simulateur/src/app/error.tsx` et le bouton « Recommencer la simulation » de `ResultsScreen.tsx` portaient le même défaut sans être cités dans la question posée en arbitrage. Ils sont repris aussi.
 
-**Ce que le remplacement change à l'écran**, et qu'il faut savoir : `size="xl"` fixe la hauteur à 44 px et le rayon à `rounded-md`, là où les `className` donnaient `h-auto min-h-11` et `rounded-lg`. Les libellés du dépôt sont courts et le bouton est en `whitespace-nowrap` : aucun ne passait sur deux lignes, donc la hauteur fixe ne coupe rien.
+**Ce que le remplacement change à l'écran**, et qu'il faut savoir — le mesurer vaut mieux que de supposer que `min-h-11` valait déjà 44 px :
+
+|                                         | Avant                                                                                  | Après (`size="xl"`)                                                                                                      |
+| --------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Hauteur, `OutcomeScreen`                | `py-4` + `text-sm` = **52 px**, et **56 px** au-delà de `md` ; `min-h-11` ne liait pas | **44 px** fixes                                                                                                          |
+| Hauteur, `error.tsx` et `ResultsScreen` | `min-h-11` liait vraiment : **44 px**                                                  | **44 px** — inchangé                                                                                                     |
+| Graisse                                 | `font-semibold` (600)                                                                  | `font-medium` (500), la base de `buttonVariants`                                                                         |
+| Rayon                                   | `rounded-lg` (8 px)                                                                    | `rounded-md`                                                                                                             |
+| Bascule typographique                   | `md:text-base`, à **768 px**                                                           | `text-label-lg`, qui bascule 14 → 16 px à **1024 px** (`--type-label-lg` n'est redéfini qu'en `@media (width >= 64rem)`) |
+
+Les libellés du dépôt sont courts et le bouton est en `whitespace-nowrap` : aucun ne passait sur deux lignes, donc la hauteur fixe ne coupe rien. Les deux derniers écarts — la graisse et le point de bascule — sont **le prix du passage au design system** : si les maquettes veulent 600 sur les CTA, cela s'ajoute à la variante, pas dans l'app.
 
 </details>
 
@@ -299,9 +319,20 @@ Autorisé : largeur, marge, `gap`, `flex`. Interdit : couleur, fond, bordure, ra
 | `ResultCard.tsx:15`                       | `<article className="border-border bg-card flex h-full flex-col … rounded-sm border p-6">` | `Card` / `CardContent`                                                                           |
 | ~~`ScrollToTopButton.tsx`~~ — **corrigé** | Un bouton de remontée écrit à la main, avec son écouteur de défilement                     | `BackToTop` de `packages/ui`, déjà utilisé par `apps/site`                                       |
 
-Le cas `text-[28px]` est le plus révélateur : la valeur est juste, mais elle ne suivra pas le jour où l'échelle typographique changera. Un token n'est pas une commodité d'écriture, c'est le point de synchronisation avec la maquette.
+Le cas `text-[28px]` est le plus révélateur : la valeur est juste, mais elle ne suivra pas le jour où l'échelle typographique changera. Un token n'est pas une commodité d'écriture, c'est le point de synchronisation avec la maquette. **Attention en le reprenant** : `text-h1` porte bien 28 px puis 32 px, mais il bascule à **1024 px** (`--type-h1` n'est redéfini qu'en `@media (width >= 64rem)`) là où le `md:` en dur bascule à 768 px. Le remplacement n'est donc pas neutre à l'écran.
 
-**Ce que le remplacement de `ScrollToTopButton` a changé de visible**, puisque les deux composants n'étaient pas équivalents : le seuil d'apparition passe de 400 px de défilement à **une hauteur d'écran** (`BackToTop` observe une sentinelle de `h-svh` au lieu d'écouter le `scroll`), et la remontée est animée en respectant `prefers-reduced-motion`. Le `md:hidden` d'origine est conservé — la remontée ne sert qu'en mobile, où la liste est en une colonne —, et il reste légitime au titre de 4.3 : c'est de la mise en page, pas de l'apparence. Les trois autres réécritures restent à faire, au fil de l'eau.
+**Ce que le remplacement de `ScrollToTopButton` a changé de visible**, puisque les deux composants n'étaient pas équivalents :
+
+- **Le seuil d'apparition** passe de 400 px de défilement à **une hauteur d'écran** : `BackToTop` observe une sentinelle de `h-svh` au lieu d'écouter le `scroll`.
+- **La couleur** : l'ancien était teinté (`bg-secondary text-primary`), le nouveau est un `Button variant="outline"`, donc neutre sur fond de page.
+- **L'ordre de tabulation** : l'ancien était le dernier enfant de `<main>`, le nouveau est le premier — sa sentinelle se positionne par rapport à son point d'insertion, il ne peut pas être ailleurs. Au clavier, on ne l'atteint donc plus en tabulant depuis le pied de page.
+- **Ce qui est gagné** : `prefers-reduced-motion` respecté, `focus({ preventScroll: true })` sur la cible, zones sûres iOS, et l'anneau de focus partagé de `Button` au lieu d'un `focus-visible:ring` recopié.
+
+Le `md:hidden` d'origine est conservé — la remontée ne sert qu'en mobile, où la liste est en une colonne —, et il reste légitime au titre de 4.3 : c'est de la mise en page, pas de l'apparence. À noter qu'il ne pilote que le bouton : la sentinelle et son observateur tournent à toutes les largeurs.
+
+**Ce que le remplacement n'a pas réglé** : `BackToTop` présente exactement la forme de défaut décrite en 1.3 — rien dans son nom ni dans ses props ne dit qu'il s'abonne à un observateur, et il ne se rend pas hors contexte. Le doublon a disparu, la forme du défaut a seulement déménagé dans `packages/ui`. C'est pourquoi 1.3 reste « déjà tenu **dans les apps** » au récapitulatif, et pas « déjà tenu » tout court.
+
+Les trois autres réécritures de ce tableau restent à faire, au fil de l'eau.
 
 </details>
 
@@ -372,21 +403,21 @@ Un commentaire qui aurait dit « attribut pour marquer les champs en erreur » n
 
 ## Récapitulatif
 
-| Pratique                         | Statut                                           | Vérification                                        |
-| -------------------------------- | ------------------------------------------------ | --------------------------------------------------- |
-| 1.1 Métier hors des composants   | Déjà tenu                                        | Revue                                               |
-| 1.2 Logique d'écran dans un hook | Écart (`FlowShell`)                              | Revue                                               |
-| 1.3 Vue pure par défaut          | Déjà tenu (`ScrollToTopButton` supprimé)         | Revue                                               |
-| 2.1 Pas d'état dérivable         | Déjà tenu                                        | Lint (`set-state-in-render`, `set-state-in-effect`) |
-| 2.2 Effet réservé à l'extérieur  | Déjà tenu                                        | Revue                                               |
-| 2.3 Pas de mémoïsation gratuite  | Déjà tenu                                        | Lint (`use-memo`, `preserve-manual-memoization`)    |
-| 3.1 Six props                    | Écart (3 composants)                             | Revue                                               |
-| 3.2 Forage ≤ 2 niveaux           | Écart (`answers`)                                | Revue                                               |
-| 4.1 Aucune couleur hors tokens   | Déjà tenu                                        | Revue                                               |
-| 4.2 Étendre par variante         | Déjà tenu (3 écarts refermés ici)                | Revue                                               |
-| 4.4 Primitives avant réécriture  | Écart (3 endroits ; `ScrollToTopButton` corrigé) | Revue                                               |
-| 5.1 `"use client"` au plus bas   | Déjà tenu                                        | Revue                                               |
-| 6 Écriture                       | Déjà tenu                                        | Prettier, ESLint, revue                             |
+| Pratique                         | Statut                                                           | Vérification                                        |
+| -------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| 1.1 Métier hors des composants   | Déjà tenu                                                        | Revue                                               |
+| 1.2 Logique d'écran dans un hook | Écart (`FlowShell`)                                              | Revue                                               |
+| 1.3 Vue pure par défaut          | Déjà tenu dans les apps ; écart dans `packages/ui` (`BackToTop`) | Revue                                               |
+| 2.1 Pas d'état dérivable         | Déjà tenu                                                        | Lint (`set-state-in-render`, `set-state-in-effect`) |
+| 2.2 Effet réservé à l'extérieur  | Déjà tenu                                                        | Revue                                               |
+| 2.3 Pas de mémoïsation gratuite  | Déjà tenu                                                        | Lint (`use-memo`, `preserve-manual-memoization`)    |
+| 3.1 Six props                    | Écart (3 composants)                                             | Revue                                               |
+| 3.2 Forage ≤ 2 niveaux           | Écart (`answers`)                                                | Revue                                               |
+| 4.1 Aucune couleur hors tokens   | Déjà tenu                                                        | Revue                                               |
+| 4.2 Étendre par variante         | Écart (3 boutons : `QuestionCta` ×2, `HomeCta`)                  | Revue                                               |
+| 4.4 Primitives avant réécriture  | Écart (3 endroits ; `ScrollToTopButton` corrigé)                 | Revue                                               |
+| 5.1 `"use client"` au plus bas   | Déjà tenu                                                        | Revue                                               |
+| 6 Écriture                       | Déjà tenu                                                        | Prettier, ESLint, revue                             |
 
 ## Relevé d'arbitrage du 22 septembre 2026
 

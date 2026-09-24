@@ -17,7 +17,7 @@ import { EmptyResults } from "./EmptyResults";
 import { ResultCard } from "./ResultCard";
 
 /** Cible du retour en haut : le titre de l'écran, focusable par programme. */
-const RESULTS_TOP_ID = "resultats-haut";
+const RESULTATS_TOP_ID = "resultats-top";
 
 interface ResultsScreenProps {
   answers: Answers;
@@ -49,7 +49,7 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
         résultats est en une seule colonne.
       */}
       <BackToTop
-        targetId={RESULTS_TOP_ID}
+        targetId={RESULTATS_TOP_ID}
         label="Revenir en haut de la page"
         className="md:hidden"
       />
@@ -58,7 +58,7 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
         <div className={`${CONTAINER} flex flex-col gap-3 py-8 md:gap-4 md:py-16`}>
           <h1
             ref={headingRef}
-            id={RESULTS_TOP_ID}
+            id={RESULTATS_TOP_ID}
             tabIndex={-1}
             className="text-foreground focus-visible:outline-ring rounded-sm text-[28px] leading-9 font-bold focus-visible:outline-2 focus-visible:outline-offset-4 md:text-[32px] md:leading-10"
           >
@@ -123,9 +123,10 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
           </p>
           <Button
             type="button"
-            variant="outline"
+            variant="outline-primary"
+            size="xl"
             onClick={onRestart}
-            className="border-primary text-primary hover:bg-secondary hover:text-secondary-foreground min-h-11 w-full rounded-lg px-6 text-sm font-semibold sm:w-auto md:text-base"
+            className="w-full sm:w-auto"
           >
             Recommencer la simulation
           </Button>

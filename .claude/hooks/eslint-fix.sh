@@ -9,7 +9,13 @@
 # derrière soi des écarts que `--fix` sait régler.
 set -u
 
-fichier=$(cat | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+# `grep -o` puis `head -1` : on retient la PREMIÈRE occurrence. Un `sed` avec un
+# `.*` en tête serait glouton et retiendrait la dernière, alors que la charge
+# JSON tient sur une seule ligne et peut contenir plusieurs `file_path`.
+fichier=$(cat |
+  grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' |
+  head -1 |
+  sed 's/.*"\([^"]*\)"$/\1/')
 
 case "$fichier" in
   *.ts | *.tsx) ;;

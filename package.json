@@ -20,6 +20,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}": "prettier --write",
+    "apps/api/**/*.ts": "npm run lint --workspace=@etape/api -- --fix",
+    "apps/keycloak-theme/**/*.{ts,tsx}": "npm run lint --workspace=@etape/keycloak-theme -- --fix",
     "apps/simulateur/**/*.{ts,tsx}": "npm run lint --workspace=@etape/simulateur -- --fix",
     "apps/site/**/*.{ts,tsx}": "npm run lint --workspace=@etape/site -- --fix",
     "packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"

@@ -10,11 +10,13 @@ import type { Outcome, OutcomeAction } from "../domain/types";
  * `outline-primary` et `size="xl"` (44 px, la hauteur des maquettes) couvrent
  * exactement le besoin : rien à redéfinir par `className`.
  */
-const ACTION_VARIANTS: Record<OutcomeAction["variant"], ComponentProps<typeof Button>["variant"]> =
-  {
-    primary: "default",
-    secondary: "outline-primary",
-  };
+const ACTION_VARIANTS: Record<
+  OutcomeAction["variant"],
+  NonNullable<ComponentProps<typeof Button>["variant"]>
+> = {
+  primary: "default",
+  secondary: "outline-primary",
+};
 
 interface OutcomeScreenProps {
   outcome: Outcome;
