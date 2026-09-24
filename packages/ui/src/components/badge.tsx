@@ -17,6 +17,11 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
+        // Variantes ETAPE (hors shadcn) : fond adouci et libellé teinté, pour
+        // qualifier une information sans l'aspect d'une action. Tokens Figma
+        // Info/Background + Info/Text et Success/Background + Success/Text.
+        info: "bg-info-muted text-info-text [a&]:hover:bg-info-muted/80",
+        success: "bg-success-muted text-success-text [a&]:hover:bg-success-muted/80",
       },
     },
     defaultVariants: {

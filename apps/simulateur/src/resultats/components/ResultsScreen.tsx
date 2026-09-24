@@ -2,6 +2,7 @@
 
 import { useMemo, type RefObject } from "react";
 
+import { BackToTop } from "@etape/ui/components/back-to-top";
 import { Button } from "@etape/ui/components/button";
 
 import type { Answers } from "@/questionnaire/domain/types";
@@ -14,7 +15,9 @@ import { AnswersRecap } from "./AnswersRecap";
 import { DownloadPdfButton } from "./DownloadPdfButton";
 import { EmptyResults } from "./EmptyResults";
 import { ResultCard } from "./ResultCard";
-import { RESULTS_TOP_ID, ScrollToTopButton } from "./ScrollToTopButton";
+
+/** Cible du retour en haut : le titre de l'écran, focusable par programme. */
+const RESULTS_TOP_ID = "resultats-haut";
 
 interface ResultsScreenProps {
   answers: Answers;
@@ -39,6 +42,18 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
 
   return (
     <main className="flex flex-1 flex-col">
+      {/*
+        Doit rester haut dans l'arbre : cf. `BackToTop`, dont la sentinelle est
+        positionnée par rapport à son point d'insertion. `md:hidden` conserve le
+        choix d'origine — la remontée ne sert qu'en mobile, où la liste de
+        résultats est en une seule colonne.
+      */}
+      <BackToTop
+        targetId={RESULTS_TOP_ID}
+        label="Revenir en haut de la page"
+        className="md:hidden"
+      />
+
       <header className="border-border bg-background border-b">
         <div className={`${CONTAINER} flex flex-col gap-3 py-8 md:gap-4 md:py-16`}>
           <h1
@@ -116,8 +131,6 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
           </Button>
         </div>
       </footer>
-
-      <ScrollToTopButton />
     </main>
   );
 }
