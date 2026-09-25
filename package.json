@@ -30,7 +30,7 @@
     "@etape/prettier-config": "*",
     "husky": "^9.1.7",
     "lint-staged": "^17.5.0",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.8",
     "turbo": "^2"
   },
   "packageManager": "npm@11.17.0+sha512.3eeaf18997b11070d313849268b23766b9db0068997dec9471073170fe43fa17f2b4d0337bf0f52330ee2274e7f5754b21b01052742e48f5c9c74d8b1e32ef43",
