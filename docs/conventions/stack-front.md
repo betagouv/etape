@@ -1,7 +1,7 @@
 # Stack front — ETAPE
 
 **Statut** : Décidé · **Décidé le** : 2026-09-22 · **Par** : l'équipe, en réunion d'arbitrage
-**Portée** : `apps/site`, `apps/simulateur`, `packages/ui`
+**Portée** : `apps/site`, `apps/simulateur`, `packages/ui` — étendue à `apps/front-office`, `apps/back-office`, `packages/api-client` et `packages/api-contract` par la décision 12 (28 septembre 2026, hors réunion d'arbitrage)
 
 Ce document valide les outils du front. La façon d'écrire le code relève de [`react.md`](./react.md), le nommage de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md).
 
@@ -429,6 +429,24 @@ Le SDK est tranché, **l'hébergement ne l'est pas** — la question est posée 
 | **Instance mutualisée de betagouv**, [`sentry.incubateur.net`](https://sentry.incubateur.net) | Pas de tiers commercial, donc rien à ajouter à la politique de confidentialité ; accès demandé par l'espace membre de l'incubateur | Une limite de débit annoncée à **10 événements/s par IP**, rafale de 20, **les événements excédentaires sont perdus sans mise en file** |
 
 **Ce point commande une autre décision, et c'est pour cela qu'il ne peut pas rester en suspens longtemps** : la décision 7 de [`architecture-api.md`](./architecture-api.md) retient **Sentry Logs** pour consulter les journaux. Rien n'établit à ce jour que l'instance de betagouv expose cette fonctionnalité. Si elle ne l'expose pas, c'est l'option Loki + Grafana qui redevient la réponse côté API — **à vérifier avant d'installer quoi que ce soit**.
+
+## Décision 12 — Front-office et back-office : deux apps Vite (ajout du 28 septembre 2026)
+
+**Hors du relevé d'arbitrage du 22 septembre.** Les onze décisions précédentes visaient `apps/site` et `apps/simulateur`, deux apps exportées statiquement. `apps/front-office` (bénéficiaires) et `apps/back-office` (métier) sont deux apps distinctes, ajoutées après cette réunion : ce sont des SPA authentifiées, destinées à tourner derrière Keycloak / FranceConnect (`apps/api`, PR #16), pas des pages à exporter au build. Cette différence de nature justifie un outillage différent sur deux points, détaillés ci-dessous ; le reste reprend les décisions déjà actées.
+
+| Brique                                    | Version        | Rôle                                                                                                     |
+| ----------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------- |
+| Vite                                      | 7.3.6          | Bundler, à la place de Next.js — ces deux apps ne sont pas exportées statiquement                        |
+| @vitejs/plugin-react, @tailwindcss/vite   | 5.2, 4.3.3     | Même pipeline Tailwind que `packages/ui` et `apps/keycloak-theme`, en plugin Vite                        |
+| react-hook-form, zod, @hookform/resolvers | 7.88, 4.6, 5.9 | Décisions 1 et 2, inchangées : mêmes versions que `packages/ui`                                          |
+| TanStack Query                            | 5.103          | Décision 3, inchangée dans ses principes (clés centralisées, aucune donnée serveur dans le store maison) |
+| **axios**, via `packages/api-client`      | 1.20           | **Nouveau** — voir ci-dessous                                                                            |
+
+**Sur axios : une divergence assumée avec la décision 5.** `apps/site` et `apps/simulateur` appellent l'API via `callApi`, une fonction bâtie sur `fetch`. Pour `front-office` et `back-office`, la bibliothèque retenue est **axios**, portée par `packages/api-client` (`createHttpClient`, `createQueryClient`) pour ne pas dupliquer entre les deux apps la construction du client HTTP (`withCredentials`, cookie de session) et du client de requêtes. Les deux apps front ont donc, pour l'instant, deux façons différentes d'appeler l'API — assumé, pas encore réconcilié.
+
+**`packages/api-contract` est recréé, vide.** Même structure que celle anticipée par la décision 5 (`RouteDefinition`, `RouteParams`/`Query`/`Body`/`Response`, `buildRoutePath`) : prête à recevoir des routes, mais aucune n'est déclarée tant qu'aucun écran ne consomme réellement l'API.
+
+**Ce qui reste à faire, comme côté site/simulateur** : le traitement centralisé d'un 401, l'émission du `correlationId` (décision 11 d'[`architecture-api.md`](./architecture-api.md)), et les premières routes dans `packages/api-contract` — à écrire avec le premier vrai écran, pas avant.
 
 ## Relevé d'arbitrage du 22 septembre 2026
 

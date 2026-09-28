@@ -421,7 +421,7 @@ on conflict (keycloak_sub) do update set
 
 **Décidé** : un paquet partagé, `packages/api-contract`, qui ne dépend que de zod. Se tranche avec la décision 5 de [`stack-front.md`](./stack-front.md), validée en même temps.
 
-**Reste à attribuer** : qui amorce le paquet, et sur quelle première route métier. L'arbitrage a validé le principe sans désigner de porteur.
+**Amorcé le 28 septembre 2026** (voir décision 12 de [`stack-front.md`](./stack-front.md)) : la structure (`RouteDefinition`, `buildRoutePath`) existe, sans route déclarée. **Reste à attribuer** : la première route métier, à écrire avec le premier vrai écran ou la première route API.
 
 ### Les principes
 
