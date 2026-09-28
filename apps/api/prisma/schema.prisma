@@ -1,3 +1,14 @@
+// Schéma de la base applicative ETAPE (PostgreSQL 18, Prisma 7).
+//
+// Conventions : docs/conventions/nommage.md
+// - noms et états métier en français, grammaire et technique en anglais ;
+// - tables et colonnes en snake_case singulier via @@map / @map ;
+// - identifiants uuid (gen_random_uuid()), horodatages en timestamptz(3) ;
+// - dates d'événement métier : date_<nom> ; auteur d'un événement : auteur_<nom>_id.
+//
+// Ce que Prisma ne sait pas exprimer (RLS, CHECK, index partiels, verrou après
+// signature, droits du rôle applicatif) est dans la migration SQL
+// `..._rls_et_contraintes`. Lire docs/donnees.md avant de toucher au schéma.
 
 generator client {
   provider = "prisma-client"
@@ -10,26 +21,77 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. Identité, comptes, sessions, habilitations
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Realm Keycloak d'origine du compte. Une même personne agent et bénéficiaire
+/// a deux comptes : c'est voulu (cloisonnement usagers / professionnels).
+enum Realm {
+  ETAPE     @map("etape")
+  ETAPE_PRO @map("etape-pro")
+
+  @@map("realm")
+}
+
+/// Rôles organisationnels, attribués en base (option C). La définition des
+/// droits vit dans le code (matrice testée en CI) : pas de table permission.
+enum Role {
+  SALARIE_TP
+  ADMIN_TP
+  SUPER_ADMIN
+  MEMBRE_COMMISSION
+
+  @@map("role")
+}
+
+/// Projection du compte Keycloak. Keycloak fait foi ; la ligne est rafraîchie
+/// à chaque connexion (docs/donnees.md). Aucune donnée saisie par la personne
+/// ici : un claim absent efface la valeur.
 model Account {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
+  realm       Realm  @default(ETAPE)
+  /// Unique tous realms confondus : les sub Keycloak sont des UUID. Garder
+  /// l'unicité simple évite de casser l'upsert `on conflict (keycloak_sub)`.
   keycloakSub String @unique @map("keycloak_sub")
 
   email  String?
   prenom String?
   nom    String?
 
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-
-  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
-
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
   lastLoginAt DateTime @default(now()) @map("last_login_at") @db.Timestamptz(3)
 
   firstLoginIdentityProvider String @map("first_login_identity_provider")
+  lastLoginIdentityProvider  String @map("last_login_identity_provider")
 
-  lastLoginIdentityProvider String @map("last_login_identity_provider")
+  /// Miroir de la désactivation Keycloak, pour la revue des habilitations et l'audit.
+  disabledAt DateTime? @map("disabled_at") @db.Timestamptz(3)
 
   sessions Session[]
+
+  beneficiaire Beneficiaire?
+
+  // Relations inverses (exigées par Prisma), nommées « <entité>As<rôle> ».
+  roleAttributions                    RoleAttribution[] @relation("role_attribution_account")
+  roleAttributionsAsAuteurAttribution RoleAttribution[] @relation("role_attribution_auteur_attribution")
+  roleAttributionsAsAuteurRetrait     RoleAttribution[] @relation("role_attribution_auteur_retrait")
+
+  invitationsAsAuteur Invitation[] @relation("invitation_auteur")
+  usedInvitations     Invitation[] @relation("invitation_account")
+
+  historiqueStatuts                     HistoriqueStatut[]
+  pieces                                PieceJustificative[] @relation("piece_deposant")
+  piecesAsInstructeur                   PieceJustificative[] @relation("piece_instructeur")
+  signatures                            Signature[]
+  messages                              Message[]
+  notesInternes                         NoteInterne[]
+  commissionMembres                     CommissionMembre[]   @relation("commission_membre_account")
+  commissionMembresAsAuteurDesignation  CommissionMembre[]   @relation("commission_membre_auteur_designation")
+  commissionDossiersAsAuteurAttribution CommissionDossier[]
+  decisionsAsAuteur                     Decision[]
 
   @@map("account")
 }
@@ -40,16 +102,777 @@ model Session {
   accountId String  @map("account_id") @db.Uuid
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
+  realm            Realm  @default(ETAPE)
   identityProvider String @map("identity_provider")
 
-  claims Json
+  /// `sid` Keycloak, pour le backchannel logout.
+  keycloakSid String? @map("keycloak_sid")
 
+  /// Identité à afficher seulement. Jamais de rôle ni de région ici : ils sont en base.
+  claims  Json
   idToken String @map("id_token")
 
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz(3)
+  /// Mise à jour au plus une fois par minute par le SessionGuard (inactivité).
+  lastActivityAt DateTime @default(now()) @map("last_activity_at") @db.Timestamptz(3)
 
   @@index([expiresAt])
   @@index([accountId])
+  @@index([keycloakSid])
   @@map("session")
+}
+
+/// Attribution d'un rôle à un compte, sur une région (null pour SUPER_ADMIN).
+/// Jamais supprimée : un retrait renseigne date_retrait (revue des habilitations).
+/// Plusieurs lignes actives = agent multi-régions (hypothèse H2).
+model RoleAttribution {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  accountId String  @map("account_id") @db.Uuid
+  account   Account @relation("role_attribution_account", fields: [accountId], references: [id], onDelete: Restrict)
+
+  role     Role
+  regionId String? @map("region_id") @db.Uuid
+  region   Region? @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  /// null uniquement pour l'amorçage (script de seed du premier SUPER_ADMIN).
+  auteurAttributionId String?  @map("auteur_attribution_id") @db.Uuid
+  auteurAttribution   Account? @relation("role_attribution_auteur_attribution", fields: [auteurAttributionId], references: [id], onDelete: Restrict)
+  dateAttribution     DateTime @default(now()) @map("date_attribution") @db.Timestamptz(3)
+
+  auteurRetraitId String?   @map("auteur_retrait_id") @db.Uuid
+  auteurRetrait   Account?  @relation("role_attribution_auteur_retrait", fields: [auteurRetraitId], references: [id], onDelete: Restrict)
+  dateRetrait     DateTime? @map("date_retrait") @db.Timestamptz(3)
+  motifRetrait    String?   @map("motif_retrait")
+
+  // Index partiel « attributions actives » dans la migration SQL.
+  @@index([regionId, role])
+  @@map("role_attribution")
+}
+
+/// Invitation d'un agent. Le lien lui-même est émis par Keycloak
+/// (execute-actions-email) ou remplacé par la première connexion ProConnect :
+/// ETAPE ne stocke donc aucun secret ici. Rattachée au compte à la première
+/// connexion, par email vérifié.
+model Invitation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  /// Toujours en minuscules (contrainte CHECK).
+  email    String
+  role     Role
+  regionId String? @map("region_id") @db.Uuid
+  region   Region? @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  auteurId String  @map("auteur_id") @db.Uuid
+  auteur   Account @relation("invitation_auteur", fields: [auteurId], references: [id], onDelete: Restrict)
+
+  /// Compte rattaché à l'utilisation.
+  accountId String?  @map("account_id") @db.Uuid
+  account   Account? @relation("invitation_account", fields: [accountId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  // Unicité « une invitation en attente par email, rôle, région » dans la migration SQL.
+  @@map("invitation")
+}
+
+/// Journal des événements sensibles, append-only (le rôle applicatif n'a ni
+/// UPDATE ni DELETE). Aucune clé étrangère, volontairement : le journal a sa
+/// propre durée de conservation et doit survivre à la purge d'un dossier ou
+/// à l'effacement d'un compte. Jamais de contenu de dossier dans `details`.
+model JournalSecurite {
+  id BigInt @id @default(autoincrement())
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  /// Code d'événement : `connexion`, `invitation.creation`, `role.attribution`,
+  /// `role.retrait`, `compte.desactivation`, `mfa.reinitialisation`,
+  /// `dossier.consultation`, `lien_cep.ouverture`… (liste fermée dans le code).
+  evenement String
+
+  /// Acteur : un compte, ou un email pour le conseiller CEP (sans compte).
+  accountId   String? @map("account_id") @db.Uuid
+  acteurEmail String? @map("acteur_email")
+
+  /// Périmètre, pour filtrer par région et relire l'activité d'un dossier.
+  regionId  String? @map("region_id") @db.Uuid
+  dossierId String? @map("dossier_id") @db.Uuid
+
+  /// Objet de l'action quand ce n'est pas le dossier (compte, rôle, commission…).
+  cibleType String? @map("cible_type")
+  cibleId   String? @map("cible_id") @db.Uuid
+
+  details       Json?
+  ip            String? @db.Inet
+  userAgent     String? @map("user_agent")
+  correlationId String? @map("correlation_id")
+
+  @@index([dossierId, createdAt])
+  @@index([accountId, createdAt])
+  @@index([regionId, createdAt])
+  @@index([createdAt])
+  @@map("journal_securite")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. Référentiels (seedés, versionnés dans le dépôt)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Dispositif {
+  DD
+
+  @@map("dispositif")
+}
+
+enum TypeOperateurCep {
+  AVENIR_ACTIFS
+  APEC
+  CAP_EMPLOI
+
+  @@map("type_operateur_cep")
+}
+
+/// Les 18 Transitions Pro. Référentiel public : pas de RLS.
+model Region {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  /// Code INSEE de la région.
+  code          String    @unique
+  nom           String
+  urlAtnet      String?   @map("url_atnet")
+  /// Codes des départements couverts.
+  departements  String[]
+  /// Date d'ouverture du dépôt DD dans ETAPE (cutover). null = dépôt sur AT-Net.
+  dateOuverture DateTime? @map("date_ouverture") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  dossiers         Dossier[]
+  commissions      Commission[]
+  operateursCep    OperateurCep[]
+  roleAttributions RoleAttribution[]
+  invitations      Invitation[]
+
+  @@map("region")
+}
+
+/// Référentiel des opérateurs CEP, administré par Transitions Pro.
+/// Attention : un volet CEP rattaché à Cap emploi laisse déduire une situation
+/// de handicap (donnée sensible, art. 9 RGPD).
+model OperateurCep {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  nom      String
+  type     TypeOperateurCep
+  /// null pour un opérateur national (APEC).
+  regionId String?          @map("region_id") @db.Uuid
+  region   Region?          @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  /// Domaines autorisés pour l'email du conseiller (contrôle serveur).
+  domainesEmail String[] @map("domaines_email")
+  siret         String?  @db.Char(14)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  voletsCep VoletCep[]
+
+  @@index([regionId])
+  @@map("operateur_cep")
+}
+
+/// Liste des pièces attendues. Une ligne n'est jamais modifiée : une évolution
+/// crée une nouvelle version, l'ancienne reçoit date_fin_validite.
+model TypePiece {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  code    String
+  version Int    @default(1)
+  libelle String
+
+  dispositif      Dispositif
+  /// null = toutes les natures de projet.
+  typeProjet      TypeProjet? @map("type_projet")
+  isObligatoire   Boolean     @map("is_obligatoire")
+  ordre           Int         @default(0)
+  dateFinValidite DateTime?   @map("date_fin_validite") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  pieces PieceJustificative[]
+
+  @@unique([code, version])
+  @@map("type_piece")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. Bénéficiaire (page « Profil »)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Civilite {
+  MADAME
+  MONSIEUR
+
+  @@map("civilite")
+}
+
+/// Profil du bénéficiaire, saisi par lui (page « Profil »). Clé = account_id :
+/// dossier.beneficiaire_id vaut donc l'id du compte, et la policy « propriétaire »
+/// n'a besoin d'aucune jointure. Lisible par son seul propriétaire (RLS) : les
+/// agents lisent la copie figée dans le dossier (identite_beneficiaire).
+/// Pas de NIR ici (minimisation) : il n'est demandé que dans le dossier.
+model Beneficiaire {
+  accountId String  @id @map("account_id") @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  civilite      Civilite?
+  nom           String?
+  prenom        String?
+  dateNaissance DateTime? @map("date_naissance") @db.Date
+  /// Code pays ISO 3166-1 alpha-2 (hypothèse H9).
+  nationalite   String?
+
+  numeroVoie        String? @map("numero_voie")
+  nomVoie           String? @map("nom_voie")
+  complementAdresse String? @map("complement_adresse")
+  codePostal        String? @map("code_postal")
+  commune           String?
+  /// Code INSEE de la commune (géocodage IGN), pour calculer la région de résidence.
+  codeCommune       String? @map("code_commune")
+
+  telephone String?
+  email     String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  dossiers Dossier[]
+
+  @@map("beneficiaire")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. Dossier et ses sections (ticket « formulaire création / reprise »)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Proposition de travail : le cycle de vie fait l'objet d'un ticket dédié.
+enum StatutDossier {
+  BROUILLON
+  EN_ATTENTE_CEP
+  SIGNE
+  SOUMIS
+  EN_CONTROLE
+  EN_ATTENTE_COMPLEMENT
+  CONTROLE
+  ATTRIBUE_COMMISSION
+  DECIDE
+  CLOTURE
+  IRRECEVABLE
+  DESISTE
+
+  @@map("statut_dossier")
+}
+
+/// Nature du projet, qui détermine le formulaire officiel (et le modèle PDF).
+/// L'onglet « Mon projet d'entreprise » choisit entre CREATION_ENTREPRISE et
+/// REPRISE_ENTREPRISE ; FORMATION relève de l'autre formulaire DD.
+enum TypeProjet {
+  FORMATION
+  CREATION_ENTREPRISE
+  REPRISE_ENTREPRISE
+
+  @@map("type_projet")
+}
+
+model Dossier {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  /// Référence lisible attribuée au dépôt (ex. DD-93-2026-000123).
+  numero String? @unique
+
+  beneficiaireId String       @map("beneficiaire_id") @db.Uuid
+  beneficiaire   Beneficiaire @relation(fields: [beneficiaireId], references: [accountId], onDelete: Restrict)
+
+  /// Région compétente, obligatoire dès le brouillon : clé de la RLS.
+  regionId String @map("region_id") @db.Uuid
+  region   Region @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  dispositif Dispositif  @default(DD)
+  typeProjet TypeProjet? @map("type_projet")
+
+  statut StatutDossier @default(BROUILLON)
+
+  dateSignature DateTime? @map("date_signature") @db.Timestamptz(3)
+  dateDepot     DateTime? @map("date_depot") @db.Timestamptz(3)
+  /// Point de départ des durées de conservation RGPD.
+  dateCloture   DateTime? @map("date_cloture") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  voletCep                 VoletCep?
+  identiteBeneficiaire     IdentiteBeneficiaire?
+  situationProfessionnelle SituationProfessionnelle?
+  projetEntreprise         ProjetEntreprise?
+
+  historiqueStatuts  HistoriqueStatut[]
+  pieces             PieceJustificative[]
+  liensCep           LienCep[]
+  signatures         Signature[]
+  messages           Message[]
+  notesInternes      NoteInterne[]
+  commissionDossiers CommissionDossier[]
+  decision           Decision?
+
+  // Unicité « un seul dossier en cours par bénéficiaire et dispositif » dans la migration SQL.
+  @@index([regionId, statut])
+  @@index([beneficiaireId])
+  @@map("dossier")
+}
+
+model HistoriqueStatut {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  dossierId String  @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  previousStatut StatutDossier? @map("previous_statut")
+  statut         StatutDossier
+
+  /// null = transition système (tâche planifiée) ou conseiller CEP (sans compte).
+  accountId String?  @map("account_id") @db.Uuid
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  motif     String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([dossierId, createdAt])
+  @@map("historique_statut")
+}
+
+// ── Onglet « Mon CEP » ───────────────────────────────────────────────────────
+
+enum StatutVoletCep {
+  /// Saisi par le bénéficiaire, lien pas encore envoyé.
+  DECLARE
+  EN_ATTENTE_CONFIRMATION
+  CONFIRME
+  INFIRME
+  LEVE_PAR_INSTRUCTEUR
+
+  @@map("statut_volet_cep")
+}
+
+/// Volet CEP : saisi par le bénéficiaire, confirmé par le conseiller via un
+/// lien personnel de 24 h. La synthèse cosignée est une pièce justificative.
+model VoletCep {
+  dossierId String  @id @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  /// Rempli quand l'opérateur est choisi dans le référentiel ; les colonnes
+  /// operateur_* gardent ce qui a été saisi et imprimé sur le formulaire.
+  operateurCepId      String?       @map("operateur_cep_id") @db.Uuid
+  operateurCep        OperateurCep? @relation(fields: [operateurCepId], references: [id], onDelete: Restrict)
+  operateurNom        String?       @map("operateur_nom")
+  operateurCodePostal String?       @map("operateur_code_postal")
+  operateurCommune    String?       @map("operateur_commune")
+
+  conseillerNom       String? @map("conseiller_nom")
+  conseillerPrenom    String? @map("conseiller_prenom")
+  conseillerTelephone String? @map("conseiller_telephone")
+  conseillerEmail     String? @map("conseiller_email")
+
+  /// Date de saisine du CEP par le salarié : conditionne la recevabilité.
+  dateSaisine DateTime? @map("date_saisine") @db.Date
+
+  statut           StatutVoletCep @default(DECLARE)
+  dateConfirmation DateTime?      @map("date_confirmation") @db.Timestamptz(3)
+  commentaireCep   String?        @map("commentaire_cep")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([operateurCepId])
+  @@map("volet_cep")
+}
+
+/// Lien personnel du conseiller CEP (24 h, une seule page). Seule l'empreinte
+/// SHA-256 du secret est stockée. Un nouvel envoi révoque le lien précédent.
+model LienCep {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  dossierId String  @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  /// Adresse à laquelle le lien a été envoyé (preuve, l'email du volet peut changer).
+  email     String
+  tokenHash String @unique @map("token_hash")
+
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(3)
+  lastOpenedAt   DateTime? @map("last_opened_at") @db.Timestamptz(3)
+  ouvertureCount Int       @default(0) @map("ouverture_count")
+
+  @@index([dossierId])
+  @@map("lien_cep")
+}
+
+// ── Onglet « Mes informations » ──────────────────────────────────────────────
+
+/// Identité et coordonnées telles que déclarées dans CE dossier. Pré-remplie
+/// depuis le profil (beneficiaire), figée à la signature : c'est ce qui est
+/// imprimé sur le PDF et lu par l'instructeur.
+model IdentiteBeneficiaire {
+  dossierId String  @id @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  civilite      Civilite?
+  nom           String?
+  prenom        String?
+  dateNaissance DateTime? @map("date_naissance") @db.Date
+  nationalite   String?
+
+  /// NIR (13 caractères, 2A/2B pour la Corse) et sa clé, contrôlés par CHECK.
+  /// Donnée encadrée : jamais dans les journaux, jamais affichée hors instruction.
+  nir    String? @db.Char(13)
+  cleNir String? @map("cle_nir") @db.Char(2)
+
+  numeroVoie        String? @map("numero_voie")
+  nomVoie           String? @map("nom_voie")
+  complementAdresse String? @map("complement_adresse")
+  codePostal        String? @map("code_postal")
+  commune           String?
+  codeCommune       String? @map("code_commune")
+
+  telephone String?
+  email     String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("identite_beneficiaire")
+}
+
+// ── Onglet « Ma situation professionnelle » ──────────────────────────────────
+
+model SituationProfessionnelle {
+  dossierId String  @id @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  fonction              String?
+  secteurActivite       String? @map("secteur_activite")
+  employeurDenomination String? @map("employeur_denomination")
+  employeurSiret        String? @map("employeur_siret") @db.Char(14)
+
+  /// « Envisagez-vous une démission au titre de ce contrat de travail ? »
+  isDemissionEnvisagee Boolean?  @map("is_demission_envisagee")
+  /// Seulement si la démission est antérieure à la demande (CHECK : null si « Non »).
+  dateDemission        DateTime? @map("date_demission") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("situation_professionnelle")
+}
+
+// ── Onglet « Mon projet d'entreprise » ───────────────────────────────────────
+
+/// Le type de projet (création / reprise) est porté par dossier.type_projet.
+/// Textes libres en `text` ; longueurs maximales dans le contrat Zod.
+model ProjetEntreprise {
+  dossierId String  @id @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  // Présentation du projet
+  demarchesProjet     String? @map("demarches_projet")
+  motivations         String?
+  demarchesExperts    String? @map("demarches_experts")
+  descriptionActivite String? @map("description_activite")
+  offreServices       String? @map("offre_services")
+  /// Codes de liste validés par le contrat Zod (hypothèse H8).
+  typeActivite        String? @map("type_activite")
+  formeJuridique      String? @map("forme_juridique")
+  competences         String?
+
+  // Formation préalable (CHECK : intitulé null si « Non »)
+  hasFormationPrealable Boolean? @map("has_formation_prealable")
+  intituleFormation     String?  @map("intitule_formation")
+
+  // Marché
+  analyseMarche      String? @map("analyse_marche")
+  analyseClientele   String? @map("analyse_clientele")
+  analyseConcurrence String? @map("analyse_concurrence")
+
+  // Financement et viabilité financière
+  besoinsFinancement String? @map("besoins_financement")
+  aidesFinancieres   String? @map("aides_financieres")
+
+  // Moyens techniques et humains
+  moyensTechniques String? @map("moyens_techniques")
+  moyensHumains    String? @map("moyens_humains")
+  recrutement      String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("projet_entreprise")
+}
+
+// ── Pièces, signatures, échanges ─────────────────────────────────────────────
+
+enum StatutPiece {
+  DEPOSEE
+  VALIDEE
+  REFUSEE
+
+  @@map("statut_piece")
+}
+
+/// Fichier déposé (stockage objet S3 Cegedim). Un re-dépôt crée une nouvelle
+/// version, l'ancienne reste (historique de contrôle).
+model PieceJustificative {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  dossierId String  @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  typePieceId String    @map("type_piece_id") @db.Uuid
+  typePiece   TypePiece @relation(fields: [typePieceId], references: [id], onDelete: Restrict)
+  version     Int       @default(1)
+
+  /// Déposant : le bénéficiaire (ou un agent pour une pièce ajoutée à l'instruction).
+  accountId String  @map("account_id") @db.Uuid
+  account   Account @relation("piece_deposant", fields: [accountId], references: [id], onDelete: Restrict)
+
+  storageKey String @map("storage_key")
+  filename   String
+  mimeType   String @map("mime_type")
+  size       Int
+  sha256     String @db.Char(64)
+
+  statut        StatutPiece @default(DEPOSEE)
+  motifRefus    String?     @map("motif_refus")
+  instructeurId String?     @map("instructeur_id") @db.Uuid
+  instructeur   Account?    @relation("piece_instructeur", fields: [instructeurId], references: [id], onDelete: Restrict)
+  dateControle  DateTime?   @map("date_controle") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([dossierId, typePieceId, version])
+  @@map("piece_justificative")
+}
+
+enum Signataire {
+  BENEFICIAIRE
+  CONSEILLER_CEP
+  PRESIDENT
+  VICE_PRESIDENT
+
+  @@map("signataire")
+}
+
+/// Preuve d'une signature ou d'une confirmation : qui, quand, sur quelle
+/// empreinte de document. Jamais modifiée.
+model Signature {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  dossierId String  @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  signataire Signataire
+  /// null pour le conseiller CEP (sans compte) : l'email fait foi.
+  accountId  String?    @map("account_id") @db.Uuid
+  account    Account?   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  email      String?
+
+  /// Renseigné pour la signature d'une décision (président, vice-président).
+  decisionId String?   @map("decision_id") @db.Uuid
+  decision   Decision? @relation(fields: [decisionId], references: [id], onDelete: Restrict)
+
+  documentSha256 String   @map("document_sha256") @db.Char(64)
+  dateSignature  DateTime @default(now()) @map("date_signature") @db.Timestamptz(3)
+  ip             String?  @db.Inet
+  userAgent      String?  @map("user_agent")
+
+  @@index([dossierId])
+  @@map("signature")
+}
+
+/// Échanges instructeur ↔ bénéficiaire sur un dossier.
+model Message {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  dossierId String  @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  accountId String  @map("account_id") @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  contenu   String
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  readAt    DateTime? @map("read_at") @db.Timestamptz(3)
+
+  @@index([dossierId, createdAt])
+  @@map("message")
+}
+
+/// Notes des agents. Invisibles du bénéficiaire, y compris en base (RLS).
+model NoteInterne {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  dossierId String  @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  accountId String  @map("account_id") @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  contenu   String
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([dossierId, createdAt])
+  @@map("note_interne")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Commission
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum StatutCommission {
+  OUVERTE
+  EN_SEANCE
+  CLOTUREE
+
+  @@map("statut_commission")
+}
+
+/// ANIMATEUR et VICE_ANIMATEUR : rôle exact à clarifier (question ouverte n° 1).
+enum FonctionCommission {
+  PRESIDENT
+  VICE_PRESIDENT
+  COMMISSAIRE
+  ANIMATEUR
+  VICE_ANIMATEUR
+  MEMBRE
+
+  @@map("fonction_commission")
+}
+
+enum SensDecision {
+  ACCORD
+  REFUS
+
+  @@map("sens_decision")
+}
+
+model Commission {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  regionId String @map("region_id") @db.Uuid
+  region   Region @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  libelle        String?
+  /// Date et heure de la séance.
+  dateCommission DateTime         @map("date_commission") @db.Timestamptz(3)
+  statut         StatutCommission @default(OUVERTE)
+  dateCloture    DateTime?        @map("date_cloture") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  membres   CommissionMembre[]
+  dossiers  CommissionDossier[]
+  decisions Decision[]
+
+  @@index([regionId, dateCommission])
+  @@map("commission")
+}
+
+/// Fonction d'un compte dans UNE commission. On peut être président de l'une
+/// et simple membre de la suivante.
+model CommissionMembre {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  commissionId String     @map("commission_id") @db.Uuid
+  commission   Commission @relation(fields: [commissionId], references: [id], onDelete: Restrict)
+
+  accountId String  @map("account_id") @db.Uuid
+  account   Account @relation("commission_membre_account", fields: [accountId], references: [id], onDelete: Restrict)
+
+  fonction FonctionCommission
+
+  auteurDesignationId String    @map("auteur_designation_id") @db.Uuid
+  auteurDesignation   Account   @relation("commission_membre_auteur_designation", fields: [auteurDesignationId], references: [id], onDelete: Restrict)
+  dateDesignation     DateTime  @default(now()) @map("date_designation") @db.Timestamptz(3)
+  dateRetrait         DateTime? @map("date_retrait") @db.Timestamptz(3)
+
+  @@unique([commissionId, accountId])
+  @@index([accountId])
+  @@map("commission_membre")
+}
+
+/// Passage d'un dossier en commission. Un report renseigne date_retrait ; le
+/// dossier est alors attribué à une autre commission (nouvelle ligne).
+model CommissionDossier {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  commissionId String     @map("commission_id") @db.Uuid
+  commission   Commission @relation(fields: [commissionId], references: [id], onDelete: Restrict)
+
+  dossierId String  @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  ordrePassage  Int?    @map("ordre_passage")
+  /// Ce que voient les membres (minimisation : pas les pièces).
+  ficheSynthese String? @map("fiche_synthese")
+
+  auteurAttributionId String    @map("auteur_attribution_id") @db.Uuid
+  auteurAttribution   Account   @relation(fields: [auteurAttributionId], references: [id], onDelete: Restrict)
+  dateAttribution     DateTime  @default(now()) @map("date_attribution") @db.Timestamptz(3)
+  dateRetrait         DateTime? @map("date_retrait") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  // Unicité « une attribution active par dossier » dans la migration SQL.
+  @@index([commissionId])
+  @@index([dossierId])
+  @@map("commission_dossier")
+}
+
+model Decision {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  dossierId String  @unique @map("dossier_id") @db.Uuid
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  commissionId String     @map("commission_id") @db.Uuid
+  commission   Commission @relation(fields: [commissionId], references: [id], onDelete: Restrict)
+
+  sens  SensDecision
+  motif String?
+
+  /// Qui l'enregistre (commissaire ou animateur : question ouverte n° 1).
+  auteurId String  @map("auteur_id") @db.Uuid
+  auteur   Account @relation(fields: [auteurId], references: [id], onDelete: Restrict)
+
+  dateDecision     DateTime  @default(now()) @map("date_decision") @db.Timestamptz(3)
+  dateNotification DateTime? @map("date_notification") @db.Timestamptz(3)
+
+  documentStorageKey String? @map("document_storage_key")
+  documentSha256     String? @map("document_sha256") @db.Char(64)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  signatures Signature[]
+
+  @@index([commissionId])
+  @@map("decision")
 }
