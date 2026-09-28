@@ -29,9 +29,37 @@ model Account {
 
   lastLoginIdentityProvider String @map("last_login_identity_provider")
 
-  sessions Session[]
+  sessions      Session[]
+  habilitations Habilitation[]
 
   @@map("account")
+}
+
+enum Role {
+  INSTRUCTEUR
+  ADMIN
+  SUPER_ADMIN
+
+  @@map("role")
+}
+
+model Habilitation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  accountId String  @map("account_id") @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  role Role
+
+  /// Portée régionale de l'habilitation. Absente pour SUPER_ADMIN (portée nationale).
+  regionId String? @map("region_id")
+
+  dateAttribution DateTime  @default(now()) @map("date_attribution") @db.Timestamptz(3)
+  dateRevocation  DateTime? @map("date_revocation") @db.Timestamptz(3)
+
+  @@index([accountId])
+  @@index([role, regionId])
+  @@map("habilitation")
 }
 
 model Session {
