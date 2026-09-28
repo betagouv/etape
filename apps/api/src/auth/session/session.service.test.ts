@@ -30,6 +30,12 @@ class FakeSessionStore implements SessionStore {
   async deleteSession(id: string): Promise<void> {
     this.sessions.delete(id);
   }
+
+  async deleteSessionsByAccountId(accountId: string): Promise<void> {
+    for (const [id, session] of this.sessions) {
+      if (session.accountId === accountId) this.sessions.delete(id);
+    }
+  }
 }
 
 class FakeResponse {

@@ -7,8 +7,8 @@ A_BRUNO=00000000-0000-0000-0000-00000000b0b1
 A_AGENT_PACA=00000000-0000-0000-0000-00000000a9e1
 A_AGENT_NA=00000000-0000-0000-0000-00000000a9e2
 A_SUPER=00000000-0000-0000-0000-00000000ad01
-R_PACA=00000000-0000-0000-0000-0000000000a1
-R_NA=00000000-0000-0000-0000-0000000000a2
+R_PACA=93
+R_NA=75
 D_A=00000000-0000-0000-0000-0000000d0a01
 D_B=00000000-0000-0000-0000-0000000d0b01
 pass=0; fail=0
@@ -46,7 +46,7 @@ check "agent PACA : dossiers PACA seulement"      "$D_A" $A_AGENT_PACA "{$R_PACA
 check "agent multi-régions : les deux"            2 $A_AGENT_PACA "{$R_PACA,$R_NA}" "" "SELECT count(*) FROM dossier"
 check "agent : pas de lecture des profils"        0 $A_AGENT_PACA "{$R_PACA}" "" "SELECT count(*) FROM beneficiaire"
 check "super admin sans région : aucun dossier"   0 $A_SUPER "" "" "SELECT count(*) FROM dossier"
-check "super admin : lit les attributions (pas de RLS)" 3 $A_SUPER "" "" "SELECT count(*) FROM role_attribution"
+check "super admin : lit les habilitations (pas de RLS)" 3 $A_SUPER "" "" "SELECT count(*) FROM habilitation"
 
 echo "Sections et niveaux de visibilité"
 check "Alice lit sa situation professionnelle"    1 $A_ALICE "" "" "SELECT count(*) FROM situation_professionnelle"
@@ -84,9 +84,9 @@ check "intitulé de formation sans « Oui » refusé" "ERR:intitule_formation_ch
 check "NIR Corse (2A) accepté"                    "UPDATE 1" $A_ALICE "" "" "UPDATE identite_beneficiaire SET nir = '185072A012345' WHERE dossier_id = '$D_A'"
 check "NIR invalide refusé"                       "ERR:nir_check" $A_ALICE "" "" "UPDATE identite_beneficiaire SET nir = '9850713012345' WHERE dossier_id = '$D_A'"
 check "second dossier DD en cours refusé"         "ERR:dossier_en_cours_key" $A_ALICE "" "" "INSERT INTO dossier (beneficiaire_id, region_id, updated_at) VALUES ('$A_ALICE', '$R_PACA', now())"
-check "auto-attribution d'un rôle refusée"        "ERR:auto_attribution_check" $A_SUPER "" "" "INSERT INTO role_attribution (account_id, role, region_id, auteur_attribution_id) VALUES ('$A_AGENT_PACA', 'ADMIN_TP', '$R_PACA', '$A_AGENT_PACA')"
-check "SUPER_ADMIN avec région refusé"            "ERR:role_attribution_region_check" $A_SUPER "" "" "INSERT INTO role_attribution (account_id, role, region_id, auteur_attribution_id) VALUES ('$A_AGENT_NA', 'SUPER_ADMIN', '$R_NA', '$A_SUPER')"
-check "rôle déjà actif refusé"                    "ERR:role_attribution_active_key" $A_SUPER "" "" "INSERT INTO role_attribution (account_id, role, region_id, auteur_attribution_id) VALUES ('$A_AGENT_PACA', 'SALARIE_TP', '$R_PACA', '$A_SUPER')"
+check "auto-attribution d'une habilitation refusée"        "ERR:auto_attribution_check" $A_SUPER "" "" "INSERT INTO habilitation (account_id, role, region_id, auteur_attribution_id) VALUES ('$A_AGENT_PACA', 'ADMIN', '$R_PACA', '$A_AGENT_PACA')"
+check "SUPER_ADMIN avec région refusé"            "ERR:habilitation_region_check" $A_SUPER "" "" "INSERT INTO habilitation (account_id, role, region_id, auteur_attribution_id) VALUES ('$A_AGENT_NA', 'SUPER_ADMIN', '$R_NA', '$A_SUPER')"
+check "habilitation déjà active refusée"                    "ERR:habilitation_active_key" $A_SUPER "" "" "INSERT INTO habilitation (account_id, role, region_id, auteur_attribution_id) VALUES ('$A_AGENT_PACA', 'INSTRUCTEUR', '$R_PACA', '$A_SUPER')"
 
 echo "Verrou après signature"
 LOCK="UPDATE dossier SET statut = 'SIGNE', date_signature = now() WHERE id = '$D_A'"

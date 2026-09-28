@@ -19,10 +19,10 @@ CREATE FUNCTION app_account_id() RETURNS uuid
   LANGUAGE sql STABLE PARALLEL SAFE
   AS $$ SELECT nullif(current_setting('app.account_id', true), '')::uuid $$;
 
--- Régions des attributions actives du compte, format tableau : '{uuid,uuid}'.
-CREATE FUNCTION app_region_ids() RETURNS uuid[]
+-- Régions des habilitations actives du compte (codes INSEE), format tableau : '{93,75}'.
+CREATE FUNCTION app_region_ids() RETURNS text[]
   LANGUAGE sql STABLE PARALLEL SAFE
-  AS $$ SELECT coalesce(nullif(current_setting('app.region_ids', true), '')::uuid[], '{}'::uuid[]) $$;
+  AS $$ SELECT coalesce(nullif(current_setting('app.region_ids', true), '')::text[], '{}'::text[]) $$;
 
 -- Dossier ouvert par un lien CEP valide (conseiller sans compte).
 CREATE FUNCTION app_cep_dossier_id() RETURNS uuid
@@ -34,7 +34,7 @@ CREATE FUNCTION app_cep_dossier_id() RETURNS uuid
 -- ═════════════════════════════════════════════════════════════════════════════
 --
 -- Sans RLS, volontairement :
--- - account, session, role_attribution, invitation, lien_cep : lues pour
+-- - account, session, habilitation, invitation, lien_cep : lues pour
 --   ÉTABLIR le contexte (qui est connecté, quels rôles, quel lien) ; protégées
 --   par l'API et les droits du rôle ;
 -- - region, operateur_cep, type_piece : référentiels publics.
@@ -135,11 +135,13 @@ CREATE POLICY journal_securite_select ON journal_securite
 -- Un format invalide n'est jamais enregistré : la sauvegarde automatique
 -- n'envoie que les champs valides (le front garde la saisie en cours).
 
-ALTER TABLE role_attribution
-  ADD CONSTRAINT role_attribution_region_check
+ALTER TABLE habilitation
+  ADD CONSTRAINT habilitation_region_check
     CHECK ((role = 'SUPER_ADMIN') = (region_id IS NULL)),
-  ADD CONSTRAINT role_attribution_auto_attribution_check
-    CHECK (auteur_attribution_id IS DISTINCT FROM account_id);
+  ADD CONSTRAINT habilitation_auto_attribution_check
+    CHECK (auteur_attribution_id IS DISTINCT FROM account_id),
+  ADD CONSTRAINT habilitation_revocation_check
+    CHECK (date_revocation IS NOT NULL OR (auteur_revocation_id IS NULL AND motif_revocation IS NULL));
 
 ALTER TABLE invitation
   ADD CONSTRAINT invitation_email_check CHECK (email = lower(email)),
@@ -198,11 +200,11 @@ ALTER TABLE decision
 -- 4. Index partiels (unicités métier et contrôles d'accès)
 -- ═════════════════════════════════════════════════════════════════════════════
 
--- Attributions actives : lues à chaque requête pour construire l'acteur.
+-- Habilitations actives : lues à chaque requête pour construire l'acteur.
 -- NULLS NOT DISTINCT : un seul SUPER_ADMIN actif par compte malgré region_id null.
-CREATE UNIQUE INDEX role_attribution_active_key
-  ON role_attribution (account_id, role, region_id) NULLS NOT DISTINCT
-  WHERE date_retrait IS NULL;
+CREATE UNIQUE INDEX habilitation_active_key
+  ON habilitation (account_id, role, region_id) NULLS NOT DISTINCT
+  WHERE date_revocation IS NULL;
 
 -- Une invitation en attente par email, rôle et région (réinviter = révoquer l'ancienne).
 CREATE UNIQUE INDEX invitation_en_attente_key

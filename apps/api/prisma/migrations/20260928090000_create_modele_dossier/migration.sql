@@ -2,7 +2,7 @@
 CREATE TYPE "realm" AS ENUM ('etape', 'etape-pro');
 
 -- CreateEnum
-CREATE TYPE "role" AS ENUM ('SALARIE_TP', 'ADMIN_TP', 'SUPER_ADMIN', 'MEMBRE_COMMISSION');
+CREATE TYPE "role" AS ENUM ('INSTRUCTEUR', 'ADMIN', 'SUPER_ADMIN', 'MEMBRE_COMMISSION');
 
 -- CreateEnum
 CREATE TYPE "dispositif" AS ENUM ('DD');
@@ -47,18 +47,18 @@ ADD COLUMN     "last_activity_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMEST
 ADD COLUMN     "realm" "realm" NOT NULL DEFAULT 'etape';
 
 -- CreateTable
-CREATE TABLE "role_attribution" (
+CREATE TABLE "habilitation" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "account_id" UUID NOT NULL,
     "role" "role" NOT NULL,
-    "region_id" UUID,
+    "region_id" TEXT,
     "auteur_attribution_id" UUID,
     "date_attribution" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "auteur_retrait_id" UUID,
-    "date_retrait" TIMESTAMPTZ(3),
-    "motif_retrait" TEXT,
+    "auteur_revocation_id" UUID,
+    "date_revocation" TIMESTAMPTZ(3),
+    "motif_revocation" TEXT,
 
-    CONSTRAINT "role_attribution_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "habilitation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -66,7 +66,7 @@ CREATE TABLE "invitation" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "email" TEXT NOT NULL,
     "role" "role" NOT NULL,
-    "region_id" UUID,
+    "region_id" TEXT,
     "auteur_id" UUID NOT NULL,
     "account_id" UUID,
     "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -84,7 +84,7 @@ CREATE TABLE "journal_securite" (
     "evenement" TEXT NOT NULL,
     "account_id" UUID,
     "acteur_email" TEXT,
-    "region_id" UUID,
+    "region_id" TEXT,
     "dossier_id" UUID,
     "cible_type" TEXT,
     "cible_id" UUID,
@@ -98,11 +98,12 @@ CREATE TABLE "journal_securite" (
 
 -- CreateTable
 CREATE TABLE "region" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "code" TEXT NOT NULL,
+    "id" TEXT NOT NULL,
     "nom" TEXT NOT NULL,
+    "url_transitions_pro" TEXT,
     "url_atnet" TEXT,
     "departements" TEXT[],
+    "is_pilote" BOOLEAN NOT NULL DEFAULT false,
     "date_ouverture" DATE,
     "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(3) NOT NULL,
@@ -115,7 +116,7 @@ CREATE TABLE "operateur_cep" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "nom" TEXT NOT NULL,
     "type" "type_operateur_cep" NOT NULL,
-    "region_id" UUID,
+    "region_id" TEXT,
     "domaines_email" TEXT[],
     "siret" CHAR(14),
     "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -167,7 +168,7 @@ CREATE TABLE "dossier" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "numero" TEXT,
     "beneficiaire_id" UUID NOT NULL,
-    "region_id" UUID NOT NULL,
+    "region_id" TEXT NOT NULL,
     "dispositif" "dispositif" NOT NULL DEFAULT 'DD',
     "type_projet" "type_projet",
     "statut" "statut_dossier" NOT NULL DEFAULT 'BROUILLON',
@@ -360,7 +361,7 @@ CREATE TABLE "note_interne" (
 -- CreateTable
 CREATE TABLE "commission" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "region_id" UUID NOT NULL,
+    "region_id" TEXT NOT NULL,
     "libelle" TEXT,
     "date_commission" TIMESTAMPTZ(3) NOT NULL,
     "statut" "statut_commission" NOT NULL DEFAULT 'OUVERTE',
@@ -418,7 +419,7 @@ CREATE TABLE "decision" (
 );
 
 -- CreateIndex
-CREATE INDEX "role_attribution_region_id_role_idx" ON "role_attribution"("region_id", "role");
+CREATE INDEX "habilitation_role_region_id_idx" ON "habilitation"("role", "region_id");
 
 -- CreateIndex
 CREATE INDEX "journal_securite_dossier_id_created_at_idx" ON "journal_securite"("dossier_id", "created_at");
@@ -431,9 +432,6 @@ CREATE INDEX "journal_securite_region_id_created_at_idx" ON "journal_securite"("
 
 -- CreateIndex
 CREATE INDEX "journal_securite_created_at_idx" ON "journal_securite"("created_at");
-
--- CreateIndex
-CREATE UNIQUE INDEX "region_code_key" ON "region"("code");
 
 -- CreateIndex
 CREATE INDEX "operateur_cep_region_id_idx" ON "operateur_cep"("region_id");
@@ -499,16 +497,16 @@ CREATE INDEX "decision_commission_id_idx" ON "decision"("commission_id");
 CREATE INDEX "session_keycloak_sid_idx" ON "session"("keycloak_sid");
 
 -- AddForeignKey
-ALTER TABLE "role_attribution" ADD CONSTRAINT "role_attribution_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "habilitation" ADD CONSTRAINT "habilitation_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "role_attribution" ADD CONSTRAINT "role_attribution_region_id_fkey" FOREIGN KEY ("region_id") REFERENCES "region"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "habilitation" ADD CONSTRAINT "habilitation_region_id_fkey" FOREIGN KEY ("region_id") REFERENCES "region"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "role_attribution" ADD CONSTRAINT "role_attribution_auteur_attribution_id_fkey" FOREIGN KEY ("auteur_attribution_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "habilitation" ADD CONSTRAINT "habilitation_auteur_attribution_id_fkey" FOREIGN KEY ("auteur_attribution_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "role_attribution" ADD CONSTRAINT "role_attribution_auteur_retrait_id_fkey" FOREIGN KEY ("auteur_retrait_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "habilitation" ADD CONSTRAINT "habilitation_auteur_revocation_id_fkey" FOREIGN KEY ("auteur_revocation_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "invitation" ADD CONSTRAINT "invitation_region_id_fkey" FOREIGN KEY ("region_id") REFERENCES "region"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

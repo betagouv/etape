@@ -34,11 +34,11 @@ enum Realm {
   @@map("realm")
 }
 
-/// Rôles organisationnels, attribués en base (option C). La définition des
-/// droits vit dans le code (matrice testée en CI) : pas de table permission.
+/// Rôles portés par une habilitation (option C). Ce qu'un rôle a le droit de
+/// faire vit dans le code (authorization/matrice-droits.ts), pas en base.
 enum Role {
-  SALARIE_TP
-  ADMIN_TP
+  INSTRUCTEUR
+  ADMIN
   SUPER_ADMIN
   MEMBRE_COMMISSION
 
@@ -75,9 +75,9 @@ model Account {
   beneficiaire Beneficiaire?
 
   // Relations inverses (exigées par Prisma), nommées « <entité>As<rôle> ».
-  roleAttributions                    RoleAttribution[] @relation("role_attribution_account")
-  roleAttributionsAsAuteurAttribution RoleAttribution[] @relation("role_attribution_auteur_attribution")
-  roleAttributionsAsAuteurRetrait     RoleAttribution[] @relation("role_attribution_auteur_retrait")
+  habilitations                    Habilitation[] @relation("habilitation_account")
+  habilitationsAsAuteurAttribution Habilitation[] @relation("habilitation_auteur_attribution")
+  habilitationsAsAuteurRevocation  Habilitation[] @relation("habilitation_auteur_revocation")
 
   invitationsAsAuteur Invitation[] @relation("invitation_auteur")
   usedInvitations     Invitation[] @relation("invitation_account")
@@ -123,32 +123,34 @@ model Session {
   @@map("session")
 }
 
-/// Attribution d'un rôle à un compte, sur une région (null pour SUPER_ADMIN).
-/// Jamais supprimée : un retrait renseigne date_retrait (revue des habilitations).
-/// Plusieurs lignes actives = agent multi-régions (hypothèse H2).
-model RoleAttribution {
+/// Habilitation : un compte a un rôle, sur une région (null pour SUPER_ADMIN),
+/// pour une période. Jamais supprimée : une révocation renseigne date_revocation
+/// (revue des habilitations). Plusieurs lignes actives = rôles cumulés ou
+/// agent multi-régions.
+model Habilitation {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
   accountId String  @map("account_id") @db.Uuid
-  account   Account @relation("role_attribution_account", fields: [accountId], references: [id], onDelete: Restrict)
+  account   Account @relation("habilitation_account", fields: [accountId], references: [id], onDelete: Restrict)
 
   role     Role
-  regionId String? @map("region_id") @db.Uuid
+  /// Code INSEE de la région ; null uniquement pour SUPER_ADMIN (CHECK).
+  regionId String? @map("region_id")
   region   Region? @relation(fields: [regionId], references: [id], onDelete: Restrict)
 
   /// null uniquement pour l'amorçage (script de seed du premier SUPER_ADMIN).
   auteurAttributionId String?  @map("auteur_attribution_id") @db.Uuid
-  auteurAttribution   Account? @relation("role_attribution_auteur_attribution", fields: [auteurAttributionId], references: [id], onDelete: Restrict)
+  auteurAttribution   Account? @relation("habilitation_auteur_attribution", fields: [auteurAttributionId], references: [id], onDelete: Restrict)
   dateAttribution     DateTime @default(now()) @map("date_attribution") @db.Timestamptz(3)
 
-  auteurRetraitId String?   @map("auteur_retrait_id") @db.Uuid
-  auteurRetrait   Account?  @relation("role_attribution_auteur_retrait", fields: [auteurRetraitId], references: [id], onDelete: Restrict)
-  dateRetrait     DateTime? @map("date_retrait") @db.Timestamptz(3)
-  motifRetrait    String?   @map("motif_retrait")
+  auteurRevocationId String?   @map("auteur_revocation_id") @db.Uuid
+  auteurRevocation   Account?  @relation("habilitation_auteur_revocation", fields: [auteurRevocationId], references: [id], onDelete: Restrict)
+  dateRevocation     DateTime? @map("date_revocation") @db.Timestamptz(3)
+  motifRevocation    String?   @map("motif_revocation")
 
-  // Index partiel « attributions actives » dans la migration SQL.
-  @@index([regionId, role])
-  @@map("role_attribution")
+  // Index partiel « habilitations actives » dans la migration SQL.
+  @@index([role, regionId])
+  @@map("habilitation")
 }
 
 /// Invitation d'un agent. Le lien lui-même est émis par Keycloak
@@ -161,7 +163,7 @@ model Invitation {
   /// Toujours en minuscules (contrainte CHECK).
   email    String
   role     Role
-  regionId String? @map("region_id") @db.Uuid
+  regionId String? @map("region_id")
   region   Region? @relation(fields: [regionId], references: [id], onDelete: Restrict)
 
   auteurId String  @map("auteur_id") @db.Uuid
@@ -189,8 +191,8 @@ model JournalSecurite {
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  /// Code d'événement : `connexion`, `invitation.creation`, `role.attribution`,
-  /// `role.retrait`, `compte.desactivation`, `mfa.reinitialisation`,
+  /// Code d'événement : `connexion`, `invitation.creation`, `habilitation.attribution`,
+  /// `habilitation.revocation`, `compte.desactivation`, `mfa.reinitialisation`,
   /// `dossier.consultation`, `lien_cep.ouverture`… (liste fermée dans le code).
   evenement String
 
@@ -199,7 +201,7 @@ model JournalSecurite {
   acteurEmail String? @map("acteur_email")
 
   /// Périmètre, pour filtrer par région et relire l'activité d'un dossier.
-  regionId  String? @map("region_id") @db.Uuid
+  regionId  String? @map("region_id")
   dossierId String? @map("dossier_id") @db.Uuid
 
   /// Objet de l'action quand ce n'est pas le dossier (compte, rôle, commission…).
@@ -237,26 +239,29 @@ enum TypeOperateurCep {
 }
 
 /// Les 18 Transitions Pro. Référentiel public : pas de RLS.
+/// La clé est le code INSEE de la région ('93' pour PACA) : lisible partout,
+/// y compris dans le contexte RLS et les journaux.
 model Region {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id String @id
 
-  /// Code INSEE de la région.
-  code          String    @unique
-  nom           String
-  urlAtnet      String?   @map("url_atnet")
+  nom               String
+  urlTransitionsPro String?  @map("url_transitions_pro")
+  urlAtnet          String?  @map("url_atnet")
   /// Codes des départements couverts.
-  departements  String[]
+  departements      String[]
+  /// Région pilote du MVP.
+  isPilote          Boolean  @default(false) @map("is_pilote")
   /// Date d'ouverture du dépôt DD dans ETAPE (cutover). null = dépôt sur AT-Net.
-  dateOuverture DateTime? @map("date_ouverture") @db.Date
+  dateOuverture     DateTime? @map("date_ouverture") @db.Date
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  dossiers         Dossier[]
-  commissions      Commission[]
-  operateursCep    OperateurCep[]
-  roleAttributions RoleAttribution[]
-  invitations      Invitation[]
+  dossiers      Dossier[]
+  commissions   Commission[]
+  operateursCep OperateurCep[]
+  habilitations Habilitation[]
+  invitations   Invitation[]
 
   @@map("region")
 }
@@ -270,7 +275,7 @@ model OperateurCep {
   nom      String
   type     TypeOperateurCep
   /// null pour un opérateur national (APEC).
-  regionId String?          @map("region_id") @db.Uuid
+  regionId String?          @map("region_id")
   region   Region?          @relation(fields: [regionId], references: [id], onDelete: Restrict)
 
   /// Domaines autorisés pour l'email du conseiller (contrôle serveur).
@@ -399,7 +404,7 @@ model Dossier {
   beneficiaire   Beneficiaire @relation(fields: [beneficiaireId], references: [accountId], onDelete: Restrict)
 
   /// Région compétente, obligatoire dès le brouillon : clé de la RLS.
-  regionId String @map("region_id") @db.Uuid
+  regionId String @map("region_id")
   region   Region @relation(fields: [regionId], references: [id], onDelete: Restrict)
 
   dispositif Dispositif  @default(DD)
@@ -775,7 +780,7 @@ enum SensDecision {
 model Commission {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  regionId String @map("region_id") @db.Uuid
+  regionId String @map("region_id")
   region   Region @relation(fields: [regionId], references: [id], onDelete: Restrict)
 
   libelle        String?
