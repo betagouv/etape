@@ -288,7 +288,7 @@ Le [document d'accessibilité](./accessibilite.md) fixe les règles ; il manquai
 
 **Mise en œuvre, validée en arbitrage** (voir [`outillage-agent.md`](./outillage-agent.md)) : **21 règles activées en erreur**, listées explicitement dans `packages/eslint-config/next.js`. `@axe-core/playwright` viendra avec Playwright, dont l'installation est différée (décision 8) ; pas de `vitest-axe` (0.1.0, projet immature).
 
-> **Le périmètre n'est pas tout le dépôt, et il faut le savoir.** Ces 21 règles vivent dans `nextConfig`, donc elles ne s'appliquent qu'à **`apps/site` et `apps/simulateur`**. `packages/ui` et `apps/keycloak-theme` utilisent `reactInternalConfig`, qui n'enregistre pas le plugin `jsx-a11y` — celui-ci n'arrive que par `eslint-config-next`. **Le design system et les écrans de connexion ne sont donc vérifiés par aucune de ces règles**, alors que ce sont des composants de formulaire. Même chose pour `exhaustive-deps`, laissé en avertissement par le preset de `react-hooks` dans ces deux workspaces.
+> **Le périmètre n'est pas tout le dépôt, et il faut le savoir.** Ces 21 règles vivent dans `nextConfig`, donc elles ne s'appliquent qu'à **`apps/site` et `apps/simulateur`**. `packages/ui`, `apps/keycloak-theme`, et depuis la décision 12 `apps/front-office` et `apps/back-office`, utilisent `reactInternalConfig`, qui n'enregistre pas le plugin `jsx-a11y` — celui-ci n'arrive que par `eslint-config-next`. **Le design system, les écrans de connexion et les deux apps Vite ne sont donc vérifiés par aucune de ces règles**, alors que ce sont (ou seront, pour front-office/back-office) des composants de formulaire. Même chose pour `exhaustive-deps`, laissé en avertissement par le preset de `react-hooks` dans ces workspaces.
 >
 > Étendre la couverture suppose de déclarer `eslint-plugin-jsx-a11y` en dépendance directe d'`@etape/eslint-config` — l'option que l'arbitrage a écartée en retenant la liste explicite. La question se repose donc, avec cette conséquence en main.
 
@@ -472,6 +472,6 @@ Les douze questions que portait ce document, et ce que l'équipe a répondu.
 1. **L'instance Sentry** : SaaS en région européenne ou `sentry.incubateur.net` (décision 11) — **issue #64**, qui pose la question à betagouv. Ce choix commande la décision 7 de [`architecture-api.md`](./architecture-api.md), qui suppose Sentry Logs.
 2. **Le porteur de l'installation de TanStack Query**, et la PR sur laquelle elle se fait.
 3. **Les mentions légales et la politique de confidentialité**, à aligner avant la mise en production de la mesure d'audience.
-4. **Le périmètre des règles `jsx-a11y`** : elles ne couvrent aujourd'hui que les deux apps Next, pas `packages/ui` ni `apps/keycloak-theme` (décision 7).
+4. **Le périmètre des règles `jsx-a11y`** : elles ne couvrent aujourd'hui que les deux apps Next, pas `packages/ui`, `apps/keycloak-theme`, ni — depuis la décision 12 — `apps/front-office` et `apps/back-office` (décision 7).
 
 Suites ouvertes par ailleurs : **#60** (purge planifiée), **#61** (repository d'`AccountService`), **#62** (premiers tests du front).
