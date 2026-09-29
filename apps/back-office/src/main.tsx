@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 
 import "./index.css";
 import { queryClient } from "./lib/query-client";
-import { router } from "./router";
+import { router } from "./navigation/router";
 
 const rootElement = document.getElementById("root");
 
