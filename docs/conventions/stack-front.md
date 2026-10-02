@@ -1,7 +1,7 @@
 # Stack front — ETAPE
 
 **Statut** : Décidé · **Décidé le** : 2026-09-22 · **Par** : l'équipe, en réunion d'arbitrage
-**Portée** : `apps/site`, `apps/simulateur`, `packages/ui`
+**Portée** : `apps/site`, `apps/simulateur`, `packages/ui` — étendue à `apps/front-office`, `apps/back-office`, `packages/api-client` et `packages/api-contract` par la décision 12 (28 septembre 2026, hors réunion d'arbitrage)
 
 Ce document valide les outils du front. La façon d'écrire le code relève de [`react.md`](./react.md), le nommage de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md).
 
@@ -288,7 +288,7 @@ Le [document d'accessibilité](./accessibilite.md) fixe les règles ; il manquai
 
 **Mise en œuvre, validée en arbitrage** (voir [`outillage-agent.md`](./outillage-agent.md)) : **21 règles activées en erreur**, listées explicitement dans `packages/eslint-config/next.js`. `@axe-core/playwright` viendra avec Playwright, dont l'installation est différée (décision 8) ; pas de `vitest-axe` (0.1.0, projet immature).
 
-> **Le périmètre n'est pas tout le dépôt, et il faut le savoir.** Ces 21 règles vivent dans `nextConfig`, donc elles ne s'appliquent qu'à **`apps/site` et `apps/simulateur`**. `packages/ui` et `apps/keycloak-theme` utilisent `reactInternalConfig`, qui n'enregistre pas le plugin `jsx-a11y` — celui-ci n'arrive que par `eslint-config-next`. **Le design system et les écrans de connexion ne sont donc vérifiés par aucune de ces règles**, alors que ce sont des composants de formulaire. Même chose pour `exhaustive-deps`, laissé en avertissement par le preset de `react-hooks` dans ces deux workspaces.
+> **Le périmètre n'est pas tout le dépôt, et il faut le savoir.** Ces 21 règles vivent dans `nextConfig`, donc elles ne s'appliquent qu'à **`apps/site` et `apps/simulateur`**. `packages/ui`, `apps/keycloak-theme`, et depuis la décision 12 `apps/front-office` et `apps/back-office`, utilisent `reactInternalConfig`, qui n'enregistre pas le plugin `jsx-a11y` — celui-ci n'arrive que par `eslint-config-next`. **Le design system, les écrans de connexion et les deux apps Vite ne sont donc vérifiés par aucune de ces règles**, alors que ce sont (ou seront, pour front-office/back-office) des composants de formulaire. Même chose pour `exhaustive-deps`, laissé en avertissement par le preset de `react-hooks` dans ces workspaces.
 >
 > Étendre la couverture suppose de déclarer `eslint-plugin-jsx-a11y` en dépendance directe d'`@etape/eslint-config` — l'option que l'arbitrage a écartée en retenant la liste explicite. La question se repose donc, avec cette conséquence en main.
 
@@ -430,6 +430,27 @@ Le SDK est tranché, **l'hébergement ne l'est pas** — la question est posée 
 
 **Ce point commande une autre décision, et c'est pour cela qu'il ne peut pas rester en suspens longtemps** : la décision 7 de [`architecture-api.md`](./architecture-api.md) retient **Sentry Logs** pour consulter les journaux. Rien n'établit à ce jour que l'instance de betagouv expose cette fonctionnalité. Si elle ne l'expose pas, c'est l'option Loki + Grafana qui redevient la réponse côté API — **à vérifier avant d'installer quoi que ce soit**.
 
+## Décision 12 — Front-office et back-office : deux apps Vite (ajout du 28 septembre 2026)
+
+**Hors du relevé d'arbitrage du 22 septembre.** Les onze décisions précédentes visaient `apps/site` et `apps/simulateur`, deux apps exportées statiquement. `apps/front-office` (bénéficiaires) et `apps/back-office` (métier) sont deux apps distinctes, ajoutées après cette réunion : ce sont des SPA authentifiées, destinées à tourner derrière Keycloak / FranceConnect (`apps/api`, PR #16), pas des pages à exporter au build. Cette différence de nature justifie un outillage différent sur deux points, détaillés ci-dessous ; le reste reprend les décisions déjà actées.
+
+| Brique                                    | Version        | Rôle                                                                                                     |
+| ----------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------- |
+| Vite                                      | 7.3.6          | Bundler, à la place de Next.js — ces deux apps ne sont pas exportées statiquement                        |
+| @vitejs/plugin-react, @tailwindcss/vite   | 5.2, 4.3.3     | Même pipeline Tailwind que `packages/ui` et `apps/keycloak-theme`, en plugin Vite                        |
+| react-hook-form, zod, @hookform/resolvers | 7.88, 4.6, 5.9 | Décisions 1 et 2, inchangées : mêmes versions que `packages/ui`                                          |
+| TanStack Query                            | 5.103          | Décision 3, inchangée dans ses principes (clés centralisées, aucune donnée serveur dans le store maison) |
+| **axios**, via `packages/api-client`      | 1.20           | **Nouveau** — voir ci-dessous                                                                            |
+| **@tanstack/react-router**, par code      | 1.170          | **Nouveau** — voir ci-dessous                                                                            |
+
+**Sur axios : une divergence assumée avec la décision 5.** `apps/site` et `apps/simulateur` appellent l'API via `callApi`, une fonction bâtie sur `fetch`. Pour `front-office` et `back-office`, la bibliothèque retenue est **axios**, portée par `packages/api-client` (`createHttpClient`, `createQueryClient`) pour ne pas dupliquer entre les deux apps la construction du client HTTP (`withCredentials`, cookie de session) et du client de requêtes. Les deux apps front ont donc, pour l'instant, deux façons différentes d'appeler l'API — assumé, pas encore réconcilié. Le traitement centralisé d'un 401 et l'émission du `correlationId` (décision 7 d'[`architecture-api.md`](./architecture-api.md)) sont en place dans `createHttpClient` — voir `packages/api-client/src/http-client.ts`.
+
+**`packages/api-contract` est recréé, vide.** Même structure que celle anticipée par la décision 5 (`RouteDefinition`, `RouteParams`/`Query`/`Body`/`Response`, `buildRoutePath`) : prête à recevoir des routes, mais aucune n'est déclarée tant qu'aucun écran ne consomme réellement l'API.
+
+**Navigation : TanStack Router, en configuration par code — pas de routage par fichiers.** Les deux apps n'avaient jusqu'ici qu'un seul écran ; TanStack Router est retenu pour la même raison qu'axios ci-dessus : ne pas réinventer ce que la bibliothèque fait déjà, et rester dans la même famille que TanStack Query déjà acté (décision 3). **Le routage par fichiers n'est délibérément pas retenu pour l'instant** : `@tanstack/router-plugin` génère `routeTree.gen.ts` au moment où Vite tourne, or le script `build` de ces apps est `tsc -b && vite build` — `tsc -b` s'exécute **avant** Vite et échouerait sur un clone neuf où ce fichier généré n'existe pas encore. La configuration par code (`createRootRoute`, `createRoute`, `createRouter`, dans `src/navigation/`) n'a pas ce problème : rien à générer, rien à exclure du lint ni du dépôt. À revoir si le nombre d'écrans rend la déclaration manuelle des routes pénible.
+
+**Ce qui reste à faire** : la vraie redirection Keycloak sur un 401 — `onUnauthorized` ne fait pour l'instant qu'un rechargement de page (`src/lib/http-client.ts` des deux apps), en attendant l'authentification (`apps/api`, PR #16) — et les premières routes dans `packages/api-contract`, à écrire avec le premier vrai écran, pas avant.
+
 ## Relevé d'arbitrage du 22 septembre 2026
 
 Les douze questions que portait ce document, et ce que l'équipe a répondu.
@@ -454,6 +475,6 @@ Les douze questions que portait ce document, et ce que l'équipe a répondu.
 1. **L'instance Sentry** : SaaS en région européenne ou `sentry.incubateur.net` (décision 11) — **issue #64**, qui pose la question à betagouv. Ce choix commande la décision 7 de [`architecture-api.md`](./architecture-api.md), qui suppose Sentry Logs.
 2. **Le porteur de l'installation de TanStack Query**, et la PR sur laquelle elle se fait.
 3. **Les mentions légales et la politique de confidentialité**, à aligner avant la mise en production de la mesure d'audience.
-4. **Le périmètre des règles `jsx-a11y`** : elles ne couvrent aujourd'hui que les deux apps Next, pas `packages/ui` ni `apps/keycloak-theme` (décision 7).
+4. **Le périmètre des règles `jsx-a11y`** : elles ne couvrent aujourd'hui que les deux apps Next, pas `packages/ui`, `apps/keycloak-theme`, ni — depuis la décision 12 — `apps/front-office` et `apps/back-office` (décision 7).
 
 Suites ouvertes par ailleurs : **#60** (purge planifiée), **#61** (repository d'`AccountService`), **#62** (premiers tests du front).
