@@ -27,6 +27,7 @@ export function createHttpClient(baseURL: string, options: CreateHttpClientOptio
       const body: unknown = error.response?.data;
 
       if (error.response?.status === 401) {
+        // TODO chantier pris en charge dans le ticket 112 gestion des session expiré
         options.onUnauthorized();
       }
 
