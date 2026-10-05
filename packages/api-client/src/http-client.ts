@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type AxiosInstance } from "axios";
 
 import { ApiError } from "./api-error";
+import { HTTP_STATUS } from "./http-status";
 import { isApiErrorBody } from "./is-api-error-body";
 
 interface CreateHttpClientOptions {
@@ -21,13 +22,14 @@ export function createHttpClient(baseURL: string, options: CreateHttpClientOptio
   httpClient.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
-      // Posé par pino (genReqId, décision 7 de architecture-api.md) sur
+      // Sera posé par pino (genReqId, décision 7 de architecture-api.md) sur
       // toute réponse, y compris quand le corps n'a pas la forme attendue.
+      // pino n'est pas encore installé côté API : l'en-tête est absent pour
+      // l'instant, et `correlationId` vaut `undefined`.
       const correlationId = error.response?.headers["x-request-id"] as string | undefined;
       const body: unknown = error.response?.data;
 
-      if (error.response?.status === 401) {
-        // TODO chantier pris en charge dans le ticket 112 gestion des session expiré
+      if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
         options.onUnauthorized();
       }
 
