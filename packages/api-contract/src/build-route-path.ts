@@ -1,4 +1,4 @@
-import type { RouteDefinition, RouteParams, RouteQuery } from "./route-definition";
+import type { RouteDefinition, RouteParams, RouteQuery } from "./route-definition.js";
 
 interface BuildRoutePathOptions<T extends RouteDefinition> {
   params?: RouteParams<T>;
