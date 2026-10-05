@@ -1,14 +1,7 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Req,
-  Res,
-  UnauthorizedException,
-  UseFilters,
-} from "@nestjs/common";
+import { Controller, Get, Query, Req, Res, UseFilters } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { minutes, Throttle } from "@nestjs/throttler";
+import type { getSession, RouteResponse } from "@etape/api-contract";
 import type { Request, Response } from "express";
 import * as client from "openid-client";
 
@@ -21,7 +14,7 @@ import { getIdentityProvider } from "./identity-provider.js";
 import { OidcService } from "./oidc.service.js";
 import { sanitizeReturnTo } from "./return-to.js";
 import { SessionService } from "./session/session.service.js";
-import { toPublicSession, type PublicSession } from "./session/session.types.js";
+import { toSessionResponse } from "./session/session.types.js";
 
 const AUTH_FLOW_THROTTLE = { default: { ttl: minutes(1), limit: 30 } };
 
@@ -147,11 +140,10 @@ export class AuthController {
   }
 
   @Get("session")
-  async session(@Req() request: Request): Promise<PublicSession> {
+  async session(@Req() request: Request): Promise<RouteResponse<typeof getSession>> {
     const session = await this.sessions.readSession(request);
-    if (!session) throw new UnauthorizedException();
 
-    return toPublicSession(
+    return toSessionResponse(
       session,
       this.config.get("KEYCLOAK_FRANCECONNECT_ALIAS", { infer: true }),
     );
