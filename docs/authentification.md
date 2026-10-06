@@ -262,10 +262,10 @@ soit — `linkExpirationFormatter` la met en toutes lettres.
 
 **Le parcours se termine de deux façons**, selon l'endroit où le lien est ouvert :
 
-| Lien ouvert…                           | Ce que voit la personne                                |
-| -------------------------------------- | ------------------------------------------------------ |
-| dans le navigateur de la demande       | connectée directement, elle arrive sur le front-office |
-| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton                  |
+| Lien ouvert…                           | Ce que voit la personne                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| dans le navigateur de la demande       | connectée directement, elle arrive sur `FRONT_BASE_URL` (voir ci-dessous) |
+| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton                                     |
 
 Le second cas est le plus courant — on demande depuis un ordinateur et on lit
 ses emails sur un téléphone — et c'est celui qui n'avait pas d'issue : la page de
@@ -273,6 +273,10 @@ confirmation ne propose de lien que si le client Keycloak porte une `baseUrl`, e
 `etape-api` n'en avait pas. Elle vise l'entrée de connexion de l'API plutôt que
 la racine du front, `/api/auth/login?returnTo=/` : qui arrive là n'est pas
 connecté, et la marche suivante est toujours la même.
+
+`FRONT_BASE_URL` désigne le front-office en local. En recette, il désigne
+encore le site (`PUBLIC_URL`), qui n'affiche plus rien de la connexion, tant
+que le front-office n'y est pas déployé.
 
 **Un lien périmé mène à `error.ftl`**, qui n'a pas non plus de retour naturel vers
 le formulaire de demande. `Error.tsx` reconnaît ce cas et propose « Demander un
@@ -289,8 +293,13 @@ garde d'en dire plus.
 
 ## La session dans front-office et back-office
 
-Les deux apps sont entièrement derrière la connexion. Ce qu'elles partagent vit
-dans `@etape/api-client` et `@etape/ui` ; chacune ne garde que son amorçage.
+Les deux apps sont entièrement derrière la connexion. La logique partagée vit
+dans `@etape/api-client` (clients HTTP et de cache, décision de la garde
+`resolveStartupAccess`, textes, `useSessionExpired`) et les vues dans
+`@etape/ui` (écrans d'attente et d'avis, dialogue). Le branchement, lui, est
+copié à l'identique dans chaque app, parce qu'il dépend de son routeur et de sa
+configuration : la route racine qui porte la garde (`navigation/routes.tsx`),
+l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
 
 - **Au démarrage**, une garde `beforeLoad` sur la route racine lit
   `/api/auth/session`. Personne n'est connecté : navigation pleine page vers

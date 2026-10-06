@@ -16,15 +16,17 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/site/package.json apps/site/
 COPY apps/simulateur/package.json apps/simulateur/
+COPY apps/front-office/package.json apps/front-office/
+COPY apps/back-office/package.json apps/back-office/
 COPY apps/keycloak-theme/package.json apps/keycloak-theme/
+COPY packages/api-contract/package.json packages/api-contract/
+COPY packages/api-client/package.json packages/api-client/
 COPY packages/eslint-config/package.json packages/eslint-config/
 COPY packages/prettier-config/package.json packages/prettier-config/
 COPY packages/ui/package.json packages/ui/
 
 RUN npm ci
 
-# `NODE_ENV` reste non défini : `next build` le positionne lui-même, et le forcer
-# ici ferait retomber `next.config.ts` sur la mauvaise URL d'API.
 FROM deps AS build
 WORKDIR /app
 COPY . .
