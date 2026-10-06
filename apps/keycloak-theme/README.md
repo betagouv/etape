@@ -15,15 +15,16 @@ system se propage ici au prochain build.
 npm run build
 
 # Voir le résultat dans le Keycloak du dépôt
-docker compose restart keycloak   # depuis la racine
+docker compose up -d keycloak-providers && docker compose restart keycloak   # depuis la racine
 
 # Linter
 npm run lint
 ```
 
-Le `docker-compose.yml` de la racine monte le JAR dans `/opt/keycloak/providers`.
-Après un build, un `docker compose restart keycloak` suffit — inutile de
-recréer le conteneur.
+Le service `keycloak-providers` du `docker-compose.yml` racine recopie le JAR
+dans le volume d'extensions de Keycloak. Après un build, il faut le relancer
+avant de redémarrer Keycloak : un simple `docker compose restart keycloak`
+servirait l'ancien JAR.
 
 `npm run storybook` (`keycloakify start-keycloak`) démarre un Keycloak jetable
 préchargé avec le realm du dépôt, pratique pour parcourir les écrans que le

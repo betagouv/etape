@@ -16,6 +16,7 @@
     "start": "turbo run start",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
+    "check:workspace-map": "node scripts/check-workspace-map.mjs",
     "prepare": "husky || true"
   },
   "lint-staged": {
