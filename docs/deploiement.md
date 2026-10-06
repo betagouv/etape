@@ -129,7 +129,7 @@ sont à confronter au portail, qui fait foi.
 PUBLIC_URL=https://etape.example.org
 KEYCLOAK_PUBLIC_URL=https://auth.etape.example.org
 
-# Le front et l'API répondent (401 sans cookie, c'est la bonne réponse)
+# Le front et l'API répondent (sans cookie : 200 et `{"session":null}`)
 curl -sI "$PUBLIC_URL/" | head -1
 curl -s -o /dev/null -w '%{http_code}\n' "$PUBLIC_URL/api/auth/session"
 
@@ -147,8 +147,10 @@ for chemin in / /admin/master/console/ /admin/realms /realms/master/protocol/ope
 done
 ```
 
-Puis, dans le navigateur : « Se connecter » dans l'en-tête du site part vers
-Keycloak, et le retour dépose sur l'accueil.
+Puis, dans le navigateur : `$PUBLIC_URL/api/auth/login` mène au formulaire de
+connexion, et le retour dépose sur l'accueil. Le site n'a plus de bouton de
+connexion : elle n'existera que dans front-office et back-office, pas encore
+déployés.
 
 Si l'API répond « Le fournisseur d'identité est injoignable », c'est qu'elle
 n'arrive pas à joindre l'URL publique de Keycloak depuis l'intérieur du réseau
