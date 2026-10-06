@@ -296,11 +296,19 @@ dans `@etape/api-client` et `@etape/ui` ; chacune ne garde que son amorçage.
   `/api/auth/session`. Personne n'est connecté : navigation pleine page vers
   `/api/auth/login?returnTo=<page demandée>`, donc vers le formulaire servi par
   Keycloak. L'URL porte un échec du parcours : l'avis s'affiche (`NoticeScreen`),
-  sans redirection. L'API ne répond pas : un écran d'erreur, relancé par un clic.
-- **En cours d'utilisation**, un 401 vide la session dans le cache de TanStack
-  Query et ouvre le dialogue « Session expirée » (`SessionExpiredDialog`).
-  Échap ne le ferme pas ; « Se reconnecter » mène au formulaire et ramène sur la
-  page en cours. Plusieurs 401 simultanés n'ouvrent qu'un dialogue.
+  sans redirection — sauf un ancien échec de connexion quand la session est
+  valide (favori, bouton Précédent) ; l'échec d'une déconnexion s'affiche
+  toujours, la limite de débit pouvant l'avoir refusée. L'API ne répond pas
+  (délai de 10 s par requête, trois relances) : un écran d'erreur, relancé par
+  un clic.
+- **En cours d'utilisation**, un 401 efface du cache de TanStack Query tout ce
+  qui a été chargé pendant la session — sur un poste partagé, rien ne doit
+  rester lisible derrière le dialogue —, vide la session et ouvre le dialogue
+  « Session expirée » (`SessionExpiredDialog`). Rien ne le ferme, ni Échap ni un
+  clic dehors ; « Se reconnecter » mène au formulaire et ramène sur la page en
+  cours, ancre comprise. Si la personne quitte la page, par le bouton Précédent
+  par exemple, la garde ne trouve plus de session et la redirige vers le
+  formulaire. Plusieurs 401 simultanés n'ouvrent qu'un dialogue.
 
 `PublicSession` porte un `claims` non typé, et `identity-claims.ts` en retire la
 plomberie du protocole — `iss`, `aud`, `at_hash` et consorts — en liste noire

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "./api-error";
-import { createHttpClient } from "./http-client";
+import { createHttpClient, REQUEST_TIMEOUT_MS } from "./http-client";
 import { HTTP_STATUS } from "./http-status";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
 
@@ -21,6 +21,8 @@ beforeAll(async () => {
         { code: "INVALID", message: "Champ manquant", correlationId: "id-du-corps" },
         { "x-request-id": "id-de-l-en-tete" },
       ),
+    // Ne répond jamais : seul le délai du client met fin à la requête.
+    "/muette": () => undefined,
     "/panne": (_, response) => {
       response.writeHead(500, { "content-type": "text/plain", "x-request-id": "req-42" });
       response.end("Internal Server Error");
@@ -90,5 +92,16 @@ describe("createHttpClient", () => {
 
     expect(error.status).toBeUndefined();
     expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it("abandonne une requête sans réponse après le délai, en ApiError sans statut", async () => {
+    const httpClient = createHttpClient(server.baseUrl, { onUnauthorized: vi.fn() });
+
+    // Le délai réel (10 s) est vérifié sur l'instance ; la requête en prend un
+    // court pour que le test ne l'attende pas.
+    expect(httpClient.defaults.timeout).toBe(REQUEST_TIMEOUT_MS);
+    const error = await captureError(httpClient.get("/muette", { timeout: 50 }));
+
+    expect(error.status).toBeUndefined();
   });
 });

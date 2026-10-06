@@ -30,6 +30,22 @@ describe("resolveStartupAccess", () => {
     });
   });
 
+  it("laisse passer une personne connectée malgré un ancien échec de connexion", () => {
+    // Favori, bouton Précédent ou autre onglet : la connexion a abouti depuis.
+    expect(resolveStartupAccess(new URLSearchParams("login=expired"), SESSION)).toEqual({
+      kind: "authenticated",
+      session: SESSION,
+    });
+  });
+
+  it("affiche l'échec d'une déconnexion même avec une session encore ouverte", () => {
+    // Une déconnexion refusée par la limite de débit laisse la session ouverte.
+    expect(resolveStartupAccess(new URLSearchParams("logout=too-many-requests"), SESSION)).toEqual({
+      kind: "auth-flow-failure",
+      failure: { step: AUTH_FLOW_STEP.LOGOUT, error: AUTH_FLOW_ERROR.TOO_MANY_REQUESTS },
+    });
+  });
+
   it("ignore un paramètre d'échec inconnu", () => {
     expect(resolveStartupAccess(new URLSearchParams("login=pirate"), null)).toEqual({
       kind: "login-required",

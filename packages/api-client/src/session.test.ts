@@ -41,7 +41,8 @@ describe("findSession", () => {
   it("échoue sur une réponse qui ne respecte pas le contrat", async () => {
     body = { session: { sub: 42 } };
 
-    await expect(findSession(httpClient())).rejects.toThrow();
+    // Le refus vient du schéma du contrat, pas d'une autre erreur (404, réseau).
+    await expect(findSession(httpClient())).rejects.toMatchObject({ name: "ZodError" });
   });
 });
 

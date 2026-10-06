@@ -20,10 +20,11 @@ export function useSessionExpired(apiBaseUrl: string): UseSessionExpiredResult {
 
   return {
     isExpired: session === null,
-    // Retour sur la page en cours après connexion.
-    reconnect: () =>
-      window.location.assign(
-        buildLoginUrl(apiBaseUrl, `${window.location.pathname}${window.location.search}`),
-      ),
+    // Retour sur la page en cours après connexion, ancre comprise, comme le
+    // fait la garde de démarrage.
+    reconnect: () => {
+      const { pathname, search, hash } = window.location;
+      window.location.assign(buildLoginUrl(apiBaseUrl, `${pathname}${search}${hash}`));
+    },
   };
 }

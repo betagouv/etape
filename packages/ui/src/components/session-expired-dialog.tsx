@@ -28,13 +28,11 @@ export function SessionExpiredDialog({ open, onReconnect }: SessionExpiredDialog
   const reconnectRef = useRef<HTMLButtonElement>(null);
 
   return (
+    // Sans `onOpenChange`, rien ne ferme le dialogue, ni Échap ni un clic
+    // dehors : la session est terminée, revenir sur l'écran ne servirait qu'à
+    // le rouvrir à la requête suivante.
     <AlertDialog open={open}>
-      {/*
-        Échap ne ferme pas : la session est terminée, revenir sur l'écran ne
-        servirait qu'à rouvrir le dialogue à la requête suivante.
-      */}
       <AlertDialogContent
-        onEscapeKeyDown={(event) => event.preventDefault()}
         // Radix ne donne le focus qu'à un bouton « Annuler », que ce dialogue
         // n'a pas : sans cette reprise, rien ne serait focalisé et le lecteur
         // d'écran n'annoncerait pas l'alerte.

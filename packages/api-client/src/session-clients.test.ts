@@ -33,6 +33,38 @@ describe("createSessionClients", () => {
 
     expect(queryClient.getQueryData(SESSION_QUERY_KEY)).toBeNull();
   });
+
+  it("efface les données et les mutations chargées pendant la session sur un 401", async () => {
+    const { httpClient, queryClient } = createSessionClients(server.baseUrl);
+    queryClient.setQueryData(SESSION_QUERY_KEY, SESSION);
+    queryClient.setQueryData(["dossier", "42"], { nom: "Martin" });
+    await queryClient
+      .getMutationCache()
+      .build(queryClient, { mutationFn: () => Promise.resolve("envoyé") })
+      .execute({ piece: "justificatif" });
+
+    await httpClient.get("/expiree").catch(() => null);
+
+    expect(
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .map((query) => query.queryKey),
+    ).toEqual([SESSION_QUERY_KEY]);
+    expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+  });
+
+  it("ne relit pas la session après un 401 : la garde trouve null et redirige", async () => {
+    const { httpClient, queryClient } = createSessionClients(server.baseUrl);
+    const options = createSessionQueryOptions(httpClient);
+    await queryClient.query(options);
+    sessionReads = 0;
+
+    await httpClient.get("/expiree").catch(() => null);
+
+    await expect(queryClient.query(options)).resolves.toBeNull();
+    expect(sessionReads).toBe(0);
+  });
 });
 
 describe("createSessionQueryOptions", () => {

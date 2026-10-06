@@ -4,6 +4,13 @@ import { ApiError } from "./api-error";
 import { HTTP_STATUS } from "./http-status";
 import { isApiErrorBody } from "./is-api-error-body";
 
+/**
+ * Sans délai, une API qui ne répond pas laisse l'écran d'attente affiché
+ * indéfiniment. Le dépassement devient une erreur sans statut, relancée comme
+ * une erreur réseau.
+ */
+export const REQUEST_TIMEOUT_MS = 10_000;
+
 interface CreateHttpClientOptions {
   /**
    * Appelé une seule fois, au même endroit, pour qu'aucun écran n'ait à
@@ -17,6 +24,7 @@ export function createHttpClient(baseURL: string, options: CreateHttpClientOptio
   const httpClient = axios.create({
     baseURL,
     withCredentials: true, // le cookie de session, jamais un jeton
+    timeout: REQUEST_TIMEOUT_MS,
   });
 
   httpClient.interceptors.response.use(

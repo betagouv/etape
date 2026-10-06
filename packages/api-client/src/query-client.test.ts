@@ -1,3 +1,4 @@
+import { getSession } from "@etape/api-contract";
 import { describe, expect, it } from "vitest";
 
 import { ApiError } from "./api-error";
@@ -33,5 +34,12 @@ describe("createQueryClient", () => {
 
   it("relance une erreur réseau, qui n'a pas de statut", () => {
     expect(readRetry()(0, new ApiError("Network Error"))).toBe(true);
+  });
+
+  it("ne relance pas une réponse hors contrat", () => {
+    const outOfContract = getSession.response.safeParse({ session: { sub: 42 } }).error;
+    if (!outOfContract) throw new Error("la réponse aurait dû être refusée par le contrat");
+
+    expect(readRetry()(0, outOfContract)).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import type { PublicSession } from "@etape/api-contract";
 
-import { readAuthFlowFailure, type AuthFlowFailure } from "./auth-flow";
+import { AUTH_FLOW_STEP, readAuthFlowFailure, type AuthFlowFailure } from "./auth-flow";
 import type { NoticeContent } from "./auth-flow-messages";
 
 /** Ce que l'app fait au démarrage, une fois la session connue. */
@@ -14,13 +14,19 @@ export type StartupAccess =
  * justement quelqu'un qui n'est pas connecté. Rediriger vers le formulaire à ce
  * moment-là bouclerait dès que le service de connexion est en panne ; on affiche
  * l'échec, et c'est la personne qui relance.
+ *
+ * Une session valide passe en revanche avant un ancien échec de connexion
+ * (favori, bouton Précédent, autre onglet) : la connexion a abouti depuis.
+ * L'échec d'une déconnexion, lui, s'affiche toujours : la limite de débit peut
+ * l'avoir refusée, et la session est alors encore ouverte.
  */
 export function resolveStartupAccess(
   search: URLSearchParams,
   session: PublicSession | null,
 ): StartupAccess {
   const failure = readAuthFlowFailure(search);
-  if (failure) return { kind: "auth-flow-failure", failure };
+  const isOutdatedLoginFailure = session !== null && failure?.step === AUTH_FLOW_STEP.LOGIN;
+  if (failure && !isOutdatedLoginFailure) return { kind: "auth-flow-failure", failure };
 
   if (!session) return { kind: "login-required" };
 
