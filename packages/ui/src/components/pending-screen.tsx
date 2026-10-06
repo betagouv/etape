@@ -4,14 +4,16 @@ export interface PendingScreenProps {
   message: string;
 }
 
-/** Un écran d'attente, annoncé aux lecteurs d'écran par sa région de statut. */
+/**
+ * Un écran d'attente. Son message est le contenu initial de la page, lu comme
+ * le reste : sans `role="status"`, qu'une région insérée déjà remplie
+ * n'annonce pas de façon fiable (`accessibilite.md`, § 2).
+ */
 export function PendingScreen({ message }: PendingScreenProps) {
   return (
     <main>
       <Container size="sm" className="py-12">
-        <p role="status" className="text-body text-content-secondary">
-          {message}
-        </p>
+        <p className="text-body text-content-secondary">{message}</p>
       </Container>
     </main>
   );

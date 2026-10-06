@@ -327,6 +327,8 @@ npm run build -- --filter=@etape/keycloak-theme
 FRANCECONNECT_CLIENT_ID=… FRANCECONNECT_CLIENT_SECRET=… docker compose up -d
 
 cp apps/api/.env.example apps/api/.env
+cp apps/front-office/.env.example apps/front-office/.env
+cp apps/back-office/.env.example apps/back-office/.env
 
 # Crée les tables de la base applicative. À rejouer après chaque migration.
 npm run db:migrate --workspace=@etape/api
