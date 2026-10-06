@@ -10,8 +10,12 @@ type Handler = (request: IncomingMessage, response: ServerResponse) => void;
 
 /** Un vrai serveur HTTP local : l'intercepteur est testé sur de vraies réponses. */
 export async function startTestServer(routes: Record<string, Handler>): Promise<TestServer> {
+  // Une `Map` plutôt que l'objet : une URL comme `/__proto__` ne peut pas y
+  // atteindre une propriété héritée d'`Object` (alerte CodeQL
+  // js/unvalidated-dynamic-method-call).
+  const handlers = new Map(Object.entries(routes));
   const server = createServer((request, response) => {
-    const handler = routes[request.url ?? ""];
+    const handler = handlers.get(request.url ?? "");
     if (handler) {
       handler(request, response);
       return;
