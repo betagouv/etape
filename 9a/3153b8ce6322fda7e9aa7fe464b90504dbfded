@@ -1,0 +1,87 @@
+apps/back-office/CLAUDE.md
+  s_d01127b51ad7c5::t_8b6a83839ead38 1
+apps/api/CLAUDE.md
+  s_d01127b51ad7c5::t_08cb62e69a7c1a 1
+apps/back-office/AGENTS.md
+  s_d01127b51ad7c5::t_8b6a83839ead38 1-49
+packages/api-client/AGENTS.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1-36
+.github/workflows/ci.yml
+  s_d01127b51ad7c5::t_7dedc2d802533f 39-41
+apps/site/AGENTS.md
+  s_d01127b51ad7c5::t_2537e3666c8a42 47
+  s_d01127b51ad7c5::t_748eed07f02ed8 5-8,10-46
+packages/api-contract/CLAUDE.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1
+packages/eslint-config/CLAUDE.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1
+packages/ui/AGENTS.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1-44
+apps/keycloak-theme/CLAUDE.md
+  s_d01127b51ad7c5::t_08cb62e69a7c1a 1
+AGENTS.md
+  s_d01127b51ad7c5::t_1ab7de4a85f110 7-18
+  s_d01127b51ad7c5::t_6846f723218623 1-6,19-63
+scripts/check-workspace-map.mjs
+  s_d01127b51ad7c5::t_ee7bdecbe3836f 1-111
+apps/front-office/CLAUDE.md
+  s_d01127b51ad7c5::t_8b6a83839ead38 1
+apps/keycloak-theme/README.md
+  s_d01127b51ad7c5::t_1ab7de4a85f110 18,24-27
+packages/prettier-config/AGENTS.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1-11
+docs/cartographie.md
+  s_d01127b51ad7c5::t_1ab7de4a85f110 48-60,68-87,103-110,131-139,143-151
+  s_d01127b51ad7c5::t_8fbb2992e1b728 123-124
+  s_d01127b51ad7c5::t_912f313d00cf78 1-47,61-67,88-102,111-122,125-130,140-142,152-166
+package.json
+  s_d01127b51ad7c5::t_7dedc2d802533f 19
+apps/keycloak-theme/AGENTS.md
+  s_d01127b51ad7c5::t_94bae4953f662c 37
+  s_d01127b51ad7c5::t_08cb62e69a7c1a 1-36,38-43
+apps/front-office/AGENTS.md
+  s_d01127b51ad7c5::t_8b6a83839ead38 1-49
+packages/api-contract/AGENTS.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1-35
+apps/simulateur/AGENTS.md
+  s_d01127b51ad7c5::t_748eed07f02ed8 10-49
+CLAUDE.md
+  s_d01127b51ad7c5::t_6846f723218623 1
+packages/api-client/CLAUDE.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1
+apps/api/AGENTS.md
+  s_d01127b51ad7c5::t_08cb62e69a7c1a 1-51
+packages/prettier-config/CLAUDE.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1
+packages/ui/CLAUDE.md
+  s_d01127b51ad7c5::t_f5928b48a02147 1
+packages/eslint-config/AGENTS.md
+  s_d01127b51ad7c5::t_1ab7de4a85f110 9-13
+  s_d01127b51ad7c5::t_f5928b48a02147 1-8,14-22
+docs/conventions/outillage-agent.md
+  s_d01127b51ad7c5::t_1ab7de4a85f110 24-34,95-96,132
+README.md
+  s_d01127b51ad7c5::t_1ab7de4a85f110 11,77
+  s_d01127b51ad7c5::t_89961312e656f7 19-20,24-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a3153b8ce6322fda7e9aa7fe464b90504dbfded",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_d01127b51ad7c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dfeea727-82bf-4f80-b9c6-c94c82aded09",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
