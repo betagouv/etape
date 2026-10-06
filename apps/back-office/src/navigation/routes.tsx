@@ -2,10 +2,8 @@ import {
   buildLoginUrl,
   createSessionQueryOptions,
   resolveStartupAccess,
-  STARTUP_ERROR_NOTICE,
   STARTUP_PENDING_MESSAGE,
 } from "@etape/api-client";
-import { NoticeScreen } from "@etape/ui/components/notice-screen";
 import { PendingScreen } from "@etape/ui/components/pending-screen";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, createRoute, redirect } from "@tanstack/react-router";
@@ -13,6 +11,7 @@ import type { AxiosInstance } from "axios";
 
 import { App } from "../App";
 import { API_BASE_URL } from "../lib/clients";
+import { AppErrorScreen, HOME_PATH, NotFoundScreen } from "./error-screens";
 import { RootLayout } from "./root-layout";
 
 export interface RouterContext {
@@ -36,15 +35,17 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   },
   component: RootLayout,
   pendingComponent: () => <PendingScreen message={STARTUP_PENDING_MESSAGE} />,
-  // L'API ne répond pas : c'est la personne qui relance, pas une boucle.
-  errorComponent: () => (
-    <NoticeScreen {...STARTUP_ERROR_NOTICE} onAction={() => window.location.reload()} />
-  ),
+  // La garde a échoué (l'API ne répond pas) ou `RootLayout` a planté : c'est
+  // la personne qui relance, pas une boucle. Les erreurs des écrans, elles,
+  // restent sous `RootLayout` (`defaultErrorComponent` du routeur).
+  errorComponent: AppErrorScreen,
+  // Une adresse inconnue : rendu dans l'`Outlet` de `RootLayout`.
+  notFoundComponent: NotFoundScreen,
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: HOME_PATH,
   component: App,
 });
 

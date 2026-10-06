@@ -308,16 +308,22 @@ l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
   sans redirection — sauf un ancien échec de connexion quand la session est
   valide (favori, bouton Précédent) ; l'échec d'une déconnexion s'affiche
   toujours, la limite de débit pouvant l'avoir refusée. L'API ne répond pas
-  (délai de 10 s par requête, trois relances) : un écran d'erreur, relancé par
-  un clic.
+  (délai de 10 s par requête, trois relances, même si la connexion tombe
+  pendant la vérification) : un écran « service indisponible », relancé par un
+  clic. Une autre erreur, comme une réponse hors contrat, affiche « Une erreur
+  inattendue est survenue ».
 - **En cours d'utilisation**, un 401 efface du cache de TanStack Query tout ce
-  qui a été chargé pendant la session — sur un poste partagé, rien ne doit
-  rester lisible derrière le dialogue —, vide la session et ouvre le dialogue
+  qui a été chargé pendant la session et retire l'écran affiché — sur un poste
+  partagé, rien ne doit rester lisible derrière le dialogue, et un écran monté
+  garde ses données même cache vidé —, vide la session et ouvre le dialogue
   « Session expirée » (`SessionExpiredDialog`). Rien ne le ferme, ni Échap ni un
   clic dehors ; « Se reconnecter » mène au formulaire et ramène sur la page en
   cours, ancre comprise. Si la personne quitte la page, par le bouton Précédent
   par exemple, la garde ne trouve plus de session et la redirige vers le
   formulaire. Plusieurs 401 simultanés n'ouvrent qu'un dialogue.
+- **Une erreur dans un écran** affiche « Une erreur inattendue est survenue » à
+  sa place, sous `RootLayout` : le dialogue « Session expirée » reste
+  disponible. Une adresse inconnue affiche « Page introuvable ».
 
 `PublicSession` porte un `claims` non typé, et `identity-claims.ts` en retire la
 plomberie du protocole — `iss`, `aud`, `at_hash` et consorts — en liste noire
@@ -435,14 +441,26 @@ c'est ce que comprennent les clients de messagerie.
       le front reconnu à l'en-tête `Host`, une `redirect_uri` par front dans
       Keycloak, le refus de FranceConnect au `callback` du back-office — le
       masquer dans le thème ne suffit pas —, et une garde CSRF (en-tête exigé)
-      sur les routes qui modifient. D'ici là, une connexion partie du
-      back-office revient sur `FRONT_BASE_URL`
+      sur les routes qui modifient. Y ajouter une garde contre les boucles de
+      redirection quand le cookie de session n'est pas conservé (cookies
+      bloqués, cookie `secure` en `http`) : la garde de démarrage renvoie alors
+      vers la connexion, que le SSO de Keycloak rouvre en silence, jusqu'à la
+      limite de débit. D'ici là, une connexion partie du back-office revient sur
+      `FRONT_BASE_URL`
 - [ ] Session inactive : expiration après 30 minutes sans activité (appel à
       l'API, mouvement, saisie), limite absolue ramenée de 12 h à 10 h, même
       règle pour les bénéficiaires et les instructeurs ; avertissement avant
       l'expiration et prolongation (WCAG 2.2.1). Demande une migration (dernière
       activité) et la garde CSRF du point précédent, pour la route de
-      prolongation
+      prolongation. À cette occasion : réserver le délai de 10 s à la lecture de
+      session (global, il couperait l'envoi d'une pièce justificative) et
+      raccourcir l'attente au démarrage (jusqu'à 47 s aujourd'hui) ; annoncer
+      l'avertissement, l'attente et l'écran d'erreur dans une même région
+      `role="status"` toujours montée ; faire de « Se reconnecter » un lien
+- [ ] Écrans d'avis : un titre d'onglet qui suit l'avis (RGAA 8.6), et
+      « Réessayer » ou « Se connecter » en liens plutôt qu'en boutons. Avec le
+      bouton de déconnexion : après une déconnexion refusée par la limite de
+      débit, proposer de la relancer plutôt que « Se connecter »
 - [ ] Décider de l'hébergement de Keycloak et de sa base, et scripter la
       configuration des environnements non locaux via `kcadm`
 

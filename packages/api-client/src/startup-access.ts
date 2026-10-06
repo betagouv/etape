@@ -1,7 +1,6 @@
 import type { PublicSession } from "@etape/api-contract";
 
 import { AUTH_FLOW_STEP, readAuthFlowFailure, type AuthFlowFailure } from "./auth-flow";
-import type { NoticeContent } from "./auth-flow-messages";
 
 /** Ce que l'app fait au démarrage, une fois la session connue. */
 export type StartupAccess =
@@ -33,12 +32,5 @@ export function resolveStartupAccess(
   return { kind: "authenticated", session };
 }
 
-/** Textes du démarrage, communs à front-office et back-office. */
+/** Texte du démarrage, commun à front-office et back-office. */
 export const STARTUP_PENDING_MESSAGE = "Vérification de votre session…";
-
-/** L'API ne répond pas : on le dit, et c'est la personne qui relance. */
-export const STARTUP_ERROR_NOTICE: NoticeContent = {
-  title: "Le service est momentanément indisponible",
-  message: "Veuillez réessayer dans quelques minutes.",
-  actionLabel: "Réessayer",
-};

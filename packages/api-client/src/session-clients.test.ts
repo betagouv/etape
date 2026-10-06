@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { onlineManager } from "@tanstack/react-query";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { HTTP_STATUS } from "./http-status";
 import { SESSION_QUERY_KEY } from "./session";
@@ -68,6 +69,18 @@ describe("createSessionClients", () => {
 });
 
 describe("createSessionQueryOptions", () => {
+  afterEach(() => onlineManager.setOnline(true));
+
+  it("lit la session même quand le navigateur se croit hors ligne", async () => {
+    // Sans cela, la requête se met en pause et la garde attend sans fin.
+    const { httpClient, queryClient } = createSessionClients(server.baseUrl);
+    onlineManager.setOnline(false);
+
+    await expect(queryClient.query(createSessionQueryOptions(httpClient))).resolves.toEqual(
+      SESSION,
+    );
+  });
+
   it("ne relit pas la session une fois connue", async () => {
     const { httpClient, queryClient } = createSessionClients(server.baseUrl);
     const options = createSessionQueryOptions(httpClient);

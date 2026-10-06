@@ -20,5 +20,10 @@ export function createSessionQueryOptions(httpClient: AxiosInstance): SessionQue
     // Lue une fois, par la garde de démarrage : la fin de la session est
     // ensuite signalée par un 401, pas par une nouvelle lecture.
     staleTime: "static",
+    // Par défaut, une requête se met en pause tant que le navigateur se croit
+    // hors ligne (portail captif, certains VPN) : la garde attendrait sans fin,
+    // et le délai des requêtes ne s'appliquerait jamais. Ici, elle part quand
+    // même et finit sur l'écran d'erreur.
+    networkMode: "always",
   });
 }

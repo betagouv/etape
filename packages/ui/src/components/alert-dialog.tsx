@@ -10,6 +10,11 @@ import { Button } from "@etape/ui/components/button";
 // `overlay-black-60` et échelle typographique `text-body*`. Contrairement à
 // `Dialog`, Radix y pose `role="alertdialog"` et ne ferme pas au clic hors du
 // cadre : une alerte attend une réponse.
+//
+// Sans animation quand la personne a demandé à les réduire : `tw-animate-css`
+// ne le prévoit pas. Le `!` de `motion-reduce:animate-none!` est nécessaire,
+// `data-[state=open]:animate-in` portant un sélecteur d'attribut, plus
+// spécifique qu'une simple media query.
 
 function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -33,7 +38,7 @@ function AlertDialogOverlay({
     <AlertDialogPrimitive.Overlay
       data-slot="alert-dialog-overlay"
       className={cn(
-        "bg-overlay-black-60 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50",
+        "bg-overlay-black-60 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50 motion-reduce:animate-none!",
         className,
       )}
       {...props}
@@ -55,7 +60,7 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          "group/alert-dialog-content bg-background data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-lg",
+          "group/alert-dialog-content bg-background data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 data-[size=sm]:max-w-xs motion-reduce:animate-none! data-[size=default]:sm:max-w-lg",
           className,
         )}
         {...props}

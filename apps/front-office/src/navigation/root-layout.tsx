@@ -23,7 +23,12 @@ export function RootLayout() {
 
   return (
     <>
-      <Outlet />
+      {/*
+        Session expirée : l'écran est retiré, pas seulement voilé. Vider le
+        cache ne suffit pas, un écran monté garde les données qu'il affiche, et
+        elles ne doivent pas rester lisibles sur un poste partagé.
+      */}
+      {!isExpired && <Outlet />}
       <SessionExpiredDialog open={isExpired} onReconnect={reconnect} />
     </>
   );

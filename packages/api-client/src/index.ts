@@ -1,4 +1,15 @@
-export { ApiError, type ApiErrorBody, type ApiErrorOptions } from "./api-error";
+export {
+  ApiError,
+  isTransientApiError,
+  type ApiErrorBody,
+  type ApiErrorOptions,
+} from "./api-error";
+export {
+  describeAppError,
+  NOT_FOUND_NOTICE,
+  SERVICE_UNAVAILABLE_NOTICE,
+  UNEXPECTED_ERROR_NOTICE,
+} from "./app-notices";
 export {
   AUTH_FLOW_ERROR,
   AUTH_FLOW_STEP,
@@ -23,7 +34,6 @@ export { createSessionClients, type SessionClients } from "./session-clients";
 export { createSessionQueryOptions, type SessionQueryOptions } from "./session-query";
 export {
   resolveStartupAccess,
-  STARTUP_ERROR_NOTICE,
   STARTUP_PENDING_MESSAGE,
   type StartupAccess,
 } from "./startup-access";
