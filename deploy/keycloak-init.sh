@@ -81,7 +81,7 @@ $KCADM update "clients/$API_CLIENT_UUID" -r "$REALM" -f - <<JSON
 {
   "secret": "${KEYCLOAK_CLIENT_SECRET}",
   "redirectUris": ["${PUBLIC_URL}/api/auth/callback"],
-  "baseUrl": "${PUBLIC_URL}/api/auth/login?returnTo=%2Fcompte%2F",
+  "baseUrl": "${PUBLIC_URL}/api/auth/login?returnTo=%2F",
   "webOrigins": [],
   "attributes": {
     "pkce.code.challenge.method": "S256",

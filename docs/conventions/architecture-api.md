@@ -421,7 +421,7 @@ on conflict (keycloak_sub) do update set
 
 **Décidé** : un paquet partagé, `packages/api-contract`, qui ne dépend que de zod. Se tranche avec la décision 5 de [`stack-front.md`](./stack-front.md), validée en même temps.
 
-**Amorcé le 28 septembre 2026** (voir décision 12 de [`stack-front.md`](./stack-front.md)) : la structure (`RouteDefinition`, `buildRoutePath`) existe, sans route déclarée. **Reste à attribuer** : la première route métier, à écrire avec le premier vrai écran ou la première route API.
+**Amorcé le 28 septembre 2026** (voir décision 12 de [`stack-front.md`](./stack-front.md)) : la structure (`RouteDefinition`, `buildRoutePath`) existe. **Première route le 5 octobre 2026** : `getSession` (`GET /auth/session`), fonctionnelle, sans écran. L'API n'en importe que des types — le paquet est publié en TypeScript source, que Node n'exécute pas depuis `node_modules` — ; valider une entrée avec un schéma du contrat demandera de le compiler. **Reste à attribuer** : le porteur.
 
 ### Les principes
 
@@ -832,6 +832,6 @@ Les onze questions que portait ce document, et ce que l'équipe a répondu.
 
 1. **L'instance Sentry** — **issue #64**, qui pose la question à betagouv et au coaching. Elle est tranchée dans [`stack-front.md`](./stack-front.md) (décision 11), et la décision 7 de ce document en dépend : Sentry Logs n'est pas garanti sur l'instance de betagouv.
 2. **Qui vérifie la confiance au proxy** (`trust proxy`) pour que la limitation de débit compte les bonnes adresses (décision 8).
-3. **Le porteur de `packages/api-contract`**, et la première route métier sur laquelle il s'amorce.
+3. **Le porteur de `packages/api-contract`**. Sa première route, `getSession`, est posée depuis le 5 octobre 2026.
 4. **Lequel des deux pipes de validation** (décision 4) : celui de NestJS 12, désormais disponible, ou le pipe maison. Se tranche à la première route qui validera une entrée, sur le format du corps d'erreur.
-5. **Les tests du front** : l'API est couverte et bloquante en CI, le front n'a aucun test (voir [`stack-front.md`](./stack-front.md), décision 8).
+5. **Les tests du front** : l'API est couverte et bloquante en CI ; côté front, seuls `packages/ui` et `packages/api-client` ont des tests depuis le 5 octobre 2026, les apps aucun (voir [`stack-front.md`](./stack-front.md), décision 8).

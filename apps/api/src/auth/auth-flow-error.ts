@@ -1,3 +1,6 @@
+// Copié dans `packages/api-client/src/auth-flow.ts`, que lisent front-office et
+// back-office : toute modification ici doit y être reportée.
+
 export const AUTH_FLOW_STEP = {
   LOGIN: "login",
   LOGOUT: "logout",

@@ -1,3 +1,5 @@
+import type { PublicSession, SessionResponse } from "@etape/api-contract";
+
 /**
  * État retenu entre le départ vers Keycloak et le retour sur `/callback`. Hors
  * de la session du compte : elle précède toute authentification.
@@ -28,14 +30,6 @@ export interface AccountSession {
 
 export type NewSession = Omit<AccountSession, "sub" | "email">;
 
-/** Vue exposée au front. Aucun jeton n'en fait partie. */
-export interface PublicSession {
-  sub: string;
-  email?: string;
-  isFranceConnectSession: boolean;
-  claims: Record<string, unknown>;
-}
-
 export function toPublicSession(
   session: AccountSession,
   franceConnectAlias: string,
@@ -46,4 +40,12 @@ export function toPublicSession(
     isFranceConnectSession: session.identityProvider === franceConnectAlias,
     claims: session.claims,
   };
+}
+
+/** `null` = personne n'est connecté : une réponse, pas une erreur. */
+export function toSessionResponse(
+  session: AccountSession | null,
+  franceConnectAlias: string,
+): SessionResponse {
+  return { session: session ? toPublicSession(session, franceConnectAlias) : null };
 }

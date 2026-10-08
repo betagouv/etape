@@ -40,7 +40,7 @@
       "protocol": "openid-connect",
       "publicClient": false,
       "bearerOnly": false,
-      "baseUrl": "http://localhost:3002/api/auth/login?returnTo=%2Fcompte%2F",
+      "baseUrl": "http://localhost:3002/api/auth/login?returnTo=%2F",
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
@@ -50,7 +50,7 @@
       "webOrigins": [],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:3000/*##http://localhost:3001/*"
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:5174/*"
       },
       "protocolMappers": [
         {

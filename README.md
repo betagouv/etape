@@ -41,6 +41,7 @@ npm install
 ```bash
 # Serveur de développement (toutes les apps via Turborepo)
 # → site : http://localhost:3000 · simulateur : http://localhost:3001
+# → front-office : http://localhost:5173 · back-office : http://localhost:5174
 npm run dev
 
 # Générer l'export statique (SSG) de toutes les apps (dossier out/ de chaque app)

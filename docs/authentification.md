@@ -34,8 +34,9 @@ Deux choix structurants :
 
 **L'API est le client OIDC, pas le navigateur.** Aucun jeton n'atteint le front.
 Il reçoit un cookie `httpOnly` contenant un identifiant de session opaque ; tout
-le reste vit côté serveur. Front et API partagent l'origine derrière nginx, donc
-pas de CORS ni de `SameSite=None` en production.
+le reste vit côté serveur. Front et API partagent l'origine — derrière nginx en
+production, par le proxy de Vite en local (`/api`) — donc ni CORS ni
+`SameSite=None` : l'API n'active pas le CORS du tout.
 
 **L'API ne parle qu'à Keycloak.** FranceConnect n'apparaît nulle part dans le
 code : Keycloak le broker. Le choix du fournisseur se réduit au paramètre
@@ -56,17 +57,24 @@ n'écrit donc rien en base. Les routes du parcours sont limitées à 30 appels p
 minute et par IP, les autres à 300 (`@nestjs/throttler`). Le détail du schéma
 est dans [donnees.md](donnees.md).
 
-| Route                    | Rôle                                              |
-| ------------------------ | ------------------------------------------------- |
-| `GET /api/auth/login`    | Démarre le parcours, redirige vers Keycloak       |
-| `GET /api/auth/callback` | Échange le code, crée le compte, ouvre la session |
-| `GET /api/auth/logout`   | Ferme la session et propage la déconnexion        |
-| `GET /api/auth/session`  | État de connexion pour le front (401 si absent)   |
+| Route                    | Rôle                                                                 |
+| ------------------------ | -------------------------------------------------------------------- |
+| `GET /api/auth/login`    | Démarre le parcours, redirige vers Keycloak                          |
+| `GET /api/auth/callback` | Échange le code, crée le compte, ouvre la session                    |
+| `GET /api/auth/logout`   | Ferme la session et propage la déconnexion                           |
+| `GET /api/auth/session`  | État de connexion : `{ session }`, `null` si personne n'est connecté |
 
 Une navigation vers `login`, `callback` ou `logout` ne reçoit jamais d'erreur
 brute : l'échec renvoie au front avec son motif, `?login=<motif>` ou
 `?logout=<motif>` (`expired`, `failed`, `unavailable`, `too-many-requests`), que
-le site affiche. Le détail reste dans les journaux de l'API.
+front-office et back-office affichent sans rediriger : c'est la personne qui
+relance le parcours, sinon une panne de Keycloak ferait boucler. Le détail reste
+dans les journaux de l'API.
+
+`/api/auth/session` répond toujours 200 : `{ session: null }` n'est pas une
+erreur, c'est « personne n'est connecté ». Un 401 ne veut donc dire, partout
+dans l'API, qu'une chose : la session a expiré (`SessionGuard`). Le schéma de la
+réponse est la première route de `packages/api-contract` (`getSession`).
 
 ## Le bouton FranceConnect reste dans le front
 
@@ -254,17 +262,21 @@ soit — `linkExpirationFormatter` la met en toutes lettres.
 
 **Le parcours se termine de deux façons**, selon l'endroit où le lien est ouvert :
 
-| Lien ouvert…                           | Ce que voit la personne                        |
-| -------------------------------------- | ---------------------------------------------- |
-| dans le navigateur de la demande       | connectée directement, elle arrive sur le site |
-| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton          |
+| Lien ouvert…                           | Ce que voit la personne                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| dans le navigateur de la demande       | connectée directement, elle arrive sur `FRONT_BASE_URL` (voir ci-dessous) |
+| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton                                     |
 
 Le second cas est le plus courant — on demande depuis un ordinateur et on lit
 ses emails sur un téléphone — et c'est celui qui n'avait pas d'issue : la page de
 confirmation ne propose de lien que si le client Keycloak porte une `baseUrl`, et
 `etape-api` n'en avait pas. Elle vise l'entrée de connexion de l'API plutôt que
-la racine du site, `/api/auth/login?returnTo=/compte/` : qui arrive là n'est pas
+la racine du front, `/api/auth/login?returnTo=/` : qui arrive là n'est pas
 connecté, et la marche suivante est toujours la même.
+
+`FRONT_BASE_URL` désigne le front-office en local. En recette, il désigne
+encore le site (`PUBLIC_URL`), qui n'affiche plus rien de la connexion, tant
+que le front-office n'y est pas déployé.
 
 **Un lien périmé mène à `error.ftl`**, qui n'a pas non plus de retour naturel vers
 le formulaire de demande. `Error.tsx` reconnaît ce cas et propose « Demander un
@@ -279,30 +291,50 @@ que l'adresse soit connue ou non, et n'envoie rien dans le second cas ; le
 libellé repris dans le thème dit « si un compte existe pour cette adresse » et se
 garde d'en dire plus.
 
-## La page `/compte/`
+## La session dans front-office et back-office
 
-Le site expose une page qui rend compte de la session en cours : l'identité
-reçue, champ par champ, et un bouton de déconnexion.
+Les deux apps sont entièrement derrière la connexion. La logique partagée vit
+dans `@etape/api-client` (clients HTTP et de cache, décision de la garde
+`resolveStartupAccess`, textes, `useSessionExpired`) et les vues dans
+`@etape/ui` (écrans d'attente et d'avis, dialogue). Le branchement, lui, est
+copié à l'identique dans chaque app, parce qu'il dépend de son routeur et de sa
+configuration : la route racine qui porte la garde (`navigation/routes.tsx`),
+l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
 
-Elle affiche les claims **tels qu'ils arrivent**, sous leur libellé français et
-leur nom technique. C'est délibéré : les champs que renvoie FranceConnect
-varient selon le fournisseur d'identité choisi, et c'est le nom technique qui
-sert à discuter avec le portail partenaires quand l'un d'eux manque. Un champ
-inconnu de la table des libellés est affiché quand même, jamais écarté.
+- **Au démarrage**, une garde `beforeLoad` sur la route racine lit
+  `/api/auth/session`. Personne n'est connecté : navigation pleine page vers
+  `/api/auth/login?returnTo=<page demandée>`, donc vers le formulaire servi par
+  Keycloak. L'URL porte un échec du parcours : l'avis s'affiche (`NoticeScreen`),
+  sans redirection — sauf un ancien échec de connexion quand la session est
+  valide (favori, bouton Précédent) ; l'échec d'une déconnexion s'affiche
+  toujours, la limite de débit pouvant l'avoir refusée. L'API ne répond pas
+  (délai de 10 s par requête, trois relances, même si la connexion tombe
+  pendant la vérification) : un écran « service indisponible », relancé par un
+  clic. Une autre erreur, comme une réponse hors contrat, affiche « Une erreur
+  inattendue est survenue ».
+- **En cours d'utilisation**, un 401 efface du cache de TanStack Query tout ce
+  qui a été chargé pendant la session et retire l'écran affiché — sur un poste
+  partagé, rien ne doit rester lisible derrière le dialogue, et un écran monté
+  garde ses données même cache vidé —, vide la session et ouvre le dialogue
+  « Session expirée » (`SessionExpiredDialog`). Rien ne le ferme, ni Échap ni un
+  clic dehors ; « Se reconnecter » mène au formulaire et ramène sur la page en
+  cours, ancre comprise. Si la personne quitte la page, par le bouton Précédent
+  par exemple, la garde ne trouve plus de session et la redirige vers le
+  formulaire. Plusieurs 401 simultanés n'ouvrent qu'un dialogue.
+- **Une erreur dans un écran** affiche « Une erreur inattendue est survenue » à
+  sa place, sous `RootLayout` : le dialogue « Session expirée » reste
+  disponible. Une adresse inconnue affiche « Page introuvable ».
 
-Deux conséquences côté API : `PublicSession` porte un `claims` non typé, et
-`identity-claims.ts` en retire la plomberie du protocole — `iss`, `aud`,
-`at_hash` et consorts — en liste noire plutôt qu'en liste blanche, pour la même
-raison.
+`PublicSession` porte un `claims` non typé, et `identity-claims.ts` en retire la
+plomberie du protocole — `iss`, `aud`, `at_hash` et consorts — en liste noire
+plutôt qu'en liste blanche : les champs que renvoie FranceConnect varient selon
+le fournisseur d'identité choisi, et c'est leur nom technique qui sert à
+discuter avec le portail partenaires quand l'un d'eux manque.
 
-L'entrée de l'en-tête suit l'état de session : « Se connecter » avant, « Mon
-compte » après. Le lien de connexion porte `returnTo=/compte/`, sans quoi
-quelqu'un déjà connecté à Keycloak repasse tout le parcours pour revenir d'où il
-vient — et croit que le bouton n'a rien fait.
-
-L'en-tête n'interroge la session qu'au chargement complet d'une page : il vit
-dans le layout, que les navigations côté client ne remontent pas. Se déconnecter
-depuis `/compte/` provoque une vraie navigation, donc l'en-tête se remet à jour.
+**Une limite, levée par la suite prévue (voir « Ce qui reste à faire »)** : l'API ne connaît
+qu'un front, `FRONT_BASE_URL`, vers lequel elle renvoie après connexion,
+déconnexion ou échec. En local, c'est le front-office ; pour essayer le
+back-office, y mettre `http://localhost:5174`.
 
 ## Développement local
 
@@ -318,12 +350,14 @@ npm run build -- --filter=@etape/keycloak-theme
 FRANCECONNECT_CLIENT_ID=… FRANCECONNECT_CLIENT_SECRET=… docker compose up -d
 
 cp apps/api/.env.example apps/api/.env
+cp apps/front-office/.env.example apps/front-office/.env
+cp apps/back-office/.env.example apps/back-office/.env
 
 # Crée les tables de la base applicative. À rejouer après chaque migration.
 npm run db:migrate --workspace=@etape/api
 
-npm run dev            # site, simulateur et API
-npm run test           # tests de l'API et du thème (Vitest)
+npm run dev            # site, simulateur, front-office, back-office et API
+npm run test           # tests de l'API, du thème, d'ui et d'api-client (Vitest)
 ```
 
 Après modification du thème, `npm run build -- --filter=@etape/keycloak-theme`
@@ -333,7 +367,8 @@ simple redémarrage de Keycloak servirait l'ancien.
 
 | Service           | Adresse               | Accès                                              |
 | ----------------- | --------------------- | -------------------------------------------------- |
-| Site vitrine      | http://localhost:3000 | bouton « Se connecter » dans l'en-tête             |
+| Front-office      | http://localhost:5173 | la connexion est demandée à l'ouverture            |
+| Back-office       | http://localhost:5174 | idem ; retour sur `FRONT_BASE_URL` après connexion |
 | Console Keycloak  | http://localhost:8080 | `admin` / `admin`                                  |
 | Compte applicatif | —                     | `test@etape.local` / `KEYCLOAK_TEST_USER_PASSWORD` |
 | Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`                    |
@@ -398,11 +433,34 @@ c'est ce que comprennent les clients de messagerie.
 - [ ] Valider l'expéditeur `SMTP_FROM` chez Brevo (SPF, DKIM) : sans domaine
       authentifié, le relais accepte les messages et la remise échoue ensuite,
       sans que Keycloak en sache rien
-- [ ] Bouton FranceConnect dans le front. Le bouton « Se connecter » de
-      l'en-tête du site part bien vers `/api/auth/login` ; celui de
-      FranceConnect, conforme au kit, reste à poser sur l'écran qui
-      l'accueillera : `FRANCECONNECT_LOGIN_URL` (`apps/site/src/lib/auth.ts`)
-      pointe déjà où il faut
+- [ ] Page de connexion du front-office : le bouton FranceConnect, conforme au
+      kit, vers `/api/auth/login?idp=franceconnect`, et « Se connecter » vers
+      `/api/auth/login`. Le back-office n'utilise pas FranceConnect
+- [ ] Une origine par front : `FRONT_OFFICE_BASE_URL` et `BACK_OFFICE_BASE_URL`
+      (avec leurs URL d'API) à la place de `FRONT_BASE_URL` et `API_BASE_URL`,
+      le front reconnu à l'en-tête `Host`, une `redirect_uri` par front dans
+      Keycloak, le refus de FranceConnect au `callback` du back-office — le
+      masquer dans le thème ne suffit pas —, et une garde CSRF (en-tête exigé)
+      sur les routes qui modifient. Y ajouter une garde contre les boucles de
+      redirection quand le cookie de session n'est pas conservé (cookies
+      bloqués, cookie `secure` en `http`) : la garde de démarrage renvoie alors
+      vers la connexion, que le SSO de Keycloak rouvre en silence, jusqu'à la
+      limite de débit. D'ici là, une connexion partie du back-office revient sur
+      `FRONT_BASE_URL`
+- [ ] Session inactive : expiration après 30 minutes sans activité (appel à
+      l'API, mouvement, saisie), limite absolue ramenée de 12 h à 10 h, même
+      règle pour les bénéficiaires et les instructeurs ; avertissement avant
+      l'expiration et prolongation (WCAG 2.2.1). Demande une migration (dernière
+      activité) et la garde CSRF du point précédent, pour la route de
+      prolongation. À cette occasion : réserver le délai de 10 s à la lecture de
+      session (global, il couperait l'envoi d'une pièce justificative) et
+      raccourcir l'attente au démarrage (jusqu'à 47 s aujourd'hui) ; annoncer
+      l'avertissement, l'attente et l'écran d'erreur dans une même région
+      `role="status"` toujours montée ; faire de « Se reconnecter » un lien
+- [ ] Écrans d'avis : un titre d'onglet qui suit l'avis (RGAA 8.6), et
+      « Réessayer » ou « Se connecter » en liens plutôt qu'en boutons. Avec le
+      bouton de déconnexion : après une déconnexion refusée par la limite de
+      débit, proposer de la relancer plutôt que « Se connecter »
 - [ ] Décider de l'hébergement de Keycloak et de sa base, et scripter la
       configuration des environnements non locaux via `kcadm`
 

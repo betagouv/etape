@@ -26,12 +26,10 @@ async function bootstrap(): Promise<void> {
   app.use(helmet());
   app.use(cookieParser());
 
-  // Inutile en production (origine commune), nécessaire en développement.
-  // `credentials` sans quoi le cookie de session ne serait pas envoyé.
-  app.enableCors({
-    origin: config.get("FRONT_BASE_URL", { infer: true }),
-    credentials: true,
-  });
+  // Pas de CORS : en production, nginx sert l'API sous `/api/`, sur la même
+  // origine que les pages ; en local, le proxy de Vite relaie `/api` depuis
+  // front-office et back-office. Aucune page d'une autre origine n'a à lire
+  // l'API.
 
   // Une redirection servie depuis un cache rejouerait un `state` déjà consommé.
   app.set("etag", false);

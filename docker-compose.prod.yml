@@ -76,7 +76,7 @@ services:
       app-db:
         condition: service_healthy
     healthcheck:
-      # 401 sans cookie est une réponse, donc un service vivant.
+      # Sans cookie, la route répond 200 `{ session: null }` : un service vivant.
       test:
         [
           "CMD",

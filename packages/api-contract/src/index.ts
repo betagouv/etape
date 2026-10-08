@@ -1,4 +1,11 @@
-export { buildRoutePath } from "./build-route-path";
+export { getSession } from "./auth/auth.routes.js";
+export {
+  PublicSessionSchema,
+  SessionResponseSchema,
+  type PublicSession,
+  type SessionResponse,
+} from "./auth/auth.schemas.js";
+export { buildRoutePath } from "./build-route-path.js";
 export {
   HTTP_METHODS,
   type HttpMethod,
@@ -7,4 +14,4 @@ export {
   type RouteParams,
   type RouteQuery,
   type RouteResponse,
-} from "./route-definition";
+} from "./route-definition.js";

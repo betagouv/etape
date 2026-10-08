@@ -1,0 +1,36 @@
+import type { PublicSession } from "@etape/api-contract";
+
+import { AUTH_FLOW_STEP, readAuthFlowFailure, type AuthFlowFailure } from "./auth-flow";
+
+/** Ce que l'app fait au démarrage, une fois la session connue. */
+export type StartupAccess =
+  | { kind: "auth-flow-failure"; failure: AuthFlowFailure }
+  | { kind: "login-required" }
+  | { kind: "authenticated"; session: PublicSession };
+
+/**
+ * L'échec d'un parcours passe avant l'absence de session : l'API y renvoie
+ * justement quelqu'un qui n'est pas connecté. Rediriger vers le formulaire à ce
+ * moment-là bouclerait dès que le service de connexion est en panne ; on affiche
+ * l'échec, et c'est la personne qui relance.
+ *
+ * Une session valide passe en revanche avant un ancien échec de connexion
+ * (favori, bouton Précédent, autre onglet) : la connexion a abouti depuis.
+ * L'échec d'une déconnexion, lui, s'affiche toujours : la limite de débit peut
+ * l'avoir refusée, et la session est alors encore ouverte.
+ */
+export function resolveStartupAccess(
+  search: URLSearchParams,
+  session: PublicSession | null,
+): StartupAccess {
+  const failure = readAuthFlowFailure(search);
+  const isOutdatedLoginFailure = session !== null && failure?.step === AUTH_FLOW_STEP.LOGIN;
+  if (failure && !isOutdatedLoginFailure) return { kind: "auth-flow-failure", failure };
+
+  if (!session) return { kind: "login-required" };
+
+  return { kind: "authenticated", session };
+}
+
+/** Texte du démarrage, commun à front-office et back-office. */
+export const STARTUP_PENDING_MESSAGE = "Vérification de votre session…";
