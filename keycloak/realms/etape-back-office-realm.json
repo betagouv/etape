@@ -1,0 +1,73 @@
+{
+  "realm": "etape-back-office",
+  "displayName": "ETAPE — back-office",
+  "enabled": true,
+  "sslRequired": "none",
+  "loginTheme": "etape",
+  "emailTheme": "etape",
+  "internationalizationEnabled": true,
+  "defaultLocale": "fr",
+  "supportedLocales": ["fr"],
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 10,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "passwordPolicy": "length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername(undefined) and passwordHistory(3)",
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "accessTokenLifespan": 300,
+  "actionTokenGeneratedByUserLifespan": 900,
+  "accessCodeLifespanLogin": 600,
+  "clients": [
+    {
+      "clientId": "etape-api",
+      "secret": "dev-secret-etape-back-office-non-confidentiel",
+      "name": "API ETAPE",
+      "description": "Client confidentiel du service NestJS, pour le back-office. Seul détenteur du secret.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "baseUrl": "http://localhost:5174/api/auth/login?returnTo=%2F",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": false,
+      "redirectUris": ["http://localhost:5174/api/auth/callback"],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5174/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "identity-provider",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "identity_provider",
+            "claim.name": "identity_provider",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

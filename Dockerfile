@@ -106,9 +106,10 @@ COPY --from=franceconnect-extension /keycloak-franceconnect.jar /opt/keycloak/pr
 COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
 COPY deploy/keycloak-start.sh /opt/keycloak/bin/etape-keycloak-start.sh
 
-# Importé au premier démarrage. Décrit le poste de développement — URL en
-# `localhost`, secret public — et `etape-init.sh` le corrige ensuite.
-COPY keycloak/realms/etape-realm.json /opt/keycloak/data/import/
+# Importés au premier démarrage, un realm par front. Ils décrivent le poste de
+# développement — URL en `localhost`, secrets publics — et `etape-init.sh` les
+# corrige ensuite.
+COPY keycloak/realms/etape-realm.json keycloak/realms/etape-back-office-realm.json /opt/keycloak/data/import/
 
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
