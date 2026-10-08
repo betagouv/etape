@@ -18,6 +18,21 @@ export const UNEXPECTED_ERROR_NOTICE: NoticeContent = {
   actionLabel: "Recharger la page",
 };
 
+/**
+ * Le cookie de session n'est pas conservé : la personne revient de la connexion
+ * sans session. Destiné à tout le monde, sans vocabulaire technique au-delà de
+ * « cookies », que les bandeaux ont rendu familier.
+ *
+ * Le titre ne suppose pas une connexion passée : l'avis s'affiche aussi d'emblée
+ * quand le stockage du navigateur est bloqué, ou à qui est reparti deux fois
+ * vers la connexion sans se connecter.
+ */
+export const LOGIN_LOOP_NOTICE: NoticeContent = {
+  title: "Connexion impossible",
+  message: "Autorisez les cookies pour ce site dans votre navigateur, puis réessayez.",
+  actionLabel: "Réessayer",
+};
+
 export const NOT_FOUND_NOTICE: NoticeContent = {
   title: "Page introuvable",
   message: "L'adresse demandée n'existe pas ou n'est plus disponible.",

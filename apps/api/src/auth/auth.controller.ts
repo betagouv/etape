@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, Res, UseFilters } from "@nestjs/common";
+import { Controller, Get, Inject, Query, Req, Res, UseFilters } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { minutes, Throttle } from "@nestjs/throttler";
 import type { getSession, RouteResponse } from "@etape/api-contract";
@@ -9,6 +9,8 @@ import { AccountService } from "../account/account.service.js";
 import type { Env } from "../config/env.js";
 import { AUTH_FLOW_ERROR, AUTH_FLOW_STEP, buildAuthFlowErrorUrl } from "./auth-flow-error.js";
 import { AuthFlowExceptionFilter } from "./auth-flow-exception.filter.js";
+import { FRONT_CONFIGS, KEYCLOAK_REALM_BY_FRONT, type Front, type FrontConfig } from "./front.js";
+import { CurrentFront } from "./front.guard.js";
 import { extractIdentityClaims, getStringClaim } from "./identity-claims.js";
 import { getIdentityProvider } from "./identity-provider.js";
 import { OidcService } from "./oidc.service.js";
@@ -31,16 +33,14 @@ export class AuthController {
     private readonly sessions: SessionService,
     private readonly accountService: AccountService,
     private readonly config: ConfigService<Env, true>,
+    @Inject(FRONT_CONFIGS) private readonly fronts: Record<Front, FrontConfig>,
   ) {}
-
-  private get frontBaseUrl(): string {
-    return this.config.get("FRONT_BASE_URL", { infer: true });
-  }
 
   @Get("login")
   @Throttle(AUTH_FLOW_THROTTLE)
   @UseFilters(AuthFlowExceptionFilter)
   async login(
+    @CurrentFront() front: Front,
     @Query("idp") idp: string | undefined,
     @Query("returnTo") returnTo: string | undefined,
     @Res() response: Response,
@@ -52,14 +52,14 @@ export class AuthController {
 
     const franceConnectAlias = this.config.get("KEYCLOAK_FRANCECONNECT_ALIAS", { infer: true });
 
-    const authorizationUrl = await this.oidc.buildAuthorizationUrl({
+    const authorizationUrl = await this.oidc.buildAuthorizationUrl(front, {
       state,
       nonce,
       codeChallenge,
       idpHint: idp === FRANCECONNECT_IDP_HINT ? franceConnectAlias : undefined,
     });
 
-    this.sessions.startPendingLogin(response, {
+    this.sessions.startPendingLogin(response, front, {
       state,
       nonce,
       codeVerifier,
@@ -72,20 +72,26 @@ export class AuthController {
   @Get("callback")
   @Throttle(AUTH_FLOW_THROTTLE)
   @UseFilters(AuthFlowExceptionFilter)
-  async callback(@Req() request: Request, @Res() response: Response): Promise<void> {
-    const pendingLogin = this.sessions.consumePendingLogin(request, response);
+  async callback(
+    @CurrentFront() front: Front,
+    @Req() request: Request,
+    @Res() response: Response,
+  ): Promise<void> {
+    const { frontBaseUrl, apiBaseUrl } = this.fronts[front];
+    const pendingLogin = this.sessions.consumePendingLogin(request, response, front);
 
     if (!pendingLogin) {
       response.redirect(
-        buildAuthFlowErrorUrl(this.frontBaseUrl, AUTH_FLOW_STEP.LOGIN, AUTH_FLOW_ERROR.EXPIRED),
+        buildAuthFlowErrorUrl(frontBaseUrl, AUTH_FLOW_STEP.LOGIN, AUTH_FLOW_ERROR.EXPIRED),
       );
       return;
     }
 
-    const apiBaseUrl = this.config.get("API_BASE_URL", { infer: true });
+    // L'URL vue par le navigateur, reconstruite depuis la configuration et non
+    // depuis l'en-tête `Host`.
     const currentUrl = new URL(request.originalUrl, apiBaseUrl);
 
-    const tokens = await this.oidc.exchangeCode({
+    const tokens = await this.oidc.exchangeCode(front, {
       currentUrl,
       state: pendingLogin.state,
       nonce: pendingLogin.nonce,
@@ -100,6 +106,7 @@ export class AuthController {
     const identityProvider = getIdentityProvider(claims);
 
     const account = await this.accountService.recordLogin({
+      keycloakRealm: KEYCLOAK_REALM_BY_FRONT[front],
       keycloakSub: claims.sub,
       email: getStringClaim(claims.email),
       prenom: getStringClaim(claims.given_name),
@@ -109,12 +116,13 @@ export class AuthController {
 
     await this.sessions.openSession(request, response, {
       accountId: account.id,
+      front,
       identityProvider,
       claims: extractIdentityClaims(claims),
       idToken: tokens.id_token,
     });
 
-    response.redirect(`${this.frontBaseUrl}${pendingLogin.returnTo}`);
+    response.redirect(`${frontBaseUrl}${pendingLogin.returnTo}`);
   }
 
   /**
@@ -123,25 +131,29 @@ export class AuthController {
    */
   @Get("logout")
   @UseFilters(AuthFlowExceptionFilter)
-  async logout(@Req() request: Request, @Res() response: Response): Promise<void> {
-    const session = await this.sessions.closeSession(request, response);
+  async logout(
+    @CurrentFront() front: Front,
+    @Req() request: Request,
+    @Res() response: Response,
+  ): Promise<void> {
+    const session = await this.sessions.closeSession(request, response, front);
 
     if (!session) {
-      response.redirect(this.frontBaseUrl);
+      response.redirect(this.fronts[front].frontBaseUrl);
       return;
     }
 
-    const logoutUrl = await this.oidc.buildLogoutUrl({
-      idToken: session.idToken,
-      postLogoutRedirectUri: this.frontBaseUrl,
-    });
+    const logoutUrl = await this.oidc.buildLogoutUrl(front, session.idToken);
 
     response.redirect(logoutUrl.href);
   }
 
   @Get("session")
-  async session(@Req() request: Request): Promise<RouteResponse<typeof getSession>> {
-    const session = await this.sessions.readSession(request);
+  async session(
+    @CurrentFront() front: Front,
+    @Req() request: Request,
+  ): Promise<RouteResponse<typeof getSession>> {
+    const session = await this.sessions.readSession(request, front);
 
     return toSessionResponse(
       session,

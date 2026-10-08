@@ -119,8 +119,9 @@ services:
   #    privée est bien reconnue comme locale.
   #
   # 2. L'import de realm ne substitue **aucune** variable, ni environnement ni
-  #    propriété système (vérifié sur Keycloak 26.7) : les secrets FranceConnect
-  #    sont donc posés ici, après coup.
+  #    propriété système (vérifié sur Keycloak 26.7) : les secrets — celui de
+  #    chaque client `etape-api`, ceux de FranceConnect — sont donc posés ici,
+  #    après coup, depuis le `.env` à la racine. Aucun n'est versionné.
   keycloak-init:
     image: quay.io/keycloak/keycloak:26.7
     restart: "no"
@@ -128,6 +129,8 @@ services:
       keycloak:
         condition: service_started
     environment:
+      FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET: ${FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET:-}
+      BACK_OFFICE_KEYCLOAK_CLIENT_SECRET: ${BACK_OFFICE_KEYCLOAK_CLIENT_SECRET:-}
       FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
       FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
       SMTP_HOST: ${SMTP_HOST:-}
@@ -146,6 +149,32 @@ services:
         $$KCADM update realms/master -s sslRequired=NONE
         echo "master : sslRequired=NONE — console admin joignable en HTTP depuis l'hôte."
 
+        # Un realm par front, chacun relayant `/api` sur sa propre origine.
+        # Adresses réappliquées à chaque démarrage : un realm déjà importé ne
+        # relit pas son fichier. Le secret doit être le même que dans
+        # `apps/api/.env` ; sans lui, Keycloak garde celui qu'il a tiré au sort
+        # à l'import, et l'API ne peut plus échanger le code de connexion.
+        for entry in "etape:http://localhost:5173:$$FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET" \
+                     "etape-back-office:http://localhost:5174:$$BACK_OFFICE_KEYCLOAK_CLIENT_SECRET"; do
+          realm=$${entry%%:*}
+          rest=$${entry#*:}
+          front_url=$${rest%:*}
+          secret=$${rest##*:}
+          client_uuid=$$($$KCADM get clients -r $$realm -q clientId=etape-api --fields id --format csv --noquotes)
+          $$KCADM update clients/$$client_uuid -r $$realm \
+            -s "redirectUris=[\"$$front_url/api/auth/callback\"]" \
+            -s "baseUrl=$$front_url/api/auth/login?returnTo=%2F" \
+            -s "attributes.\"post.logout.redirect.uris\"=$$front_url/*"
+          echo "$$realm — client etape-api : adresses alignées sur $$front_url."
+          if [ -n "$$secret" ]; then
+            $$KCADM update clients/$$client_uuid -r $$realm -s "secret=$$secret"
+            echo "$$realm — client etape-api : secret posé."
+          else
+            echo "✗ $$realm — client etape-api : secret absent du .env à la racine,"
+            echo "  l'API ne pourra pas s'y connecter (voir .env.example)."
+          fi
+        done
+
         if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then
           $$KCADM update identity-provider/instances/franceconnect -r etape \
             -s "config.clientId=$$FRANCECONNECT_CLIENT_ID" \
@@ -156,28 +185,32 @@ services:
           echo "                renseigner FRANCECONNECT_CLIENT_ID / _SECRET puis relancer."
         fi
 
-        if [ -n "$$SMTP_HOST" ]; then
-          printf '{"verifyEmail":true,"smtpServer":{"host":"%s","port":"%s","from":"%s","fromDisplayName":"ETAPE","starttls":"true","ssl":"false","auth":"true","user":"%s","password":"%s"}}' \
-            "$$SMTP_HOST" "$$SMTP_PORT" "$$SMTP_FROM" "$$SMTP_USER" "$$SMTP_PASSWORD" \
-            | $$KCADM update realms/etape -f -
-          echo "smtp : $$SMTP_HOST configuré, verifyEmail activé."
-        else
-          echo "smtp : aucun serveur d'envoi — verifyEmail reste désactivé."
-          echo "       « mot de passe oublié » et vérification d'adresse sont fermés ;"
-          echo "       renseigner SMTP_HOST / _USER / _PASSWORD / _FROM puis relancer."
-        fi
-
-        if [ -n "$$KEYCLOAK_TEST_USER_PASSWORD" ]; then
-          if [ -z "$$($$KCADM get users -r etape -q username=test@etape.local -q exact=true --fields id --format csv --noquotes)" ]; then
-            $$KCADM create users -r etape -s username=test@etape.local -s email=test@etape.local \
-              -s emailVerified=true -s enabled=true -s firstName=Test -s lastName=ETAPE
+        # Deux realms, un par front : SMTP et compte de test valent pour les
+        # deux. FranceConnect, lui, n'existe que dans `etape`.
+        for realm in etape etape-back-office; do
+          if [ -n "$$SMTP_HOST" ]; then
+            printf '{"verifyEmail":true,"smtpServer":{"host":"%s","port":"%s","from":"%s","fromDisplayName":"ETAPE","starttls":"true","ssl":"false","auth":"true","user":"%s","password":"%s"}}' \
+              "$$SMTP_HOST" "$$SMTP_PORT" "$$SMTP_FROM" "$$SMTP_USER" "$$SMTP_PASSWORD" \
+              | $$KCADM update realms/$$realm -f -
+            echo "$$realm — smtp : $$SMTP_HOST configuré, verifyEmail activé."
+          else
+            echo "$$realm — smtp : aucun serveur d'envoi, verifyEmail reste désactivé."
+            echo "       « mot de passe oublié » et vérification d'adresse sont fermés ;"
+            echo "       renseigner SMTP_HOST / _USER / _PASSWORD / _FROM puis relancer."
           fi
-          $$KCADM set-password -r etape --username test@etape.local \
-            --new-password "$$KEYCLOAK_TEST_USER_PASSWORD" >/dev/null 2>&1 || true
-          echo "compte de test : test@etape.local, mot de passe KEYCLOAK_TEST_USER_PASSWORD."
-        else
-          echo "compte de test : KEYCLOAK_TEST_USER_PASSWORD absent, aucun compte créé."
-        fi
+
+          if [ -n "$$KEYCLOAK_TEST_USER_PASSWORD" ]; then
+            if [ -z "$$($$KCADM get users -r $$realm -q username=test@etape.local -q exact=true --fields id --format csv --noquotes)" ]; then
+              $$KCADM create users -r $$realm -s username=test@etape.local -s email=test@etape.local \
+                -s emailVerified=true -s enabled=true -s firstName=Test -s lastName=ETAPE
+            fi
+            $$KCADM set-password -r $$realm --username test@etape.local \
+              --new-password "$$KEYCLOAK_TEST_USER_PASSWORD" >/dev/null 2>&1 || true
+            echo "$$realm — compte de test : test@etape.local, mot de passe KEYCLOAK_TEST_USER_PASSWORD."
+          else
+            echo "$$realm — compte de test : KEYCLOAK_TEST_USER_PASSWORD absent, aucun compte créé."
+          fi
+        done
 
 volumes:
   app-db-data:

@@ -669,7 +669,9 @@ providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }];
 
 **Comment lire ces valeurs** : 300 requêtes par minute et par adresse pour l'ensemble de l'API — au-dessus de ce qu'un écran génère, en dessous de ce qu'un script produit. Et 10 ouvertures de connexion par minute : personne ne se connecte dix fois par minute, mais dix lignes par minute ne remplissent aucune table. C'est cette seconde limite qui protège la table des transactions, et c'est elle qui manque.
 
-**Attention à l'adresse vue par le compteur** : derrière nginx, toutes les requêtes semblent venir du proxy. Il faut que l'API fasse confiance à `X-Forwarded-For` (`app.set("trust proxy", 1)`), sinon la limite s'applique à tout le monde d'un coup. **Qui vérifie cette configuration côté hébergeur n'a pas été tranché** : le point reste ouvert, et il conditionne l'efficacité réelle de la limitation.
+**Attention à l'adresse vue par le compteur** : derrière nginx, toutes les requêtes semblent venir du proxy. Il faut que l'API fasse confiance à `X-Forwarded-For` (`app.set("trust proxy", …)`, réglé par `TRUST_PROXY_HOPS` : 2 en production, le proxy de l'hébergeur puis le nginx de `web`), sinon la limite s'applique à tout le monde d'un coup. **Qui vérifie cette configuration côté hébergeur n'a pas été tranché** : le point reste ouvert, et il conditionne l'efficacité réelle de la limitation.
+
+**`trust proxy` ne sert qu'à `req.ip`** (décidé le 8 octobre 2026, avec une origine par front) : l'API reconnaît le front à l'en-tête `Host`, que le nginx de chaque front écrit lui-même, et jamais à `req.host`, qui lit `X-Forwarded-Host` dès que la confiance est accordée et en garde la valeur la plus à gauche — celle du client si un proxy ajoute au lieu de remplacer. Aucune URL n'est construite à partir de `Host` : il ne sert qu'à choisir dans la liste fermée des fronts.
 
 </details>
 
@@ -831,7 +833,7 @@ Les onze questions que portait ce document, et ce que l'équipe a répondu.
 ### Ce qui reste ouvert
 
 1. **L'instance Sentry** — **issue #64**, qui pose la question à betagouv et au coaching. Elle est tranchée dans [`stack-front.md`](./stack-front.md) (décision 11), et la décision 7 de ce document en dépend : Sentry Logs n'est pas garanti sur l'instance de betagouv.
-2. **Qui vérifie la confiance au proxy** (`trust proxy`) pour que la limitation de débit compte les bonnes adresses (décision 8).
+2. **Qui vérifie la confiance au proxy** (`trust proxy`) pour que la limitation de débit compte les bonnes adresses (décision 8). La question voisine — `Host` ou `X-Forwarded-Host` pour reconnaître le front — est tranchée : `Host` (décision 8).
 3. **Le porteur de `packages/api-contract`**. Sa première route, `getSession`, est posée depuis le 5 octobre 2026.
 4. **Lequel des deux pipes de validation** (décision 4) : celui de NestJS 12, désormais disponible, ou le pipe maison. Se tranche à la première route qui validera une entrée, sur le format du corps d'erreur.
 5. **Les tests du front** : l'API est couverte et bloquante en CI ; côté front, seuls `packages/ui` et `packages/api-client` ont des tests depuis le 5 octobre 2026, les apps aucun (voir [`stack-front.md`](./stack-front.md), décision 8).

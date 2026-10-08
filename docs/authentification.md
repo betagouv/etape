@@ -20,22 +20,23 @@ assemblage par `scripts/vercel-out.mjs` — n'est pas touché.
 ## Architecture
 
 ```
-front statique (Next SSG)
-   │  bouton FranceConnect → /api/auth/login?idp=franceconnect
-   │  bouton email/mdp     → /api/auth/login
-   ▼
-apps/api (NestJS)  ── client OIDC confidentiel · session en cookie httpOnly
-   ▼
-Keycloak (realm etape) ─┬→ FranceConnect  (identity provider brokerisé)
-                        └→ utilisateurs locaux (email / mot de passe)
+front-office (son origine)            back-office (son origine)
+   │  /api/auth/login?idp=franceconnect   │  /api/auth/login
+   │  /api/auth/login                     │
+   ▼  relayé par nginx ou Vite            ▼  relayé par nginx ou Vite
+apps/api (NestJS) ── front reconnu à l'en-tête Host · client OIDC confidentiel
+   │                                       · session en cookie httpOnly
+   ▼                                      ▼
+Keycloak, realm etape ─┬→ FranceConnect   Keycloak, realm etape-back-office
+                       └→ comptes locaux     └→ comptes locaux (sans inscription)
 ```
 
 Deux choix structurants :
 
 **L'API est le client OIDC, pas le navigateur.** Aucun jeton n'atteint le front.
 Il reçoit un cookie `httpOnly` contenant un identifiant de session opaque ; tout
-le reste vit côté serveur. Front et API partagent l'origine — derrière nginx en
-production, par le proxy de Vite en local (`/api`) — donc ni CORS ni
+le reste vit côté serveur. Chaque front relaie `/api` sur sa propre origine —
+nginx en production, le proxy de Vite en local — donc ni CORS ni
 `SameSite=None` : l'API n'active pas le CORS du tout.
 
 **L'API ne parle qu'à Keycloak.** FranceConnect n'apparaît nulle part dans le
@@ -76,6 +77,30 @@ erreur, c'est « personne n'est connecté ». Un 401 ne veut donc dire, partout
 dans l'API, qu'une chose : la session a expiré (`SessionGuard`). Le schéma de la
 réponse est la première route de `packages/api-contract` (`getSession`).
 
+**Une garde CSRF protège les requêtes qui modifient des données** (`POST`,
+`PUT`, `PATCH`, `DELETE` ; `CsrfGuard`, globale). Elle exige deux choses, et
+répond 403 sinon :
+
+- l'en-tête `x-etape-csrf: 1`, que `createHttpClient` (`packages/api-client`)
+  envoie sur toutes les requêtes. Une page d'un autre site ne peut pas l'ajouter
+  sans la permission du serveur, et l'API ne la donne jamais : elle n'active pas
+  le CORS ;
+- un en-tête `Origin` égal à l'origine du front reconnu par `Host`. Les
+  navigateurs l'envoient sur toute requête qui n'est ni GET ni HEAD ; il tient
+  encore si le CORS était un jour ouvert par erreur.
+
+Le cookie de session reste en `SameSite=Lax` : le retour de Keycloak sur
+`/auth/callback` est une navigation venue d'un autre site, que `Strict`
+priverait de son cookie.
+
+**Les cookies** (`etape-front-office.sid`, `etape-back-office.sid`, et leur
+transaction de connexion en `.txn`) sont `HttpOnly`, sans `Domain`, donc liés à
+l'hôte de leur front. En production, ils portent le préfixe `__Host-Http-` : le
+navigateur ne les accepte alors que `Secure`, sur `Path=/`, sans `Domain` et
+posés par le serveur — aucun script, aucun sous-domaine ne peut les créer ni les
+écraser. Un tel cookie ne s'efface qu'avec les mêmes attributs, `Secure`
+compris : `SessionService` pose et efface avec une seule définition.
+
 ## Le bouton FranceConnect reste dans le front
 
 Dans un flux brokerisé standard, c'est Keycloak qui affiche l'écran de connexion,
@@ -91,8 +116,12 @@ que pour le chemin email / mot de passe.
 
 ## Configuration du realm
 
-Elle est versionnée dans `keycloak/realms/etape-realm.json`, importée au
-démarrage. Ce fichier décrit **l'environnement de développement uniquement** :
+Un realm par front, versionnés dans `keycloak/realms/` (`etape-realm.json` pour
+le front-office, `etape-back-office-realm.json` pour le back-office), importés
+au démarrage. Deux realms et non deux clients : la session de Keycloak est
+commune à tout un realm, et un compte du front-office se retrouverait connecté
+au back-office sans rien saisir. Ces fichiers décrivent **l'environnement de
+développement uniquement** :
 l'import de realm ne substitue aucune variable, ni d'environnement ni de propriété
 système, si bien que tout ce qui varie d'un environnement à l'autre doit être
 appliqué après coup par `kcadm`. Le détail et les pièges associés sont dans
@@ -102,7 +131,11 @@ appliqué après coup par `kcadm`. Le détail et les pièges associés sont dans
 
 - Type **confidentiel** ; `Direct access grants` désactivé — le mot de passe ne
   doit jamais transiter par l'API.
-- `Valid redirect URIs` : `${API_BASE_URL}/auth/callback`, au caractère près.
+- Un client par realm, donc un par front : `etape` pour le front-office,
+  `etape-back-office` pour le back-office.
+- `Valid redirect URIs` : `<url du front>/api/auth/callback`, au caractère près.
+  Le retour doit se faire sur l'hôte où la connexion a commencé, sans quoi le
+  cookie de connexion en attente n'est pas retrouvé.
 - PKCE `S256` **exigé** côté client, en plus d'être envoyé par l'API.
 - `post.logout.redirect.uris` doit couvrir l'URL du front. Elle n'est pas déduite
   des `redirectUris` : oubliée, la déconnexion échoue alors même que la connexion
@@ -262,10 +295,10 @@ soit — `linkExpirationFormatter` la met en toutes lettres.
 
 **Le parcours se termine de deux façons**, selon l'endroit où le lien est ouvert :
 
-| Lien ouvert…                           | Ce que voit la personne                                                   |
-| -------------------------------------- | ------------------------------------------------------------------------- |
-| dans le navigateur de la demande       | connectée directement, elle arrive sur `FRONT_BASE_URL` (voir ci-dessous) |
-| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton                                     |
+| Lien ouvert…                           | Ce que voit la personne                                            |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| dans le navigateur de la demande       | connectée directement, elle arrive sur son front (voir ci-dessous) |
+| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton                              |
 
 Le second cas est le plus courant — on demande depuis un ordinateur et on lit
 ses emails sur un téléphone — et c'est celui qui n'avait pas d'issue : la page de
@@ -274,9 +307,8 @@ confirmation ne propose de lien que si le client Keycloak porte une `baseUrl`, e
 la racine du front, `/api/auth/login?returnTo=/` : qui arrive là n'est pas
 connecté, et la marche suivante est toujours la même.
 
-`FRONT_BASE_URL` désigne le front-office en local. En recette, il désigne
-encore le site (`PUBLIC_URL`), qui n'affiche plus rien de la connexion, tant
-que le front-office n'y est pas déployé.
+Chaque realm renvoie vers son front : le front-office pour `etape`, le
+back-office pour `etape-back-office`.
 
 **Un lien périmé mène à `error.ftl`**, qui n'a pas non plus de retour naturel vers
 le formulaire de demande. `Error.tsx` reconnaît ce cas et propose « Demander un
@@ -294,8 +326,8 @@ garde d'en dire plus.
 ## La session dans front-office et back-office
 
 Les deux apps sont entièrement derrière la connexion. La logique partagée vit
-dans `@etape/api-client` (clients HTTP et de cache, décision de la garde
-`resolveStartupAccess`, textes, `useSessionExpired`) et les vues dans
+dans `@etape/api-client` (clients HTTP et de cache, garde de démarrage
+`checkStartupAccess` et son compteur, textes, `useSessionExpired`) et les vues dans
 `@etape/ui` (écrans d'attente et d'avis, dialogue). Le branchement, lui, est
 copié à l'identique dans chaque app, parce qu'il dépend de son routeur et de sa
 configuration : la route racine qui porte la garde (`navigation/routes.tsx`),
@@ -312,6 +344,18 @@ l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
   pendant la vérification) : un écran « service indisponible », relancé par un
   clic. Une autre erreur, comme une réponse hors contrat, affiche « Une erreur
   inattendue est survenue ».
+- **Si le cookie de session n'est pas conservé** (cookies bloqués, cookie
+  `Secure` servi en `http`), on reviendrait de la connexion sans session, que
+  Keycloak rouvrirait en silence : une boucle, jusqu'à la limite de débit. La
+  garde compte donc ses départs vers la connexion en `sessionStorage`
+  (`login-attempts.ts`) : au-delà de deux en une minute, elle affiche « Connexion
+  impossible », et c'est la personne qui relance. Lire, effacer et incrémenter
+  le compteur se fait dans `checkStartupAccess`, testé d'un bloc : l'app n'a
+  plus qu'à rediriger.
+  Deux et non un : revenir du formulaire par le bouton Précédent ressemble, vu
+  du front, à un retour sans session. Un stockage inaccessible — le cas des
+  cookies bloqués — affiche l'avis d'emblée. Le compteur s'efface à la
+  connexion réussie.
 - **En cours d'utilisation**, un 401 efface du cache de TanStack Query tout ce
   qui a été chargé pendant la session et retire l'écran affiché — sur un poste
   partagé, rien ne doit rester lisible derrière le dialogue, et un écran monté
@@ -331,10 +375,14 @@ plutôt qu'en liste blanche : les champs que renvoie FranceConnect varient selon
 le fournisseur d'identité choisi, et c'est leur nom technique qui sert à
 discuter avec le portail partenaires quand l'un d'eux manque.
 
-**Une limite, levée par la suite prévue (voir « Ce qui reste à faire »)** : l'API ne connaît
-qu'un front, `FRONT_BASE_URL`, vers lequel elle renvoie après connexion,
-déconnexion ou échec. En local, c'est le front-office ; pour essayer le
-back-office, y mettre `http://localhost:5174`.
+**L'API reconnaît le front à l'en-tête `Host`**, comparé à la liste fermée des
+fronts configurés (`auth/front.ts`) ; un hôte inconnu reçoit 421, sans
+redirection. C'est de là qu'elle tire le realm, la `redirect_uri` et l'adresse
+de retour après connexion, déconnexion ou échec — jamais de l'en-tête lui-même.
+`X-Forwarded-Host` n'est pas lu : `req.host` le préférerait dès que
+`trust proxy` est actif, en gardant la valeur la plus à gauche, celle du client.
+En local, le proxy de Vite doit donc garder `Host` intact (forme objet, sans
+`changeOrigin`).
 
 ## Développement local
 
@@ -343,15 +391,15 @@ back-office, y mettre `http://localhost:5174`.
 # lui Keycloak démarre quand même, mais avec ses écrans par défaut.
 npm run build -- --filter=@etape/keycloak-theme
 
-# La base applicative, Keycloak et la sienne. Identifiants FranceConnect et clé
-# SMTP sont facultatifs : sans eux tout fonctionne, seuls le parcours
-# FranceConnect et les emails (inscription, « mot de passe oublié ») restent
-# indisponibles.
-FRANCECONNECT_CLIENT_ID=… FRANCECONNECT_CLIENT_SECRET=… docker compose up -d
+# Les `.env` — à la racine, et dans apps/api, apps/front-office et
+# apps/back-office — se récupèrent dans le coffre-fort de l'équipe. Les
+# `.env.example` versionnés n'en donnent que la liste des variables, sans valeur.
 
-cp apps/api/.env.example apps/api/.env
-cp apps/front-office/.env.example apps/front-office/.env
-cp apps/back-office/.env.example apps/back-office/.env
+# La base applicative, Keycloak et la sienne, configurés depuis le `.env` à la
+# racine. Identifiants FranceConnect et clé SMTP sont facultatifs : sans eux tout
+# fonctionne, seuls le parcours FranceConnect et les emails (inscription,
+# « mot de passe oublié ») restent indisponibles.
+docker compose up -d
 
 # Crée les tables de la base applicative. À rejouer après chaque migration.
 npm run db:migrate --workspace=@etape/api
@@ -368,19 +416,25 @@ simple redémarrage de Keycloak servirait l'ancien.
 | Service           | Adresse               | Accès                                              |
 | ----------------- | --------------------- | -------------------------------------------------- |
 | Front-office      | http://localhost:5173 | la connexion est demandée à l'ouverture            |
-| Back-office       | http://localhost:5174 | idem ; retour sur `FRONT_BASE_URL` après connexion |
+| Back-office       | http://localhost:5174 | idem, realm `etape-back-office`                    |
 | Console Keycloak  | http://localhost:8080 | `admin` / `admin`                                  |
 | Compte applicatif | —                     | `test@etape.local` / `KEYCLOAK_TEST_USER_PASSWORD` |
 | Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`                    |
+
+L'API écoute sur `localhost:3002`, mais n'y répond qu'aux noms d'hôte des
+fronts : ouverte directement, elle renvoie 421. Pour l'appeler à la main, passer
+par un front (`http://localhost:5173/api/…`) ou envoyer son en-tête :
+`curl -H 'Host: localhost:5173' http://localhost:3002/api/auth/session`.
 
 Aucun mot de passe n'est versionné : le compte applicatif n'est créé que si
 `KEYCLOAK_TEST_USER_PASSWORD` est renseigné, dans le `.env` à la racine ou dans
 le shell, avant `docker compose up`.
 
-Le secret du client est figé dans le fichier de realm et recopié tel quel dans
-`.env.example` : sans cela, Keycloak en régénère un à chaque import et il
-faudrait rouvrir la console après chaque `docker compose down -v`. Il ne protège
-qu'un Keycloak local ; les autres environnements reçoivent le leur par `kcadm`.
+Aucun secret de client n'est versionné non plus : le fichier de realm n'en porte
+pas, et Keycloak en tire un au sort à l'import. `keycloak-init` le remplace
+ensuite par celui du `.env` à la racine (`FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET`,
+`BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`), qui doit être le même que dans
+`apps/api/.env`. Les autres environnements reçoivent le leur par `kcadm`.
 
 ### Les emails, en local aussi
 
@@ -436,23 +490,27 @@ c'est ce que comprennent les clients de messagerie.
 - [ ] Page de connexion du front-office : le bouton FranceConnect, conforme au
       kit, vers `/api/auth/login?idp=franceconnect`, et « Se connecter » vers
       `/api/auth/login`. Le back-office n'utilise pas FranceConnect
-- [ ] Une origine par front : `FRONT_OFFICE_BASE_URL` et `BACK_OFFICE_BASE_URL`
-      (avec leurs URL d'API) à la place de `FRONT_BASE_URL` et `API_BASE_URL`,
-      le front reconnu à l'en-tête `Host`, une `redirect_uri` par front dans
-      Keycloak, le refus de FranceConnect au `callback` du back-office — le
-      masquer dans le thème ne suffit pas —, et une garde CSRF (en-tête exigé)
-      sur les routes qui modifient. Y ajouter une garde contre les boucles de
-      redirection quand le cookie de session n'est pas conservé (cookies
-      bloqués, cookie `secure` en `http`) : la garde de démarrage renvoie alors
-      vers la connexion, que le SSO de Keycloak rouvre en silence, jusqu'à la
-      limite de débit. D'ici là, une connexion partie du back-office revient sur
-      `FRONT_BASE_URL`
+- [x] Une origine par front : chaque front relaie `/api` sur son sous-domaine,
+      l'API le reconnaît à l'en-tête `Host` (421 sinon) ; un realm Keycloak par
+      front, le back-office sans FranceConnect ni inscription ; sessions et
+      comptes rattachés à leur front et à leur realm ; garde CSRF (en-tête
+      `x-etape-csrf` et `Origin`) ; cookies `__Host-Http-` en production ;
+      `frame-ancestors 'none'` ; garde contre les boucles de redirection
+- [ ] Déclarer chez l'hébergeur les domaines du front-office et du
+      back-office, sur le service `web` (voir [deploiement.md](deploiement.md)),
+      et jouer la connexion de bout en bout en recette
+- [ ] Comptes du back-office : décrire leur création par un administrateur
+      (`kcadm` dans le realm `etape-back-office`, l'inscription y étant fermée),
+      puis rattacher chaque compte à son rôle métier (instructeur, conseiller)
+      avant le premier écran du back-office qui affiche des données. Le realm
+      séparé ferme la porte aux bénéficiaires ; les rôles régleront les droits
+      au sein du back-office
 - [ ] Session inactive : expiration après 30 minutes sans activité (appel à
       l'API, mouvement, saisie), limite absolue ramenée de 12 h à 10 h, même
       règle pour les bénéficiaires et les instructeurs ; avertissement avant
       l'expiration et prolongation (WCAG 2.2.1). Demande une migration (dernière
-      activité) et la garde CSRF du point précédent, pour la route de
-      prolongation. À cette occasion : réserver le délai de 10 s à la lecture de
+      activité) ; la route de prolongation passera par la garde CSRF, déjà en
+      place. À cette occasion : réserver le délai de 10 s à la lecture de
       session (global, il couperait l'envoi d'une pièce justificative) et
       raccourcir l'attente au démarrage (jusqu'à 47 s aujourd'hui) ; annoncer
       l'avertissement, l'attente et l'écran d'erreur dans une même région

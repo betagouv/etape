@@ -1,16 +1,18 @@
-# Pile de déploiement. Quatre services et deux bases : le front et l'API derrière
-# un même nginx, Keycloak derrière un proxy qui n'y laisse passer que le realm
-# applicatif, et à chacun sa base PostgreSQL.
+# Pile de déploiement. Quatre services et deux bases : le site, les deux fronts
+# et l'API derrière un même nginx, Keycloak derrière un proxy qui n'y laisse
+# passer que les realms applicatifs, et à chacun sa base PostgreSQL.
 #
 # Keycloak configure son realm lui-même au démarrage, et l'API applique ses
 # migrations de la même façon — un conteneur d'initialisation qui s'arrête est
 # compté comme un échec par les hébergeurs qui attendent
 # `docker compose up --wait`.
 #
-# Deux domaines à déclarer, sur les deux seuls services exposés :
+# Quatre domaines à déclarer, sur les deux seuls services exposés :
 #
-#   web   https://etape.example.org        (port 80)
-#   auth  https://auth.etape.example.org   (port 80)
+#   web   https://etape.example.org               site et simulateur (port 80)
+#   web   https://front-office.etape.example.org  front-office       (port 80)
+#   web   https://back-office.etape.example.org   back-office        (port 80)
+#   auth  https://auth.etape.example.org          Keycloak           (port 80)
 #
 # `auth`, et non `keycloak` : c'est le proxy qui porte le sous-domaine, et lui
 # qui refuse l'administration. Keycloak n'expose plus de port, précisément pour
@@ -20,8 +22,8 @@
 # suivre complète : `docs/deploiement.md`.
 
 services:
-  # Point d'entrée du domaine principal : nginx transmet aussi `/api/` à l'API,
-  # d'où une origine commune.
+  # Le site et les deux fronts, chacun sur son nom d'hôte ; chaque front relaie
+  # aussi son `/api/` vers l'API. Un hôte inconnu est refusé.
   web:
     build:
       context: .
@@ -29,10 +31,16 @@ services:
     restart: unless-stopped
     expose:
       - "80"
+    environment:
+      # Les noms d'hôte en sont déduits au démarrage (`nginx-hostnames.envsh`).
+      PUBLIC_URL: ${PUBLIC_URL:?URL publique du site, sans slash final}
+      FRONT_OFFICE_PUBLIC_URL: ${FRONT_OFFICE_PUBLIC_URL:?URL publique du front-office, sans slash final}
+      BACK_OFFICE_PUBLIC_URL: ${BACK_OFFICE_PUBLIC_URL:?URL publique du back-office, sans slash final}
     depends_on:
       - api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      # `/healthz` : le seul chemin servi sans nom d'hôte connu.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -49,17 +57,21 @@ services:
       NODE_ENV: production
       API_PORT: 3002
 
-      # Préfixe porté par l'application et non retiré par nginx : la
-      # `redirect_uri` reste valable des deux côtés du proxy.
-      API_BASE_URL: ${PUBLIC_URL:?URL publique du front, sans slash final}/api
-      FRONT_BASE_URL: ${PUBLIC_URL}
+      # Un front, une origine, chacune relayant `/api` : l'API reconnaît le
+      # front à son nom d'hôte. Préfixe porté par l'application et non retiré
+      # par nginx : la `redirect_uri` reste valable des deux côtés du proxy.
+      FRONT_OFFICE_BASE_URL: ${FRONT_OFFICE_PUBLIC_URL:?URL publique du front-office, sans slash final}
+      FRONT_OFFICE_API_BASE_URL: ${FRONT_OFFICE_PUBLIC_URL}/api
+      FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET: ${FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET:?secret du client etape-api du realm etape}
+      BACK_OFFICE_BASE_URL: ${BACK_OFFICE_PUBLIC_URL:?URL publique du back-office, sans slash final}
+      BACK_OFFICE_API_BASE_URL: ${BACK_OFFICE_PUBLIC_URL}/api
+      BACK_OFFICE_KEYCLOAK_CLIENT_SECRET: ${BACK_OFFICE_KEYCLOAK_CLIENT_SECRET:?secret du client etape-api du realm etape-back-office}
 
       # URL **publique** et non le nom de service interne : `openid-client` exige
       # que l'issuer coïncide avec le document de découverte. L'appel sort donc
       # du réseau Docker — voir `extra_hosts`.
-      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_PUBLIC_URL:?URL publique de Keycloak, sans slash final}/realms/etape
+      KEYCLOAK_URL: ${KEYCLOAK_PUBLIC_URL:?URL publique de Keycloak, sans slash final}
       KEYCLOAK_CLIENT_ID: etape-api
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?secret du client etape-api, partagé avec Keycloak}
       KEYCLOAK_FRANCECONNECT_ALIAS: franceconnect
 
       COOKIE_ENCRYPTION_KEY: ${COOKIE_ENCRYPTION_KEY:?32 octets en base64, openssl rand -base64 32}
@@ -77,12 +89,14 @@ services:
         condition: service_healthy
     healthcheck:
       # Sans cookie, la route répond 200 `{ session: null }` : un service vivant.
+      # Sous le nom d'hôte du front-office, sans quoi l'API répond 421 : `fetch`
+      # ne laisse pas choisir l'en-tête `Host`, d'où `http.get`.
       test:
         [
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:3002/api/auth/session').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+          "require('http').get({host:'127.0.0.1',port:3002,path:'/api/auth/session',headers:{host:new URL(process.env.FRONT_OFFICE_BASE_URL).host}},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
         ]
       interval: 30s
       timeout: 5s
@@ -145,10 +159,12 @@ services:
       # Lues par `etape-init.sh`.
       KEYCLOAK_INTERNAL_URL: http://127.0.0.1:8080
       KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL}
-      PUBLIC_URL: ${PUBLIC_URL}
+      FRONT_OFFICE_PUBLIC_URL: ${FRONT_OFFICE_PUBLIC_URL}
       KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN_USER:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET: ${FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET}
+      BACK_OFFICE_PUBLIC_URL: ${BACK_OFFICE_PUBLIC_URL}
+      BACK_OFFICE_KEYCLOAK_CLIENT_SECRET: ${BACK_OFFICE_KEYCLOAK_CLIENT_SECRET}
       KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
       FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
       FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}

@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../../database/prisma.service.js";
 import { Prisma } from "../../generated/prisma/client.ts";
+import { isFront } from "../front.js";
 import type { AccountSession, NewSession } from "./session.types.js";
 
 /**
@@ -32,6 +33,7 @@ export class PrismaSessionStore extends SessionStore {
       data: {
         id,
         accountId: session.accountId,
+        front: session.front,
         identityProvider: session.identityProvider,
         claims: session.claims as Prisma.InputJsonValue,
         idToken: session.idToken,
@@ -53,9 +55,14 @@ export class PrismaSessionStore extends SessionStore {
       return null;
     }
 
+    // Une valeur inconnue en base ne désigne aucun front : la session n'est
+    // valable nulle part.
+    if (!isFront(row.front)) return null;
+
     return {
       sub: row.account.keycloakSub,
       accountId: row.accountId,
+      front: row.front,
       email: row.account.email ?? undefined,
       identityProvider: row.identityProvider,
       claims: row.claims as Record<string, unknown>,

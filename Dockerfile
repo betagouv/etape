@@ -4,7 +4,7 @@
 # installation de dépendances, et des contextes séparés la referaient chaque
 # fois. Cibles choisies depuis `docker-compose.prod.yml` (`target:`) :
 #
-#   web  front statique   api   NestJS
+#   web  site et fronts   api   NestJS
 #   auth proxy Keycloak   keycloak  IAM + thème ETAPE
 
 # Seuls les manifestes avant `npm ci` : la couche n'est invalidée qu'au
@@ -31,7 +31,12 @@ FROM deps AS build
 WORKDIR /app
 COPY . .
 
-RUN npx turbo run build --filter=@etape/site --filter=@etape/simulateur --filter=@etape/api
+# `/api` relatif : chaque front relaie lui-même `/api/` vers l'API, sur sa propre
+# origine. Vite fige la valeur dans le bundle.
+RUN VITE_API_BASE_URL=/api npx turbo run build \
+      --filter=@etape/site --filter=@etape/simulateur \
+      --filter=@etape/front-office --filter=@etape/back-office \
+      --filter=@etape/api
 RUN node scripts/assemble-static.mjs /srv/static
 
 # Réinstallation plutôt qu'élagage : `npm ci` restaure exactement le verrou, là
@@ -58,11 +63,19 @@ USER node
 EXPOSE 3002
 CMD ["/usr/local/bin/etape-api-start.sh"]
 
-# Front statique : les deux exports assemblés, servis par nginx, qui transmet
-# aussi `/api/` — d'où une origine commune.
+# Le site et les deux fronts, chacun sur son nom d'hôte. Chaque front relaie
+# aussi son propre `/api/` vers l'API — une origine par front.
 FROM nginx:1.29-alpine AS web
-COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+# Seuls les `${ETAPE_…}` du gabarit sont substitués : `$host` et les autres
+# variables de nginx restent intactes.
+ENV NGINX_ENVSUBST_FILTER=^ETAPE_
+COPY --chmod=0755 deploy/nginx-hostnames.envsh /docker-entrypoint.d/05-etape-hostnames.envsh
+COPY deploy/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY deploy/nginx-front.inc /etc/nginx/snippets/front.inc
+COPY deploy/nginx-front-headers.inc /etc/nginx/snippets/front-headers.inc
 COPY --from=build /srv/static /usr/share/nginx/html
+COPY --from=build /app/apps/front-office/dist /usr/share/nginx/front-office
+COPY --from=build /app/apps/back-office/dist /usr/share/nginx/back-office
 EXPOSE 80
 
 # Porte le domaine `auth.…` à la place de Keycloak, et refuse tout sauf le realm
@@ -106,9 +119,10 @@ COPY --from=franceconnect-extension /keycloak-franceconnect.jar /opt/keycloak/pr
 COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
 COPY deploy/keycloak-start.sh /opt/keycloak/bin/etape-keycloak-start.sh
 
-# Importé au premier démarrage. Décrit le poste de développement — URL en
-# `localhost`, secret public — et `etape-init.sh` le corrige ensuite.
-COPY keycloak/realms/etape-realm.json /opt/keycloak/data/import/
+# Importés au premier démarrage, un realm par front. Ils décrivent le poste de
+# développement — URL en `localhost`, secrets publics — et `etape-init.sh` les
+# corrige ensuite.
+COPY keycloak/realms/etape-realm.json keycloak/realms/etape-back-office-realm.json /opt/keycloak/data/import/
 
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true

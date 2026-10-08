@@ -1,0 +1,93 @@
+# Gabarit : l'entrypoint de l'image nginx remplace les `${ETAPE_…}` au démarrage
+# (et eux seuls, voir `NGINX_ENVSUBST_FILTER` dans le Dockerfile), après que
+# `nginx-hostnames.envsh` les a déduits des URL publiques.
+#
+# Trois origines, une par app : le site vitrine et le simulateur, le
+# front-office, le back-office. Chaque front relaie son propre `/api/` vers
+# l'API, d'où ni CORS ni `SameSite=None`. Keycloak ne passe pas par ici.
+
+# TLS est terminé par le proxy de l'hébergeur : le schéma ne se lit que dans
+# l'en-tête, et le repli évite de propager une valeur vide qui ferait croire à
+# l'API qu'elle est appelée sans chiffrement.
+map $http_x_forwarded_proto $etape_scheme {
+    default $http_x_forwarded_proto;
+    ""      https;
+}
+
+# Sinon la redirection `/faq` → `/faq/` porterait le nom et le port internes
+# du conteneur, et expédierait l'internaute sur une adresse injoignable.
+absolute_redirect off;
+
+# Diffère la résolution du nom `api` au moment de la requête : nginx démarre
+# même si l'API n'est pas encore levée.
+resolver 127.0.0.11 valid=10s ipv6=off;
+
+access_log /dev/stdout;
+error_log /dev/stderr;
+
+# Hôte inconnu : la connexion est fermée sans réponse (444). Seule la sonde de
+# santé du conteneur passe, sans nom d'hôte.
+server {
+    listen 80 default_server;
+    server_name _;
+
+    location = /healthz {
+        access_log off;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 444;
+    }
+}
+
+# Site vitrine et simulateur : deux exports statiques, plus aucun `/api/` — ils
+# ne parlent pas à l'API.
+server {
+    listen 80;
+    server_name ${ETAPE_SITE_HOSTNAME};
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Environnement de recette : rien de tout cela n'a vocation à être indexé.
+    add_header X-Robots-Tag "noindex, nofollow" always;
+
+    # Assets versionnés de Next. Vaut pour les deux apps, d'où le préfixe
+    # optionnel.
+    location ~ ^(/simulateur)?/_next/static/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header X-Robots-Tag "noindex, nofollow" always;
+        try_files $uri =404;
+    }
+
+    # Le simulateur a sa propre 404 : servir celle du site afficherait la
+    # navigation de l'autre app.
+    location /simulateur/ {
+        try_files $uri $uri/ =404;
+        error_page 404 /simulateur/404.html;
+    }
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    error_page 404 /404.html;
+}
+
+server {
+    listen 80;
+    server_name ${ETAPE_FRONT_OFFICE_HOSTNAME};
+
+    root /usr/share/nginx/front-office;
+    include /etc/nginx/snippets/front.inc;
+}
+
+server {
+    listen 80;
+    server_name ${ETAPE_BACK_OFFICE_HOSTNAME};
+
+    root /usr/share/nginx/back-office;
+    include /etc/nginx/snippets/front.inc;
+}

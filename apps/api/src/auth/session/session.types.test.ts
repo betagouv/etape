@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { FRONT } from "../front.js";
 import { toSessionResponse, type AccountSession } from "./session.types.js";
 
 const FRANCECONNECT_ALIAS = "franceconnect";
@@ -8,6 +9,7 @@ function buildSession(overrides: Partial<AccountSession> = {}): AccountSession {
   return {
     sub: "sub",
     accountId: "account-id",
+    front: FRONT.FRONT_OFFICE,
     email: "camille.martin@exemple.fr",
     identityProvider: "keycloak",
     claims: { given_name: "Camille" },

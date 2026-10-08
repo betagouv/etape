@@ -11,22 +11,30 @@ celles de l'environnement visé.
 
 ## Ce qui tourne
 
-| Service       | Rôle                                       | Exposé           |
-| ------------- | ------------------------------------------ | ---------------- |
-| `web`         | nginx : exports statiques + `/api/` → API  | domaine du site  |
-| `api`         | NestJS, client OIDC confidentiel           | non              |
-| `auth`        | nginx : refuse tout sauf le realm `etape`  | son sous-domaine |
-| `keycloak`    | IAM, broker FranceConnect, thème ETAPE     | non              |
-| `keycloak-db` | PostgreSQL de Keycloak                     | non              |
-| `app-db`      | PostgreSQL applicative : comptes, sessions | non              |
+| Service       | Rôle                                                                    | Exposé           |
+| ------------- | ----------------------------------------------------------------------- | ---------------- |
+| `web`         | nginx : site, front-office, back-office ; `/api/` de chaque front → API | trois domaines   |
+| `api`         | NestJS, client OIDC confidentiel                                        | non              |
+| `auth`        | nginx : refuse tout sauf les realms applicatifs                         | son sous-domaine |
+| `keycloak`    | IAM, broker FranceConnect, thème ETAPE                                  | non              |
+| `keycloak-db` | PostgreSQL de Keycloak                                                  | non              |
+| `app-db`      | PostgreSQL applicative : comptes, sessions                              | non              |
 
-Deux origines, et c'est voulu :
+Une origine par app, et c'est voulu :
 
-**Le front et l'API partagent la leur**, derrière nginx. Pas de CORS, pas de
-`SameSite=None` : le cookie de session reste en `Lax`, et le préfixe `/api` est
-porté par l'application elle-même plutôt que réécrit par le proxy — les chemins
-vus par Nest sont ceux vus par le navigateur, donc la `redirect_uri` déclarée
-dans Keycloak reste valable des deux côtés.
+**Chaque front a la sienne, et y relaie l'API.** Le front-office et le
+back-office ont chacun leur sous-domaine, et nginx transmet le `/api/` de chacun
+au même conteneur `api`. Les cookies d'un front ne partent donc jamais vers
+l'autre, sans CORS ni `SameSite=None` : le cookie de session reste en `Lax`.
+L'API reconnaît le front à l'en-tête `Host`, comparé à la liste des fronts
+configurés, et refuse tout autre hôte (421) ; nginx, de son côté, ferme la
+connexion à un hôte inconnu (444). Le préfixe `/api` est porté par
+l'application elle-même plutôt que réécrit par le proxy — les chemins vus par
+Nest sont ceux vus par le navigateur, donc la `redirect_uri` déclarée dans
+chaque realm reste valable des deux côtés.
+
+**Le site vitrine et le simulateur ont la leur**, sans `/api/` : ils ne parlent
+pas à l'API.
 
 **Keycloak a la sienne.** Ni le même domaine ni un préfixe de chemin : l'adresse
 du broker est celle que FranceConnect met en liste blanche, et la faire changer
@@ -38,8 +46,15 @@ survit à un déménagement du front comme à un changement d'hébergeur.
 1. Une ressource **Docker Compose**, sur ce dépôt et la branche à déployer.
 2. Fichier de composition : `/docker-compose.prod.yml`.
 3. Domaines, sur les deux seuls services exposés :
-   - `web` → `https://etape.example.org`
+   - `web` → `https://etape.example.org` (site et simulateur),
+     `https://front-office.etape.example.org` et
+     `https://back-office.etape.example.org` (port 80, les trois)
    - `auth` → `https://auth.etape.example.org` (port 80)
+
+   Les trois domaines de `web` doivent être ceux de `PUBLIC_URL`,
+   `FRONT_OFFICE_PUBLIC_URL` et `BACK_OFFICE_PUBLIC_URL` : nginx en déduit ses
+   noms d'hôte, et répond 444 à tout autre. Le proxy de l'hébergeur doit
+   transmettre l'en-tête `Host` intact.
 
    Le sous-domaine va bien sur **`auth`**, et non sur `keycloak` : c'est le
    proxy qui refuse l'administration. Sur une pile déjà déployée, c'est un
@@ -62,25 +77,28 @@ configurent, plutôt que dans un conteneur d'initialisation séparé.
 
 Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 
-| Variable                      | Obligatoire | Rôle                                                    |
-| ----------------------------- | ----------- | ------------------------------------------------------- |
-| `PUBLIC_URL`                  | oui         | `https://etape.example.org`, sans slash final           |
-| `KEYCLOAK_PUBLIC_URL`         | oui         | `https://auth.etape.example.org`, sans slash final      |
-| `KEYCLOAK_HOSTNAME`           | oui         | Nom d'hôte du précédent, sans le schéma                 |
-| `KEYCLOAK_ADMIN_USER`         | non         | `admin` par défaut                                      |
-| `KEYCLOAK_ADMIN_PASSWORD`     | oui         | Administration de Keycloak (`kcadm`)                    |
-| `KEYCLOAK_DB_PASSWORD`        | oui         | Base de Keycloak                                        |
-| `APP_DB_PASSWORD`             | oui         | Base applicative (comptes, sessions)                    |
-| `KEYCLOAK_CLIENT_SECRET`      | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak    |
-| `COOKIE_ENCRYPTION_KEY`       | oui         | Chiffre la transaction de connexion (base64, 32 octets) |
-| `TRUST_PROXY_HOPS`            | non         | Proxys devant l'API, `2` par défaut                     |
-| `FRANCECONNECT_CLIENT_ID`     | non         | Identifiant du client FranceConnect                     |
-| `FRANCECONNECT_CLIENT_SECRET` | non         | Secret du client FranceConnect                          |
-| `FRANCECONNECT_ENVIRONMENT`   | non         | `INTEGRATION_STANDARD_V2` (bac à sable) par défaut      |
-| `FRANCECONNECT_EIDAS`         | non         | Niveau eIDAS demandé, `EIDAS1` par défaut               |
-| `KEYCLOAK_TEST_USER_PASSWORD` | non         | Crée `test@etape.local` avec ce mot de passe            |
-| `SMTP_*`                      | non         | Envoi par Brevo ; sans lui, pas d'email du tout         |
-| `KEYCLOAK_RECAPTCHA_*`        | non         | reCAPTCHA de l'inscription (voir ci-dessous)            |
+| Variable                              | Obligatoire | Rôle                                                              |
+| ------------------------------------- | ----------- | ----------------------------------------------------------------- |
+| `PUBLIC_URL`                          | oui         | Site et simulateur, `https://etape.example.org`, sans slash final |
+| `FRONT_OFFICE_PUBLIC_URL`             | oui         | URL du front-office, sans slash final ni port                     |
+| `KEYCLOAK_PUBLIC_URL`                 | oui         | `https://auth.etape.example.org`, sans slash final                |
+| `KEYCLOAK_HOSTNAME`                   | oui         | Nom d'hôte du précédent, sans le schéma                           |
+| `KEYCLOAK_ADMIN_USER`                 | non         | `admin` par défaut                                                |
+| `KEYCLOAK_ADMIN_PASSWORD`             | oui         | Administration de Keycloak (`kcadm`)                              |
+| `KEYCLOAK_DB_PASSWORD`                | oui         | Base de Keycloak                                                  |
+| `APP_DB_PASSWORD`                     | oui         | Base applicative (comptes, sessions)                              |
+| `FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET` | oui         | Secret du client `etape-api` du realm `etape`                     |
+| `BACK_OFFICE_PUBLIC_URL`              | oui         | URL du back-office, sans slash final ni port                      |
+| `BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`  | oui         | Secret du client `etape-api` du realm `etape-back-office`         |
+| `COOKIE_ENCRYPTION_KEY`               | oui         | Chiffre la transaction de connexion (base64, 32 octets)           |
+| `TRUST_PROXY_HOPS`                    | non         | Proxys devant l'API, `2` par défaut                               |
+| `FRANCECONNECT_CLIENT_ID`             | non         | Identifiant du client FranceConnect                               |
+| `FRANCECONNECT_CLIENT_SECRET`         | non         | Secret du client FranceConnect                                    |
+| `FRANCECONNECT_ENVIRONMENT`           | non         | `INTEGRATION_STANDARD_V2` (bac à sable) par défaut                |
+| `FRANCECONNECT_EIDAS`                 | non         | Niveau eIDAS demandé, `EIDAS1` par défaut                         |
+| `KEYCLOAK_TEST_USER_PASSWORD`         | non         | Crée `test@etape.local` avec ce mot de passe                      |
+| `SMTP_*`                              | non         | Envoi par Brevo ; sans lui, pas d'email du tout                   |
+| `KEYCLOAK_RECAPTCHA_*`                | non         | reCAPTCHA de l'inscription (voir ci-dessous)                      |
 
 Trois pièges tiennent au moment où ces valeurs sont lues :
 
@@ -91,8 +109,8 @@ Trois pièges tiennent au moment où ces valeurs sont lues :
   connecter, sans que rien n'indique pourquoi. `APP_DB_PASSWORD` entre de plus
   dans une URL de connexion : le prendre alphanumérique évite d'avoir à encoder
   `@`, `:` ou `/`, qui y changeraient de sens.
-- `KEYCLOAK_CLIENT_SECRET`, à l'inverse, est réappliqué à chaque démarrage de
-  Keycloak : c'est la seule des trois qui se corrige en redéployant.
+- Les deux `…_KEYCLOAK_CLIENT_SECRET`, à l'inverse, sont réappliqués à chaque
+  démarrage de Keycloak : ce sont les seuls qui se corrigent en redéployant.
 
 `KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Aucun identifiant n'est versionné :
 le fichier de realm ne crée plus de compte, et `test@etape.local` n'existe que si
@@ -129,9 +147,18 @@ sont à confronter au portail, qui fait foi.
 PUBLIC_URL=https://etape.example.org
 KEYCLOAK_PUBLIC_URL=https://auth.etape.example.org
 
-# Le front et l'API répondent (sans cookie : 200 et `{"session":null}`)
+FRONT_OFFICE_PUBLIC_URL=https://front-office.etape.example.org
+BACK_OFFICE_PUBLIC_URL=https://back-office.etape.example.org
+
+# Le site répond, sans `/api/` ; chaque front répond, et relaie l'API (sans
+# cookie : 200 et `{"session":null}`)
 curl -sI "$PUBLIC_URL/" | head -1
-curl -s -o /dev/null -w '%{http_code}\n' "$PUBLIC_URL/api/auth/session"
+curl -s -o /dev/null -w '%{http_code}\n' "$PUBLIC_URL/api/auth/session"              # 404
+curl -s -o /dev/null -w '%{http_code}\n' "$FRONT_OFFICE_PUBLIC_URL/api/auth/session" # 200
+curl -s -o /dev/null -w '%{http_code}\n' "$BACK_OFFICE_PUBLIC_URL/api/auth/session"  # 200
+
+# Les fronts refusent d'être affichés dans un cadre
+curl -sI "$FRONT_OFFICE_PUBLIC_URL/" | grep -i 'content-security-policy' # frame-ancestors 'none'
 
 # Keycloak annonce le bon émetteur — s'il annonce autre chose, l'API refusera
 # l'échange de jetons
@@ -147,10 +174,10 @@ for chemin in / /admin/master/console/ /admin/realms /realms/master/protocol/ope
 done
 ```
 
-Puis, dans le navigateur : `$PUBLIC_URL/api/auth/login` mène au formulaire de
-connexion, et le retour dépose sur l'accueil. Le site n'a plus de bouton de
-connexion : elle n'existera que dans front-office et back-office, pas encore
-déployés.
+Puis, dans le navigateur : `$FRONT_OFFICE_PUBLIC_URL` et `$BACK_OFFICE_PUBLIC_URL`
+mènent chacun au formulaire de connexion de son realm, et le retour dépose sur
+l'accueil du même front. Le formulaire du back-office ne propose pas
+FranceConnect.
 
 Si l'API répond « Le fournisseur d'identité est injoignable », c'est qu'elle
 n'arrive pas à joindre l'URL publique de Keycloak depuis l'intérieur du réseau
