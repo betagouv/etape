@@ -92,6 +92,14 @@ Le cookie de session reste en `SameSite=Lax` : le retour de Keycloak sur
 `/auth/callback` est une navigation venue d'un autre site, que `Strict`
 priverait de son cookie.
 
+**Les cookies** (`etape-front-office.sid`, `etape-back-office.sid`, et leur
+transaction de connexion en `.txn`) sont `HttpOnly`, sans `Domain`, donc liés à
+l'hôte de leur front. En production, ils portent le préfixe `__Host-Http-` : le
+navigateur ne les accepte alors que `Secure`, sur `Path=/`, sans `Domain` et
+posés par le serveur — aucun script, aucun sous-domaine ne peut les créer ni les
+écraser. Un tel cookie ne s'efface qu'avec les mêmes attributs, `Secure`
+compris : `SessionService` pose et efface avec une seule définition.
+
 ## Le bouton FranceConnect reste dans le front
 
 Dans un flux brokerisé standard, c'est Keycloak qui affiche l'écran de connexion,

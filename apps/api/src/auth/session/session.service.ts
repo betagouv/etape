@@ -26,6 +26,16 @@ const PENDING_LOGIN_COOKIE: Record<Front, string> = {
   [FRONT.BACK_OFFICE]: "etape-back-office.txn",
 };
 
+/**
+ * Préfixe des cookies en production. Le navigateur n'accepte un cookie ainsi
+ * nommé que s'il est `Secure`, sur `Path=/`, sans `Domain` — donc lié à l'hôte
+ * exact de son front, sans qu'un sous-domaine puisse le poser ou l'écraser — et,
+ * pour `Http`, `HttpOnly` : aucun script ne peut le créer. Un navigateur qui ne
+ * connaît que `__Host-` en applique déjà les trois premières règles. Pas en
+ * local : `http://` n'y a pas `Secure`.
+ */
+const PRODUCTION_COOKIE_PREFIX = "__Host-Http-";
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const PENDING_LOGIN_TTL_MS = 10 * 60 * 1000;
@@ -56,20 +66,34 @@ export class SessionService {
     this.cookieKey = Buffer.from(encodedKey, "base64");
   }
 
+  private get isProduction(): boolean {
+    return this.config.get("NODE_ENV", { infer: true }) === NODE_ENV.PRODUCTION;
+  }
+
+  private cookieName(name: string): string {
+    return this.isProduction ? `${PRODUCTION_COOKIE_PREFIX}${name}` : name;
+  }
+
   /**
+   * Communs à la pose et à l'effacement : un cookie `__Host-` ne s'efface
+   * qu'avec les mêmes attributs, `Secure` compris, sans quoi le navigateur
+   * ignore l'effacement et la déconnexion laisse le cookie en place.
+   *
    * `strict` casserait la connexion : au retour sur `/auth/callback`, le
    * navigateur voit une navigation venue d'un autre site et n'enverrait pas le
    * cookie. `lax` l'autorise pour un GET de premier niveau — la forme exacte du
    * callback — sans rouvrir le CSRF.
    */
-  private cookieOptions(maxAgeMs: number): CookieOptions {
-    return {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: this.config.get("NODE_ENV", { infer: true }) === NODE_ENV.PRODUCTION,
-      path: "/",
-      maxAge: maxAgeMs,
-    };
+  private get baseCookieOptions(): CookieOptions {
+    return { httpOnly: true, sameSite: "lax", secure: this.isProduction, path: "/" };
+  }
+
+  private setCookie(response: Response, name: string, value: string, maxAgeMs: number): void {
+    response.cookie(this.cookieName(name), value, { ...this.baseCookieOptions, maxAge: maxAgeMs });
+  }
+
+  private clearCookie(response: Response, name: string): void {
+    response.clearCookie(this.cookieName(name), this.baseCookieOptions);
   }
 
   startPendingLogin(
@@ -82,16 +106,17 @@ export class SessionService {
       expiresAt: Date.now() + PENDING_LOGIN_TTL_MS,
     };
 
-    response.cookie(
+    this.setCookie(
+      response,
       PENDING_LOGIN_COOKIE[front],
       sealCookieValue(this.cookieKey, JSON.stringify(pendingLogin)),
-      this.cookieOptions(PENDING_LOGIN_TTL_MS),
+      PENDING_LOGIN_TTL_MS,
     );
   }
 
   consumePendingLogin(request: Request, response: Response, front: Front): PendingLogin | null {
-    const sealedValue = this.readRawCookie(request, PENDING_LOGIN_COOKIE[front]);
-    response.clearCookie(PENDING_LOGIN_COOKIE[front], { path: "/" });
+    const sealedValue = this.readRawCookie(request, this.cookieName(PENDING_LOGIN_COOKIE[front]));
+    this.clearCookie(response, PENDING_LOGIN_COOKIE[front]);
 
     if (!sealedValue) return null;
 
@@ -115,7 +140,7 @@ export class SessionService {
     const id = randomUUID();
 
     await this.store.createSession(id, { ...session, expiresAt: Date.now() + SESSION_TTL_MS });
-    response.cookie(SESSION_COOKIE[session.front], id, this.cookieOptions(SESSION_TTL_MS));
+    this.setCookie(response, SESSION_COOKIE[session.front], id, SESSION_TTL_MS);
   }
 
   /**
@@ -144,7 +169,7 @@ export class SessionService {
     response: Response,
     front: Front,
   ): Promise<AccountSession | null> {
-    response.clearCookie(SESSION_COOKIE[front], { path: "/" });
+    this.clearCookie(response, SESSION_COOKIE[front]);
 
     const session = await this.readSession(request, front);
     if (!session) return null;
@@ -154,7 +179,7 @@ export class SessionService {
   }
 
   private readSessionId(request: Request, front: Front): string | null {
-    const value = this.readRawCookie(request, SESSION_COOKIE[front]);
+    const value = this.readRawCookie(request, this.cookieName(SESSION_COOKIE[front]));
     return value && UUID.test(value) ? value : null;
   }
 

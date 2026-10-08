@@ -11,9 +11,10 @@ import { SessionService } from "./session.service.js";
 import type { SessionStore } from "./session.store.js";
 import type { AccountSession, NewSession } from "./session.types.js";
 
-const PENDING_LOGIN_COOKIE = "etape-front-office.txn";
-const SESSION_COOKIE = "etape-front-office.sid";
-const BACK_OFFICE_SESSION_COOKIE = "etape-back-office.sid";
+// Le service est créé en production : noms préfixés.
+const PENDING_LOGIN_COOKIE = "__Host-Http-etape-front-office.txn";
+const SESSION_COOKIE = "__Host-Http-etape-front-office.sid";
+const BACK_OFFICE_SESSION_COOKIE = "__Host-Http-etape-back-office.sid";
 
 const key = randomBytes(32);
 
@@ -37,14 +38,16 @@ class FakeSessionStore implements SessionStore {
 class FakeResponse {
   readonly cookies = new Map<string, { value: string; options: CookieOptions }>();
   readonly clearedCookies: string[] = [];
+  readonly clearedCookieOptions = new Map<string, CookieOptions>();
 
   cookie(name: string, value: string, options: CookieOptions): this {
     this.cookies.set(name, { value, options });
     return this;
   }
 
-  clearCookie(name: string): this {
+  clearCookie(name: string, options: CookieOptions): this {
     this.clearedCookies.push(name);
+    this.clearedCookieOptions.set(name, options);
     return this;
   }
 }
@@ -53,10 +56,13 @@ function createRequest(cookies: Record<string, string>): Request {
   return { cookies } as unknown as Request;
 }
 
-function createService(store: SessionStore): SessionService {
+function createService(
+  store: SessionStore,
+  nodeEnv: Env["NODE_ENV"] = NODE_ENV.PRODUCTION,
+): SessionService {
   const values: Partial<Env> = {
     COOKIE_ENCRYPTION_KEY: key.toString("base64"),
-    NODE_ENV: NODE_ENV.PRODUCTION,
+    NODE_ENV: nodeEnv,
   };
   const config = { get: (name: keyof Env) => values[name] } as unknown as ConfigService<Env, true>;
 
@@ -275,6 +281,73 @@ describe("SessionService", () => {
 
       expect(response.cookies.has(BACK_OFFICE_SESSION_COOKIE)).toBe(true);
       expect(response.cookies.has(SESSION_COOKIE)).toBe(false);
+    });
+  });
+
+  describe("attributs des cookies", () => {
+    const newSession = {
+      accountId: "account",
+      front: FRONT.FRONT_OFFICE,
+      identityProvider: "local",
+      claims: {},
+      idToken: "id-token",
+    };
+
+    it("pose en production un cookie __Host-Http-, sécurisé, sur / et sans Domain", async () => {
+      const response = new FakeResponse();
+      await service.openSession(createRequest({}), response as unknown as Response, newSession);
+
+      const cookie = response.cookies.get(SESSION_COOKIE);
+      expect(cookie?.options).toMatchObject({ httpOnly: true, secure: true, path: "/" });
+      expect(cookie?.options.domain).toBeUndefined();
+    });
+
+    it("efface avec les mêmes attributs, sans quoi le navigateur ignore l'effacement", async () => {
+      const response = new FakeResponse();
+      await service.closeSession(
+        createRequest({}),
+        response as unknown as Response,
+        FRONT.FRONT_OFFICE,
+      );
+
+      expect(response.clearedCookieOptions.get(SESSION_COOKIE)).toMatchObject({
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+      });
+    });
+
+    it("relit le cookie préfixé", async () => {
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const id = openResponse.cookies.get(SESSION_COOKIE)!.value;
+
+      expect(
+        await service.readSession(createRequest({ [SESSION_COOKIE]: id }), FRONT.FRONT_OFFICE),
+      ).not.toBeNull();
+      // Le même identifiant sous le nom sans préfixe, posable par un script ou un
+      // sous-domaine, n'est pas lu.
+      expect(
+        await service.readSession(
+          createRequest({ "etape-front-office.sid": id }),
+          FRONT.FRONT_OFFICE,
+        ),
+      ).toBeNull();
+    });
+
+    it("garde en local des noms sans préfixe, sans Secure", async () => {
+      const localService = createService(store, NODE_ENV.DEVELOPMENT);
+      const response = new FakeResponse();
+      await localService.openSession(
+        createRequest({}),
+        response as unknown as Response,
+        newSession,
+      );
+
+      expect(response.cookies.get("etape-front-office.sid")?.options).toMatchObject({
+        secure: false,
+      });
     });
   });
 });
