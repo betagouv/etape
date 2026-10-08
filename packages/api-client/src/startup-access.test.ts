@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { AUTH_FLOW_ERROR, AUTH_FLOW_STEP } from "./auth-flow";
 import { LOGIN_LOOP_NOTICE } from "./app-notices";
-import { describeStartupNotice, resolveStartupAccess } from "./startup-access";
+import { createLoginAttempts, MAX_LOGIN_ATTEMPTS } from "./login-attempts";
+import {
+  checkStartupAccess,
+  describeStartupNotice,
+  resolveStartupAccess,
+  type StartupAccess,
+} from "./startup-access";
+import { MemoryStorage } from "./testing/memory-storage";
 
 const SESSION = {
   sub: "sub",
@@ -74,6 +81,55 @@ describe("resolveStartupAccess", () => {
     expect(resolveStartupAccess(new URLSearchParams("login=unavailable"), null, true).kind).toBe(
       "auth-flow-failure",
     );
+  });
+});
+
+describe("checkStartupAccess", () => {
+  /** Un démarrage de l'app, comme le fait la garde de chaque front. */
+  function createStartup(): (session: typeof SESSION | null, search?: string) => StartupAccess {
+    const storage = new MemoryStorage();
+    const loginAttempts = createLoginAttempts(
+      () => storage,
+      () => 1_000_000,
+    );
+
+    return (session, search = "") =>
+      checkStartupAccess(new URLSearchParams(search), session, loginAttempts);
+  }
+
+  it("cesse de rediriger quand on revient sans session après chaque départ", () => {
+    // Le cookie de session n'est pas conservé : chaque retour de la connexion
+    // se fait sans session.
+    const start = createStartup();
+
+    for (let attempt = 0; attempt < MAX_LOGIN_ATTEMPTS; attempt++) {
+      expect(start(null).kind).toBe("login-required");
+    }
+
+    expect(start(null).kind).toBe("login-loop");
+  });
+
+  it("repart de zéro une fois connecté", () => {
+    // Connexion, puis déconnexion : le départ suivant vers la connexion n'est
+    // pas une boucle.
+    const start = createStartup();
+
+    expect(start(null).kind).toBe("login-required");
+    expect(start(SESSION).kind).toBe("authenticated");
+
+    for (let attempt = 0; attempt < MAX_LOGIN_ATTEMPTS; attempt++) {
+      expect(start(null).kind).toBe("login-required");
+    }
+  });
+
+  it("ne compte pas l'affichage d'un échec du parcours comme un départ", () => {
+    // L'échec s'affiche sans redirection : c'est la personne qui relance.
+    const start = createStartup();
+
+    expect(start(null, "login=unavailable").kind).toBe("auth-flow-failure");
+    expect(start(null, "login=unavailable").kind).toBe("auth-flow-failure");
+
+    expect(start(null).kind).toBe("login-required");
   });
 });
 

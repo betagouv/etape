@@ -15,6 +15,24 @@ hostname_of() {
 : "${FRONT_OFFICE_PUBLIC_URL:?FRONT_OFFICE_PUBLIC_URL est obligatoire}"
 : "${BACK_OFFICE_PUBLIC_URL:?BACK_OFFICE_PUBLIC_URL est obligatoire}"
 
+# L'API reconnaît un front à l'en-tête `Host`, comparé à l'hôte de son URL
+# publique port compris, et nginx lui transmet `$host`, qui n'en a jamais. Un
+# port dans l'URL d'un front ferait répondre 421 à chacun de ses appels à
+# `/api` : mieux vaut refuser de démarrer.
+require_no_port() {
+  etape_authority=${2#*://}
+  etape_authority=${etape_authority%%/*}
+  case "$etape_authority" in
+    *:*)
+      echo "etape : $1 ne doit pas porter de port ($2), l'API répondrait 421 à chaque appel de /api." >&2
+      exit 1
+      ;;
+  esac
+}
+
+require_no_port FRONT_OFFICE_PUBLIC_URL "$FRONT_OFFICE_PUBLIC_URL"
+require_no_port BACK_OFFICE_PUBLIC_URL "$BACK_OFFICE_PUBLIC_URL"
+
 ETAPE_SITE_HOSTNAME=$(hostname_of "$PUBLIC_URL")
 ETAPE_FRONT_OFFICE_HOSTNAME=$(hostname_of "$FRONT_OFFICE_PUBLIC_URL")
 ETAPE_BACK_OFFICE_HOSTNAME=$(hostname_of "$BACK_OFFICE_PUBLIC_URL")

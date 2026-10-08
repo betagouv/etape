@@ -326,8 +326,8 @@ garde d'en dire plus.
 ## La session dans front-office et back-office
 
 Les deux apps sont entièrement derrière la connexion. La logique partagée vit
-dans `@etape/api-client` (clients HTTP et de cache, décision de la garde
-`resolveStartupAccess`, textes, `useSessionExpired`) et les vues dans
+dans `@etape/api-client` (clients HTTP et de cache, garde de démarrage
+`checkStartupAccess` et son compteur, textes, `useSessionExpired`) et les vues dans
 `@etape/ui` (écrans d'attente et d'avis, dialogue). Le branchement, lui, est
 copié à l'identique dans chaque app, parce qu'il dépend de son routeur et de sa
 configuration : la route racine qui porte la garde (`navigation/routes.tsx`),
@@ -348,8 +348,10 @@ l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
   `Secure` servi en `http`), on reviendrait de la connexion sans session, que
   Keycloak rouvrirait en silence : une boucle, jusqu'à la limite de débit. La
   garde compte donc ses départs vers la connexion en `sessionStorage`
-  (`login-attempts.ts`) : au-delà de deux en une minute, elle affiche « Impossible
-  de rester connecté », et c'est la personne qui relance.
+  (`login-attempts.ts`) : au-delà de deux en une minute, elle affiche « Connexion
+  impossible », et c'est la personne qui relance. Lire, effacer et incrémenter
+  le compteur se fait dans `checkStartupAccess`, testé d'un bloc : l'app n'a
+  plus qu'à rediriger.
   Deux et non un : revenir du formulaire par le bouton Précédent ressemble, vu
   du front, à un retour sans session. Un stockage inaccessible — le cas des
   cookies bloqués — affiche l'avis d'emblée. Le compteur s'efface à la

@@ -1,8 +1,8 @@
 import {
   buildLoginUrl,
+  checkStartupAccess,
   createLoginAttempts,
   createSessionQueryOptions,
-  resolveStartupAccess,
   STARTUP_PENDING_MESSAGE,
 } from "@etape/api-client";
 import { PendingScreen } from "@etape/ui/components/pending-screen";
@@ -27,16 +27,13 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   // Garde de démarrage : toute l'app est derrière la connexion.
   beforeLoad: async ({ context, location }) => {
     const session = await context.queryClient.query(createSessionQueryOptions(context.httpClient));
-    const access = resolveStartupAccess(
+    const access = checkStartupAccess(
       new URLSearchParams(location.searchStr),
       session,
-      loginAttempts.isLoginLoopSuspected(),
+      loginAttempts,
     );
 
-    if (access.kind === "authenticated") loginAttempts.clearLoginAttempts();
-
     if (access.kind === "login-required") {
-      loginAttempts.recordLoginAttempt();
       // Navigation pleine page : le formulaire de connexion est servi par
       // Keycloak, via l'API, pas par cette app.
       throw redirect({ href: buildLoginUrl(API_BASE_URL, location.href), reloadDocument: true });

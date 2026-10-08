@@ -40,8 +40,8 @@ export { buildLoginUrl, findSession, SESSION_QUERY_KEY } from "./session";
 export { createSessionClients, type SessionClients } from "./session-clients";
 export { createSessionQueryOptions, type SessionQueryOptions } from "./session-query";
 export {
+  checkStartupAccess,
   describeStartupNotice,
-  resolveStartupAccess,
   STARTUP_PENDING_MESSAGE,
   type StartupAccess,
 } from "./startup-access";

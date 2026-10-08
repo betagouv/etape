@@ -80,7 +80,7 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 | Variable                              | Obligatoire | Rôle                                                              |
 | ------------------------------------- | ----------- | ----------------------------------------------------------------- |
 | `PUBLIC_URL`                          | oui         | Site et simulateur, `https://etape.example.org`, sans slash final |
-| `FRONT_OFFICE_PUBLIC_URL`             | oui         | URL du front-office, sans slash final                             |
+| `FRONT_OFFICE_PUBLIC_URL`             | oui         | URL du front-office, sans slash final ni port                     |
 | `KEYCLOAK_PUBLIC_URL`                 | oui         | `https://auth.etape.example.org`, sans slash final                |
 | `KEYCLOAK_HOSTNAME`                   | oui         | Nom d'hôte du précédent, sans le schéma                           |
 | `KEYCLOAK_ADMIN_USER`                 | non         | `admin` par défaut                                                |
@@ -88,7 +88,7 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 | `KEYCLOAK_DB_PASSWORD`                | oui         | Base de Keycloak                                                  |
 | `APP_DB_PASSWORD`                     | oui         | Base applicative (comptes, sessions)                              |
 | `FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET` | oui         | Secret du client `etape-api` du realm `etape`                     |
-| `BACK_OFFICE_PUBLIC_URL`              | oui         | URL du back-office, sans slash final                              |
+| `BACK_OFFICE_PUBLIC_URL`              | oui         | URL du back-office, sans slash final ni port                      |
 | `BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`  | oui         | Secret du client `etape-api` du realm `etape-back-office`         |
 | `COOKIE_ENCRYPTION_KEY`               | oui         | Chiffre la transaction de connexion (base64, 32 octets)           |
 | `TRUST_PROXY_HOPS`                    | non         | Proxys devant l'API, `2` par défaut                               |
