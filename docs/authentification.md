@@ -349,9 +349,9 @@ npm run build -- --filter=@etape/keycloak-theme
 # indisponibles.
 FRANCECONNECT_CLIENT_ID=… FRANCECONNECT_CLIENT_SECRET=… docker compose up -d
 
-cp apps/api/.env.example apps/api/.env
-cp apps/front-office/.env.example apps/front-office/.env
-cp apps/back-office/.env.example apps/back-office/.env
+# Les `.env` de apps/api, apps/front-office et apps/back-office se récupèrent
+# dans le coffre-fort de l'équipe. Les `.env.example` versionnés n'en donnent
+# que la liste des variables, sans valeur.
 
 # Crée les tables de la base applicative. À rejouer après chaque migration.
 npm run db:migrate --workspace=@etape/api
@@ -377,9 +377,10 @@ Aucun mot de passe n'est versionné : le compte applicatif n'est créé que si
 `KEYCLOAK_TEST_USER_PASSWORD` est renseigné, dans le `.env` à la racine ou dans
 le shell, avant `docker compose up`.
 
-Le secret du client est figé dans le fichier de realm et recopié tel quel dans
-`.env.example` : sans cela, Keycloak en régénère un à chaque import et il
-faudrait rouvrir la console après chaque `docker compose down -v`. Il ne protège
+Le secret du client est figé dans le fichier de realm, et le `.env` de l'API
+partagé par le coffre-fort porte le même : sans cela, Keycloak en régénère un à
+chaque import et il faudrait rouvrir la console après chaque
+`docker compose down -v`. Il ne protège
 qu'un Keycloak local ; les autres environnements reçoivent le leur par `kcadm`.
 
 ### Les emails, en local aussi
