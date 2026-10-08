@@ -76,6 +76,22 @@ erreur, c'est « personne n'est connecté ». Un 401 ne veut donc dire, partout
 dans l'API, qu'une chose : la session a expiré (`SessionGuard`). Le schéma de la
 réponse est la première route de `packages/api-contract` (`getSession`).
 
+**Une garde CSRF protège les requêtes qui modifient des données** (`POST`,
+`PUT`, `PATCH`, `DELETE` ; `CsrfGuard`, globale). Elle exige deux choses, et
+répond 403 sinon :
+
+- l'en-tête `x-etape-csrf: 1`, que `createHttpClient` (`packages/api-client`)
+  envoie sur toutes les requêtes. Une page d'un autre site ne peut pas l'ajouter
+  sans la permission du serveur, et l'API ne la donne jamais : elle n'active pas
+  le CORS ;
+- un en-tête `Origin` égal à l'origine du front reconnu par `Host`. Les
+  navigateurs l'envoient sur toute requête qui n'est ni GET ni HEAD ; il tient
+  encore si le CORS était un jour ouvert par erreur.
+
+Le cookie de session reste en `SameSite=Lax` : le retour de Keycloak sur
+`/auth/callback` est une navigation venue d'un autre site, que `Strict`
+priverait de son cookie.
+
 ## Le bouton FranceConnect reste dans le front
 
 Dans un flux brokerisé standard, c'est Keycloak qui affiche l'écran de connexion,

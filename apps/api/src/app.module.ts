@@ -4,6 +4,7 @@ import { APP_GUARD } from "@nestjs/core";
 import { minutes, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 
 import { AuthModule } from "./auth/auth.module.js";
+import { CsrfGuard } from "./auth/csrf.guard.js";
 import { FrontGuard } from "./auth/front.guard.js";
 import { validateEnv } from "./config/env.js";
 import { DatabaseModule } from "./database/database.module.js";
@@ -21,10 +22,12 @@ import { DatabaseModule } from "./database/database.module.js";
     DatabaseModule,
     AuthModule,
   ],
-  // Le front d'abord : un hôte inconnu est refusé avant de compter dans la
-  // limite de débit.
+  // Dans cet ordre : le front d'abord, qu'un hôte inconnu soit refusé avant de
+  // compter dans la limite de débit, et que la garde CSRF connaisse l'origine
+  // attendue.
   providers: [
     { provide: APP_GUARD, useExisting: FrontGuard },
+    { provide: APP_GUARD, useExisting: CsrfGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type AxiosInstance } from "axios";
 
 import { ApiError } from "./api-error";
+import { CSRF_HEADER, CSRF_HEADER_VALUE } from "./csrf";
 import { HTTP_STATUS } from "./http-status";
 import { isApiErrorBody } from "./is-api-error-body";
 
@@ -25,6 +26,9 @@ export function createHttpClient(baseURL: string, options: CreateHttpClientOptio
     baseURL,
     withCredentials: true, // le cookie de session, jamais un jeton
     timeout: REQUEST_TIMEOUT_MS,
+    // Sur toutes les requêtes, lectures comprises : l'API ne l'exige que sur
+    // celles qui modifient, mais l'envoyer partout évite qu'un appel l'oublie.
+    headers: { [CSRF_HEADER]: CSRF_HEADER_VALUE },
   });
 
   httpClient.interceptors.response.use(

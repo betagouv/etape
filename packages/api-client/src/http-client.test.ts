@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "./api-error";
+import { CSRF_HEADER, CSRF_HEADER_VALUE } from "./csrf";
 import { createHttpClient, REQUEST_TIMEOUT_MS } from "./http-client";
 import { HTTP_STATUS } from "./http-status";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
@@ -9,6 +10,7 @@ let server: TestServer;
 
 beforeAll(async () => {
   server = await startTestServer({
+    "/en-tetes": (request, response) => sendJson(response, 200, request.headers),
     "/expiree": (_, response) =>
       sendJson(response, HTTP_STATUS.UNAUTHORIZED, {
         code: "UNAUTHORIZED",
@@ -39,6 +41,16 @@ async function captureError(promise: Promise<unknown>): Promise<ApiError> {
 }
 
 describe("createHttpClient", () => {
+  it("envoie l'en-tête anti-CSRF, lectures comme écritures", async () => {
+    const httpClient = createHttpClient(server.baseUrl, { onUnauthorized: vi.fn() });
+
+    const read = await httpClient.get<Record<string, string>>("/en-tetes");
+    const write = await httpClient.post<Record<string, string>>("/en-tetes", {});
+
+    expect(read.data[CSRF_HEADER]).toBe(CSRF_HEADER_VALUE);
+    expect(write.data[CSRF_HEADER]).toBe(CSRF_HEADER_VALUE);
+  });
+
   it("appelle onUnauthorized une fois sur un 401", async () => {
     const onUnauthorized = vi.fn();
     const httpClient = createHttpClient(server.baseUrl, { onUnauthorized });
