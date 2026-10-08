@@ -129,7 +129,7 @@ services:
       keycloak:
         condition: service_started
     environment:
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
+      FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET: ${FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET:-}
       BACK_OFFICE_KEYCLOAK_CLIENT_SECRET: ${BACK_OFFICE_KEYCLOAK_CLIENT_SECRET:-}
       FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
       FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
@@ -149,14 +149,24 @@ services:
         $$KCADM update realms/master -s sslRequired=NONE
         echo "master : sslRequired=NONE — console admin joignable en HTTP depuis l'hôte."
 
-        # Le même secret doit figurer dans `apps/api/.env`. Sans lui, Keycloak
-        # garde celui qu'il a tiré au sort à l'import, et l'API ne peut plus
-        # échanger le code de connexion.
-        for pair in "etape:$$KEYCLOAK_CLIENT_SECRET" "etape-back-office:$$BACK_OFFICE_KEYCLOAK_CLIENT_SECRET"; do
-          realm=$${pair%%:*}
-          secret=$${pair#*:}
+        # Un realm par front, chacun relayant `/api` sur sa propre origine.
+        # Adresses réappliquées à chaque démarrage : un realm déjà importé ne
+        # relit pas son fichier. Le secret doit être le même que dans
+        # `apps/api/.env` ; sans lui, Keycloak garde celui qu'il a tiré au sort
+        # à l'import, et l'API ne peut plus échanger le code de connexion.
+        for entry in "etape:http://localhost:5173:$$FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET" \
+                     "etape-back-office:http://localhost:5174:$$BACK_OFFICE_KEYCLOAK_CLIENT_SECRET"; do
+          realm=$${entry%%:*}
+          rest=$${entry#*:}
+          front_url=$${rest%:*}
+          secret=$${rest##*:}
+          client_uuid=$$($$KCADM get clients -r $$realm -q clientId=etape-api --fields id --format csv --noquotes)
+          $$KCADM update clients/$$client_uuid -r $$realm \
+            -s "redirectUris=[\"$$front_url/api/auth/callback\"]" \
+            -s "baseUrl=$$front_url/api/auth/login?returnTo=%2F" \
+            -s "attributes.\"post.logout.redirect.uris\"=$$front_url/*"
+          echo "$$realm — client etape-api : adresses alignées sur $$front_url."
           if [ -n "$$secret" ]; then
-            client_uuid=$$($$KCADM get clients -r $$realm -q clientId=etape-api --fields id --format csv --noquotes)
             $$KCADM update clients/$$client_uuid -r $$realm -s "secret=$$secret"
             echo "$$realm — client etape-api : secret posé."
           else

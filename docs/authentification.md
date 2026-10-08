@@ -102,7 +102,11 @@ appliqué après coup par `kcadm`. Le détail et les pièges associés sont dans
 
 - Type **confidentiel** ; `Direct access grants` désactivé — le mot de passe ne
   doit jamais transiter par l'API.
-- `Valid redirect URIs` : `${API_BASE_URL}/auth/callback`, au caractère près.
+- Un client par realm, donc un par front : `etape` pour le front-office,
+  `etape-back-office` pour le back-office.
+- `Valid redirect URIs` : `<url du front>/api/auth/callback`, au caractère près.
+  Le retour doit se faire sur l'hôte où la connexion a commencé, sans quoi le
+  cookie de connexion en attente n'est pas retrouvé.
 - PKCE `S256` **exigé** côté client, en plus d'être envoyé par l'API.
 - `post.logout.redirect.uris` doit couvrir l'URL du front. Elle n'est pas déduite
   des `redirectUris` : oubliée, la déconnexion échoue alors même que la connexion
@@ -262,10 +266,10 @@ soit — `linkExpirationFormatter` la met en toutes lettres.
 
 **Le parcours se termine de deux façons**, selon l'endroit où le lien est ouvert :
 
-| Lien ouvert…                           | Ce que voit la personne                                                   |
-| -------------------------------------- | ------------------------------------------------------------------------- |
-| dans le navigateur de la demande       | connectée directement, elle arrive sur `FRONT_BASE_URL` (voir ci-dessous) |
-| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton                                     |
+| Lien ouvert…                           | Ce que voit la personne                                            |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| dans le navigateur de la demande       | connectée directement, elle arrive sur son front (voir ci-dessous) |
+| ailleurs (téléphone, autre navigateur) | « Compte mis à jour », puis un bouton                              |
 
 Le second cas est le plus courant — on demande depuis un ordinateur et on lit
 ses emails sur un téléphone — et c'est celui qui n'avait pas d'issue : la page de
@@ -274,9 +278,8 @@ confirmation ne propose de lien que si le client Keycloak porte une `baseUrl`, e
 la racine du front, `/api/auth/login?returnTo=/` : qui arrive là n'est pas
 connecté, et la marche suivante est toujours la même.
 
-`FRONT_BASE_URL` désigne le front-office en local. En recette, il désigne
-encore le site (`PUBLIC_URL`), qui n'affiche plus rien de la connexion, tant
-que le front-office n'y est pas déployé.
+Chaque realm renvoie vers son front : le front-office pour `etape`, le
+back-office pour `etape-back-office`.
 
 **Un lien périmé mène à `error.ftl`**, qui n'a pas non plus de retour naturel vers
 le formulaire de demande. `Error.tsx` reconnaît ce cas et propose « Demander un
@@ -331,10 +334,14 @@ plutôt qu'en liste blanche : les champs que renvoie FranceConnect varient selon
 le fournisseur d'identité choisi, et c'est leur nom technique qui sert à
 discuter avec le portail partenaires quand l'un d'eux manque.
 
-**Une limite, levée par la suite prévue (voir « Ce qui reste à faire »)** : l'API ne connaît
-qu'un front, `FRONT_BASE_URL`, vers lequel elle renvoie après connexion,
-déconnexion ou échec. En local, c'est le front-office ; pour essayer le
-back-office, y mettre `http://localhost:5174`.
+**L'API reconnaît le front à l'en-tête `Host`**, comparé à la liste fermée des
+fronts configurés (`auth/front.ts`) ; un hôte inconnu reçoit 421, sans
+redirection. C'est de là qu'elle tire le realm, la `redirect_uri` et l'adresse
+de retour après connexion, déconnexion ou échec — jamais de l'en-tête lui-même.
+`X-Forwarded-Host` n'est pas lu : `req.host` le préférerait dès que
+`trust proxy` est actif, en gardant la valeur la plus à gauche, celle du client.
+En local, le proxy de Vite doit donc garder `Host` intact (forme objet, sans
+`changeOrigin`).
 
 ## Développement local
 
@@ -368,7 +375,7 @@ simple redémarrage de Keycloak servirait l'ancien.
 | Service           | Adresse               | Accès                                              |
 | ----------------- | --------------------- | -------------------------------------------------- |
 | Front-office      | http://localhost:5173 | la connexion est demandée à l'ouverture            |
-| Back-office       | http://localhost:5174 | idem ; retour sur `FRONT_BASE_URL` après connexion |
+| Back-office       | http://localhost:5174 | idem, realm `etape-back-office`                    |
 | Console Keycloak  | http://localhost:8080 | `admin` / `admin`                                  |
 | Compte applicatif | —                     | `test@etape.local` / `KEYCLOAK_TEST_USER_PASSWORD` |
 | Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`                    |
@@ -379,7 +386,7 @@ le shell, avant `docker compose up`.
 
 Aucun secret de client n'est versionné non plus : le fichier de realm n'en porte
 pas, et Keycloak en tire un au sort à l'import. `keycloak-init` le remplace
-ensuite par celui du `.env` à la racine (`KEYCLOAK_CLIENT_SECRET`,
+ensuite par celui du `.env` à la racine (`FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET`,
 `BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`), qui doit être le même que dans
 `apps/api/.env`. Les autres environnements reçoivent le leur par `kcadm`.
 

@@ -62,27 +62,28 @@ configurent, plutôt que dans un conteneur d'initialisation séparé.
 
 Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 
-| Variable                             | Obligatoire | Rôle                                                      |
-| ------------------------------------ | ----------- | --------------------------------------------------------- |
-| `PUBLIC_URL`                         | oui         | `https://etape.example.org`, sans slash final             |
-| `KEYCLOAK_PUBLIC_URL`                | oui         | `https://auth.etape.example.org`, sans slash final        |
-| `KEYCLOAK_HOSTNAME`                  | oui         | Nom d'hôte du précédent, sans le schéma                   |
-| `KEYCLOAK_ADMIN_USER`                | non         | `admin` par défaut                                        |
-| `KEYCLOAK_ADMIN_PASSWORD`            | oui         | Administration de Keycloak (`kcadm`)                      |
-| `KEYCLOAK_DB_PASSWORD`               | oui         | Base de Keycloak                                          |
-| `APP_DB_PASSWORD`                    | oui         | Base applicative (comptes, sessions)                      |
-| `KEYCLOAK_CLIENT_SECRET`             | oui         | Secret du client `etape-api`, partagé API ↔ Keycloak      |
-| `BACK_OFFICE_PUBLIC_URL`             | oui         | URL du back-office, sans slash final                      |
-| `BACK_OFFICE_KEYCLOAK_CLIENT_SECRET` | oui         | Secret du client `etape-api` du realm `etape-back-office` |
-| `COOKIE_ENCRYPTION_KEY`              | oui         | Chiffre la transaction de connexion (base64, 32 octets)   |
-| `TRUST_PROXY_HOPS`                   | non         | Proxys devant l'API, `2` par défaut                       |
-| `FRANCECONNECT_CLIENT_ID`            | non         | Identifiant du client FranceConnect                       |
-| `FRANCECONNECT_CLIENT_SECRET`        | non         | Secret du client FranceConnect                            |
-| `FRANCECONNECT_ENVIRONMENT`          | non         | `INTEGRATION_STANDARD_V2` (bac à sable) par défaut        |
-| `FRANCECONNECT_EIDAS`                | non         | Niveau eIDAS demandé, `EIDAS1` par défaut                 |
-| `KEYCLOAK_TEST_USER_PASSWORD`        | non         | Crée `test@etape.local` avec ce mot de passe              |
-| `SMTP_*`                             | non         | Envoi par Brevo ; sans lui, pas d'email du tout           |
-| `KEYCLOAK_RECAPTCHA_*`               | non         | reCAPTCHA de l'inscription (voir ci-dessous)              |
+| Variable                              | Obligatoire | Rôle                                                      |
+| ------------------------------------- | ----------- | --------------------------------------------------------- |
+| `PUBLIC_URL`                          | oui         | `https://etape.example.org`, sans slash final             |
+| `FRONT_OFFICE_PUBLIC_URL`             | oui         | URL du front-office, sans slash final                     |
+| `KEYCLOAK_PUBLIC_URL`                 | oui         | `https://auth.etape.example.org`, sans slash final        |
+| `KEYCLOAK_HOSTNAME`                   | oui         | Nom d'hôte du précédent, sans le schéma                   |
+| `KEYCLOAK_ADMIN_USER`                 | non         | `admin` par défaut                                        |
+| `KEYCLOAK_ADMIN_PASSWORD`             | oui         | Administration de Keycloak (`kcadm`)                      |
+| `KEYCLOAK_DB_PASSWORD`                | oui         | Base de Keycloak                                          |
+| `APP_DB_PASSWORD`                     | oui         | Base applicative (comptes, sessions)                      |
+| `FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET` | oui         | Secret du client `etape-api` du realm `etape`             |
+| `BACK_OFFICE_PUBLIC_URL`              | oui         | URL du back-office, sans slash final                      |
+| `BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`  | oui         | Secret du client `etape-api` du realm `etape-back-office` |
+| `COOKIE_ENCRYPTION_KEY`               | oui         | Chiffre la transaction de connexion (base64, 32 octets)   |
+| `TRUST_PROXY_HOPS`                    | non         | Proxys devant l'API, `2` par défaut                       |
+| `FRANCECONNECT_CLIENT_ID`             | non         | Identifiant du client FranceConnect                       |
+| `FRANCECONNECT_CLIENT_SECRET`         | non         | Secret du client FranceConnect                            |
+| `FRANCECONNECT_ENVIRONMENT`           | non         | `INTEGRATION_STANDARD_V2` (bac à sable) par défaut        |
+| `FRANCECONNECT_EIDAS`                 | non         | Niveau eIDAS demandé, `EIDAS1` par défaut                 |
+| `KEYCLOAK_TEST_USER_PASSWORD`         | non         | Crée `test@etape.local` avec ce mot de passe              |
+| `SMTP_*`                              | non         | Envoi par Brevo ; sans lui, pas d'email du tout           |
+| `KEYCLOAK_RECAPTCHA_*`                | non         | reCAPTCHA de l'inscription (voir ci-dessous)              |
 
 Trois pièges tiennent au moment où ces valeurs sont lues :
 
@@ -93,8 +94,8 @@ Trois pièges tiennent au moment où ces valeurs sont lues :
   connecter, sans que rien n'indique pourquoi. `APP_DB_PASSWORD` entre de plus
   dans une URL de connexion : le prendre alphanumérique évite d'avoir à encoder
   `@`, `:` ou `/`, qui y changeraient de sens.
-- `KEYCLOAK_CLIENT_SECRET`, à l'inverse, est réappliqué à chaque démarrage de
-  Keycloak : c'est la seule des trois qui se corrige en redéployant.
+- Les deux `…_KEYCLOAK_CLIENT_SECRET`, à l'inverse, sont réappliqués à chaque
+  démarrage de Keycloak : ce sont les seuls qui se corrigent en redéployant.
 
 `KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Aucun identifiant n'est versionné :
 le fichier de realm ne crée plus de compte, et `test@etape.local` n'existe que si

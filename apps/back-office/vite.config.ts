@@ -13,6 +13,10 @@ export default defineConfig({
     // Même origine qu'en production : le front appelle `/api`, relayé ici à
     // l'API, sans CORS. Pas de réécriture, l'API porte elle-même son préfixe.
     // `vite preview` reprend ce proxy.
-    proxy: { "/api": "http://localhost:3002" },
+    //
+    // Forme objet obligatoire : la forme courte (`"/api": "http://…"`) active
+    // `changeOrigin`, qui remplace l'en-tête `Host` par `localhost:3002`. Or
+    // l'API reconnaît le front à cet en-tête, et répondrait 421.
+    proxy: { "/api": { target: "http://localhost:3002" } },
   },
 });

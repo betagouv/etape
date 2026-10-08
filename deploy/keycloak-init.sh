@@ -20,9 +20,9 @@ REALM=etape
 BACK_OFFICE_REALM=etape-back-office
 INTERNAL_URL="${KEYCLOAK_INTERNAL_URL:-http://keycloak:8080}"
 
-: "${PUBLIC_URL:?PUBLIC_URL est obligatoire (URL publique du front, sans slash final)}"
 : "${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD est obligatoire}"
-: "${KEYCLOAK_CLIENT_SECRET:?KEYCLOAK_CLIENT_SECRET est obligatoire}"
+: "${FRONT_OFFICE_PUBLIC_URL:?FRONT_OFFICE_PUBLIC_URL est obligatoire (URL publique du front-office, sans slash final)}"
+: "${FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET:?FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET est obligatoire}"
 : "${BACK_OFFICE_PUBLIC_URL:?BACK_OFFICE_PUBLIC_URL est obligatoire (URL publique du back-office, sans slash final)}"
 : "${BACK_OFFICE_KEYCLOAK_CLIENT_SECRET:?BACK_OFFICE_KEYCLOAK_CLIENT_SECRET est obligatoire}"
 
@@ -193,7 +193,7 @@ $KCADM update realms/master \
   -s maxFailureWaitSeconds=900
 echo "→ realm master : protection contre la force brute activée"
 
-configure_api_client "$REALM" "$KEYCLOAK_CLIENT_SECRET" "$PUBLIC_URL"
+configure_api_client "$REALM" "$FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET" "$FRONT_OFFICE_PUBLIC_URL"
 configure_api_client "$BACK_OFFICE_REALM" "$BACK_OFFICE_KEYCLOAK_CLIENT_SECRET" "$BACK_OFFICE_PUBLIC_URL"
 
 # Identifiants facultatifs : sans eux, seul ce parcours est indisponible.
@@ -320,5 +320,5 @@ configure_smtp "$BACK_OFFICE_REALM"
 configure_test_user "$REALM"
 configure_test_user "$BACK_OFFICE_REALM"
 
-echo "✅ realm ${REALM} configuré pour ${PUBLIC_URL}"
+echo "✅ realm ${REALM} configuré pour ${FRONT_OFFICE_PUBLIC_URL}"
 echo "✅ realm ${BACK_OFFICE_REALM} configuré pour ${BACK_OFFICE_PUBLIC_URL}"

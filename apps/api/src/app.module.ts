@@ -4,6 +4,7 @@ import { APP_GUARD } from "@nestjs/core";
 import { minutes, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 
 import { AuthModule } from "./auth/auth.module.js";
+import { FrontGuard } from "./auth/front.guard.js";
 import { validateEnv } from "./config/env.js";
 import { DatabaseModule } from "./database/database.module.js";
 
@@ -20,6 +21,11 @@ import { DatabaseModule } from "./database/database.module.js";
     DatabaseModule,
     AuthModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  // Le front d'abord : un hôte inconnu est refusé avant de compter dans la
+  // limite de débit.
+  providers: [
+    { provide: APP_GUARD, useExisting: FrontGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

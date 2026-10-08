@@ -34,22 +34,22 @@
     {
       "clientId": "etape-api",
       "name": "API ETAPE",
-      "description": "Client confidentiel du service NestJS. Seul détenteur du secret.",
+      "description": "Client confidentiel du service NestJS, pour le front-office. Seul détenteur du secret.",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
       "bearerOnly": false,
-      "baseUrl": "http://localhost:3002/api/auth/login?returnTo=%2F",
+      "baseUrl": "http://localhost:5173/api/auth/login?returnTo=%2F",
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
       "frontchannelLogout": false,
-      "redirectUris": ["http://localhost:3002/api/auth/callback"],
+      "redirectUris": ["http://localhost:5173/api/auth/callback"],
       "webOrigins": [],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:5174/*"
+        "post.logout.redirect.uris": "http://localhost:5173/*"
       },
       "protocolMappers": [
         {

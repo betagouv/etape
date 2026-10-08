@@ -22,14 +22,16 @@ async function bootstrap(): Promise<void> {
   const config: ConfigService<Env, true> = app.get(ConfigService);
 
   app.setGlobalPrefix(API_PREFIX);
+  // Ne sert qu'à `req.ip`, lu par la limitation de débit. Le front est reconnu à
+  // l'en-tête `Host` lui-même, jamais à `req.host` qui lirait `X-Forwarded-Host`
+  // dès cette confiance accordée (voir `auth/front.ts`).
   app.set("trust proxy", config.get("TRUST_PROXY_HOPS", { infer: true }));
   app.use(helmet());
   app.use(cookieParser());
 
-  // Pas de CORS : en production, nginx sert l'API sous `/api/`, sur la même
-  // origine que les pages ; en local, le proxy de Vite relaie `/api` depuis
-  // front-office et back-office. Aucune page d'une autre origine n'a à lire
-  // l'API.
+  // Pas de CORS : chaque front relaie `/api` sur sa propre origine — nginx en
+  // production, le proxy de Vite en local. Aucune page d'une autre origine n'a à
+  // lire l'API.
 
   // Une redirection servie depuis un cache rejouerait un `state` déjà consommé.
   app.set("etag", false);
