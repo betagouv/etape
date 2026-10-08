@@ -451,7 +451,9 @@ Le SDK est tranché, **l'hébergement ne l'est pas** — la question est posée 
 
 **La session** : une garde `beforeLoad` sur la route racine vérifie la session au démarrage et envoie vers le formulaire de connexion si personne n'est connecté ; un 401 en cours d'utilisation efface les données en cache et ouvre le dialogue « Session expirée » ; si la personne quitte la page (bouton Précédent), elle est redirigée vers le formulaire de connexion. Le détail est dans [`authentification.md`](../authentification.md).
 
-**Ce qui reste à faire** (détail dans [`authentification.md`](../authentification.md#ce-qui-reste-à-faire), « Ce qui reste à faire ») : une origine par front, avec le refus de FranceConnect sur le back-office et une garde CSRF ; puis la session inactive.
+**Une origine par front** : chaque app relaie `/api` sur son propre sous-domaine (nginx en production, proxy de Vite en local, en forme objet pour garder l'en-tête `Host`, que l'API lit pour reconnaître le front). `createHttpClient` envoie l'en-tête anti-CSRF exigé par l'API sur les écritures, et la garde de démarrage s'arrête d'elle-même quand le cookie de session n'est pas conservé (« Impossible de rester connecté »).
+
+**Ce qui reste à faire** (détail dans [`authentification.md`](../authentification.md#ce-qui-reste-à-faire), « Ce qui reste à faire ») : la session inactive.
 
 ## Relevé d'arbitrage du 22 septembre 2026
 

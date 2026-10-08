@@ -20,22 +20,23 @@ assemblage par `scripts/vercel-out.mjs` — n'est pas touché.
 ## Architecture
 
 ```
-front statique (Next SSG)
-   │  bouton FranceConnect → /api/auth/login?idp=franceconnect
-   │  bouton email/mdp     → /api/auth/login
-   ▼
-apps/api (NestJS)  ── client OIDC confidentiel · session en cookie httpOnly
-   ▼
-Keycloak (realm etape) ─┬→ FranceConnect  (identity provider brokerisé)
-                        └→ utilisateurs locaux (email / mot de passe)
+front-office (son origine)            back-office (son origine)
+   │  /api/auth/login?idp=franceconnect   │  /api/auth/login
+   │  /api/auth/login                     │
+   ▼  relayé par nginx ou Vite            ▼  relayé par nginx ou Vite
+apps/api (NestJS) ── front reconnu à l'en-tête Host · client OIDC confidentiel
+   │                                       · session en cookie httpOnly
+   ▼                                      ▼
+Keycloak, realm etape ─┬→ FranceConnect   Keycloak, realm etape-back-office
+                       └→ comptes locaux     └→ comptes locaux (sans inscription)
 ```
 
 Deux choix structurants :
 
 **L'API est le client OIDC, pas le navigateur.** Aucun jeton n'atteint le front.
 Il reçoit un cookie `httpOnly` contenant un identifiant de session opaque ; tout
-le reste vit côté serveur. Front et API partagent l'origine — derrière nginx en
-production, par le proxy de Vite en local (`/api`) — donc ni CORS ni
+le reste vit côté serveur. Chaque front relaie `/api` sur sa propre origine —
+nginx en production, le proxy de Vite en local — donc ni CORS ni
 `SameSite=None` : l'API n'active pas le CORS du tout.
 
 **L'API ne parle qu'à Keycloak.** FranceConnect n'apparaît nulle part dans le
@@ -115,8 +116,12 @@ que pour le chemin email / mot de passe.
 
 ## Configuration du realm
 
-Elle est versionnée dans `keycloak/realms/etape-realm.json`, importée au
-démarrage. Ce fichier décrit **l'environnement de développement uniquement** :
+Un realm par front, versionnés dans `keycloak/realms/` (`etape-realm.json` pour
+le front-office, `etape-back-office-realm.json` pour le back-office), importés
+au démarrage. Deux realms et non deux clients : la session de Keycloak est
+commune à tout un realm, et un compte du front-office se retrouverait connecté
+au back-office sans rien saisir. Ces fichiers décrivent **l'environnement de
+développement uniquement** :
 l'import de realm ne substitue aucune variable, ni d'environnement ni de propriété
 système, si bien que tout ce qui varie d'un environnement à l'autre doit être
 appliqué après coup par `kcadm`. Le détail et les pièges associés sont dans
@@ -414,6 +419,11 @@ simple redémarrage de Keycloak servirait l'ancien.
 | Compte applicatif | —                     | `test@etape.local` / `KEYCLOAK_TEST_USER_PASSWORD` |
 | Base applicative  | localhost:5432        | `etape` / `etape`, base `etape`                    |
 
+L'API écoute sur `localhost:3002`, mais n'y répond qu'aux noms d'hôte des
+fronts : ouverte directement, elle renvoie 421. Pour l'appeler à la main, passer
+par un front (`http://localhost:5173/api/…`) ou envoyer son en-tête :
+`curl -H 'Host: localhost:5173' http://localhost:3002/api/auth/session`.
+
 Aucun mot de passe n'est versionné : le compte applicatif n'est créé que si
 `KEYCLOAK_TEST_USER_PASSWORD` est renseigné, dans le `.env` à la racine ou dans
 le shell, avant `docker compose up`.
@@ -478,23 +488,27 @@ c'est ce que comprennent les clients de messagerie.
 - [ ] Page de connexion du front-office : le bouton FranceConnect, conforme au
       kit, vers `/api/auth/login?idp=franceconnect`, et « Se connecter » vers
       `/api/auth/login`. Le back-office n'utilise pas FranceConnect
-- [ ] Une origine par front : `FRONT_OFFICE_BASE_URL` et `BACK_OFFICE_BASE_URL`
-      (avec leurs URL d'API) à la place de `FRONT_BASE_URL` et `API_BASE_URL`,
-      le front reconnu à l'en-tête `Host`, une `redirect_uri` par front dans
-      Keycloak, le refus de FranceConnect au `callback` du back-office — le
-      masquer dans le thème ne suffit pas —, et une garde CSRF (en-tête exigé)
-      sur les routes qui modifient. Y ajouter une garde contre les boucles de
-      redirection quand le cookie de session n'est pas conservé (cookies
-      bloqués, cookie `secure` en `http`) : la garde de démarrage renvoie alors
-      vers la connexion, que le SSO de Keycloak rouvre en silence, jusqu'à la
-      limite de débit. D'ici là, une connexion partie du back-office revient sur
-      `FRONT_BASE_URL`
+- [x] Une origine par front : chaque front relaie `/api` sur son sous-domaine,
+      l'API le reconnaît à l'en-tête `Host` (421 sinon) ; un realm Keycloak par
+      front, le back-office sans FranceConnect ni inscription ; sessions et
+      comptes rattachés à leur front et à leur realm ; garde CSRF (en-tête
+      `x-etape-csrf` et `Origin`) ; cookies `__Host-Http-` en production ;
+      `frame-ancestors 'none'` ; garde contre les boucles de redirection
+- [ ] Déclarer chez l'hébergeur les domaines du front-office et du
+      back-office, sur le service `web` (voir [deploiement.md](deploiement.md)),
+      et jouer la connexion de bout en bout en recette
+- [ ] Comptes du back-office : décrire leur création par un administrateur
+      (`kcadm` dans le realm `etape-back-office`, l'inscription y étant fermée),
+      puis rattacher chaque compte à son rôle métier (instructeur, conseiller)
+      avant le premier écran du back-office qui affiche des données. Le realm
+      séparé ferme la porte aux bénéficiaires ; les rôles régleront les droits
+      au sein du back-office
 - [ ] Session inactive : expiration après 30 minutes sans activité (appel à
       l'API, mouvement, saisie), limite absolue ramenée de 12 h à 10 h, même
       règle pour les bénéficiaires et les instructeurs ; avertissement avant
       l'expiration et prolongation (WCAG 2.2.1). Demande une migration (dernière
-      activité) et la garde CSRF du point précédent, pour la route de
-      prolongation. À cette occasion : réserver le délai de 10 s à la lecture de
+      activité) ; la route de prolongation passera par la garde CSRF, déjà en
+      place. À cette occasion : réserver le délai de 10 s à la lecture de
       session (global, il couperait l'envoi d'une pièce justificative) et
       raccourcir l'attente au démarrage (jusqu'à 47 s aujourd'hui) ; annoncer
       l'avertissement, l'attente et l'écran d'erreur dans une même région
