@@ -9,7 +9,7 @@ import { AccountService } from "../account/account.service.js";
 import type { Env } from "../config/env.js";
 import { AUTH_FLOW_ERROR, AUTH_FLOW_STEP, buildAuthFlowErrorUrl } from "./auth-flow-error.js";
 import { AuthFlowExceptionFilter } from "./auth-flow-exception.filter.js";
-import { FRONT_CONFIGS, type Front, type FrontConfig } from "./front.js";
+import { FRONT_CONFIGS, KEYCLOAK_REALM_BY_FRONT, type Front, type FrontConfig } from "./front.js";
 import { CurrentFront } from "./front.guard.js";
 import { extractIdentityClaims, getStringClaim } from "./identity-claims.js";
 import { getIdentityProvider } from "./identity-provider.js";
@@ -59,7 +59,7 @@ export class AuthController {
       idpHint: idp === FRANCECONNECT_IDP_HINT ? franceConnectAlias : undefined,
     });
 
-    this.sessions.startPendingLogin(response, {
+    this.sessions.startPendingLogin(response, front, {
       state,
       nonce,
       codeVerifier,
@@ -78,7 +78,7 @@ export class AuthController {
     @Res() response: Response,
   ): Promise<void> {
     const { frontBaseUrl, apiBaseUrl } = this.fronts[front];
-    const pendingLogin = this.sessions.consumePendingLogin(request, response);
+    const pendingLogin = this.sessions.consumePendingLogin(request, response, front);
 
     if (!pendingLogin) {
       response.redirect(
@@ -106,6 +106,7 @@ export class AuthController {
     const identityProvider = getIdentityProvider(claims);
 
     const account = await this.accountService.recordLogin({
+      keycloakRealm: KEYCLOAK_REALM_BY_FRONT[front],
       keycloakSub: claims.sub,
       email: getStringClaim(claims.email),
       prenom: getStringClaim(claims.given_name),
@@ -115,6 +116,7 @@ export class AuthController {
 
     await this.sessions.openSession(request, response, {
       accountId: account.id,
+      front,
       identityProvider,
       claims: extractIdentityClaims(claims),
       idToken: tokens.id_token,
@@ -134,7 +136,7 @@ export class AuthController {
     @Req() request: Request,
     @Res() response: Response,
   ): Promise<void> {
-    const session = await this.sessions.closeSession(request, response);
+    const session = await this.sessions.closeSession(request, response, front);
 
     if (!session) {
       response.redirect(this.fronts[front].frontBaseUrl);
@@ -147,8 +149,11 @@ export class AuthController {
   }
 
   @Get("session")
-  async session(@Req() request: Request): Promise<RouteResponse<typeof getSession>> {
-    const session = await this.sessions.readSession(request);
+  async session(
+    @CurrentFront() front: Front,
+    @Req() request: Request,
+  ): Promise<RouteResponse<typeof getSession>> {
+    const session = await this.sessions.readSession(request, front);
 
     return toSessionResponse(
       session,

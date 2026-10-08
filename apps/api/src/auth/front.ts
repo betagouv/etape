@@ -13,6 +13,10 @@ export const FRONT = {
 
 export type Front = (typeof FRONT)[keyof typeof FRONT];
 
+export function isFront(value: string): value is Front {
+  return Object.values<string>(FRONT).includes(value);
+}
+
 /**
  * Deux realms et non deux clients d'un même realm : la session de Keycloak est
  * commune à tout un realm, et un compte du front-office se retrouverait

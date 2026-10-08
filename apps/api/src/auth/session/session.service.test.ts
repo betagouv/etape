@@ -4,14 +4,16 @@ import { randomBytes } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NODE_ENV, type Env } from "../../config/env.js";
+import { FRONT } from "../front.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { sealCookieValue } from "./cookie-cipher.js";
 import { SessionService } from "./session.service.js";
 import type { SessionStore } from "./session.store.js";
 import type { AccountSession, NewSession } from "./session.types.js";
 
-const PENDING_LOGIN_COOKIE = "etape.txn";
-const SESSION_COOKIE = "etape.sid";
+const PENDING_LOGIN_COOKIE = "etape-front-office.txn";
+const SESSION_COOKIE = "etape-front-office.sid";
+const BACK_OFFICE_SESSION_COOKIE = "etape-back-office.sid";
 
 const key = randomBytes(32);
 
@@ -84,7 +86,7 @@ describe("SessionService", () => {
   describe("transaction de connexion", () => {
     it("pose un cookie httpOnly, sécurisé et lax, puis relit la transaction", () => {
       const response = new FakeResponse();
-      service.startPendingLogin(response as unknown as Response, pendingLogin);
+      service.startPendingLogin(response as unknown as Response, FRONT.FRONT_OFFICE, pendingLogin);
 
       const cookie = response.cookies.get(PENDING_LOGIN_COOKIE);
       expect(cookie?.options).toMatchObject({ httpOnly: true, secure: true, sameSite: "lax" });
@@ -92,13 +94,18 @@ describe("SessionService", () => {
       const consumed = service.consumePendingLogin(
         createRequest({ [PENDING_LOGIN_COOKIE]: cookie!.value }),
         new FakeResponse() as unknown as Response,
+        FRONT.FRONT_OFFICE,
       );
       expect(consumed).toMatchObject(pendingLogin);
     });
 
     it("efface le cookie à la lecture", () => {
       const response = new FakeResponse();
-      service.consumePendingLogin(createRequest({}), response as unknown as Response);
+      service.consumePendingLogin(
+        createRequest({}),
+        response as unknown as Response,
+        FRONT.FRONT_OFFICE,
+      );
 
       expect(response.clearedCookies).toContain(PENDING_LOGIN_COOKIE);
     });
@@ -106,7 +113,7 @@ describe("SessionService", () => {
     it("refuse une transaction expirée", () => {
       vi.useFakeTimers();
       const response = new FakeResponse();
-      service.startPendingLogin(response as unknown as Response, pendingLogin);
+      service.startPendingLogin(response as unknown as Response, FRONT.FRONT_OFFICE, pendingLogin);
 
       vi.advanceTimersByTime(10 * 60 * 1000 + 1);
 
@@ -115,6 +122,7 @@ describe("SessionService", () => {
           [PENDING_LOGIN_COOKIE]: response.cookies.get(PENDING_LOGIN_COOKIE)!.value,
         }),
         new FakeResponse() as unknown as Response,
+        FRONT.FRONT_OFFICE,
       );
       expect(consumed).toBeNull();
     });
@@ -129,6 +137,7 @@ describe("SessionService", () => {
         service.consumePendingLogin(
           createRequest({ [PENDING_LOGIN_COOKIE]: sealed }),
           new FakeResponse() as unknown as Response,
+          FRONT.FRONT_OFFICE,
         ),
       ).toBeNull();
     });
@@ -149,6 +158,7 @@ describe("SessionService", () => {
           service.consumePendingLogin(
             createRequest({ [PENDING_LOGIN_COOKIE]: sealed }),
             new FakeResponse() as unknown as Response,
+            FRONT.FRONT_OFFICE,
           ),
         ).toBeNull();
       }
@@ -158,6 +168,7 @@ describe("SessionService", () => {
   describe("session", () => {
     const newSession = {
       accountId: "account",
+      front: FRONT.FRONT_OFFICE,
       identityProvider: "local",
       claims: {},
       idToken: "id-token",
@@ -193,6 +204,7 @@ describe("SessionService", () => {
         service.closeSession(
           createRequest({ [SESSION_COOKIE]: "5f0c8a52-6f0e-4f7a-9a39-1f1b8a6f2c11" }),
           response as unknown as Response,
+          FRONT.FRONT_OFFICE,
         ),
       ).rejects.toThrow("base injoignable");
       expect(response.clearedCookies).toContain(SESSION_COOKIE);
@@ -206,6 +218,7 @@ describe("SessionService", () => {
       const closed = await service.closeSession(
         createRequest({ [SESSION_COOKIE]: id }),
         new FakeResponse() as unknown as Response,
+        FRONT.FRONT_OFFICE,
       );
 
       expect(closed?.idToken).toBe(newSession.idToken);
@@ -216,9 +229,52 @@ describe("SessionService", () => {
       const getSession = vi.spyOn(store, "getSession");
 
       expect(
-        await service.readSession(createRequest({ [SESSION_COOKIE]: "../../admin" })),
+        await service.readSession(
+          createRequest({ [SESSION_COOKIE]: "../../admin" }),
+          FRONT.FRONT_OFFICE,
+        ),
       ).toBeNull();
       expect(getSession).not.toHaveBeenCalled();
+    });
+
+    it("ne rend pas une session au front qui ne l'a pas ouverte", async () => {
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const id = openResponse.cookies.get(SESSION_COOKIE)!.value;
+
+      // L'identifiant recopié sous le nom du cookie du back-office.
+      const copied = createRequest({ [BACK_OFFICE_SESSION_COOKIE]: id });
+
+      expect(await service.readSession(copied, FRONT.BACK_OFFICE)).toBeNull();
+      expect(
+        await service.readSession(createRequest({ [SESSION_COOKIE]: id }), FRONT.FRONT_OFFICE),
+      ).not.toBeNull();
+    });
+
+    it("ne ferme pas la session d'un autre front", async () => {
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const id = openResponse.cookies.get(SESSION_COOKIE)!.value;
+
+      const closed = await service.closeSession(
+        createRequest({ [BACK_OFFICE_SESSION_COOKIE]: id }),
+        new FakeResponse() as unknown as Response,
+        FRONT.BACK_OFFICE,
+      );
+
+      expect(closed).toBeNull();
+      expect(store.sessions.has(id)).toBe(true);
+    });
+
+    it("nomme le cookie selon le front, que localhost partage entre les ports", async () => {
+      const response = new FakeResponse();
+      await service.openSession(createRequest({}), response as unknown as Response, {
+        ...newSession,
+        front: FRONT.BACK_OFFICE,
+      });
+
+      expect(response.cookies.has(BACK_OFFICE_SESSION_COOKIE)).toBe(true);
+      expect(response.cookies.has(SESSION_COOKIE)).toBe(false);
     });
   });
 });

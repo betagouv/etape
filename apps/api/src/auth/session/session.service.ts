@@ -5,13 +5,26 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 import { NODE_ENV, type Env } from "../../config/env.js";
+import { FRONT, type Front } from "../front.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { openCookieValue, sealCookieValue } from "./cookie-cipher.js";
 import { SessionStore } from "./session.store.js";
 import type { AccountSession, NewSession, PendingLogin } from "./session.types.js";
 
-const SESSION_COOKIE = "etape.sid";
-const PENDING_LOGIN_COOKIE = "etape.txn";
+/**
+ * Un nom par front. En production, les deux fronts ont chacun leur hôte et ne
+ * voient jamais les cookies l'un de l'autre ; en local, `localhost:5173` et
+ * `localhost:5174` partagent les leurs — un cookie ne distingue pas les ports —
+ * et une connexion au back-office écraserait celle du front-office.
+ */
+const SESSION_COOKIE: Record<Front, string> = {
+  [FRONT.FRONT_OFFICE]: "etape-front-office.sid",
+  [FRONT.BACK_OFFICE]: "etape-back-office.sid",
+};
+const PENDING_LOGIN_COOKIE: Record<Front, string> = {
+  [FRONT.FRONT_OFFICE]: "etape-front-office.txn",
+  [FRONT.BACK_OFFICE]: "etape-back-office.txn",
+};
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -59,22 +72,26 @@ export class SessionService {
     };
   }
 
-  startPendingLogin(response: Response, login: Omit<PendingLogin, "expiresAt">): void {
+  startPendingLogin(
+    response: Response,
+    front: Front,
+    login: Omit<PendingLogin, "expiresAt">,
+  ): void {
     const pendingLogin: PendingLogin = {
       ...login,
       expiresAt: Date.now() + PENDING_LOGIN_TTL_MS,
     };
 
     response.cookie(
-      PENDING_LOGIN_COOKIE,
+      PENDING_LOGIN_COOKIE[front],
       sealCookieValue(this.cookieKey, JSON.stringify(pendingLogin)),
       this.cookieOptions(PENDING_LOGIN_TTL_MS),
     );
   }
 
-  consumePendingLogin(request: Request, response: Response): PendingLogin | null {
-    const sealedValue = this.readRawCookie(request, PENDING_LOGIN_COOKIE);
-    response.clearCookie(PENDING_LOGIN_COOKIE, { path: "/" });
+  consumePendingLogin(request: Request, response: Response, front: Front): PendingLogin | null {
+    const sealedValue = this.readRawCookie(request, PENDING_LOGIN_COOKIE[front]);
+    response.clearCookie(PENDING_LOGIN_COOKIE[front], { path: "/" });
 
     if (!sealedValue) return null;
 
@@ -92,33 +109,52 @@ export class SessionService {
     response: Response,
     session: Omit<NewSession, "expiresAt">,
   ): Promise<void> {
-    const previousId = this.readSessionId(request);
-    if (previousId) await this.store.deleteSession(previousId);
+    const previous = await this.readSession(request, session.front);
+    if (previous) await this.store.deleteSession(previous.id);
 
     const id = randomUUID();
 
     await this.store.createSession(id, { ...session, expiresAt: Date.now() + SESSION_TTL_MS });
-    response.cookie(SESSION_COOKIE, id, this.cookieOptions(SESSION_TTL_MS));
+    response.cookie(SESSION_COOKIE[session.front], id, this.cookieOptions(SESSION_TTL_MS));
   }
 
-  async readSession(request: Request): Promise<AccountSession | null> {
-    const id = this.readSessionId(request);
-    return id ? this.store.getSession(id) : null;
-  }
-
-  async closeSession(request: Request, response: Response): Promise<AccountSession | null> {
-    response.clearCookie(SESSION_COOKIE, { path: "/" });
-
-    const id = this.readSessionId(request);
+  /**
+   * La session n'est rendue que sur le front où elle a été ouverte. Le
+   * navigateur n'envoie de lui-même le cookie qu'au front qui l'a reçu, mais une
+   * personne peut copier son identifiant de session depuis son navigateur et
+   * l'envoyer elle-même à l'autre front. Pour celui-ci, personne n'est connecté.
+   */
+  async readSession(
+    request: Request,
+    front: Front,
+  ): Promise<(AccountSession & { id: string }) | null> {
+    const id = this.readSessionId(request, front);
     if (!id) return null;
 
     const session = await this.store.getSession(id);
-    await this.store.deleteSession(id);
+    return session?.front === front ? { ...session, id } : null;
+  }
+
+  /**
+   * Une session d'un autre front n'est pas supprimée : la déconnexion ne vaut
+   * que pour le front qui la demande.
+   */
+  async closeSession(
+    request: Request,
+    response: Response,
+    front: Front,
+  ): Promise<AccountSession | null> {
+    response.clearCookie(SESSION_COOKIE[front], { path: "/" });
+
+    const session = await this.readSession(request, front);
+    if (!session) return null;
+
+    await this.store.deleteSession(session.id);
     return session;
   }
 
-  private readSessionId(request: Request): string | null {
-    const value = this.readRawCookie(request, SESSION_COOKIE);
+  private readSessionId(request: Request, front: Front): string | null {
+    const value = this.readRawCookie(request, SESSION_COOKIE[front]);
     return value && UUID.test(value) ? value : null;
   }
 

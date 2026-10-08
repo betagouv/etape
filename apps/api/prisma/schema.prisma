@@ -13,7 +13,10 @@ datasource db {
 model Account {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  keycloakSub String @unique @map("keycloak_sub")
+  // Un compte par realm : le `sub` n'est unique qu'au sein de son émetteur, et
+  // la même personne a deux comptes si elle utilise les deux fronts.
+  keycloakRealm String @map("keycloak_realm")
+  keycloakSub   String @map("keycloak_sub")
 
   email  String?
   prenom String?
@@ -31,6 +34,7 @@ model Account {
 
   sessions Session[]
 
+  @@unique([keycloakRealm, keycloakSub])
   @@map("account")
 }
 
@@ -39,6 +43,13 @@ model Session {
 
   accountId String  @map("account_id") @db.Uuid
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // Front sur lequel la session a été ouverte (`front-office` ou `back-office`) :
+  // l'API la refuse sur l'autre. Le navigateur n'envoie de lui-même le cookie
+  // qu'au front qui l'a reçu, mais une personne peut copier son identifiant de
+  // session depuis son navigateur et l'envoyer elle-même à l'autre front ; sans
+  // cette colonne, l'API l'y accepterait.
+  front String
 
   identityProvider String @map("identity_provider")
 
