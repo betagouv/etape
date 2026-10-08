@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Sourcé par l'entrypoint de l'image nginx avant la substitution des gabarits
+# (`/etc/nginx/templates`) : déduit chaque nom d'hôte de son URL publique, pour
+# qu'il n'y ait qu'une valeur à renseigner par domaine, et qu'ils ne puissent pas
+# diverger.
+
+hostname_of() {
+  host=${1#*://}
+  host=${host%%/*}
+  echo "${host%%:*}"
+}
+
+: "${PUBLIC_URL:?PUBLIC_URL est obligatoire (URL publique du site)}"
+: "${FRONT_OFFICE_PUBLIC_URL:?FRONT_OFFICE_PUBLIC_URL est obligatoire}"
+: "${BACK_OFFICE_PUBLIC_URL:?BACK_OFFICE_PUBLIC_URL est obligatoire}"
+
+ETAPE_SITE_HOSTNAME=$(hostname_of "$PUBLIC_URL")
+ETAPE_FRONT_OFFICE_HOSTNAME=$(hostname_of "$FRONT_OFFICE_PUBLIC_URL")
+ETAPE_BACK_OFFICE_HOSTNAME=$(hostname_of "$BACK_OFFICE_PUBLIC_URL")
+export ETAPE_SITE_HOSTNAME ETAPE_FRONT_OFFICE_HOSTNAME ETAPE_BACK_OFFICE_HOSTNAME
+
+echo "etape : site ${ETAPE_SITE_HOSTNAME}, front-office ${ETAPE_FRONT_OFFICE_HOSTNAME}, back-office ${ETAPE_BACK_OFFICE_HOSTNAME}"

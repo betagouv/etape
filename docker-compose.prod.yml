@@ -1,16 +1,18 @@
-# Pile de déploiement. Quatre services et deux bases : le front et l'API derrière
-# un même nginx, Keycloak derrière un proxy qui n'y laisse passer que le realm
-# applicatif, et à chacun sa base PostgreSQL.
+# Pile de déploiement. Quatre services et deux bases : le site, les deux fronts
+# et l'API derrière un même nginx, Keycloak derrière un proxy qui n'y laisse
+# passer que les realms applicatifs, et à chacun sa base PostgreSQL.
 #
 # Keycloak configure son realm lui-même au démarrage, et l'API applique ses
 # migrations de la même façon — un conteneur d'initialisation qui s'arrête est
 # compté comme un échec par les hébergeurs qui attendent
 # `docker compose up --wait`.
 #
-# Deux domaines à déclarer, sur les deux seuls services exposés :
+# Quatre domaines à déclarer, sur les deux seuls services exposés :
 #
-#   web   https://etape.example.org        (port 80)
-#   auth  https://auth.etape.example.org   (port 80)
+#   web   https://etape.example.org               site et simulateur (port 80)
+#   web   https://front-office.etape.example.org  front-office       (port 80)
+#   web   https://back-office.etape.example.org   back-office        (port 80)
+#   auth  https://auth.etape.example.org          Keycloak           (port 80)
 #
 # `auth`, et non `keycloak` : c'est le proxy qui porte le sous-domaine, et lui
 # qui refuse l'administration. Keycloak n'expose plus de port, précisément pour
@@ -20,8 +22,8 @@
 # suivre complète : `docs/deploiement.md`.
 
 services:
-  # Point d'entrée du domaine principal : nginx transmet aussi `/api/` à l'API,
-  # d'où une origine commune.
+  # Le site et les deux fronts, chacun sur son nom d'hôte ; chaque front relaie
+  # aussi son `/api/` vers l'API. Un hôte inconnu est refusé.
   web:
     build:
       context: .
@@ -29,10 +31,16 @@ services:
     restart: unless-stopped
     expose:
       - "80"
+    environment:
+      # Les noms d'hôte en sont déduits au démarrage (`nginx-hostnames.envsh`).
+      PUBLIC_URL: ${PUBLIC_URL:?URL publique du site, sans slash final}
+      FRONT_OFFICE_PUBLIC_URL: ${FRONT_OFFICE_PUBLIC_URL:?URL publique du front-office, sans slash final}
+      BACK_OFFICE_PUBLIC_URL: ${BACK_OFFICE_PUBLIC_URL:?URL publique du back-office, sans slash final}
     depends_on:
       - api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      # `/healthz` : le seul chemin servi sans nom d'hôte connu.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
       interval: 30s
       timeout: 5s
       retries: 3
