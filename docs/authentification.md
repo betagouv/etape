@@ -343,15 +343,15 @@ back-office, y mettre `http://localhost:5174`.
 # lui Keycloak démarre quand même, mais avec ses écrans par défaut.
 npm run build -- --filter=@etape/keycloak-theme
 
-# La base applicative, Keycloak et la sienne. Identifiants FranceConnect et clé
-# SMTP sont facultatifs : sans eux tout fonctionne, seuls le parcours
-# FranceConnect et les emails (inscription, « mot de passe oublié ») restent
-# indisponibles.
-FRANCECONNECT_CLIENT_ID=… FRANCECONNECT_CLIENT_SECRET=… docker compose up -d
+# Les `.env` — à la racine, et dans apps/api, apps/front-office et
+# apps/back-office — se récupèrent dans le coffre-fort de l'équipe. Les
+# `.env.example` versionnés n'en donnent que la liste des variables, sans valeur.
 
-# Les `.env` de apps/api, apps/front-office et apps/back-office se récupèrent
-# dans le coffre-fort de l'équipe. Les `.env.example` versionnés n'en donnent
-# que la liste des variables, sans valeur.
+# La base applicative, Keycloak et la sienne, configurés depuis le `.env` à la
+# racine. Identifiants FranceConnect et clé SMTP sont facultatifs : sans eux tout
+# fonctionne, seuls le parcours FranceConnect et les emails (inscription,
+# « mot de passe oublié ») restent indisponibles.
+docker compose up -d
 
 # Crée les tables de la base applicative. À rejouer après chaque migration.
 npm run db:migrate --workspace=@etape/api
@@ -377,11 +377,11 @@ Aucun mot de passe n'est versionné : le compte applicatif n'est créé que si
 `KEYCLOAK_TEST_USER_PASSWORD` est renseigné, dans le `.env` à la racine ou dans
 le shell, avant `docker compose up`.
 
-Le secret du client est figé dans le fichier de realm, et le `.env` de l'API
-partagé par le coffre-fort porte le même : sans cela, Keycloak en régénère un à
-chaque import et il faudrait rouvrir la console après chaque
-`docker compose down -v`. Il ne protège
-qu'un Keycloak local ; les autres environnements reçoivent le leur par `kcadm`.
+Aucun secret de client n'est versionné non plus : le fichier de realm n'en porte
+pas, et Keycloak en tire un au sort à l'import. `keycloak-init` le remplace
+ensuite par celui du `.env` à la racine (`KEYCLOAK_CLIENT_SECRET`,
+`BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`), qui doit être le même que dans
+`apps/api/.env`. Les autres environnements reçoivent le leur par `kcadm`.
 
 ### Les emails, en local aussi
 

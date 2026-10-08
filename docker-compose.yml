@@ -119,8 +119,9 @@ services:
   #    privée est bien reconnue comme locale.
   #
   # 2. L'import de realm ne substitue **aucune** variable, ni environnement ni
-  #    propriété système (vérifié sur Keycloak 26.7) : les secrets FranceConnect
-  #    sont donc posés ici, après coup.
+  #    propriété système (vérifié sur Keycloak 26.7) : les secrets — celui de
+  #    chaque client `etape-api`, ceux de FranceConnect — sont donc posés ici,
+  #    après coup, depuis le `.env` à la racine. Aucun n'est versionné.
   keycloak-init:
     image: quay.io/keycloak/keycloak:26.7
     restart: "no"
@@ -128,6 +129,8 @@ services:
       keycloak:
         condition: service_started
     environment:
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
+      BACK_OFFICE_KEYCLOAK_CLIENT_SECRET: ${BACK_OFFICE_KEYCLOAK_CLIENT_SECRET:-}
       FRANCECONNECT_CLIENT_ID: ${FRANCECONNECT_CLIENT_ID:-}
       FRANCECONNECT_CLIENT_SECRET: ${FRANCECONNECT_CLIENT_SECRET:-}
       SMTP_HOST: ${SMTP_HOST:-}
@@ -145,6 +148,22 @@ services:
 
         $$KCADM update realms/master -s sslRequired=NONE
         echo "master : sslRequired=NONE — console admin joignable en HTTP depuis l'hôte."
+
+        # Le même secret doit figurer dans `apps/api/.env`. Sans lui, Keycloak
+        # garde celui qu'il a tiré au sort à l'import, et l'API ne peut plus
+        # échanger le code de connexion.
+        for pair in "etape:$$KEYCLOAK_CLIENT_SECRET" "etape-back-office:$$BACK_OFFICE_KEYCLOAK_CLIENT_SECRET"; do
+          realm=$${pair%%:*}
+          secret=$${pair#*:}
+          if [ -n "$$secret" ]; then
+            client_uuid=$$($$KCADM get clients -r $$realm -q clientId=etape-api --fields id --format csv --noquotes)
+            $$KCADM update clients/$$client_uuid -r $$realm -s "secret=$$secret"
+            echo "$$realm — client etape-api : secret posé."
+          else
+            echo "✗ $$realm — client etape-api : secret absent du .env à la racine,"
+            echo "  l'API ne pourra pas s'y connecter (voir .env.example)."
+          fi
+        done
 
         if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then
           $$KCADM update identity-provider/instances/franceconnect -r etape \

@@ -33,7 +33,6 @@
   "clients": [
     {
       "clientId": "etape-api",
-      "secret": "dev-secret-etape-non-confidentiel",
       "name": "API ETAPE",
       "description": "Client confidentiel du service NestJS. Seul détenteur du secret.",
       "enabled": true,
