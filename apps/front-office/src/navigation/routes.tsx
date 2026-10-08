@@ -1,5 +1,6 @@
 import {
   buildLoginUrl,
+  createLoginAttempts,
   createSessionQueryOptions,
   resolveStartupAccess,
   STARTUP_PENDING_MESSAGE,
@@ -14,6 +15,9 @@ import { API_BASE_URL } from "../lib/clients";
 import { AppErrorScreen, HOME_PATH, NotFoundScreen } from "./error-screens";
 import { RootLayout } from "./root-layout";
 
+/** Compte les départs vers la connexion, pour ne pas boucler (voir `login-attempts.ts`). */
+const loginAttempts = createLoginAttempts(() => window.sessionStorage);
+
 export interface RouterContext {
   httpClient: AxiosInstance;
   queryClient: QueryClient;
@@ -23,9 +27,16 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   // Garde de démarrage : toute l'app est derrière la connexion.
   beforeLoad: async ({ context, location }) => {
     const session = await context.queryClient.query(createSessionQueryOptions(context.httpClient));
-    const access = resolveStartupAccess(new URLSearchParams(location.searchStr), session);
+    const access = resolveStartupAccess(
+      new URLSearchParams(location.searchStr),
+      session,
+      loginAttempts.isLoginLoopSuspected(),
+    );
+
+    if (access.kind === "authenticated") loginAttempts.clearLoginAttempts();
 
     if (access.kind === "login-required") {
+      loginAttempts.recordLoginAttempt();
       // Navigation pleine page : le formulaire de connexion est servi par
       // Keycloak, via l'API, pas par cette app.
       throw redirect({ href: buildLoginUrl(API_BASE_URL, location.href), reloadDocument: true });

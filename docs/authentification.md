@@ -339,6 +339,16 @@ l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
   pendant la vérification) : un écran « service indisponible », relancé par un
   clic. Une autre erreur, comme une réponse hors contrat, affiche « Une erreur
   inattendue est survenue ».
+- **Si le cookie de session n'est pas conservé** (cookies bloqués, cookie
+  `Secure` servi en `http`), on reviendrait de la connexion sans session, que
+  Keycloak rouvrirait en silence : une boucle, jusqu'à la limite de débit. La
+  garde compte donc ses départs vers la connexion en `sessionStorage`
+  (`login-attempts.ts`) : au-delà de deux en une minute, elle affiche « Impossible
+  de rester connecté », et c'est la personne qui relance.
+  Deux et non un : revenir du formulaire par le bouton Précédent ressemble, vu
+  du front, à un retour sans session. Un stockage inaccessible — le cas des
+  cookies bloqués — affiche l'avis d'emblée. Le compteur s'efface à la
+  connexion réussie.
 - **En cours d'utilisation**, un 401 efface du cache de TanStack Query tout ce
   qui a été chargé pendant la session et retire l'écran affiché — sur un poste
   partagé, rien ne doit rester lisible derrière le dialogue, et un écran monté
