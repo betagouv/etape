@@ -3,13 +3,9 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createHttpClient } from "./http-client";
 import { buildLoginUrl, findSession } from "./session";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
+import { SESSION_FIXTURE } from "./testing/session-fixture";
 
-const SESSION = {
-  sub: "sub",
-  email: "camille.martin@exemple.fr",
-  isFranceConnectSession: false,
-  claims: { given_name: "Camille" },
-};
+const SESSION = SESSION_FIXTURE;
 
 describe("findSession", () => {
   let server: TestServer;

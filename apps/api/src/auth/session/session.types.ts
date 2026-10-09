@@ -1,6 +1,7 @@
 import type { PublicSession, SessionResponse } from "@etape/api-contract";
 
 import type { Front } from "../front.js";
+import { SESSION_POLICY_BY_FRONT } from "./session-policy.js";
 
 /**
  * État retenu entre le départ vers Keycloak et le retour sur `/callback`. Hors
@@ -40,12 +41,21 @@ export type NewSession = Omit<AccountSession, "sub" | "email">;
 export function toPublicSession(
   session: AccountSession,
   franceConnectAlias: string,
+  now: number,
 ): PublicSession {
+  const policy = SESSION_POLICY_BY_FRONT[session.front];
+
   return {
     sub: session.sub,
     email: session.email,
     isFranceConnectSession: session.identityProvider === franceConnectAlias,
     claims: session.claims,
+    expiry: {
+      idleTimeoutMs: policy.idleTimeoutMs,
+      maxDurationMs: policy.maxDurationMs,
+      idleRemainingMs: session.idleExpiresAt - now,
+      maxRemainingMs: session.expiresAt - now,
+    },
   };
 }
 
@@ -53,6 +63,7 @@ export function toPublicSession(
 export function toSessionResponse(
   session: AccountSession | null,
   franceConnectAlias: string,
+  now: number,
 ): SessionResponse {
-  return { session: session ? toPublicSession(session, franceConnectAlias) : null };
+  return { session: session ? toPublicSession(session, franceConnectAlias, now) : null };
 }

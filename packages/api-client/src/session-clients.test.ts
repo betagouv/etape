@@ -6,8 +6,9 @@ import { SESSION_QUERY_KEY } from "./session";
 import { createSessionClients } from "./session-clients";
 import { createSessionQueryOptions } from "./session-query";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
+import { SESSION_FIXTURE } from "./testing/session-fixture";
 
-const SESSION = { sub: "sub", isFranceConnectSession: false, claims: {} };
+const SESSION = SESSION_FIXTURE;
 
 let server: TestServer;
 let sessionReads = 0;
