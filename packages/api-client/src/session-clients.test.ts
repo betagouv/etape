@@ -1,6 +1,7 @@
 import { onlineManager } from "@tanstack/react-query";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
+import { ApiError } from "./api-error";
 import { HTTP_STATUS } from "./http-status";
 import { SESSION_END_QUERY_KEY, SESSION_QUERY_KEY } from "./session";
 import { createSessionClients } from "./session-clients";
@@ -104,6 +105,18 @@ describe("createSessionQueryOptions", () => {
 
     await expect(queryClient.query(createSessionQueryOptions(httpClient))).resolves.toEqual(
       SESSION,
+    );
+  });
+
+  it("relance deux fois une lecture en échec passager, pas davantage", () => {
+    const { httpClient } = createSessionClients(server.baseUrl);
+    const { retry } = createSessionQueryOptions(httpClient);
+    const unavailable = new ApiError("Service indisponible", { status: 503 });
+
+    expect(typeof retry === "function" && retry(1, unavailable)).toBe(true);
+    expect(typeof retry === "function" && retry(2, unavailable)).toBe(false);
+    expect(typeof retry === "function" && retry(0, new ApiError("Refusée", { status: 400 }))).toBe(
+      false,
     );
   });
 
