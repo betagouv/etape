@@ -1,0 +1,108 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  isSessionEndNear,
+  isStaleExpiry,
+  resolveSessionEnd,
+  resolveSessionEndNotice,
+  SESSION_END_CAUSE,
+} from "./session-timeline";
+
+const MINUTE_MS = 60 * 1000;
+const RECEIVED_AT = 1_000_000;
+
+const expiry = {
+  idleTimeoutMs: 30 * MINUTE_MS,
+  maxDurationMs: 600 * MINUTE_MS,
+  idleRemainingMs: 30 * MINUTE_MS,
+  maxRemainingMs: 600 * MINUTE_MS,
+};
+
+describe("resolveSessionEnd", () => {
+  it("retient la fin d'inactivité quand elle vient avant la durée maximale", () => {
+    expect(resolveSessionEnd(expiry, RECEIVED_AT)).toEqual({
+      at: RECEIVED_AT + 30 * MINUTE_MS,
+      cause: SESSION_END_CAUSE.IDLE,
+    });
+  });
+
+  it("retient la durée maximale quand elle arrive la première", () => {
+    expect(resolveSessionEnd({ ...expiry, maxRemainingMs: 10 * MINUTE_MS }, RECEIVED_AT)).toEqual({
+      at: RECEIVED_AT + 10 * MINUTE_MS,
+      cause: SESSION_END_CAUSE.MAX_DURATION,
+    });
+  });
+
+  it("donne la durée maximale à égalité : « Oui » ne la repousserait pas", () => {
+    const end = resolveSessionEnd(
+      { ...expiry, maxRemainingMs: expiry.idleRemainingMs },
+      RECEIVED_AT,
+    );
+
+    expect(end.cause).toBe(SESSION_END_CAUSE.MAX_DURATION);
+  });
+
+  it("compte depuis l'heure de réception, pas depuis l'horloge du serveur", () => {
+    expect(resolveSessionEnd(expiry, 0).at).toBe(30 * MINUTE_MS);
+  });
+});
+
+describe("isSessionEndNear", () => {
+  const end = { at: RECEIVED_AT + 30 * MINUTE_MS, cause: SESSION_END_CAUSE.IDLE };
+
+  it("avertit à deux minutes de la fin, pas avant", () => {
+    expect(isSessionEndNear(end, end.at - 2 * MINUTE_MS)).toBe(true);
+    expect(isSessionEndNear(end, end.at - 3 * MINUTE_MS)).toBe(false);
+  });
+
+  it("avertit quand la relecture donne une échéance à peine plus lointaine", () => {
+    expect(isSessionEndNear(end, end.at - 2 * MINUTE_MS - 1_000)).toBe(true);
+  });
+});
+
+describe("isStaleExpiry", () => {
+  it("écarte une relecture revenue après une prolongation plus récente", () => {
+    const relecture = { ...expiry, idleRemainingMs: MINUTE_MS };
+
+    expect(isStaleExpiry(relecture, RECEIVED_AT + 100, expiry, RECEIVED_AT)).toBe(true);
+  });
+
+  it("garde une relecture de la même échéance, malgré le trajet des réponses", () => {
+    const later = { ...expiry, idleRemainingMs: expiry.idleRemainingMs - 2_000 };
+
+    expect(isStaleExpiry(later, RECEIVED_AT, expiry, RECEIVED_AT)).toBe(false);
+  });
+
+  it("garde une session prolongée", () => {
+    expect(isStaleExpiry(expiry, RECEIVED_AT + MINUTE_MS, expiry, RECEIVED_AT)).toBe(false);
+  });
+});
+
+describe("resolveSessionEndNotice", () => {
+  const idleEnd = RECEIVED_AT + 30 * MINUTE_MS;
+
+  it("attribue une fin à l'inactivité, avec le délai du front", () => {
+    expect(resolveSessionEndNotice(expiry, RECEIVED_AT, idleEnd)).toEqual({
+      cause: SESSION_END_CAUSE.IDLE,
+      durationMs: 30 * MINUTE_MS,
+    });
+  });
+
+  it("attribue une fin à la durée maximale, avec la durée du front", () => {
+    const shortExpiry = { ...expiry, maxRemainingMs: 10 * MINUTE_MS };
+
+    expect(resolveSessionEndNotice(shortExpiry, RECEIVED_AT, RECEIVED_AT + 10 * MINUTE_MS)).toEqual(
+      { cause: SESSION_END_CAUSE.MAX_DURATION, durationMs: 600 * MINUTE_MS },
+    );
+  });
+
+  it("tolère que le 401 arrive juste avant la fin vue du front", () => {
+    expect(resolveSessionEndNotice(expiry, RECEIVED_AT, idleEnd - 2_000)?.cause).toBe(
+      SESSION_END_CAUSE.IDLE,
+    );
+  });
+
+  it("ne donne aucune cause à une fin anticipée, comme une déconnexion ailleurs", () => {
+    expect(resolveSessionEndNotice(expiry, RECEIVED_AT, idleEnd - MINUTE_MS)).toBeNull();
+  });
+});

@@ -1,15 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createHttpClient } from "./http-client";
-import { buildLoginUrl, findSession } from "./session";
+import {
+  buildLoginUrl,
+  findSession,
+  recordSessionActivity,
+  SESSION_REQUEST_TIMEOUT_MS,
+} from "./session";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
+import { SESSION_FIXTURE } from "./testing/session-fixture";
 
-const SESSION = {
-  sub: "sub",
-  email: "camille.martin@exemple.fr",
-  isFranceConnectSession: false,
-  claims: { given_name: "Camille" },
-};
+const SESSION = SESSION_FIXTURE;
 
 describe("findSession", () => {
   let server: TestServer;
@@ -38,11 +39,48 @@ describe("findSession", () => {
     await expect(findSession(httpClient())).resolves.toEqual(SESSION);
   });
 
+  it("fixe son propre délai, le client n'en ayant aucun", async () => {
+    const client = httpClient();
+    let timeout: number | undefined;
+    client.interceptors.request.use((config) => {
+      timeout = config.timeout;
+      return config;
+    });
+    body = { session: null };
+
+    await findSession(client);
+
+    expect(timeout).toBe(SESSION_REQUEST_TIMEOUT_MS);
+  });
+
   it("échoue sur une réponse qui ne respecte pas le contrat", async () => {
     body = { session: { sub: 42 } };
 
     // Le refus vient du schéma du contrat, pas d'une autre erreur (404, réseau).
     await expect(findSession(httpClient())).rejects.toMatchObject({ name: "ZodError" });
+  });
+});
+
+describe("recordSessionActivity", () => {
+  let server: TestServer;
+  let method: string | undefined;
+
+  beforeAll(async () => {
+    server = await startTestServer({
+      "/auth/session/refresh": (request, response) => {
+        method = request.method;
+        sendJson(response, 200, { session: SESSION });
+      },
+    });
+  });
+
+  afterAll(() => server.close());
+
+  it("signale l'activité par un POST et renvoie la session prolongée", async () => {
+    const httpClient = createHttpClient(server.baseUrl, { onUnauthorized: vi.fn() });
+
+    await expect(recordSessionActivity(httpClient)).resolves.toEqual(SESSION);
+    expect(method).toBe("POST");
   });
 });
 

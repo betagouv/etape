@@ -1,5 +1,20 @@
 import { z } from "zod";
 
+/**
+ * Quand la session prendra fin. Le temps restant est donné en durées, pas en
+ * dates : le front les ajoute à sa propre horloge, qui peut différer de celle
+ * du serveur. La règle du front sert aussi aux messages (« après 30 minutes
+ * d'inactivité »), qu'aucune app n'écrit donc en dur.
+ */
+export const SessionExpirySchema = z.object({
+  idleTimeoutMs: z.number().int().positive(),
+  maxDurationMs: z.number().int().positive(),
+  idleRemainingMs: z.number().int(),
+  maxRemainingMs: z.number().int(),
+});
+
+export type SessionExpiry = z.infer<typeof SessionExpirySchema>;
+
 /** Vue de la session exposée au front. Aucun jeton n'en fait partie. */
 export const PublicSessionSchema = z.object({
   sub: z.string(),
@@ -7,6 +22,7 @@ export const PublicSessionSchema = z.object({
   isFranceConnectSession: z.boolean(),
   /** Non typés : les champs varient d'un fournisseur d'identité à l'autre. */
   claims: z.record(z.string(), z.unknown()),
+  expiry: SessionExpirySchema,
 });
 
 export type PublicSession = z.infer<typeof PublicSessionSchema>;
@@ -22,3 +38,10 @@ export const SessionResponseSchema = z.object({
 });
 
 export type SessionResponse = z.infer<typeof SessionResponseSchema>;
+
+/** La prolongation exige une session : elle n'est jamais nulle ici (401 sinon). */
+export const RefreshSessionResponseSchema = z.object({
+  session: PublicSessionSchema,
+});
+
+export type RefreshSessionResponse = z.infer<typeof RefreshSessionResponseSchema>;

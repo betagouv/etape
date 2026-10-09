@@ -1,13 +1,16 @@
 import { onlineManager } from "@tanstack/react-query";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
+import { ApiError } from "./api-error";
 import { HTTP_STATUS } from "./http-status";
-import { SESSION_QUERY_KEY } from "./session";
+import { SESSION_END_QUERY_KEY, SESSION_QUERY_KEY } from "./session";
 import { createSessionClients } from "./session-clients";
 import { createSessionQueryOptions } from "./session-query";
+import { SESSION_END_CAUSE } from "./session-timeline";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
+import { SESSION_FIXTURE } from "./testing/session-fixture";
 
-const SESSION = { sub: "sub", isFranceConnectSession: false, claims: {} };
+const SESSION = SESSION_FIXTURE;
 
 let server: TestServer;
 let sessionReads = 0;
@@ -51,8 +54,48 @@ describe("createSessionClients", () => {
         .getQueryCache()
         .getAll()
         .map((query) => query.queryKey),
-    ).toEqual([SESSION_QUERY_KEY]);
+    ).toEqual([SESSION_QUERY_KEY, SESSION_END_QUERY_KEY]);
     expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+  });
+
+  it("relève sur un 401 la cause de la fin, d'après les échéances annoncées", async () => {
+    const { httpClient, queryClient } = createSessionClients(server.baseUrl);
+    queryClient.setQueryData(SESSION_QUERY_KEY, {
+      ...SESSION,
+      expiry: { ...SESSION.expiry, idleRemainingMs: 0 },
+    });
+
+    await httpClient.get("/expiree").catch(() => null);
+
+    expect(queryClient.getQueryData(SESSION_END_QUERY_KEY)).toEqual({
+      cause: SESSION_END_CAUSE.IDLE,
+      durationMs: SESSION.expiry.idleTimeoutMs,
+    });
+  });
+
+  it("garde la cause quand la fin est constatée une seconde fois", async () => {
+    const { httpClient, queryClient } = createSessionClients(server.baseUrl);
+    queryClient.setQueryData(SESSION_QUERY_KEY, {
+      ...SESSION,
+      expiry: { ...SESSION.expiry, idleRemainingMs: 0 },
+    });
+
+    await httpClient.get("/expiree").catch(() => null);
+    await httpClient.get("/expiree").catch(() => null);
+
+    expect(queryClient.getQueryData(SESSION_END_QUERY_KEY)).toEqual({
+      cause: SESSION_END_CAUSE.IDLE,
+      durationMs: SESSION.expiry.idleTimeoutMs,
+    });
+  });
+
+  it("ne donne aucune cause à un 401 arrivé avant les échéances", async () => {
+    const { httpClient, queryClient } = createSessionClients(server.baseUrl);
+    queryClient.setQueryData(SESSION_QUERY_KEY, SESSION);
+
+    await httpClient.get("/expiree").catch(() => null);
+
+    expect(queryClient.getQueryData(SESSION_END_QUERY_KEY)).toBeNull();
   });
 
   it("ne relit pas la session après un 401 : la garde trouve null et redirige", async () => {
@@ -78,6 +121,18 @@ describe("createSessionQueryOptions", () => {
 
     await expect(queryClient.query(createSessionQueryOptions(httpClient))).resolves.toEqual(
       SESSION,
+    );
+  });
+
+  it("relance deux fois une lecture en échec passager, pas davantage", () => {
+    const { httpClient } = createSessionClients(server.baseUrl);
+    const { retry } = createSessionQueryOptions(httpClient);
+    const unavailable = new ApiError("Service indisponible", { status: 503 });
+
+    expect(typeof retry === "function" && retry(1, unavailable)).toBe(true);
+    expect(typeof retry === "function" && retry(2, unavailable)).toBe(false);
+    expect(typeof retry === "function" && retry(0, new ApiError("Refusée", { status: 400 }))).toBe(
+      false,
     );
   });
 
