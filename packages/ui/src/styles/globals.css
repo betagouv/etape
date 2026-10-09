@@ -17,13 +17,13 @@
  * 300 #acc6c4 · 400 #92b5b2 · 500 #78a3a0 · 600 #44817c · 700 #2b6f6b ·
  * 800 #115e59 · 900 #134e4a · 950 #12423e.
  *
- * Écarts PROVISOIRES au kit, en attente de l'UI/UX — chacun marqué « écart » :
- * - `--ring` : le kit donne neutral-400 #a3a3a3 (2,5:1 sur blanc), sous les
- *   3:1 exigés d'un indicateur de focus. Remplacé par teal-700 (5,85:1).
- * - `--border-strong` : bord des radios, cases et champs. Le kit les borde en
- *   `input` #d3e2e0 (1,3:1), sous les 3:1 d'un composant d'interface.
- * - `--destructive-foreground` : #fef2f2 sur #dc2626 donne 4,41:1, sous les
- *   4,5:1 d'un texte courant. Remplacé par du blanc (4,83:1).
+ * Écart PROVISOIRE au kit, marqué « écart » sur sa ligne :
+ * `--destructive-foreground` : #fef2f2 sur #dc2626 donne 4,41:1, sous les
+ * 4,5:1 d'un texte courant. Remplacé par du blanc (4,83:1).
+ *
+ * À surveiller : `--input` (teal-200, bord des champs de saisie) ne fait que
+ * 1,3:1 sur blanc, sous les 3:1 d'un composant d'interface. Gardé comme dans
+ * le kit en attendant l'arbitrage de l'UI/UX.
  *
  * Les tokens hors shadcn (`content-*`, `border-*`, `divider`, statuts,
  * voiles) n'ont pas d'équivalent dans le kit : ce sont des extensions ETAPE,
@@ -56,13 +56,13 @@
 
   /* Bordures & focus */
   --border: #d3e2e0; /* base/border (teal-200) */
-  --border-strong: #2b6f6b; /* écart : bord des contrôles (teal-700) */
+  --border-strong: #2b6f6b; /* extension ETAPE : bord marqué (teal-700) */
   --border-hover: #115e59; /* extension ETAPE (teal-800) */
   --border-active: #134e4a; /* extension ETAPE (teal-900) */
   --border-disabled: #d3e2e0; /* extension ETAPE (teal-200) */
   --divider: #d3e2e0; /* extension ETAPE (= border) */
   --input: #d3e2e0; /* base/input (teal-200) */
-  --ring: #2b6f6b; /* écart : kit #a3a3a3 (teal-700) */
+  --ring: #2b6f6b; /* base/ring (teal-700) */
   --ring-alpha: rgba(43, 111, 107, 0.5); /* ring à 50 % */
 
   /* Statuts — extensions ETAPE, le kit n'a ni succès ni info */
@@ -236,11 +236,10 @@
 }
 
 /*
- * Bascule en mode Desktop — aligné sur le breakpoint `lg` de Tailwind.
- * PROVISOIRE pour les titres : le kit ne dit pas à quelle largeur ses modes
- * Desktop et Mobile basculent (question posée à l'UI/UX).
+ * Bascule des titres en mode Desktop à 768px, le breakpoint `md` de Tailwind
+ * (précisé par l'UI/UX).
  */
-@media (width >= 64rem) {
+@media (width >= 48rem) {
   :root {
     --type-heading-xl: 3.75rem; /* 60 */
     --type-heading-xl-lh: 3.75rem; /* 60 */
@@ -250,6 +249,12 @@
     --type-heading-md-lh: 2.5rem; /* 40 */
     --type-heading-sm: 1.5rem; /* 24 */
     --type-heading-sm-lh: 2rem; /* 32 */
+  }
+}
+
+/* Textes hérités de l'ancien kit, sans équivalent dans le nouveau : bascule à `lg`. */
+@media (width >= 64rem) {
+  :root {
     --type-body-lg: 1.125rem; /* 18 */
     --type-body-lg-lh: 1.75rem; /* 28 */
     --type-label-lg: 1rem; /* 16 */
