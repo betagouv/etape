@@ -16,6 +16,7 @@
  * téléchargé.
  */
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/bricolage-grotesque";
 
 /*
  * Marianne, exigée par le kit d'implémentation FranceConnect pour le libellé du
@@ -49,10 +50,12 @@
 
 :root {
   /*
-   * `@etape/ui` déclare `--font-sans: var(--font-geist, …)`, variable posée par
-   * `next/font` dans les apps Next. Ici c'est à nous de la fournir.
+   * `@etape/ui` déclare `--font-sans: var(--font-geist, …)` et
+   * `--font-heading: var(--font-bricolage, …)`, variables posées par
+   * `next/font` dans les apps Next. Ici c'est à nous de les fournir.
    */
   --font-geist: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-bricolage: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ------------------------------------------------------------------ */
