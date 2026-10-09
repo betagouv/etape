@@ -17,23 +17,23 @@
     <meta name="color-scheme" content="light" />
     <title>${realmName}</title>
 </head>
-<body style="margin:0; padding:0; background-color:#fafafa; -webkit-font-smoothing:antialiased;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#fafafa;">
+<body style="margin:0; padding:0; background-color:#f9faf9; -webkit-font-smoothing:antialiased;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9faf9;">
         <tr>
             <td align="center" style="padding:32px 16px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;">
                     <tr>
-                        <td style="padding-bottom:24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:0.04em; color:#00796b;">
+                        <td style="padding-bottom:24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:0.04em; color:#134e4a;">
                             ETAPE
                         </td>
                     </tr>
                     <tr>
-                        <td style="background-color:#ffffff; border:1px solid #d6d6d6; border-radius:16px; padding:40px 32px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; line-height:24px; color:#434343;">
+                        <td style="background-color:#ffffff; border:1px solid #d3e2e0; border-radius:14px; padding:40px 32px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; line-height:24px; color:#404040;">
                             <#nested>
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding-top:24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:12px; line-height:16px; color:#575757;">
+                        <td style="padding-top:24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:12px; line-height:16px; color:#737373;">
                             ${msg("etapeEmailFooter")}
                         </td>
                     </tr>
@@ -54,8 +54,8 @@
 <#macro button href label>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
     <tr>
-        <td align="center" bgcolor="#00796b" style="border-radius:12px;">
-            <a href="${href}" style="display:inline-block; padding:12px 24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:600; line-height:20px; color:#ffffff; text-decoration:none; border-radius:12px;">
+        <td align="center" bgcolor="#134e4a" style="border-radius:10px;">
+            <a href="${href}" style="display:inline-block; padding:12px 24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; font-weight:600; line-height:20px; color:#fafafa; text-decoration:none; border-radius:10px;">
                 ${label}
             </a>
         </td>
@@ -71,10 +71,10 @@
   une impasse.
 -->
 <#macro fallbackLink href>
-<p style="margin:24px 0 0; font-size:12px; line-height:16px; color:#575757;">
+<p style="margin:24px 0 0; font-size:12px; line-height:16px; color:#737373;">
     ${msg("etapeEmailFallback")}<br />
     <#-- Gris et non teal : ces URL font dix lignes, les teinter en couleur
          d'action ferait passer le repli avant le bouton. -->
-    <a href="${href}" style="color:#575757; word-break:break-all;">${href}</a>
+    <a href="${href}" style="color:#737373; word-break:break-all;">${href}</a>
 </p>
 </#macro>
