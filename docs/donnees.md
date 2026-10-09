@@ -135,6 +135,12 @@ reçu, mais une personne peut copier son identifiant de session depuis son
 navigateur et l'envoyer elle-même à l'autre front : sans cette colonne, l'API
 l'y accepterait. Pour l'autre front, personne n'est alors connecté.
 
+Une session a deux fins : `expires_at`, fixée à l'ouverture, que rien ne
+repousse, et `idle_expires_at`, repoussée par chaque activité. Une échéance
+plutôt que la date de la dernière activité : le délai d'inactivité dépend du
+front, et la purge n'a ainsi qu'à comparer les deux colonnes à maintenant. Le
+détail est dans [authentification.md](authentification.md).
+
 ### Les sessions sont en base, pas en mémoire
 
 Elles survivent au redéploiement, et deux instances de l'API voient les mêmes.
