@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Open_Sans } from "next/font/google";
+import { Geist } from "next/font/google";
 import { BackToTop } from "@etape/ui/components/back-to-top";
 import { SkipLinks } from "@etape/ui/components/skip-links";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
@@ -9,8 +9,8 @@ import { SiteHeader } from "@/components/site-header";
 import { MAIN_CONTENT_ID, SKIP_LINKS } from "@/lib/navigation";
 import "./globals.css";
 
-const openSans = Open_Sans({
-  variable: "--font-open-sans",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" suppressHydrationWarning className={`${openSans.variable} h-full antialiased`}>
+    <html lang="fr" suppressHydrationWarning className={`${geist.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <ThemeProvider
           attribute="class"

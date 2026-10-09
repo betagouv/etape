@@ -3,7 +3,7 @@
 
   Écrite en tables et en styles en ligne : les clients de messagerie ignorent les
   feuilles de style externes, et beaucoup ignorent aussi les balises `<style>`.
-  Aucune police distante non plus — on retombe sur la pile système, Open Sans
+  Aucune police distante non plus — on retombe sur la pile système, Geist
   n'étant pas disponible dans une boîte mail.
 
   Tout email hérité de `base` passe par ici, y compris ceux que nous n'avons pas

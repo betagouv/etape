@@ -325,7 +325,12 @@
   --radius-full: 9999px;
 
   /* Typographie */
-  --font-sans: var(--font-open-sans);
+  /*
+   * `--font-geist` est posée par `next/font` dans les apps Next, et à la main
+   * dans les apps Vite qui chargent Geist par Fontsource. Le repli système
+   * évite qu'une app qui l'oublie retombe sur la police serif du navigateur.
+   */
+  --font-sans: var(--font-geist, ui-sans-serif, system-ui, sans-serif);
 
   /* Styles de texte Figma — responsive par construction (cf. bloc ci-dessus) */
   --text-display-lg: var(--type-display-lg);
