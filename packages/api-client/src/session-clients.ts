@@ -1,9 +1,11 @@
+import type { PublicSession } from "@etape/api-contract";
 import { hashKey, type QueryClient } from "@tanstack/react-query";
 import type { AxiosInstance } from "axios";
 
 import { createHttpClient } from "./http-client";
 import { createQueryClient } from "./query-client";
-import { SESSION_QUERY_KEY } from "./session";
+import { SESSION_END_QUERY_KEY, SESSION_QUERY_KEY } from "./session";
+import { resolveSessionEndNotice, type SessionEndNotice } from "./session-timeline";
 
 export interface SessionClients {
   httpClient: AxiosInstance;
@@ -30,13 +32,24 @@ export function createSessionClients(apiBaseUrl: string): SessionClients {
  * navigation suivante (bouton Précédent compris), la garde n'en trouve plus et
  * redirige vers le formulaire de connexion.
  *
- * La requête de session est gardée, vidée plutôt que supprimée : le dialogue
- * l'observe, et un observateur ne suit pas une requête recréée.
+ * Avant de la vider, relève pourquoi elle a pris fin, d'après les échéances
+ * qu'elle annonçait : le dialogue le dira.
+ *
+ * Les requêtes de session sont gardées, vidées plutôt que supprimées : le
+ * dialogue les observe, et un observateur ne suit pas une requête recréée.
  */
-function expireSession(queryClient: QueryClient): void {
-  const sessionQueryHash = hashKey(SESSION_QUERY_KEY);
+export function expireSession(queryClient: QueryClient): void {
+  const keptQueryHashes = [hashKey(SESSION_QUERY_KEY), hashKey(SESSION_END_QUERY_KEY)];
 
-  queryClient.removeQueries({ predicate: (query) => query.queryHash !== sessionQueryHash });
+  queryClient.setQueryData(SESSION_END_QUERY_KEY, findSessionEndNotice(queryClient));
+  queryClient.removeQueries({ predicate: (query) => !keptQueryHashes.includes(query.queryHash) });
   queryClient.getMutationCache().clear();
   queryClient.setQueryData(SESSION_QUERY_KEY, null);
+}
+
+function findSessionEndNotice(queryClient: QueryClient): SessionEndNotice | null {
+  const state = queryClient.getQueryState<PublicSession | null>(SESSION_QUERY_KEY);
+  if (!state?.data) return null;
+
+  return resolveSessionEndNotice(state.data.expiry, state.dataUpdatedAt, Date.now());
 }

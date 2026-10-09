@@ -36,8 +36,29 @@ export {
 } from "./login-attempts";
 export { HTTP_STATUS, type HttpStatus } from "./http-status";
 export { createQueryClient } from "./query-client";
-export { buildLoginUrl, findSession, SESSION_QUERY_KEY } from "./session";
-export { createSessionClients, type SessionClients } from "./session-clients";
+export {
+  buildLoginUrl,
+  findSession,
+  recordSessionActivity,
+  SESSION_END_QUERY_KEY,
+  SESSION_QUERY_KEY,
+} from "./session";
+export { createSessionClients, expireSession, type SessionClients } from "./session-clients";
+export {
+  describeSessionEnd,
+  describeSessionEnding,
+  formatDuration,
+  PRESENCE_CHECK_NOTICE,
+} from "./session-messages";
+export {
+  resolveSessionEnd,
+  resolveSessionEndNotice,
+  SESSION_END_CAUSE,
+  SESSION_WARNING_DELAY_MS,
+  type SessionEnd,
+  type SessionEndCause,
+  type SessionEndNotice,
+} from "./session-timeline";
 export { createSessionQueryOptions, type SessionQueryOptions } from "./session-query";
 export {
   checkStartupAccess,
