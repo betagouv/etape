@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   isSessionEndNear,
+  isStaleExpiry,
   resolveSessionEnd,
   resolveSessionEndNotice,
   SESSION_END_CAUSE,
@@ -56,6 +57,24 @@ describe("isSessionEndNear", () => {
 
   it("avertit quand la relecture donne une échéance à peine plus lointaine", () => {
     expect(isSessionEndNear(end, end.at - 2 * MINUTE_MS - 1_000)).toBe(true);
+  });
+});
+
+describe("isStaleExpiry", () => {
+  it("écarte une relecture revenue après une prolongation plus récente", () => {
+    const relecture = { ...expiry, idleRemainingMs: MINUTE_MS };
+
+    expect(isStaleExpiry(relecture, RECEIVED_AT + 100, expiry, RECEIVED_AT)).toBe(true);
+  });
+
+  it("garde une relecture de la même échéance, malgré le trajet des réponses", () => {
+    const later = { ...expiry, idleRemainingMs: expiry.idleRemainingMs - 2_000 };
+
+    expect(isStaleExpiry(later, RECEIVED_AT, expiry, RECEIVED_AT)).toBe(false);
+  });
+
+  it("garde une session prolongée", () => {
+    expect(isStaleExpiry(expiry, RECEIVED_AT + MINUTE_MS, expiry, RECEIVED_AT)).toBe(false);
   });
 });
 

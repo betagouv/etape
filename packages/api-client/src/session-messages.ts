@@ -33,6 +33,10 @@ export const PRESENCE_CHECK_NOTICE: NoticeContent = {
   actionLabel: "Oui",
 };
 
+/** « Oui » n'a pas abouti (l'API ne répond pas) : le dialogue reste ouvert. */
+export const PRESENCE_CHECK_FAILURE_MESSAGE =
+  "La prolongation n'a pas abouti. Vérifiez votre connexion, puis réessayez.";
+
 /** Avant la durée maximale : rien ne la repousse, une reconnexion repart de zéro. */
 export function describeSessionEnding(maxDurationMs: number): NoticeContent {
   return {

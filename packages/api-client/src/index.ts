@@ -48,10 +48,12 @@ export {
   describeSessionEnd,
   describeSessionEnding,
   formatDuration,
+  PRESENCE_CHECK_FAILURE_MESSAGE,
   PRESENCE_CHECK_NOTICE,
 } from "./session-messages";
 export {
   isSessionEndNear,
+  isStaleExpiry,
   resolveSessionEnd,
   resolveSessionEndNotice,
   SESSION_END_CAUSE,

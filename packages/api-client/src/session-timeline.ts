@@ -49,6 +49,25 @@ export function isSessionEndNear(end: SessionEnd, now: number): boolean {
   return end.at - now <= SESSION_WARNING_DELAY_MS + CLOCK_TOLERANCE_MS;
 }
 
+/**
+ * Une réponse dépassée par une autre déjà reçue : sa fin d'inactivité vient
+ * avant celle qu'on connaît. Deux requêtes parties ensemble (prolongation et
+ * relecture) peuvent revenir dans le désordre, et la relecture, plus ancienne,
+ * annoncerait une fin proche qui n'est plus vraie. La fin d'inactivité ne
+ * recule jamais, sauf à changer de session, ce qui passe par un rechargement.
+ */
+export function isStaleExpiry(
+  fresh: SessionExpiry,
+  freshReceivedAt: number,
+  known: SessionExpiry,
+  knownReceivedAt: number,
+): boolean {
+  const freshIdleEndsAt = freshReceivedAt + fresh.idleRemainingMs;
+  const knownIdleEndsAt = knownReceivedAt + known.idleRemainingMs;
+
+  return freshIdleEndsAt < knownIdleEndsAt - CLOCK_TOLERANCE_MS;
+}
+
 /** Ce que le dialogue « Session expirée » peut en dire. */
 export interface SessionEndNotice {
   cause: SessionEndCause;

@@ -85,12 +85,12 @@ function StartupPendingScreen() {
  */
 function SessionLayout() {
   const { access, apiBaseUrl, httpClient } = sessionRootRoute.useRouteContext();
-  const expired = useSessionExpired(apiBaseUrl);
-  const activity = useSessionActivity(httpClient);
-
   // Échec du parcours, ou cookie de session non conservé : un clic, jamais une
   // redirection automatique, sans quoi l'on bouclerait.
   const notice = describeStartupNotice(access);
+  const expired = useSessionExpired(apiBaseUrl);
+  // Derrière un avis, l'activité ne prolonge rien.
+  const activity = useSessionActivity(httpClient, notice === null);
   useAnnounce(describeAnnouncement(notice, activity.isConfirmed));
 
   if (notice) {
@@ -108,6 +108,7 @@ function SessionLayout() {
       reconnectHref: expired.reconnectHref,
       confirmPresence: activity.confirmPresence,
       isConfirming: activity.isConfirming,
+      hasConfirmFailed: activity.hasConfirmFailed,
     });
 
   return (

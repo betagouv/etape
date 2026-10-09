@@ -27,6 +27,11 @@ class FakeSessionApi {
   maxEndsAt = Date.now() + MAX_DURATION_MS;
   reads = 0;
   refreshes = 0;
+  /** Délai de la réponse : deux requêtes parties ensemble reviennent dans le désordre. */
+  readDelayMs = 0;
+  refreshDelayMs = 0;
+  /** Le réseau ne répond plus. */
+  isOffline = false;
 
   private get isOpen(): boolean {
     return Date.now() < Math.min(this.idleEndsAt, this.maxEndsAt);
@@ -51,13 +56,21 @@ class FakeSessionApi {
     this.idleEndsAt = Date.now() + IDLE_TIMEOUT_MS;
   }
 
+  // Une lecture est établie à l'arrivée de la requête, puis rendue après son
+  // délai : elle peut être dépassée quand elle arrive. Une prolongation est
+  // traitée après le sien : une lecture partie en même temps peut passer avant.
   readonly adapter: AxiosAdapter = async (config: InternalAxiosRequestConfig) => {
+    if (this.isOffline) throw new AxiosError("Network Error", AxiosError.ERR_NETWORK, config);
+
     if (config.method === "get") {
       this.reads += 1;
-      return this.respond(config, 200, { session: this.isOpen ? this.session() : null });
+      const body = { session: this.isOpen ? this.session() : null };
+      await this.wait(this.readDelayMs);
+      return this.respond(config, 200, body);
     }
 
     this.refreshes += 1;
+    await this.wait(this.refreshDelayMs);
     if (!this.isOpen) {
       const response = this.respond(config, 401, { code: "UNAUTHORIZED", message: "Expirée" });
       throw new AxiosError("401", AxiosError.ERR_BAD_REQUEST, config, null, response);
@@ -65,6 +78,10 @@ class FakeSessionApi {
     this.idleEndsAt = Date.now() + IDLE_TIMEOUT_MS;
     return this.respond(config, 200, { session: this.session() });
   };
+
+  private async wait(ms: number): Promise<void> {
+    if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   private respond(config: InternalAxiosRequestConfig, status: number, data: unknown) {
     return { data, status, statusText: "", headers: {}, config };
@@ -88,7 +105,7 @@ afterEach(() => {
 });
 
 /** L'app telle que la garde de démarrage la laisse : session lue, à l'instant. */
-function renderSessionActivity() {
+function renderSessionActivity(isEnabled = true) {
   const { httpClient, queryClient } = createSessionClients("/api");
   httpClient.defaults.adapter = api.adapter;
   queryClient.setQueryData(SESSION_QUERY_KEY, api.session());
@@ -96,7 +113,7 @@ function renderSessionActivity() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  const hook = renderHook(() => useSessionActivity(httpClient), { wrapper });
+  const hook = renderHook(() => useSessionActivity(httpClient, isEnabled), { wrapper });
 
   return { ...hook, queryClient };
 }
@@ -239,8 +256,101 @@ describe("useSessionActivity", () => {
     });
   });
 
+  describe("réponses dans le désordre", () => {
+    it("referme l'avertissement quand la prolongation arrive après la relecture", async () => {
+      // Rechargement de la page dans les deux dernières minutes : la
+      // prolongation (affichage de la page) et la relecture partent ensemble.
+      api.idleEndsAt = Date.now() + MINUTE_MS;
+      api.refreshDelayMs = 500;
+      const { result } = renderSessionActivity();
+
+      await advance(0);
+      expect(result.current.warning?.cause).toBe(SESSION_END_CAUSE.IDLE);
+
+      await advance(500);
+      expect(result.current.warning).toBeNull();
+
+      await advance(10 * MINUTE_MS);
+      expect(result.current.warning).toBeNull();
+    });
+
+    it("écarte une relecture dépassée par la prolongation", async () => {
+      api.idleEndsAt = Date.now() + MINUTE_MS;
+      api.readDelayMs = 500;
+      const { result, queryClient } = renderSessionActivity();
+
+      await advance(500);
+
+      expect(result.current.warning).toBeNull();
+      expect(
+        queryClient.getQueryData<PublicSession>(SESSION_QUERY_KEY)?.expiry.idleRemainingMs,
+      ).toBeGreaterThan(20 * MINUTE_MS);
+    });
+  });
+
+  describe("derrière un avis de démarrage", () => {
+    it("ne prolonge rien et n'avertit pas", async () => {
+      const { result } = renderSessionActivity(false);
+
+      fireEvent.pointerMove(window);
+      await advance(IDLE_TIMEOUT_MS - MINUTE_MS);
+
+      expect(api.refreshes).toBe(0);
+      expect(api.reads).toBe(0);
+      expect(result.current.warning).toBeNull();
+    });
+  });
+
+  describe("échec de « Oui »", () => {
+    it("garde l'avertissement ouvert et le signale, puis « Oui » se relance", async () => {
+      const { result } = renderSessionActivity();
+      await advance(IDLE_TIMEOUT_MS - 2 * MINUTE_MS);
+      api.isOffline = true;
+
+      act(() => result.current.confirmPresence());
+      await advance(0);
+
+      expect(result.current.hasConfirmFailed).toBe(true);
+      expect(result.current.warning).not.toBeNull();
+
+      api.isOffline = false;
+      act(() => result.current.confirmPresence());
+      expect(result.current.hasConfirmFailed).toBe(false);
+      await advance(0);
+
+      expect(result.current.warning).toBeNull();
+    });
+  });
+
+  it("vide l'annonce de la prolongation après l'avoir laissée lire", async () => {
+    const { result } = renderSessionActivity();
+    await advance(IDLE_TIMEOUT_MS - 2 * MINUTE_MS);
+
+    act(() => result.current.confirmPresence());
+    await advance(0);
+    expect(result.current.isConfirmed).toBe(true);
+
+    await advance(10 * 1000);
+    expect(result.current.isConfirmed).toBe(false);
+  });
+
+  it("referme l'avertissement au retour sur l'onglet si un autre l'a prolongée", async () => {
+    const { result } = renderSessionActivity();
+    await advance(IDLE_TIMEOUT_MS - 2 * MINUTE_MS);
+    expect(result.current.warning).not.toBeNull();
+
+    api.recordActivityElsewhere();
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(result.current.warning).toBeNull();
+  });
+
   it("relit l'échéance au retour sur l'onglet, quand le minuteur a pris du retard", async () => {
     const { result } = renderSessionActivity();
+    await advance(0);
     // L'onglet en arrière-plan : l'heure avance, le minuteur ne part pas.
     vi.setSystemTime(IDLE_TIMEOUT_MS - MINUTE_MS);
 

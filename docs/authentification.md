@@ -388,7 +388,8 @@ routeur — qui reçoit `apiBaseUrl`, lue dans son `.env` — et l'amorçage.
     pu la prolonger —, puis avertit. Avant la fin d'inactivité : « Êtes-vous
     toujours là ? » et un seul bouton, « Oui », qui prolonge ; pendant ce
     dialogue, bouger la souris ne compte pas, seul « Oui » prolonge (WCAG
-    2.2.1). Avant la durée maximale, que rien ne repousse : « Votre session se
+    2.2.1). Si « Oui » n'aboutit pas (réseau), le dialogue reste ouvert et le
+    dit ; une fois fermé, le focus revient là où il était. Avant la durée maximale, que rien ne repousse : « Votre session se
     termine bientôt » et « Se reconnecter », qui ouvre une session neuve.
   - **Sans réponse**, le front relit encore l'échéance et, la session finie,
     l'expire comme sur un 401 : dialogue « Session expirée », avec la cause
@@ -397,7 +398,14 @@ routeur — qui reçoit `apiBaseUrl`, lue dans son `.env` — et l'amorçage.
     sans cause plausible — déconnexion dans un autre onglet — garde le message
     générique.
   - Le minuteur est relu au retour sur l'onglet : le navigateur le ralentit en
-    arrière-plan et le suspend en veille. Dans tous les cas, c'est l'API qui
+    arrière-plan et le suspend en veille. Pendant l'avertissement, l'échéance
+    est relue à chaque retour : un autre onglet a pu la repousser.
+  - Prolongation et relecture peuvent revenir dans le désordre : une réponse
+    dont la fin d'inactivité précède celle déjà connue est écartée, et
+    l'avertissement suit la session gardée.
+  - Derrière un avis de démarrage (une déconnexion refusée par la limite de
+    débit, par exemple), rien n'est suivi : l'activité ne doit pas prolonger
+    une session que la personne voulait fermer. Dans tous les cas, c'est l'API qui
     refuse une session finie.
   - Le realm de chaque front reprend les mêmes délais (`ssoSessionIdleTimeout`,
     `ssoSessionMaxLifespan`, réappliqués par `deploy/keycloak-init.sh`) :

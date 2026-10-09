@@ -13,15 +13,31 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
+function setMessage(message: string): void {
+  currentMessage = message;
+  for (const listener of listeners) listener();
+}
+
 /** Le message à annoncer, pour la région de `SessionApp`. */
 export function useAnnouncement(): string {
   return useSyncExternalStore(subscribe, () => currentMessage);
 }
 
-/** Annonce `message` quand l'écran s'affiche ou que le message change ; vide la région avec `""`. */
+/**
+ * Annonce `message` tant que l'écran qui l'appelle est affiché ; `""` n'annonce
+ * rien. Un message appartient à qui l'a écrit : seul lui l'efface, quand il
+ * change ou disparaît. Un parent qui n'a rien à dire n'efface donc pas
+ * l'annonce de son enfant — les effets de l'enfant passent avant les siens —,
+ * et un écran qui revient est annoncé de nouveau, la région étant repassée
+ * par le vide.
+ */
 export function useAnnounce(message: string): void {
   useEffect(() => {
-    currentMessage = message;
-    for (const listener of listeners) listener();
+    if (!message) return;
+
+    setMessage(message);
+    return () => {
+      if (currentMessage === message) setMessage("");
+    };
   }, [message]);
 }

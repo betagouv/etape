@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SessionDialog, type SessionDialogProps } from "@etape/ui/components/session-dialog";
@@ -10,7 +10,7 @@ const PROPS: SessionDialogProps = {
   title: "Êtes-vous toujours là ?",
   message: "Sans réponse de votre part, votre session expirera dans 2 minutes.",
   actionLabel: "Oui",
-  action: { onClick: vi.fn(), isBusy: false },
+  action: { onClick: vi.fn(), isBusy: false, failureMessage: "" },
 };
 
 describe("SessionDialog", () => {
@@ -42,10 +42,38 @@ describe("SessionDialog", () => {
     expect(screen.queryByRole("alertdialog")).not.toBeNull();
   });
 
+  it("rend le focus à l'élément qui l'avait, une fois fermé", async () => {
+    const { rerender } = render(
+      <>
+        <input aria-label="Nom" />
+        <SessionDialog {...PROPS} open={false} />
+      </>,
+    );
+    const field = screen.getByRole("textbox", { name: "Nom" });
+    field.focus();
+
+    rerender(
+      <>
+        <input aria-label="Nom" />
+        <SessionDialog {...PROPS} />
+      </>,
+    );
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Oui" }));
+
+    rerender(
+      <>
+        <input aria-label="Nom" />
+        <SessionDialog {...PROPS} open={false} />
+      </>,
+    );
+
+    await waitFor(() => expect(document.activeElement).toBe(field));
+  });
+
   describe("action dans la page", () => {
     it("appelle onClick au clic", () => {
       const onClick = vi.fn();
-      render(<SessionDialog {...PROPS} action={{ onClick, isBusy: false }} />);
+      render(<SessionDialog {...PROPS} action={{ onClick, isBusy: false, failureMessage: "" }} />);
 
       fireEvent.click(screen.getByRole("button", { name: "Oui" }));
 
@@ -54,7 +82,7 @@ describe("SessionDialog", () => {
 
     it("pendant l'envoi, garde le focus et ignore un nouveau clic", () => {
       const onClick = vi.fn();
-      render(<SessionDialog {...PROPS} action={{ onClick, isBusy: true }} />);
+      render(<SessionDialog {...PROPS} action={{ onClick, isBusy: true, failureMessage: "" }} />);
       const button = screen.getByRole("button", { name: "Oui" });
 
       fireEvent.click(button);
@@ -63,6 +91,27 @@ describe("SessionDialog", () => {
       expect(button.hasAttribute("disabled")).toBe(false);
       expect(button.getAttribute("aria-disabled")).toBe("true");
       expect(document.activeElement).toBe(button);
+    });
+
+    it("annonce son échec dans le dialogue, par une région montée avec lui", () => {
+      const { rerender } = render(<SessionDialog {...PROPS} />);
+      const region = screen.getByRole("status");
+
+      expect(region.textContent).toBe("");
+
+      rerender(
+        <SessionDialog
+          {...PROPS}
+          action={{
+            onClick: vi.fn(),
+            isBusy: false,
+            failureMessage: "La prolongation n'a pas abouti.",
+          }}
+        />,
+      );
+
+      expect(screen.getByRole("status")).toBe(region);
+      expect(region.textContent).toBe("La prolongation n'a pas abouti.");
     });
   });
 
