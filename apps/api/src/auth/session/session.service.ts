@@ -8,6 +8,7 @@ import { NODE_ENV, type Env } from "../../config/env.js";
 import { FRONT, type Front } from "../front.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { openCookieValue, sealCookieValue } from "./cookie-cipher.js";
+import { isActivityWriteDue, SESSION_POLICY_BY_FRONT } from "./session-policy.js";
 import { SessionStore } from "./session.store.js";
 import type { AccountSession, NewSession, PendingLogin } from "./session.types.js";
 
@@ -39,7 +40,6 @@ const PRODUCTION_COOKIE_PREFIX = "__Host-Http-";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const PENDING_LOGIN_TTL_MS = 10 * 60 * 1000;
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 const pendingLoginSchema = z.object({
   state: z.string().min(1),
@@ -132,15 +132,39 @@ export class SessionService {
   async openSession(
     request: Request,
     response: Response,
-    session: Omit<NewSession, "expiresAt">,
+    session: Omit<NewSession, "expiresAt" | "idleExpiresAt">,
   ): Promise<void> {
     const previous = await this.readSession(request, session.front);
     if (previous) await this.store.deleteSession(previous.id);
 
     const id = randomUUID();
+    const policy = SESSION_POLICY_BY_FRONT[session.front];
+    const now = Date.now();
 
-    await this.store.createSession(id, { ...session, expiresAt: Date.now() + SESSION_TTL_MS });
-    this.setCookie(response, SESSION_COOKIE[session.front], id, SESSION_TTL_MS);
+    await this.store.createSession(id, {
+      ...session,
+      expiresAt: now + policy.maxDurationMs,
+      idleExpiresAt: now + policy.idleTimeoutMs,
+    });
+    // Le cookie vit jusqu'à la fin absolue ; l'inactivité, elle, ne se juge
+    // que côté serveur.
+    this.setCookie(response, SESSION_COOKIE[session.front], id, policy.maxDurationMs);
+  }
+
+  /**
+   * Repousse la fin d'inactivité. Appelé pour chaque requête authentifiée
+   * (`SessionGuard`) ; n'écrit qu'une fois par minute au plus.
+   */
+  async recordActivity<T extends AccountSession & { id: string }>(session: T): Promise<T> {
+    const policy = SESSION_POLICY_BY_FRONT[session.front];
+    const now = Date.now();
+
+    if (!isActivityWriteDue(session.idleExpiresAt, policy, now)) return session;
+
+    const idleExpiresAt = now + policy.idleTimeoutMs;
+    await this.store.extendSession(session.id, idleExpiresAt);
+
+    return { ...session, idleExpiresAt };
   }
 
   /**

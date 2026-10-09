@@ -58,9 +58,15 @@ model Session {
   idToken String @map("id_token")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  // Fin absolue, fixée à l'ouverture : l'activité ne la repousse jamais.
   expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  // Fin faute d'activité, repoussée à chaque activité. Une échéance plutôt
+  // que la date de la dernière activité : le délai dépend du front, et la
+  // purge n'a ainsi qu'à comparer à maintenant.
+  idleExpiresAt DateTime @map("idle_expires_at") @db.Timestamptz(3)
 
   @@index([expiresAt])
+  @@index([idleExpiresAt])
   @@index([accountId])
   @@map("session")
 }
