@@ -15,6 +15,7 @@ function buildSession(overrides: Partial<AccountSession> = {}): AccountSession {
     claims: { given_name: "Camille" },
     idToken: "id-token",
     expiresAt: 0,
+    idleExpiresAt: 0,
     ...overrides,
   };
 }

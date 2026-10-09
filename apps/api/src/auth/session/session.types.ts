@@ -29,7 +29,10 @@ export interface AccountSession {
   claims: Record<string, unknown>;
   /** Gardé pour le seul `id_token_hint` de la déconnexion. */
   idToken: string;
+  /** Fin absolue, fixée à l'ouverture. */
   expiresAt: number;
+  /** Fin faute d'activité, repoussée par chaque activité. */
+  idleExpiresAt: number;
 }
 
 export type NewSession = Omit<AccountSession, "sub" | "email">;

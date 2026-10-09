@@ -181,6 +181,24 @@ configure_test_user() {
 configure_realm_security "$REALM"
 configure_realm_security "$BACK_OFFICE_REALM"
 
+# Les délais de session de chaque front, les mêmes que ceux de l'API
+# (`SESSION_POLICY_BY_FRONT`, apps/api/src/auth/session/session-policy.ts) :
+# Keycloak ne garde pas sa propre session ouverte plus longtemps que celle de
+# l'app, et une reconnexion au-delà redemande le mot de passe. Réappliqués à
+# chaque démarrage : un realm déjà importé ne relit pas son fichier.
+configure_session_lifespans() {
+  local realm=$1 idle_seconds=$2 max_seconds=$3
+
+  $KCADM update "realms/$realm" \
+    -s ssoSessionIdleTimeout="$idle_seconds" \
+    -s ssoSessionMaxLifespan="$max_seconds"
+  echo "→ realm ${realm} : session close après ${idle_seconds} s d'inactivité, ${max_seconds} s au plus"
+}
+
+configure_session_lifespans "$REALM" 1800 36000
+# Provisoire, comme dans l'API : les délais des instructeurs ne sont pas arbitrés.
+configure_session_lifespans "$BACK_OFFICE_REALM" 3600 43200
+
 # Le realm `master` naît sans protection contre la force brute, là où les realms
 # applicatifs la portent, et c'est pourtant lui qui délivre le jeton
 # d'administration. `permanentLockout=false` : verrouiller le seul
