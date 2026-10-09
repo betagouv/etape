@@ -10,7 +10,7 @@
 import { StyleSheet } from "@react-pdf/renderer";
 
 import type { Categorie } from "../domain/types";
-import { PDF_FONT_FAMILY } from "./fonts";
+import { PDF_FONT_FAMILY, PDF_HEADING_FONT_FAMILY } from "./fonts";
 
 // Sous-ensemble de `packages/ui/src/styles/globals.css` (thème clair —
 // un PDF ne suit pas le thème sombre de l'app).
@@ -49,8 +49,10 @@ export const pdfStyles = StyleSheet.create({
     marginBottom: 24,
   },
   bannerTitle: {
+    fontFamily: PDF_HEADING_FONT_FAMILY,
     fontSize: 18,
-    fontWeight: 700,
+    fontWeight: 600,
+    letterSpacing: -0.45, // -0.025em, l'approche des titres du kit
     color: COLORS.white,
   },
   bannerSubtitle: {
@@ -59,8 +61,10 @@ export const pdfStyles = StyleSheet.create({
     color: COLORS.calloutBg,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: 700,
+    fontFamily: PDF_HEADING_FONT_FAMILY,
+    fontSize: 16,
+    fontWeight: 600,
+    letterSpacing: -0.4, // -0.025em
     marginBottom: 10,
     paddingBottom: 6,
     borderBottomWidth: 2,
