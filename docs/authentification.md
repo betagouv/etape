@@ -342,9 +342,11 @@ routeur — qui reçoit `apiBaseUrl`, lue dans son `.env` — et l'amorçage.
   sans redirection — sauf un ancien échec de connexion quand la session est
   valide (favori, bouton Précédent) ; l'échec d'une déconnexion s'affiche
   toujours, la limite de débit pouvant l'avoir refusée. L'API ne répond pas
-  (délai de 10 s par requête, trois relances, même si la connexion tombe
-  pendant la vérification) : un écran « service indisponible », relancé par un
-  clic. Une autre erreur, comme une réponse hors contrat, affiche « Une erreur
+  (délai de 4 s par lecture, deux relances, soit 15 s au plus, même si la
+  connexion tombe pendant la vérification) : un écran « service indisponible »,
+  relancé par un clic. Ce délai ne vaut que pour les appels de session : un
+  délai commun couperait l'envoi d'une pièce justificative sur une connexion
+  lente. Une autre erreur, comme une réponse hors contrat, affiche « Une erreur
   inattendue est survenue ».
 - **Si le cookie de session n'est pas conservé** (cookies bloqués, cookie
   `Secure` servi en `http`), on reviendrait de la connexion sans session, que
@@ -366,7 +368,46 @@ routeur — qui reçoit `apiBaseUrl`, lue dans son `.env` — et l'amorçage.
   clic dehors ; « Se reconnecter » mène au formulaire et ramène sur la page en
   cours, ancre comprise. Si la personne quitte la page, par le bouton Précédent
   par exemple, la garde ne trouve plus de session et la redirige vers le
-  formulaire. Plusieurs 401 simultanés n'ouvrent qu'un dialogue.
+  formulaire. Plusieurs 401 simultanés n'ouvrent qu'un dialogue. « Se
+  reconnecter » est un lien : il quitte l'app.
+- **La session prend fin** après une période sans activité ou à sa durée
+  maximale, comptée depuis la connexion et que l'activité ne repousse jamais.
+  Les deux délais dépendent du front (`SESSION_POLICY_BY_FRONT`, côté API) :
+  30 minutes et 10 heures pour le front-office ; 1 heure et 12 heures,
+  provisoires, pour le back-office, dont les délais ne sont pas encore
+  arbitrés. Aucune app ne les écrit en dur : `GET /api/auth/session` renvoie la
+  règle et le temps restant avant chaque fin (`expiry`), en durées plutôt
+  qu'en dates, pour ne pas dépendre de l'horloge du poste.
+  - **Est une activité** : toute requête authentifiée (`SessionGuard`), et,
+    côté front, un mouvement du pointeur, une touche, un défilement, un retour
+    en arrière ou l'affichage d'une page, signalés par
+    `POST /api/auth/session/refresh` au plus une fois par minute — l'API
+    n'écrit pas plus souvent. La lecture de session n'en est pas une : le front
+    relit l'échéance sans la repousser.
+  - **Deux minutes avant la fin**, le front relit l'échéance — un autre onglet a
+    pu la prolonger —, puis avertit. Avant la fin d'inactivité : « Êtes-vous
+    toujours là ? » et un seul bouton, « Oui », qui prolonge ; pendant ce
+    dialogue, bouger la souris ne compte pas, seul « Oui » prolonge (WCAG
+    2.2.1). Avant la durée maximale, que rien ne repousse : « Votre session se
+    termine bientôt » et « Se reconnecter », qui ouvre une session neuve.
+  - **Sans réponse**, le front relit encore l'échéance et, la session finie,
+    l'expire comme sur un 401 : dialogue « Session expirée », avec la cause
+    quand elle est connue (« Votre session a expiré après 30 minutes
+    d'inactivité », « … a atteint sa durée maximale de 10 heures »). Une fin
+    sans cause plausible — déconnexion dans un autre onglet — garde le message
+    générique.
+  - Le minuteur est relu au retour sur l'onglet : le navigateur le ralentit en
+    arrière-plan et le suspend en veille. Dans tous les cas, c'est l'API qui
+    refuse une session finie.
+  - Le realm de chaque front reprend les mêmes délais (`ssoSessionIdleTimeout`,
+    `ssoSessionMaxLifespan`, réappliqués par `deploy/keycloak-init.sh`) :
+    Keycloak ne voit pas l'activité dans l'app, et sa propre session finit
+    souvent avant celle de l'app. Se reconnecter redemande alors le mot de
+    passe, ce que veut la durée maximale.
+- **Une région `role="status"`**, montée une fois au-dessus du routeur
+  (`SessionApp`), annonce l'attente au démarrage, les avis et la prolongation
+  par « Oui ». Les dialogues n'y passent pas : le focus déplacé dans
+  l'`alertdialog` les annonce déjà.
 - **Une erreur dans un écran** affiche « Une erreur inattendue est survenue » à
   sa place, sous `SessionLayout` : le dialogue « Session expirée » reste
   disponible. Une adresse inconnue affiche « Page introuvable ».
@@ -507,16 +548,14 @@ c'est ce que comprennent les clients de messagerie.
       avant le premier écran du back-office qui affiche des données. Le realm
       séparé ferme la porte aux bénéficiaires ; les rôles régleront les droits
       au sein du back-office
-- [ ] Session inactive : expiration après 30 minutes sans activité (appel à
-      l'API, mouvement, saisie), limite absolue ramenée de 12 h à 10 h, même
-      règle pour les bénéficiaires et les instructeurs ; avertissement avant
-      l'expiration et prolongation (WCAG 2.2.1). Demande une migration (dernière
-      activité) ; la route de prolongation passera par la garde CSRF, déjà en
-      place. À cette occasion : réserver le délai de 10 s à la lecture de
-      session (global, il couperait l'envoi d'une pièce justificative) et
-      raccourcir l'attente au démarrage (jusqu'à 47 s aujourd'hui) ; annoncer
-      l'avertissement, l'attente et l'écran d'erreur dans une même région
-      `role="status"` toujours montée ; faire de « Se reconnecter » un lien
+- [x] Session inactive : fin après une période sans activité et à une durée
+      maximale, par front ; avertissement deux minutes avant (« Oui » ou « Se
+      reconnecter ») ; cause de la fin dans le dialogue ; délai réservé aux
+      appels de session et attente au démarrage ramenée à 15 s ; région
+      `role="status"` commune ; « Se reconnecter » en lien
+- [ ] Arbitrer les délais de session du back-office (1 h d'inactivité et 12 h
+      au plus, provisoires) : `SESSION_POLICY_BY_FRONT` dans l'API et
+      `deploy/keycloak-init.sh` pour le realm
 - [ ] Écrans d'avis : un titre d'onglet qui suit l'avis (RGAA 8.6), et
       « Réessayer » ou « Se connecter » en liens plutôt qu'en boutons. Avec le
       bouton de déconnexion : après une déconnexion refusée par la limite de
