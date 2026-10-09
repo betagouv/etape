@@ -51,6 +51,7 @@ export {
   PRESENCE_CHECK_NOTICE,
 } from "./session-messages";
 export {
+  isSessionEndNear,
   resolveSessionEnd,
   resolveSessionEndNotice,
   SESSION_END_CAUSE,

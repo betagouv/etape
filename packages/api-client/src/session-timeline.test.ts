@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveSessionEnd, resolveSessionEndNotice, SESSION_END_CAUSE } from "./session-timeline";
+import {
+  isSessionEndNear,
+  resolveSessionEnd,
+  resolveSessionEndNotice,
+  SESSION_END_CAUSE,
+} from "./session-timeline";
 
 const MINUTE_MS = 60 * 1000;
 const RECEIVED_AT = 1_000_000;
@@ -38,6 +43,19 @@ describe("resolveSessionEnd", () => {
 
   it("compte depuis l'heure de réception, pas depuis l'horloge du serveur", () => {
     expect(resolveSessionEnd(expiry, 0).at).toBe(30 * MINUTE_MS);
+  });
+});
+
+describe("isSessionEndNear", () => {
+  const end = { at: RECEIVED_AT + 30 * MINUTE_MS, cause: SESSION_END_CAUSE.IDLE };
+
+  it("avertit à deux minutes de la fin, pas avant", () => {
+    expect(isSessionEndNear(end, end.at - 2 * MINUTE_MS)).toBe(true);
+    expect(isSessionEndNear(end, end.at - 3 * MINUTE_MS)).toBe(false);
+  });
+
+  it("avertit quand la relecture donne une échéance à peine plus lointaine", () => {
+    expect(isSessionEndNear(end, end.at - 2 * MINUTE_MS - 1_000)).toBe(true);
   });
 });
 

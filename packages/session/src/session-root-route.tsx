@@ -6,6 +6,7 @@ import {
   describeStartupNotice,
   STARTUP_PENDING_MESSAGE,
   useSessionExpired,
+  type NoticeContent,
 } from "@etape/api-client";
 import { NoticeScreen } from "@etape/ui/components/notice-screen";
 import { PendingScreen } from "@etape/ui/components/pending-screen";
@@ -14,7 +15,10 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet, redirect } from "@tanstack/react-router";
 import type { AxiosInstance } from "axios";
 
-import { AppErrorScreen, NotFoundScreen } from "./error-screens";
+import { useAnnounce } from "./announcer";
+import { AppErrorScreen, NotFoundScreen, toAnnouncement } from "./error-screens";
+import { describeWarningDialog, SESSION_EXTENDED_MESSAGE } from "./session-dialogs";
+import { useSessionActivity } from "./use-session-activity";
 
 /** Compte les départs vers la connexion, pour ne pas boucler (voir `login-attempts.ts`). */
 const loginAttempts = createLoginAttempts(() => window.sessionStorage);
@@ -54,7 +58,7 @@ export const sessionRootRoute = createRootRouteWithContext<SessionRouterContext>
     return { access };
   },
   component: SessionLayout,
-  pendingComponent: () => <PendingScreen message={STARTUP_PENDING_MESSAGE} />,
+  pendingComponent: StartupPendingScreen,
   // La garde a échoué (l'API ne répond pas) ou `SessionLayout` a planté :
   // c'est la personne qui relance, pas une boucle. Les erreurs des écrans,
   // elles, restent sous `SessionLayout` (`defaultErrorComponent` du routeur).
@@ -63,14 +67,32 @@ export const sessionRootRoute = createRootRouteWithContext<SessionRouterContext>
   notFoundComponent: NotFoundScreen,
 });
 
-/** Aiguille selon ce qu'a décidé la garde de démarrage (`beforeLoad`). */
+/** L'avis s'il y en a un ; sinon la prolongation, une fois faite ; sinon rien. */
+function describeAnnouncement(notice: NoticeContent | null, isConfirmed: boolean): string {
+  if (notice) return toAnnouncement(notice);
+  return isConfirmed ? SESSION_EXTENDED_MESSAGE : "";
+}
+
+function StartupPendingScreen() {
+  useAnnounce(STARTUP_PENDING_MESSAGE);
+
+  return <PendingScreen message={STARTUP_PENDING_MESSAGE} />;
+}
+
+/**
+ * Aiguille selon ce qu'a décidé la garde de démarrage (`beforeLoad`), puis
+ * selon la session : avertissement avant sa fin, dialogue une fois finie.
+ */
 function SessionLayout() {
-  const { access, apiBaseUrl } = sessionRootRoute.useRouteContext();
+  const { access, apiBaseUrl, httpClient } = sessionRootRoute.useRouteContext();
   const expired = useSessionExpired(apiBaseUrl);
+  const activity = useSessionActivity(httpClient);
 
   // Échec du parcours, ou cookie de session non conservé : un clic, jamais une
   // redirection automatique, sans quoi l'on bouclerait.
   const notice = describeStartupNotice(access);
+  useAnnounce(describeAnnouncement(notice, activity.isConfirmed));
+
   if (notice) {
     return (
       <NoticeScreen
@@ -80,6 +102,14 @@ function SessionLayout() {
     );
   }
 
+  const warningDialog =
+    activity.warning &&
+    describeWarningDialog(activity.warning, {
+      reconnectHref: expired.reconnectHref,
+      confirmPresence: activity.confirmPresence,
+      isConfirming: activity.isConfirming,
+    });
+
   return (
     <>
       {/*
@@ -88,6 +118,7 @@ function SessionLayout() {
         elles ne doivent pas rester lisibles sur un poste partagé.
       */}
       {!expired.isExpired && <Outlet />}
+      {warningDialog && <SessionDialog open {...warningDialog} />}
       <SessionDialog
         open={expired.isExpired}
         {...expired.notice}
