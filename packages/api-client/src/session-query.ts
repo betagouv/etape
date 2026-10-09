@@ -2,7 +2,14 @@ import type { PublicSession } from "@etape/api-contract";
 import { queryOptions, type DataTag, type UseQueryOptions } from "@tanstack/react-query";
 import type { AxiosInstance } from "axios";
 
+import { isTransientApiError } from "./api-error";
 import { findSession, SESSION_QUERY_KEY } from "./session";
+
+/**
+ * Deux relances, après 1 s puis 2 s : avec le délai de 4 s par tentative,
+ * l'écran d'attente cède au plus après 15 s à « service indisponible ».
+ */
+const SESSION_READ_MAX_RETRIES = 2;
 
 type SessionQueryKey = typeof SESSION_QUERY_KEY;
 
@@ -25,5 +32,7 @@ export function createSessionQueryOptions(httpClient: AxiosInstance): SessionQue
     // et le délai des requêtes ne s'appliquerait jamais. Ici, elle part quand
     // même et finit sur l'écran d'erreur.
     networkMode: "always",
+    retry: (failureCount, error) =>
+      isTransientApiError(error) && failureCount < SESSION_READ_MAX_RETRIES,
   });
 }

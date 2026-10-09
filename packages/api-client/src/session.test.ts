@@ -1,7 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createHttpClient } from "./http-client";
-import { buildLoginUrl, findSession, recordSessionActivity } from "./session";
+import {
+  buildLoginUrl,
+  findSession,
+  recordSessionActivity,
+  SESSION_REQUEST_TIMEOUT_MS,
+} from "./session";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
 import { SESSION_FIXTURE } from "./testing/session-fixture";
 
@@ -32,6 +37,20 @@ describe("findSession", () => {
     body = { session: SESSION };
 
     await expect(findSession(httpClient())).resolves.toEqual(SESSION);
+  });
+
+  it("fixe son propre délai, le client n'en ayant aucun", async () => {
+    const client = httpClient();
+    let timeout: number | undefined;
+    client.interceptors.request.use((config) => {
+      timeout = config.timeout;
+      return config;
+    });
+    body = { session: null };
+
+    await findSession(client);
+
+    expect(timeout).toBe(SESSION_REQUEST_TIMEOUT_MS);
   });
 
   it("échoue sur une réponse qui ne respecte pas le contrat", async () => {
