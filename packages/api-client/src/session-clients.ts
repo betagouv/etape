@@ -39,6 +39,11 @@ export function createSessionClients(apiBaseUrl: string): SessionClients {
  * dialogue les observe, et un observateur ne suit pas une requête recréée.
  */
 export function expireSession(queryClient: QueryClient): void {
+  // Déjà expirée : la fin peut être constatée deux fois (relecture et 401 au
+  // réveil d'une veille), et la seconde, ne trouvant plus de session, effacerait
+  // la cause relevée par la première.
+  if (queryClient.getQueryData(SESSION_QUERY_KEY) === null) return;
+
   const keptQueryHashes = [hashKey(SESSION_QUERY_KEY), hashKey(SESSION_END_QUERY_KEY)];
 
   queryClient.setQueryData(SESSION_END_QUERY_KEY, findSessionEndNotice(queryClient));

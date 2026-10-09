@@ -73,6 +73,22 @@ describe("createSessionClients", () => {
     });
   });
 
+  it("garde la cause quand la fin est constatée une seconde fois", async () => {
+    const { httpClient, queryClient } = createSessionClients(server.baseUrl);
+    queryClient.setQueryData(SESSION_QUERY_KEY, {
+      ...SESSION,
+      expiry: { ...SESSION.expiry, idleRemainingMs: 0 },
+    });
+
+    await httpClient.get("/expiree").catch(() => null);
+    await httpClient.get("/expiree").catch(() => null);
+
+    expect(queryClient.getQueryData(SESSION_END_QUERY_KEY)).toEqual({
+      cause: SESSION_END_CAUSE.IDLE,
+      durationMs: SESSION.expiry.idleTimeoutMs,
+    });
+  });
+
   it("ne donne aucune cause à un 401 arrivé avant les échéances", async () => {
     const { httpClient, queryClient } = createSessionClients(server.baseUrl);
     queryClient.setQueryData(SESSION_QUERY_KEY, SESSION);

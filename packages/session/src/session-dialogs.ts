@@ -1,5 +1,6 @@
 import {
   describeSessionEnding,
+  PRESENCE_CHECK_FAILURE_MESSAGE,
   PRESENCE_CHECK_NOTICE,
   SESSION_END_CAUSE,
   type SessionEndCause,
@@ -12,6 +13,7 @@ interface WarningActions {
   reconnectHref: string;
   confirmPresence: () => void;
   isConfirming: boolean;
+  hasConfirmFailed: boolean;
 }
 
 type WarningDialog = Omit<SessionDialogProps, "open">;
@@ -21,9 +23,13 @@ const WARNING_DIALOGS: Record<
   (warning: SessionWarning, actions: WarningActions) => WarningDialog
 > = {
   // « Oui » prolonge la session, sans quitter la page.
-  [SESSION_END_CAUSE.IDLE]: (_, { confirmPresence, isConfirming }) => ({
+  [SESSION_END_CAUSE.IDLE]: (_, { confirmPresence, isConfirming, hasConfirmFailed }) => ({
     ...PRESENCE_CHECK_NOTICE,
-    action: { onClick: confirmPresence, isBusy: isConfirming },
+    action: {
+      onClick: confirmPresence,
+      isBusy: isConfirming,
+      failureMessage: hasConfirmFailed ? PRESENCE_CHECK_FAILURE_MESSAGE : "",
+    },
   }),
   // Rien ne repousse la durée maximale : seule une nouvelle connexion.
   [SESSION_END_CAUSE.MAX_DURATION]: ({ maxDurationMs }, { reconnectHref }) => ({
