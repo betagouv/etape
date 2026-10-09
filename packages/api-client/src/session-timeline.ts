@@ -14,11 +14,11 @@ export type SessionEndCause = (typeof SESSION_END_CAUSE)[keyof typeof SESSION_EN
 export const SESSION_WARNING_DELAY_MS = 2 * 60 * 1000;
 
 /**
- * Un 401 arrive un peu après la fin vue du front : le temps restant est calculé
- * par le serveur, puis reçu après le trajet de la réponse. Cette marge suffit à
- * attribuer la fin à sa cause malgré ce décalage.
+ * Le temps restant est calculé par le serveur, puis reçu après le trajet de la
+ * réponse : vue du front, une échéance peut se décaler d'autant. Cette marge
+ * absorbe le décalage.
  */
-const END_CAUSE_TOLERANCE_MS = 5 * 1000;
+const CLOCK_TOLERANCE_MS = 5 * 1000;
 
 /** La fin la plus proche, en heure du poste. */
 export interface SessionEnd {
@@ -38,6 +38,15 @@ export function resolveSessionEnd(expiry: SessionExpiry, receivedAt: number): Se
   return maxEndsAt <= idleEndsAt
     ? { at: maxEndsAt, cause: SESSION_END_CAUSE.MAX_DURATION }
     : { at: idleEndsAt, cause: SESSION_END_CAUSE.IDLE };
+}
+
+/**
+ * La fin est assez proche pour avertir. La marge absorbe le trajet de la
+ * réponse : relue juste à l'heure de l'avertissement, l'échéance peut sembler
+ * à peine plus lointaine que le délai.
+ */
+export function isSessionEndNear(end: SessionEnd, now: number): boolean {
+  return end.at - now <= SESSION_WARNING_DELAY_MS + CLOCK_TOLERANCE_MS;
 }
 
 /** Ce que le dialogue « Session expirée » peut en dire. */
@@ -63,7 +72,7 @@ export function resolveSessionEndNotice(
   now: number,
 ): SessionEndNotice | null {
   const end = resolveSessionEnd(expiry, receivedAt);
-  if (now < end.at - END_CAUSE_TOLERANCE_MS) return null;
+  if (now < end.at - CLOCK_TOLERANCE_MS) return null;
 
   return { cause: end.cause, durationMs: expiry[DURATION_BY_CAUSE[end.cause]] };
 }
