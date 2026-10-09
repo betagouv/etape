@@ -1,0 +1,33 @@
+{
+  "name": "@etape/session",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "prettier": "@etape/prettier-config",
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@etape/api-client": "*",
+    "@etape/ui": "*",
+    "@tanstack/react-query": "^5.103.0",
+    "@tanstack/react-router": "^1.170.0",
+    "axios": "^1.20.0"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@etape/eslint-config": "*",
+    "@etape/prettier-config": "*",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "eslint": "^9",
+    "typescript": "^5"
+  }
+}

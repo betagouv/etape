@@ -28,6 +28,7 @@
     "apps/site/**/*.{ts,tsx}": "npm run lint --workspace=@etape/site -- --fix",
     "packages/api-client/**/*.ts": "npm run lint --workspace=@etape/api-client -- --fix",
     "packages/api-contract/**/*.ts": "npm run lint --workspace=@etape/api-contract -- --fix",
+    "packages/session/**/*.{ts,tsx}": "npm run lint --workspace=@etape/session -- --fix",
     "packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"
   },
   "devDependencies": {
