@@ -31,7 +31,7 @@
  */
 
 :root {
-  --radius: 0.75rem; /* Radius M = 12px */
+  --radius: 0.625rem; /* radius/lg = 10px */
 
   /* Surfaces & contenu */
   --background: #ffffff; /* base/background */
@@ -316,13 +316,13 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Rayons (échelle Figma dérivée de --radius) */
-  --radius-xs: 4px; /* Radius XS (Figma) */
-  --radius-sm: calc(var(--radius) - 4px); /* 8px  — Radius S */
-  --radius-md: calc(var(--radius) - 2px); /* 10px — dérivé shadcn (pas de token Figma) */
-  --radius-lg: var(--radius); /* 12px — Radius M */
-  --radius-xl: calc(var(--radius) + 4px); /* 16px — Radius L */
-  --radius-full: 9999px; /* Radius Full (Figma) */
+  /* Rayons (échelle shadcn dérivée de --radius, identique au kit Figma) */
+  --radius-xs: 2px; /* radius/xs */
+  --radius-sm: calc(var(--radius) - 4px); /* 6px — radius/sm */
+  --radius-md: calc(var(--radius) - 2px); /* 8px — radius/md */
+  --radius-lg: var(--radius); /* 10px — radius/lg */
+  --radius-xl: calc(var(--radius) + 4px); /* 14px — radius/xl */
+  --radius-full: 9999px;
 
   /* Typographie */
   --font-sans: var(--font-open-sans);
