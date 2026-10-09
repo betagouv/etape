@@ -15,19 +15,19 @@ import { PDF_FONT_FAMILY } from "./fonts";
 // Sous-ensemble de `packages/ui/src/styles/globals.css` (thème clair —
 // un PDF ne suit pas le thème sombre de l'app).
 const COLORS = {
-  foreground: "#1b1b1b", // --foreground
-  secondary: "#434343", // --content-secondary
-  muted: "#575757", // --muted-foreground
-  primary: "#00796b", // --primary / --content-accent
-  border: "#d6d6d6", // --border
+  foreground: "#0a0a0a", // --foreground
+  secondary: "#404040", // --content-secondary
+  muted: "#737373", // --muted-foreground
+  primary: "#134e4a", // --primary / --content-accent
+  border: "#d3e2e0", // --border
   white: "#ffffff",
-  calloutBg: "#e0f2f1", // --secondary
-  calloutText: "#00695c", // --secondary-foreground
+  calloutBg: "#f9faf9", // --secondary
+  calloutText: "#134e4a", // --secondary-foreground
 };
 
 /** Couleur d'accent par catégorie — les mêmes tokens que `CategorieTag.tsx`. */
 export const CATEGORIE_COLORS: Record<Categorie, string> = {
-  interlocuteur: "#00695c", // --secondary-foreground
+  interlocuteur: "#134e4a", // --secondary-foreground
   outil: "#1d4ed8", // --info-text
   dispositif: "#047857", // --success-text
 };
