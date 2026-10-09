@@ -38,12 +38,11 @@ export default function RootLayout({
       className={`${geist.variable} ${bricolage.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        {/* Thème clair imposé : le mode sombre du kit Figma n'est pas encore décliné
+            aux couleurs ETAPE (primaire gris clair). `forcedTheme` ignore aussi un
+            choix « dark » resté en localStorage. Le thème `.dark` de globals.css
+            est gardé pour le jour où il le sera. */}
+        <ThemeProvider attribute="class" forcedTheme="light" disableTransitionOnChange>
           <SkipLinks links={SKIP_LINKS} />
           {/* Doit rester haut dans l'arbre : cf. `BackToTop`. */}
           <BackToTop targetId={MAIN_CONTENT_ID} />
