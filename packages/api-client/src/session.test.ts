@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createHttpClient } from "./http-client";
-import { buildLoginUrl, findSession } from "./session";
+import { buildLoginUrl, findSession, recordSessionActivity } from "./session";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
 import { SESSION_FIXTURE } from "./testing/session-fixture";
 
@@ -39,6 +39,29 @@ describe("findSession", () => {
 
     // Le refus vient du schéma du contrat, pas d'une autre erreur (404, réseau).
     await expect(findSession(httpClient())).rejects.toMatchObject({ name: "ZodError" });
+  });
+});
+
+describe("recordSessionActivity", () => {
+  let server: TestServer;
+  let method: string | undefined;
+
+  beforeAll(async () => {
+    server = await startTestServer({
+      "/auth/session/refresh": (request, response) => {
+        method = request.method;
+        sendJson(response, 200, { session: SESSION });
+      },
+    });
+  });
+
+  afterAll(() => server.close());
+
+  it("signale l'activité par un POST et renvoie la session prolongée", async () => {
+    const httpClient = createHttpClient(server.baseUrl, { onUnauthorized: vi.fn() });
+
+    await expect(recordSessionActivity(httpClient)).resolves.toEqual(SESSION);
+    expect(method).toBe("POST");
   });
 });
 
