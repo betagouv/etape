@@ -8,7 +8,7 @@ Maquettes Figma : [Projet ETAPE](https://www.figma.com/files/team/16391949410018
 
 ## Développement
 
-Monorepo [Turborepo](https://turbo.build/) regroupant plusieurs applications Next.js (SSG).
+Monorepo [Turborepo](https://turbo.build/) : deux sites Next.js en export statique, deux SPA Vite, une API NestJS et un thème Keycloak. Quel workspace sert à quoi, et où faire quoi : [docs/cartographie.md](docs/cartographie.md).
 
 ### Applications
 
@@ -16,10 +16,13 @@ Monorepo [Turborepo](https://turbo.build/) regroupant plusieurs applications Nex
 | --------------------- | ------------------------------ | ---------- |
 | `apps/site`           | Site vitrine                   | 3000       |
 | `apps/simulateur`     | Simulateur d'éligibilité       | 3001       |
+| `apps/front-office`   | Espace du bénéficiaire         | 5173       |
+| `apps/back-office`    | Outil de l'instructeur         | 5174       |
 | `apps/api`            | API d'authentification         | 3002       |
 | `apps/keycloak-theme` | Écrans de connexion et d'email | —          |
 
-Le site et le simulateur sont des exports statiques. `apps/api` est un service
+Le site et le simulateur sont des exports statiques ; le front-office et le
+back-office sont des SPA Vite, encore à l'état de scaffold. `apps/api` est un service
 NestJS : il porte la connexion FranceConnect et les comptes locaux, tient la base
 de données du service, et reste le seul composant à détenir des secrets. `apps/keycloak-theme` n'est pas un serveur
 mais un thème Keycloak, construit en JAR et servi par Keycloak — voir
@@ -72,7 +75,7 @@ Variables d'environnement, identifiants FranceConnect et vérifications :
 
 ## Travailler avec Claude Code
 
-Les conventions du projet sont portées par des règles et des skills versionnés — voir [`docs/conventions/outillage-agent.md`](./docs/conventions/outillage-agent.md). Une seule manipulation est à faire sur ton poste.
+Les conventions du projet sont portées par des règles et des skills versionnés — voir [`docs/conventions/outillage-agent.md`](./docs/conventions/outillage-agent.md). Chaque workspace a un `AGENTS.md` (importé par son `CLAUDE.md`) qui oriente les agents, et [`docs/cartographie.md`](./docs/cartographie.md) en est la vue d'ensemble. Une seule manipulation est à faire sur ton poste.
 
 **Activer le serveur MCP `shadcn`.** Il donne accès aux sources officielles des composants shadcn, ce dont le skill `composant-ui` a besoin pour ne pas les retaper de mémoire. Le dépôt le déclare (`.mcp.json`) et l'autorise (`.claude/settings.json`), mais ton fichier personnel `.claude/settings.local.json` — non versionné — peut le désactiver :
 
