@@ -9,7 +9,7 @@ import {
 } from "@etape/api-client";
 import { NoticeScreen } from "@etape/ui/components/notice-screen";
 import { PendingScreen } from "@etape/ui/components/pending-screen";
-import { SessionExpiredDialog } from "@etape/ui/components/session-expired-dialog";
+import { SessionDialog } from "@etape/ui/components/session-dialog";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet, redirect } from "@tanstack/react-router";
 import type { AxiosInstance } from "axios";
@@ -66,7 +66,7 @@ export const sessionRootRoute = createRootRouteWithContext<SessionRouterContext>
 /** Aiguille selon ce qu'a décidé la garde de démarrage (`beforeLoad`). */
 function SessionLayout() {
   const { access, apiBaseUrl } = sessionRootRoute.useRouteContext();
-  const { isExpired, reconnect } = useSessionExpired(apiBaseUrl);
+  const expired = useSessionExpired(apiBaseUrl);
 
   // Échec du parcours, ou cookie de session non conservé : un clic, jamais une
   // redirection automatique, sans quoi l'on bouclerait.
@@ -87,8 +87,12 @@ function SessionLayout() {
         cache ne suffit pas, un écran monté garde les données qu'il affiche, et
         elles ne doivent pas rester lisibles sur un poste partagé.
       */}
-      {!isExpired && <Outlet />}
-      <SessionExpiredDialog open={isExpired} onReconnect={reconnect} />
+      {!expired.isExpired && <Outlet />}
+      <SessionDialog
+        open={expired.isExpired}
+        {...expired.notice}
+        action={{ href: expired.reconnectHref }}
+      />
     </>
   );
 }
