@@ -328,10 +328,12 @@ garde d'en dire plus.
 Les deux apps sont entièrement derrière la connexion. La logique partagée vit
 dans `@etape/api-client` (clients HTTP et de cache, garde de démarrage
 `checkStartupAccess` et son compteur, textes, `useSessionExpired`) et les vues dans
-`@etape/ui` (écrans d'attente et d'avis, dialogue). Le branchement, lui, est
-copié à l'identique dans chaque app, parce qu'il dépend de son routeur et de sa
-configuration : la route racine qui porte la garde (`navigation/routes.tsx`),
-l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
+`@etape/ui` (écrans d'attente et d'avis, dialogue). Le branchement, qui les
+relie au routeur, vit dans `@etape/session` : la route racine qui porte la garde
+(`sessionRootRoute`), l'aiguillage `SessionLayout` et les écrans d'erreur. Un
+mécanisme de sécurité n'existe ainsi qu'en un exemplaire, et un correctif ne
+peut pas n'atteindre qu'une app. Chaque app n'y ajoute que ses routes, son
+routeur — qui reçoit `apiBaseUrl`, lue dans son `.env` — et l'amorçage.
 
 - **Au démarrage**, une garde `beforeLoad` sur la route racine lit
   `/api/auth/session`. Personne n'est connecté : navigation pleine page vers
@@ -366,7 +368,7 @@ l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
   par exemple, la garde ne trouve plus de session et la redirige vers le
   formulaire. Plusieurs 401 simultanés n'ouvrent qu'un dialogue.
 - **Une erreur dans un écran** affiche « Une erreur inattendue est survenue » à
-  sa place, sous `RootLayout` : le dialogue « Session expirée » reste
+  sa place, sous `SessionLayout` : le dialogue « Session expirée » reste
   disponible. Une adresse inconnue affiche « Page introuvable ».
 
 `PublicSession` porte un `claims` non typé, et `identity-claims.ts` en retire la
