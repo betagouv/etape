@@ -21,7 +21,7 @@ const COLORS = {
   primary: "#134e4a", // --primary / --content-accent
   border: "#d3e2e0", // --border
   white: "#ffffff",
-  calloutBg: "#f9faf9", // --secondary
+  calloutBg: "#eef4f2", // --secondary
   calloutText: "#134e4a", // --secondary-foreground
 };
 
