@@ -6,6 +6,7 @@ import { minutes, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AuthModule } from "./auth/auth.module.js";
 import { validateEnv } from "./config/env.js";
 import { DatabaseModule } from "./database/database.module.js";
+import { PieceJustificativeModule } from "./piece-justificative/piece-justificative.module.js";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { DatabaseModule } from "./database/database.module.js";
     ThrottlerModule.forRoot({ throttlers: [{ ttl: minutes(1), limit: 300 }] }),
     DatabaseModule,
     AuthModule,
+    PieceJustificativeModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
