@@ -110,7 +110,7 @@ export default function Template(props: Props) {
                 </a>
               </div>
             ) : (
-              <h1 id="kc-page-title" className="text-h1 text-foreground font-bold">
+              <h1 id="kc-page-title" className="font-heading text-heading-md text-foreground">
                 {headerNode}
               </h1>
             )}

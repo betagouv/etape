@@ -1,1 +1,7 @@
 @import "@etape/ui/globals.css";
+@import "@fontsource-variable/geist";
+
+/* Les apps Next posent `--font-geist` via `next/font` ; ici, Fontsource. */
+:root {
+  --font-geist: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+}

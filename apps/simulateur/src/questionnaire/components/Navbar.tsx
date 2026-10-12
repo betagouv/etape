@@ -24,7 +24,7 @@ export function Navbar({ step, total }: NavbarProps) {
       </div>
 
       <div
-        className="bg-accent h-1 w-full overflow-hidden"
+        className="bg-primary/20 h-1 w-full overflow-hidden"
         role="progressbar"
         aria-label="Progression du questionnaire"
         aria-valuenow={Math.round(pct)}

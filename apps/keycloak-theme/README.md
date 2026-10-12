@@ -82,7 +82,7 @@ démarre pas de façon fiable dans ce contexte et a été retirée plutôt que l
 
 ## Polices
 
-Open Sans vient de `@fontsource` et Marianne est versionnée dans
+Geist et Bricolage Grotesque viennent de `@fontsource-variable` et Marianne est versionnée dans
 `src/assets/fonts`, extraite de la distribution du DSFR — le paquet
 `@gouvfr/dsfr` refuse de s'installer hors d'un projet initialisé par son propre
 CLI. Marianne ne sert qu'au bouton FranceConnect, dont le kit d'implémentation

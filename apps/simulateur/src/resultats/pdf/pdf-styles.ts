@@ -10,26 +10,26 @@
 import { StyleSheet } from "@react-pdf/renderer";
 
 import type { Categorie } from "../domain/types";
-import { PDF_FONT_FAMILY } from "./fonts";
+import { PDF_FONT_FAMILY, PDF_HEADING_FONT_FAMILY } from "./fonts";
 
 // Sous-ensemble de `packages/ui/src/styles/globals.css` (thème clair —
 // un PDF ne suit pas le thème sombre de l'app).
 const COLORS = {
-  foreground: "#1b1b1b", // --foreground
-  secondary: "#434343", // --content-secondary
-  muted: "#575757", // --muted-foreground
-  primary: "#00796b", // --primary / --content-accent
-  border: "#d6d6d6", // --border
+  foreground: "#0a0a0a", // --foreground
+  secondary: "#404040", // --content-secondary
+  muted: "#737373", // --muted-foreground
+  primary: "#134e4a", // --primary / --content-accent
+  border: "#d3e2e0", // --border
   white: "#ffffff",
-  calloutBg: "#e0f2f1", // --secondary
-  calloutText: "#00695c", // --secondary-foreground
+  calloutBg: "#eef4f2", // --secondary
+  calloutText: "#134e4a", // --secondary-foreground
 };
 
 /** Couleur d'accent par catégorie — les mêmes tokens que `CategorieTag.tsx`. */
 export const CATEGORIE_COLORS: Record<Categorie, string> = {
-  interlocuteur: "#00695c", // --secondary-foreground
-  outil: "#1d4ed8", // --info-text
-  dispositif: "#047857", // --success-text
+  interlocuteur: "#134e4a", // --secondary-foreground
+  outil: "#1e40af", // --info-text
+  dispositif: "#166534", // --success-text
 };
 
 export const pdfStyles = StyleSheet.create({
@@ -49,8 +49,10 @@ export const pdfStyles = StyleSheet.create({
     marginBottom: 24,
   },
   bannerTitle: {
+    fontFamily: PDF_HEADING_FONT_FAMILY,
     fontSize: 18,
-    fontWeight: 700,
+    fontWeight: 600,
+    letterSpacing: -0.45, // -0.025em, l'approche des titres du kit
     color: COLORS.white,
   },
   bannerSubtitle: {
@@ -59,8 +61,10 @@ export const pdfStyles = StyleSheet.create({
     color: COLORS.calloutBg,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: 700,
+    fontFamily: PDF_HEADING_FONT_FAMILY,
+    fontSize: 16,
+    fontWeight: 600,
+    letterSpacing: -0.4, // -0.025em
     marginBottom: 10,
     paddingBottom: 6,
     borderBottomWidth: 2,

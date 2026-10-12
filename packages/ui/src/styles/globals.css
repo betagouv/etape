@@ -8,190 +8,227 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ------------------------------------------------------------------ */
-/* Thème ETAPE — dérivé de l'export Figma (Colors-Primitives) */
+/* Thème ETAPE — kit Figma « Shadcn-UI-Kit ✅ » (L0xP6yvR8Jh2exmWHdCe1S) */
 /* ------------------------------------------------------------------ */
+/*
+ * Les tokens shadcn reprennent la collection « 3. Mode » (`base/*`, Light /
+ * Dark). Les valeurs en commentaire nomment le cran de la gamme teal ETAPE de
+ * la collection « 1. TailwindCSS » : 50 #f9faf9 · 100 #eef4f2 · 200 #d3e2e0 ·
+ * 300 #acc6c4 · 400 #92b5b2 · 500 #78a3a0 · 600 #44817c · 700 #2b6f6b ·
+ * 800 #115e59 · 900 #134e4a · 950 #12423e.
+ *
+ * Écarts au kit, chacun marqué « écart » sur sa ligne :
+ * - `--muted` : le kit donne neutral-100 #f5f5f5, sur lequel son
+ *   `muted-foreground` #737373 ne fait que 4,35:1, sous les 4,5:1 d'un texte
+ *   courant (légendes des cartes, témoignages, récapitulatif). Remplacé par
+ *   neutral-50 #fafafa : 4,54:1.
+ * - `--secondary` : le kit donne teal-50 #f9faf9, qui ne se distingue pas du
+ *   blanc — sections, tags, pastilles et survols disparaissaient. Remplacé
+ *   par teal-100 #eef4f2.
+ * - `--destructive-foreground` : #fef2f2 sur #dc2626 donne 4,41:1, sous les
+ *   4,5:1 d'un texte courant. Remplacé par du blanc (4,83:1).
+ *
+ * Les statuts reprennent les couleurs d'état du kit (`colors/succes`,
+ * `informational`, `warning`, `error` et leurs variantes `-dimmed`, `-border`,
+ * `-contrast`, collection « 2. Theme »), sous nos noms de tokens. Le kit ne
+ * les décline pas encore en Light / Dark : le thème sombre garde les siennes.
+ *
+ * Les tokens hors shadcn (`content-*`, `border-*`, `divider`, statuts,
+ * voiles) n'ont pas d'équivalent dans le kit : ce sont des extensions ETAPE,
+ * alignées sur sa gamme.
+ */
 
 :root {
-  --radius: 0.75rem; /* Radius M = 12px */
+  --radius: 0.625rem; /* radius/lg = 10px */
 
   /* Surfaces & contenu */
-  --background: #ffffff; /* Surface/Base/Default */
-  --foreground: #1b1b1b; /* Content/Base/Primary (Neutral-900) */
-  --content-secondary: #434343; /* Content/Base/Secondary (Neutral-700) */
-  --card: #ffffff;
-  --card-foreground: #1b1b1b;
+  --background: #ffffff; /* base/background */
+  --foreground: #0a0a0a; /* base/foreground (neutral-950) */
+  --card: #ffffff; /* base/card */
+  --card-foreground: #0a0a0a;
   --popover: #ffffff;
-  --popover-foreground: #1b1b1b;
+  --popover-foreground: #0a0a0a;
 
   /* Actions */
-  --primary: #00796b; /* Action/Primary/Default (Teal-700) */
-  --primary-foreground: #ffffff; /* Content/Inverse */
-  --secondary: #e0f2f1; /* Surface/Base/Secondary (Teal-50) */
-  --secondary-foreground: #00695c; /* Teal-800 */
-  --secondary-selected: #b2dfdb; /* Surface/Secondary/Selected (Teal-100) */
-  --muted: #fafafa; /* Surface/Base/Grey (Neutral-50) */
-  --muted-foreground: #575757; /* Content/Tertiary (Neutral-600) */
-  --accent: #e8e8e8; /* Surface/State/Hover (Neutral-200) */
-  --accent-foreground: #1b1b1b;
-  --destructive: #b91c1c; /* Status/Danger/Fill (Danger-700) */
-  --destructive-foreground: #ffffff;
+  --primary: #134e4a; /* base/primary (teal-900) */
+  --primary-foreground: #fafafa; /* base/primary-foreground */
+  --secondary: #eef4f2; /* écart : kit teal-50 #f9faf9 (teal-100) */
+  --secondary-foreground: #134e4a; /* base/secondary-foreground (teal-900) */
+  --secondary-selected: #d3e2e0; /* extension ETAPE (teal-200) */
+  --muted: #fafafa; /* écart : kit neutral-100 #f5f5f5 (neutral-50) */
+  --muted-foreground: #737373; /* base/muted-foreground (neutral-500) */
+  --accent: #f5f5f5; /* base/accent (neutral-100) */
+  --accent-foreground: #171717; /* base/accent-foreground */
+  --destructive: #dc2626; /* base/destructive (red-600) */
+  --destructive-foreground: #ffffff; /* écart : kit #fef2f2 */
 
   /* Bordures & focus */
-  --border: #d6d6d6; /* Stroke/Light (Neutral-300) */
-  --border-strong: #767676; /* Stroke/Default (Neutral-500) */
-  --border-hover: #575757; /* Stroke/Hover (Neutral-600) */
-  --border-active: #00897b; /* Stroke/Active (Teal-600) */
-  --border-disabled: #d6d6d6; /* Stroke/Disabled (Neutral-300) */
-  --divider: #d6d6d6; /* Stroke/Divider (Neutral-300) */
-  --input: #d6d6d6;
-  --ring: #00796b; /* Stroke/Focus (Teal-700) */
-  --ring-alpha: rgba(0, 121, 107, 0.5); /* Stroke/Focus-Alpha-50 */
+  --border: #d3e2e0; /* base/border (teal-200) */
+  --border-strong: #2b6f6b; /* extension ETAPE : bord marqué (teal-700) */
+  --border-hover: #115e59; /* extension ETAPE (teal-800) */
+  --border-active: #134e4a; /* extension ETAPE (teal-900) */
+  --border-disabled: #d3e2e0; /* extension ETAPE (teal-200) */
+  --divider: #d3e2e0; /* extension ETAPE (= border) */
+  --input: #8f8f8f; /* base/input (neutral-400) — 3,23:1 sur blanc */
+  --ring: #2b6f6b; /* base/ring (teal-700) */
+  --ring-alpha: rgba(43, 111, 107, 0.5); /* ring à 50 % */
 
-  /* Statuts (tokens additionnels ETAPE) */
-  --success: #047857; /* Success/Fill (Success-700) */
-  --success-foreground: #ffffff;
-  --success-muted: #ecfdf5; /* Success/Background (Success-50) */
-  --success-border: #047857; /* Success/Border (Success-700) */
-  --success-text: #047857; /* Success/Text (Success-700) */
-  --warning: #b45309; /* Warning/Fill (Warning-700) */
-  --warning-foreground: #ffffff;
-  --warning-muted: #fffbeb; /* Warning/Background (Warning-50) */
-  --warning-border: #b45309; /* Warning/Border (Warning-700) */
-  --warning-text: #b45309; /* Warning/Text (Warning-700) */
-  --info: #1d4ed8; /* Info/Fill (Info-700) */
-  --info-foreground: #ffffff;
-  --info-muted: #eff6ff; /* Info/Background (Info-50) */
-  --info-border: #1d4ed8; /* Info/Border (Info-700) */
-  --info-text: #1d4ed8; /* Info/Text (Info-700) */
-  --destructive-muted: #fef2f2; /* Danger/Background (Danger-50) */
-  --destructive-border: #b91c1c; /* Danger/Border (Danger-700) */
-  --destructive-text: #b91c1c; /* Danger/Text (Danger-700) */
-  --destructive-border-alpha: rgba(185, 28, 28, 0.5); /* Danger/Border-Alpha-50 */
+  /* Statuts — couleurs d'état du kit (collection « 2. Theme ») */
+  --success: #166534; /* colors/succes (green-800) */
+  --success-foreground: #ffffff; /* colors/succes-contrast */
+  --success-muted: #f0fdf4; /* colors/succes-dimmed (green-50) */
+  --success-border: #dcfce7; /* colors/succes-border (green-100) */
+  --success-text: #166534; /* colors/succes — 6,81:1 sur succes-dimmed */
+  --warning: #9a3412; /* colors/warning (orange-800) */
+  --warning-foreground: #ffffff; /* colors/warning-contrast */
+  --warning-muted: #fff7ed; /* colors/warning-dimmed (orange-50) */
+  --warning-border: #ffedd5; /* colors/warning-border (orange-100) */
+  --warning-text: #9a3412; /* colors/warning — 6,88:1 sur warning-dimmed */
+  --info: #1e40af; /* colors/informational (blue-800) */
+  --info-foreground: #ffffff; /* colors/informational-contrast */
+  --info-muted: #eff6ff; /* colors/informational-dimmed (blue-50) */
+  --info-border: #dbeafe; /* colors/informational-border (blue-100) */
+  --info-text: #1e40af; /* colors/informational — 8,01:1 sur informational-dimmed */
+  --destructive-muted: #fef2f2; /* colors/error-dimmed (red-50) */
+  --destructive-border: #fee2e2; /* colors/error-border (red-100) */
+  --destructive-text: #991b1b; /* colors/error (red-800) — 8,31:1 sur blanc */
+  --destructive-border-alpha: rgba(220, 38, 38, 0.5); /* destructive à 50 % */
 
-  /* Contenu accent / liens */
-  --content-accent: #00796b; /* Content/Accent (Teal-700) */
-  --content-accent-hover: #00695c; /* Content/Accent-Hover (Teal-800) */
-  --content-secondary: #434343; /* Content/Secondary (Neutral-700) */
+  /* Contenu — extensions ETAPE */
+  --content-secondary: #404040; /* neutral-700 */
+  --content-accent: #134e4a; /* = primary (teal-900) */
+  --content-accent-hover: #12423e; /* teal-950 */
 
   /* Overlays (identiques light & dark) */
-  --overlay-black-60: rgba(0, 0, 0, 0.6); /* Surface/Overlay/Black-60 */
-  --overlay-black-10: rgba(0, 0, 0, 0.1); /* Surface/Overlay/Black-10 */
-  --overlay-white-70: rgba(255, 255, 255, 0.7); /* Surface/Overlay/White-70 */
-  --overlay-white-40: rgba(255, 255, 255, 0.4); /* Surface/Overlay/White-40 */
+  --overlay-black-60: rgba(0, 0, 0, 0.6);
+  --overlay-black-10: rgba(0, 0, 0, 0.1);
+  --overlay-white-70: rgba(255, 255, 255, 0.7);
+  --overlay-white-40: rgba(255, 255, 255, 0.4);
 
   /* Charts */
-  --chart-1: #00897b; /* Teal-600 */
-  --chart-2: #3b82f6; /* Info-500 */
-  --chart-3: #f59e0b; /* Warning-500 */
-  --chart-4: #10b981; /* Success-500 */
-  --chart-5: #ef4444; /* Danger-500 */
+  --chart-1: #ea580c; /* base/chart-1 */
+  --chart-2: #44817c; /* base/chart-2 (teal-600) */
+  --chart-3: #164e63; /* base/chart-3 */
+  --chart-4: #fbbf24; /* base/chart-4 */
+  --chart-5: #f59e0b; /* base/chart-5 */
 
   /* Sidebar */
-  --sidebar: #fafafa;
-  --sidebar-foreground: #1b1b1b;
-  --sidebar-primary: #00796b;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8e8e8; /* Surface/State/Hover (Neutral-200) */
-  --sidebar-accent-foreground: #1b1b1b;
-  --sidebar-border: #d6d6d6;
-  --sidebar-ring: #00796b;
+  --sidebar: #fafafa; /* base/sidebar */
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a3a3a3;
 }
 
+/*
+ * Thème sombre : le kit reprend le neutre de shadcn sans teal (primaire gris
+ * clair). Appliqué tel quel en attendant sa déclinaison par l'UI/UX, avec les
+ * mêmes écarts d'accessibilité qu'en clair.
+ */
 .dark {
-  /* Surfaces & contenu — niveaux ajustés pour le contraste (bg Neutral-900, card Neutral-800) */
-  --background: #1b1b1b; /* Neutral-900 */
-  --foreground: #fafafa; /* Content/Base/Primary (Neutral-50) */
-  --content-secondary: #e8e8e8; /* Content/Base/Secondary (Neutral-200) */
-  --card: #2b2b2b; /* Surface/Base/Default (Neutral-800) */
+  /* Surfaces & contenu */
+  --background: #0a0a0a; /* base/background */
+  --foreground: #fafafa; /* base/foreground */
+  --card: #171717; /* base/card */
   --card-foreground: #fafafa;
-  --popover: #2b2b2b;
+  --popover: #262626;
   --popover-foreground: #fafafa;
 
   /* Actions */
-  --primary: #26a69a; /* Action/Primary/Default (Teal-400) */
-  --primary-foreground: #1b1b1b; /* Content/Inverse (Neutral-900) */
-  --secondary: #004d40; /* Surface/Base/Secondary (Teal-900) */
-  --secondary-foreground: #e0f2f1; /* Teal-50 */
-  --secondary-selected: #00695c; /* Surface/Secondary/Selected (Teal-800) */
-  --muted: #2b2b2b; /* Neutral-800 */
-  --muted-foreground: #d6d6d6; /* Content/Tertiary (Neutral-300) */
-  --accent: #434343; /* Neutral-700 (hover contrasté) */
+  --primary: #e5e5e5; /* base/primary */
+  --primary-foreground: #171717;
+  --secondary: #262626; /* base/secondary */
+  --secondary-foreground: #fafafa;
+  --secondary-selected: #404040; /* extension ETAPE (neutral-700) */
+  --muted: #262626; /* base/muted */
+  --muted-foreground: #a3a3a3; /* base/muted-foreground */
+  --accent: #404040; /* base/accent */
   --accent-foreground: #fafafa;
-  --destructive: #ef4444; /* Status/Danger/Fill dark (Danger-500) */
-  --destructive-foreground: #1b1b1b;
+  --destructive: #f87171; /* base/destructive (red-400) */
+  --destructive-foreground: #0a0a0a; /* écart : kit #fef2f2 (2,5:1) */
 
   /* Bordures & focus */
-  --border: #575757; /* Stroke/Light (Neutral-600) */
-  --border-strong: #a6a6a6; /* Stroke/Default (Neutral-400) */
-  --border-hover: #d6d6d6; /* Stroke/Hover (Neutral-300) */
-  --border-active: #26a69a; /* Stroke/Active (Teal-400) */
-  --border-disabled: #575757; /* Stroke/Disabled (Neutral-600) */
-  --divider: #575757; /* Stroke/Divider (Neutral-600) */
-  --input: #575757;
-  --ring: #4db6ac; /* Stroke/Focus (Teal-300) */
-  --ring-alpha: rgba(77, 182, 172, 0.5); /* Stroke/Focus-Alpha-50 */
+  --border: rgba(255, 255, 255, 0.1); /* base/border */
+  --border-strong: #737373; /* écart : bord des contrôles (neutral-500, 4,2:1) */
+  --border-hover: #a3a3a3; /* neutral-400 */
+  --border-active: #e5e5e5; /* = primary */
+  --border-disabled: rgba(255, 255, 255, 0.1);
+  --divider: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15); /* base/input */
+  --ring: #737373; /* base/ring (neutral-500, 4,2:1) */
+  --ring-alpha: rgba(115, 115, 115, 0.5);
 
   /* Statuts */
-  --success: #10b981; /* Success/Fill (Success-500) */
-  --success-foreground: #1b1b1b;
-  --success-muted: #064e3b; /* Success/Background (Success-900) */
-  --success-border: #6ee7b7; /* Success/Border (Success-300) */
-  --success-text: #6ee7b7; /* Success/Text (Success-300) */
-  --warning: #f59e0b; /* Warning/Fill (Warning-500) */
-  --warning-foreground: #1b1b1b;
-  --warning-muted: #78350f; /* Warning/Background (Warning-900) */
-  --warning-border: #fcd34d; /* Warning/Border (Warning-300) */
-  --warning-text: #fcd34d; /* Warning/Text (Warning-300) */
-  --info: #3b82f6; /* Info/Fill (Info-500) */
-  --info-foreground: #1b1b1b;
-  --info-muted: #1e3a8a; /* Info/Background (Info-900) */
-  --info-border: #93c5fd; /* Info/Border (Info-300) */
-  --info-text: #93c5fd; /* Info/Text (Info-300) */
-  --destructive-muted: #7f1d1d; /* Danger/Background (Danger-900) */
-  --destructive-border: #fca5a5; /* Danger/Border (Danger-300) */
-  --destructive-text: #fca5a5; /* Danger/Text (Danger-300) */
-  --destructive-border-alpha: rgba(252, 165, 165, 0.5); /* Danger/Border-Alpha-50 */
+  --success: #10b981; /* emerald-500 */
+  --success-foreground: #0a0a0a;
+  --success-muted: #064e3b; /* emerald-900 */
+  --success-border: #6ee7b7; /* emerald-300 */
+  --success-text: #6ee7b7;
+  --warning: #f59e0b; /* amber-500 */
+  --warning-foreground: #0a0a0a;
+  --warning-muted: #78350f; /* amber-900 */
+  --warning-border: #fcd34d; /* amber-300 */
+  --warning-text: #fcd34d;
+  --info: #3b82f6; /* blue-500 */
+  --info-foreground: #0a0a0a;
+  --info-muted: #1e3a8a; /* blue-900 */
+  --info-border: #93c5fd; /* blue-300 */
+  --info-text: #93c5fd;
+  --destructive-muted: #7f1d1d; /* red-900 */
+  --destructive-border: #fca5a5; /* red-300 */
+  --destructive-text: #fca5a5;
+  --destructive-border-alpha: rgba(252, 165, 165, 0.5);
 
-  /* Contenu accent / liens */
-  --content-accent: #26a69a; /* Content/Accent (Teal-400) */
-  --content-accent-hover: #4db6ac; /* Content/Accent-Hover (Teal-300) */
-  --content-secondary: #e8e8e8; /* Content/Secondary (Neutral-200) */
+  /* Contenu */
+  --content-secondary: #d4d4d4; /* neutral-300 */
+  --content-accent: #e5e5e5; /* = primary */
+  --content-accent-hover: #fafafa;
 
   /* Charts */
-  --chart-1: #26a69a; /* Teal-400 */
-  --chart-2: #93c5fd; /* Info-300 */
-  --chart-3: #fcd34d; /* Warning-300 */
-  --chart-4: #6ee7b7; /* Success-300 */
-  --chart-5: #fca5a5; /* Danger-300 */
+  --chart-1: #1d4ed8; /* base/chart-1 */
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #a855f7;
+  --chart-5: #f43f5e;
 
   /* Sidebar */
-  --sidebar: #1b1b1b;
+  --sidebar: #171717;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #26a69a;
-  --sidebar-primary-foreground: #1b1b1b;
-  --sidebar-accent: #434343;
+  --sidebar-primary: #1d4ed8;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #262626;
   --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #575757;
-  --sidebar-ring: #4db6ac;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #525252;
 }
 
 /* ------------------------------------------------------------------ */
 /* Échelle typographique — deux modes, comme dans Figma                */
 /* ------------------------------------------------------------------ */
 /*
- * Les styles de texte Figma sont modaux : `Heading/H1` vaut 28/36 en mobile et
- * 32/40 en desktop, sous le même nom. Les valeurs mobile sont posées dans
- * `:root`, redéfinies à `lg`, et exposées via `@theme inline` — qui compile en
- * `font-size: var(--type-h1)`, si bien que `text-h1` bascule seul au breakpoint.
+ * Les titres du kit (collection « 4. Custom ») sont modaux : `heading-md` vaut
+ * 30/36 en Mobile et 36/40 en Desktop, sous le même nom. Les valeurs mobile
+ * sont posées dans `:root`, redéfinies à `lg`, et exposées via `@theme inline`
+ * — qui compile en `font-size: var(--type-heading-md)`, si bien que
+ * `text-heading-md` bascule seul au breakpoint.
+ *
+ * Un titre s'écrit `font-heading text-heading-md` : la taille porte interlignage,
+ * graisse (600) et approche (-0.025em, soit les -0.5 à -1.5px du kit), mais
+ * Tailwind ne laisse pas une taille porter sa police.
  */
 :root {
   /* Mode Mobile */
-  --type-display-lg: 2.25rem; /* Display/Large 36 */
-  --type-display-lg-lh: 2.75rem; /* 44 */
-  --type-h1: 1.75rem; /* Heading/H1 28 */
-  --type-h1-lh: 2.25rem; /* 36 */
-  --type-h2: 1.5rem; /* Heading/H2 24 */
-  --type-h2-lh: 2rem; /* 32 */
+  --type-heading-xl: 3rem; /* heading-xl 48 */
+  --type-heading-xl-lh: 3rem; /* 48 */
+  --type-heading-lg: 2.25rem; /* heading-lg 36 */
+  --type-heading-lg-lh: 2.5rem; /* 40 */
+  --type-heading-md: 1.875rem; /* heading-md 30 */
+  --type-heading-md-lh: 2.25rem; /* 36 */
+  --type-heading-sm: 1.25rem; /* heading-sm 20 */
+  --type-heading-sm-lh: 1.75rem; /* 28 */
   --type-body-lg: 1rem; /* Body/Large 16 */
   --type-body-lg-lh: 1.5rem; /* 24 */
   --type-label-lg: 0.875rem; /* Label/Large 14 */
@@ -206,15 +243,26 @@
   --type-caption-lh: 1rem; /* 16 */
 }
 
-/* Bascule en mode Desktop — aligné sur le breakpoint `lg` de Tailwind. */
+/*
+ * Bascule des titres en mode Desktop à 768px, le breakpoint `md` de Tailwind
+ * (précisé par l'UI/UX).
+ */
+@media (width >= 48rem) {
+  :root {
+    --type-heading-xl: 3.75rem; /* 60 */
+    --type-heading-xl-lh: 3.75rem; /* 60 */
+    --type-heading-lg: 3rem; /* 48 */
+    --type-heading-lg-lh: 3rem; /* 48 */
+    --type-heading-md: 2.25rem; /* 36 */
+    --type-heading-md-lh: 2.5rem; /* 40 */
+    --type-heading-sm: 1.5rem; /* 24 */
+    --type-heading-sm-lh: 2rem; /* 32 */
+  }
+}
+
+/* Textes hérités de l'ancien kit, sans équivalent dans le nouveau : bascule à `lg`. */
 @media (width >= 64rem) {
   :root {
-    --type-display-lg: 3rem; /* 48 */
-    --type-display-lg-lh: 3.75rem; /* 60 */
-    --type-h1: 2rem; /* 32 */
-    --type-h1-lh: 2.5rem; /* 40 */
-    --type-h2: 1.75rem; /* 28 */
-    --type-h2-lh: 2.25rem; /* 36 */
     --type-body-lg: 1.125rem; /* 18 */
     --type-body-lg-lh: 1.75rem; /* 28 */
     --type-label-lg: 1rem; /* 16 */
@@ -273,7 +321,6 @@
   --color-content-secondary: var(--content-secondary);
   --color-content-accent: var(--content-accent);
   --color-content-accent-hover: var(--content-accent-hover);
-  --color-content-secondary: var(--content-secondary);
 
   --color-overlay-black-60: var(--overlay-black-60);
   --color-overlay-black-10: var(--overlay-black-10);
@@ -295,24 +342,47 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Rayons (échelle Figma dérivée de --radius) */
-  --radius-xs: 4px; /* Radius XS (Figma) */
-  --radius-sm: calc(var(--radius) - 4px); /* 8px  — Radius S */
-  --radius-md: calc(var(--radius) - 2px); /* 10px — dérivé shadcn (pas de token Figma) */
-  --radius-lg: var(--radius); /* 12px — Radius M */
-  --radius-xl: calc(var(--radius) + 4px); /* 16px — Radius L */
-  --radius-full: 9999px; /* Radius Full (Figma) */
+  /* Rayons (échelle shadcn dérivée de --radius, identique au kit Figma) */
+  --radius-xs: 2px; /* radius/xs */
+  --radius-sm: calc(var(--radius) - 4px); /* 6px — radius/sm */
+  --radius-md: calc(var(--radius) - 2px); /* 8px — radius/md */
+  --radius-lg: var(--radius); /* 10px — radius/lg */
+  --radius-xl: calc(var(--radius) + 4px); /* 14px — radius/xl */
+  --radius-full: 9999px;
 
   /* Typographie */
-  --font-sans: var(--font-open-sans);
+  /*
+   * `--font-geist` est posée par `next/font` dans les apps Next, et à la main
+   * dans les apps Vite qui chargent Geist par Fontsource. Le repli système
+   * évite qu'une app qui l'oublie retombe sur la police serif du navigateur.
+   */
+  --font-sans: var(--font-geist, ui-sans-serif, system-ui, sans-serif);
+  /*
+   * Bricolage Grotesque, rangée en `font-serif` dans le kit — d'où un nom à
+   * nous. Chargée sur son seul axe de graisse : l'axe `opsz` reste à sa valeur
+   * par défaut, 14, celle des styles de titre du kit. Une app qui ne la charge
+   * pas affiche ses titres en Geist, comme son texte, plutôt que dans la
+   * police du système.
+   */
+  --font-heading: var(--font-bricolage, var(--font-geist, ui-sans-serif, system-ui, sans-serif));
 
   /* Styles de texte Figma — responsive par construction (cf. bloc ci-dessus) */
-  --text-display-lg: var(--type-display-lg);
-  --text-display-lg--line-height: var(--type-display-lg-lh);
-  --text-h1: var(--type-h1);
-  --text-h1--line-height: var(--type-h1-lh);
-  --text-h2: var(--type-h2);
-  --text-h2--line-height: var(--type-h2-lh);
+  --text-heading-xl: var(--type-heading-xl);
+  --text-heading-xl--line-height: var(--type-heading-xl-lh);
+  --text-heading-xl--font-weight: 600;
+  --text-heading-xl--letter-spacing: -0.025em;
+  --text-heading-lg: var(--type-heading-lg);
+  --text-heading-lg--line-height: var(--type-heading-lg-lh);
+  --text-heading-lg--font-weight: 600;
+  --text-heading-lg--letter-spacing: -0.025em;
+  --text-heading-md: var(--type-heading-md);
+  --text-heading-md--line-height: var(--type-heading-md-lh);
+  --text-heading-md--font-weight: 600;
+  --text-heading-md--letter-spacing: -0.025em;
+  --text-heading-sm: var(--type-heading-sm);
+  --text-heading-sm--line-height: var(--type-heading-sm-lh);
+  --text-heading-sm--font-weight: 600;
+  --text-heading-sm--letter-spacing: -0.025em;
   --text-body-lg: var(--type-body-lg);
   --text-body-lg--line-height: var(--type-body-lg-lh);
   --text-body: var(--type-body);

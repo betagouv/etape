@@ -80,7 +80,7 @@ function SectionHeader({
       {caption ? (
         <p className="text-caption text-primary font-medium tracking-wide uppercase">{caption}</p>
       ) : null}
-      <h2 id={titleId} className="text-h2 font-bold">
+      <h2 id={titleId} className="font-heading text-heading-sm">
         {title}
       </h2>
       {subtext ? (

@@ -18,7 +18,7 @@ export function Impact() {
         {impact.stats.map(({ value, label, description }) => (
           <li key={label} className="flex">
             <Card variant="muted" className="w-full px-6">
-              <p className="text-display-lg text-primary font-bold">{value}</p>
+              <p className="font-heading text-heading-lg text-primary">{value}</p>
               <p className="text-caption text-muted-foreground tracking-wide uppercase">{label}</p>
               <p className="text-body text-content-secondary">{description}</p>
             </Card>

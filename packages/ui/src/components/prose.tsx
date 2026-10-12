@@ -16,7 +16,7 @@ function Prose({
       className={cn(
         "text-body text-foreground",
 
-        "[&_h2]:text-h2 [&_h2]:text-foreground [&_h2]:font-bold [&_h2]:text-balance",
+        "[&_h2]:font-heading [&_h2]:text-heading-sm [&_h2]:text-foreground [&_h2]:text-balance",
         "[&_h3]:text-body-lg [&_h3]:text-foreground [&_h3]:font-bold [&_h3]:text-balance",
 
         "[&_p]:text-pretty",
