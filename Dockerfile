@@ -97,13 +97,21 @@ RUN apk add --no-cache curl && \
       "https://github.com/InseeFr/Keycloak-FranceConnect/releases/download/${KEYCLOAK_FRANCECONNECT_VERSION}/keycloak-franceconnect-${KEYCLOAK_FRANCECONNECT_VERSION}.jar" && \
     echo "${KEYCLOAK_FRANCECONNECT_SHA256}  /keycloak-franceconnect.jar" | sha256sum -c -
 
+FROM alpine:3.22 AS altcha-extension
+RUN apk add --no-cache maven
+WORKDIR /src
+COPY keycloak/extensions/altcha/ ./
+RUN mvn -B -q package
+
 # `kc.sh build` ici plutôt qu'au démarrage : c'est ce qui autorise
 # `start --optimized`. Les options figées alors ne varient plus à l'exécution.
 FROM quay.io/keycloak/keycloak:26.7 AS keycloak
 
 COPY --from=theme /app/apps/keycloak-theme/dist_keycloak/etape-keycloak-theme.jar /opt/keycloak/providers/
 COPY --from=franceconnect-extension /keycloak-franceconnect.jar /opt/keycloak/providers/
+COPY --from=altcha-extension /src/target/etape-keycloak-altcha.jar /opt/keycloak/providers/
 COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
+COPY deploy/keycloak-altcha.sh /opt/keycloak/bin/etape-altcha.sh
 COPY deploy/keycloak-start.sh /opt/keycloak/bin/etape-keycloak-start.sh
 
 # Importé au premier démarrage. Décrit le poste de développement — URL en

@@ -14,6 +14,8 @@
   "duplicateEmailsAllowed": false,
   "editUsernameAllowed": false,
   "resetPasswordAllowed": true,
+  "registrationFlow": "etape-registration",
+  "resetCredentialsFlow": "etape-reset-credentials",
   "rememberMe": true,
   "verifyEmail": false,
   "bruteForceProtected": true,
@@ -88,6 +90,105 @@
         "clientAuthMethod": "client_secret_post",
         "syncMode": "FORCE"
       }
+    }
+  ],
+  "authenticationFlows": [
+    {
+      "alias": "etape-registration",
+      "description": "Inscription protégée par ALTCHA",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "registration-page-form",
+          "authenticatorFlow": true,
+          "flowAlias": "etape-registration registration form",
+          "requirement": "REQUIRED",
+          "priority": 10
+        }
+      ]
+    },
+    {
+      "alias": "etape-registration registration form",
+      "description": "Formulaire d'inscription",
+      "providerId": "form-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "registration-user-creation",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20
+        },
+        {
+          "authenticator": "registration-password-action",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 50
+        },
+        {
+          "authenticator": "etape-altcha-registration",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 70
+        }
+      ]
+    },
+    {
+      "alias": "etape-reset-credentials",
+      "description": "Mot de passe oublié protégé par ALTCHA",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "etape-altcha-reset-credentials",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10
+        },
+        {
+          "authenticator": "reset-credential-email",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20
+        },
+        {
+          "authenticator": "reset-password",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 30
+        },
+        {
+          "authenticatorFlow": true,
+          "flowAlias": "etape-reset-credentials Reset - Conditional OTP",
+          "requirement": "CONDITIONAL",
+          "priority": 40
+        }
+      ]
+    },
+    {
+      "alias": "etape-reset-credentials Reset - Conditional OTP",
+      "description": "Réinitialisation de l'OTP s'il est configuré",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-user-configured",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10
+        },
+        {
+          "authenticator": "reset-otp",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20
+        }
+      ]
     }
   ]
 }

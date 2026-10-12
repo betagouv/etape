@@ -2,8 +2,10 @@
 
 `etape-realm.json` est importé au démarrage de Keycloak (`docker compose up`
 lance le conteneur avec `--import-realm`). Il décrit le client `etape-api`,
-l'identity provider FranceConnect, la politique de mot de passe et la protection
-contre le bruteforce. Voir [docs/authentification.md](../../docs/authentification.md).
+l'identity provider FranceConnect, la politique de mot de passe, la protection
+contre le bruteforce et les flows `etape-registration` et
+`etape-reset-credentials`, qui exigent ALTCHA. Voir
+[docs/authentification.md](../../docs/authentification.md).
 
 ## Ce fichier décrit l'environnement de développement, et lui seul
 
@@ -43,6 +45,9 @@ L'import tourne en stratégie `IGNORE_EXISTING` : si le realm `etape` existe dé
 le fichier est ignoré en silence. Un `docker compose restart` après modification
 ne produit donc **aucun effet** — piège classique, qui se traduit par de longues
 minutes à se demander pourquoi un réglage ne prend pas.
+
+Les flows ALTCHA font exception : `deploy/keycloak-altcha.sh`, lancé par
+`keycloak-init`, les crée aussi sur un realm existant.
 
 Pour repartir du fichier, il faut détruire le volume :
 
