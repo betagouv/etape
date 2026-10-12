@@ -31,6 +31,11 @@ const buttonVariants = cva(
         // le contraste tombe de 5,70:1 à 4,65:1.
         "outline-primary":
           "border border-primary bg-background text-primary hover:bg-secondary hover:text-secondary-foreground",
+        // « Destructive subdued » du kit : action destructive secondaire, sur
+        // fond rouge atténué. Écart : le kit pose le libellé en `destructive`,
+        // qui ne fait que 4,1:1 sur ce fond ; `destructive-text` y fait 7:1.
+        "destructive-subdued":
+          "bg-destructive/10 text-destructive-text hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

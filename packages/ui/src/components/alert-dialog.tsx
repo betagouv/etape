@@ -1,13 +1,15 @@
 "use client";
 
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 
 import { cn } from "@etape/ui/lib/utils";
 import { Button } from "@etape/ui/components/button";
 
-// Source : registre shadcn (new-york-v4), adaptée aux tokens du projet — voile
-// `overlay-black-60` et échelle typographique `text-body*`. Contrairement à
+// Source : registre shadcn, à l'apparence du kit Figma (« Alert Dialog ») — cadre
+// sans marge intérieure, en-tête et pied de 16 px, pied grisé sous un filet.
+// Contrairement à
 // `Dialog`, Radix y pose `role="alertdialog"` et ne ferme pas au clic hors du
 // cadre : une alerte attend une réponse.
 //
@@ -30,15 +32,37 @@ function AlertDialogPortal({ ...props }: React.ComponentProps<typeof AlertDialog
   return <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />;
 }
 
+/**
+ * `center` : au milieu de l'écran, sous un voile sombre.
+ * `top-end` : ancré en haut à droite, sous le bouton qui l'ouvre, et sur un
+ * voile clair qui estompe la page sans la masquer (maquette « Quitter » du
+ * simulateur). En dessous de `sm`, il reste centré : l'écran est trop étroit
+ * pour qu'un ancrage se lise. Sa position par défaut est le coin de l'écran ;
+ * l'app l'aligne sur son déclencheur par `className` (`sm:top-*`, `sm:right-*`).
+ */
+const alertDialogPlacements = {
+  center: { overlay: "bg-overlay-black-60", content: "" },
+  "top-end": {
+    overlay: "bg-background/50",
+    content: "sm:top-4 sm:right-4 sm:left-auto sm:translate-x-0 sm:translate-y-0",
+  },
+} as const;
+
+type AlertDialogPlacement = keyof typeof alertDialogPlacements;
+
 function AlertDialogOverlay({
   className,
+  placement = "center",
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Overlay>) {
+}: React.ComponentProps<typeof AlertDialogPrimitive.Overlay> & {
+  placement?: AlertDialogPlacement;
+}) {
   return (
     <AlertDialogPrimitive.Overlay
       data-slot="alert-dialog-overlay"
       className={cn(
-        "bg-overlay-black-60 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50 motion-reduce:animate-none!",
+        "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50 motion-reduce:animate-none!",
+        alertDialogPlacements[placement].overlay,
         className,
       )}
       {...props}
@@ -49,18 +73,22 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   size = "default",
+  placement = "center",
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm";
+  placement?: AlertDialogPlacement;
 }) {
   return (
     <AlertDialogPortal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay placement={placement} />
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         data-size={size}
+        data-placement={placement}
         className={cn(
-          "group/alert-dialog-content bg-background data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 data-[size=sm]:max-w-xs motion-reduce:animate-none! data-[size=default]:sm:max-w-lg",
+          "group/alert-dialog-content bg-background data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 border-foreground/10 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-xl border shadow-lg duration-200 data-[size=sm]:max-w-xs motion-reduce:animate-none! data-[size=default]:sm:max-w-sm",
+          alertDialogPlacements[placement].content,
           className,
         )}
         {...props}
@@ -74,7 +102,7 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
     <div
       data-slot="alert-dialog-header"
       className={cn(
-        "grid grid-rows-[auto_1fr] place-items-center gap-1.5 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-6 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
+        "grid grid-rows-[auto_1fr] place-items-center gap-1.5 p-4 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
         className,
       )}
       {...props}
@@ -82,12 +110,13 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
   );
 }
 
+// Pied du kit : neutral-100 à 50 % sur blanc, soit exactement notre `--muted`.
 function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
+        "border-border bg-muted flex flex-col-reverse gap-2 border-t p-4 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}
@@ -103,7 +132,7 @@ function AlertDialogTitle({
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
       className={cn(
-        "text-body-lg text-foreground font-bold sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
+        "text-body-lg text-foreground font-medium sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
         className,
       )}
       {...props}
@@ -118,20 +147,37 @@ function AlertDialogDescription({
   return (
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
-      className={cn("text-body text-content-secondary", className)}
+      className={cn("text-body-sm text-muted-foreground", className)}
       {...props}
     />
   );
 }
 
-function AlertDialogMedia({ className, ...props }: React.ComponentProps<"div">) {
+/** Pastille d'icône de l'en-tête. `destructive` : une action qui fait perdre quelque chose. */
+const alertDialogMediaVariants = cva(
+  "mb-2 inline-flex size-10 items-center justify-center rounded-md sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-6",
+  {
+    variants: {
+      variant: {
+        default: "bg-muted text-foreground",
+        destructive: "bg-destructive/10 text-destructive",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+function AlertDialogMedia({
+  className,
+  variant,
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof alertDialogMediaVariants>) {
   return (
     <div
       data-slot="alert-dialog-media"
-      className={cn(
-        "bg-muted mb-2 inline-flex size-16 items-center justify-center rounded-md sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-8",
-        className,
-      )}
+      className={cn(alertDialogMediaVariants({ variant }), className)}
       {...props}
     />
   );

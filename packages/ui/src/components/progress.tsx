@@ -1,0 +1,34 @@
+"use client";
+
+import * as React from "react";
+import { Progress as ProgressPrimitive } from "radix-ui";
+
+import { cn } from "@etape/ui/lib/utils";
+
+// Source : registre shadcn, à l'apparence du kit Figma (« Progress ») — rail de
+// 4 px en `primary/20`. Radix pose `role="progressbar"` et ses attributs
+// `aria-value*` ; un `getValueLabel` donne une lecture plus parlante qu'un
+// pourcentage (« Question 3 sur environ 7 »).
+
+function Progress({
+  className,
+  value,
+  ...props
+}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+  return (
+    <ProgressPrimitive.Root
+      data-slot="progress"
+      value={value}
+      className={cn("bg-primary/20 relative h-1 w-full overflow-hidden rounded-full", className)}
+      {...props}
+    >
+      <ProgressPrimitive.Indicator
+        data-slot="progress-indicator"
+        className="bg-primary h-full w-full flex-1 rounded-full transition-transform motion-reduce:transition-none"
+        style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
+      />
+    </ProgressPrimitive.Root>
+  );
+}
+
+export { Progress };
