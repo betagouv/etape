@@ -1,5 +1,8 @@
 "use client";
 
+import { Fragment } from "react";
+import { Separator } from "@etape/ui/components/separator";
+
 import { isFieldVisible, opensUnder } from "../domain/conditions";
 import type { Answers, AnswerValue, Field, Question } from "../domain/types";
 import { FieldRenderer } from "./FieldRenderer";
@@ -80,24 +83,24 @@ export function QuestionFields({
                 if (opened.length === 0) return null;
                 const option = field.options.find((o) => o.value === optionValue);
                 return (
+                  // Chaque précision s'ouvre sous un filet, dans la carte de
+                  // l'option : le lien entre le choix et ce qu'il ouvre se lit
+                  // sans retrait, la carte faisant déjà le regroupement.
                   <div
                     role="group"
                     aria-label={`Précisions : ${option?.label ?? ""}`}
-                    // Filet teal aligné sous le LIBELLÉ de l'option (ms-6 = la
-                    // puce de 16px + son écart de 8px), et remonté de 8px pour
-                    // se coller à elle : dans la colonne d'options espacée de
-                    // 24px, il reste ainsi plus proche de la réponse qu'il
-                    // précise que de la suivante. Repris du proto (`.sub`).
-                    className="border-secondary-selected ms-6 -mt-2 flex flex-col gap-5 border-s-2 ps-4 pt-4 pb-1"
+                    className="flex flex-col gap-3"
                   >
                     {opened.map((sub) => (
-                      <FieldRenderer
-                        key={sub.name}
-                        field={sub}
-                        answers={answers}
-                        setAnswer={setAnswer}
-                        error={errorOf(sub)}
-                      />
+                      <Fragment key={sub.name}>
+                        <Separator />
+                        <FieldRenderer
+                          field={sub}
+                          answers={answers}
+                          setAnswer={setAnswer}
+                          error={errorOf(sub)}
+                        />
+                      </Fragment>
                     ))}
                   </div>
                 );
@@ -110,7 +113,7 @@ export function QuestionFields({
 
   return (
     <InlineFieldErrorProvider value={inlineErrors}>
-      <div className="flex w-full flex-col gap-6 md:gap-8">{mainFields.map(renderField)}</div>
+      <div className="flex w-full flex-col gap-8">{mainFields.map(renderField)}</div>
     </InlineFieldErrorProvider>
   );
 }

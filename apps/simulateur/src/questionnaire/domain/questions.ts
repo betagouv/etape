@@ -73,6 +73,30 @@ const enActivite = (answers: Answers): boolean =>
 
 const estSalarie = (answers: Answers): boolean => answers[FIELD_SITUATION] === SITUATION_SALARIE;
 
+const CONTRATS_CADRE = ["cdi", "cdd"];
+
+/**
+ * Le statut cadre n'est demandé qu'en CDI et en CDD (règle du ticket) : il ne
+ * veut rien dire pour un intérim ou un intermittent du spectacle.
+ */
+const isCadreDemande = (answers: Answers): boolean =>
+  estSalarie(answers) && CONTRATS_CADRE.includes(String(answers[FIELD_CONTRAT]));
+
+/**
+ * Les précisions de Q3 s'ouvrent une à une, chacune une fois la précédente
+ * donnée (maquettes « Q3 - Completed ») : l'arrêt de travail, posé en dernier,
+ * attend le contrat et le statut cadre du salarié·e, ou le versant de l'agent·e.
+ * L'indépendant·e n'a pas d'autre précision : la question lui vient d'emblée.
+ */
+const isSituationPrecisee = (answers: Answers): boolean => {
+  if (estSalarie(answers)) {
+    if (answers[FIELD_CONTRAT] === undefined) return false;
+    return !isCadreDemande(answers) || answers[FIELD_CADRE] !== undefined;
+  }
+  if (answers[FIELD_SITUATION] === SITUATION_AGENT) return answers[FIELD_VERSANT] !== undefined;
+  return true;
+};
+
 /**
  * Q5 ne peut pas être inférieure à Q4 : on ne totalise pas 5 ans d'activité en
  * étant chez le même employeur depuis 10 ans.
@@ -96,13 +120,19 @@ const dureeCoherente = (answers: Answers): string | null => {
   return `Vous avez indiqué être chez votre employeur actuel depuis ${monthLabel(entree)}, soit ${seuil} ${seuil > 1 ? "ans" : "an"} : votre durée totale ne peut pas être inférieure. Corrigez-la, ou revenez à la question précédente.`;
 };
 
-/** Séquence ordonnée des questions du flow. */
+/**
+ * Séquence ordonnée des questions du flow.
+ *
+ * Les « ? » sont précédés d'une espace insécable (`\u00a0`) : sans elle, le
+ * point d'interrogation peut se retrouver seul en début de ligne.
+ */
 export const questions: Question[] = [
   // ─── Q1. Origine de la demande ─────────────────────────────────────────
   {
     id: Q_ORIGINE,
-    title: "D'où vient ce besoin d'informations ?",
-    subtitle: "Plusieurs réponses possibles. Il n'y a pas de mauvaise réponse.",
+    title: "D'où vient ce besoin d'informations\u00a0?",
+    subtitle:
+      "Votre point de départ nous aide à vous orienter vers les dispositifs les plus adaptés.",
     fields: [
       {
         type: "checkbox",
@@ -112,24 +142,37 @@ export const questions: Question[] = [
           {
             value: "nouveau-depart",
             label: "J'ai envie d'un nouveau départ",
+            description:
+              "Vouloir changer est une raison suffisante. Des dispositifs existent pour construire ce projet.",
             flags: [FLAGS.NOUVEAU_DEPART],
           },
           {
             value: "sante",
             label: "Ma santé ne me permet plus de me projeter dans ma situation professionnelle",
+            description:
+              "Des dispositifs existent spécifiquement pour ces situations. Des solutions adaptées existent.",
             flags: [FLAGS.SANTE],
           },
           {
             value: "poste-menace",
             label: "Mon poste est menacé ou mon entreprise est en difficulté ou en restructuration",
+            description:
+              "Anticiper vous ouvre plus de solutions. Des solutions existent avant toute rupture de contrat.",
             flags: [FLAGS.MENACE],
           },
           {
             value: "pas-emploi",
             label: "Je ne trouve pas d'emploi",
+            description: "Une reconversion peut aussi ouvrir de nouvelles opportunités.",
             flags: [FLAGS.PAS_EMPLOI],
           },
-          { value: "autre", label: "Autre", flags: [FLAGS.AUTRE_MOTIF] },
+          {
+            value: "autre",
+            label: "Autre raison",
+            description:
+              "Toutes les situations sont prises en compte, même si elles n'entrent pas dans une case.",
+            flags: [FLAGS.AUTRE_MOTIF],
+          },
         ],
       },
     ],
@@ -138,8 +181,9 @@ export const questions: Question[] = [
   // ─── Q2. Métier souhaité ───────────────────────────────────────────────
   {
     id: Q_METIER,
-    title: "Avez-vous une idée du métier que vous souhaitez faire ?",
-    subtitle: "Choix unique.",
+    title: "Avez-vous une idée du métier que vous souhaitez faire\u00a0?",
+    subtitle:
+      "Certains dispositifs demandent un projet défini, d'autres servent justement à le construire.",
     fields: [
       {
         type: "radio",
@@ -149,21 +193,28 @@ export const questions: Question[] = [
           {
             value: "precis",
             label: "Oui, j'ai un métier cible précis",
+            description: "Nous allons identifier les dispositifs pour y parvenir.",
             flags: [FLAGS.METIER_PRECIS],
           },
           {
             value: "piste",
             label: "J'ai une piste mais pas encore de certitude",
+            description:
+              "Une piste est un bon point de départ. Un accompagnement peut vous aider à la confirmer.",
             flags: [FLAGS.ORIENTATION],
           },
           {
             value: "ailleurs",
             label: "Je veux garder mon métier mais l'exercer ailleurs",
+            description:
+              "Changer de cadre est aussi un projet professionnel. Des dispositifs existent pour évoluer ailleurs.",
             flags: [FLAGS.GARDER_METIER],
           },
           {
             value: "non",
             label: "Non, je ne sais pas encore",
+            description:
+              "C'est le cas le plus fréquent, et c'est précisément ce qu'un conseiller peut vous aider à clarifier.",
             flags: [FLAGS.ORIENTATION],
           },
         ],
@@ -175,8 +226,8 @@ export const questions: Question[] = [
   // Les précisions vivent sur le même écran, sous l'option qui les déclenche.
   {
     id: Q_SITUATION,
-    title: "Quelle est votre situation professionnelle actuelle ?",
-    subtitle: "Choix unique. Des précisions s'afficheront sous votre réponse.",
+    title: "Quelle est votre situation professionnelle actuelle\u00a0?",
+    subtitle: "Les dispositifs accessibles dépendent de votre statut.",
     fields: [
       {
         type: "radio",
@@ -185,27 +236,27 @@ export const questions: Question[] = [
         options: [
           {
             value: SITUATION_SALARIE,
-            label: "Salarié·e du secteur privé",
+            label: "Salarié.e",
             flags: [FLAGS.SALARIE],
           },
           {
             value: SITUATION_DEMANDEUR,
-            label: "Demandeur·euse d'emploi inscrit·e à France Travail",
+            label: "Demandeur.se d'emploi",
             flags: [FLAGS.DE],
           },
           {
             value: SITUATION_AGENT,
-            label: "Agent·e de la fonction publique",
+            label: "Agent.e de la fonction publique",
             flags: [FLAGS.FONCTIONNAIRE],
           },
           {
             value: SITUATION_INDEPENDANT,
-            label: "Auto-entrepreneur·euse ou chef·fe d'entreprise",
+            label: "Auto-entrepreneur.se ou chef.fe d'entreprise",
             flags: [FLAGS.INDEPENDANT],
           },
           {
             value: SITUATION_SANS_EMPLOI,
-            label: "Sans emploi, non inscrit·e à France Travail",
+            label: "Sans emploi",
             flags: [FLAGS.SANS_EMPLOI],
           },
         ],
@@ -214,9 +265,8 @@ export const questions: Question[] = [
         type: "radio",
         name: FIELD_CONTRAT,
         sub: SITUATION_SALARIE,
-        label: "Quel est votre type de contrat ?",
+        label: "Quel est votre type de contrat\u00a0?",
         required: true,
-        orientation: "horizontal",
         visibleWhen: estSalarie,
         options: [
           { value: "cdi", label: "CDI", flags: [FLAGS.CDI] },
@@ -224,33 +274,28 @@ export const questions: Question[] = [
           { value: "interim", label: "Intérimaire", flags: [FLAGS.INTERIM] },
           {
             value: "intermittent",
-            label: "Intermittent·e du spectacle",
+            label: "Intermittent.e du spectacle",
             flags: [FLAGS.INTERMITTENT],
           },
         ],
       },
       {
-        // Le statut cadre n'est demandé qu'en CDI et en CDD (règle du ticket) :
-        // il ne veut rien dire pour un intérim ou un intermittent du spectacle.
         type: "radio",
         name: FIELD_CADRE,
         sub: SITUATION_SALARIE,
-        label: "Quel est votre statut ?",
+        label: "Êtes-vous cadre\u00a0?",
         required: true,
-        orientation: "horizontal",
-        visibleWhen: (answers) =>
-          estSalarie(answers) &&
-          (answers[FIELD_CONTRAT] === "cdi" || answers[FIELD_CONTRAT] === "cdd"),
+        visibleWhen: isCadreDemande,
         options: [
-          { value: "cadre", label: "Cadre", flags: [FLAGS.CADRE] },
-          { value: "non-cadre", label: "Non-cadre" },
+          { value: "cadre", label: "Oui", flags: [FLAGS.CADRE] },
+          { value: "non-cadre", label: "Non" },
         ],
       },
       {
         type: "radio",
         name: FIELD_VERSANT,
         sub: SITUATION_AGENT,
-        label: "Dans quelle fonction publique travaillez-vous ?",
+        label: "Dans quelle fonction publique travaillez-vous\u00a0?",
         required: true,
         visibleWhen: (answers) => answers[FIELD_SITUATION] === SITUATION_AGENT,
         options: [
@@ -273,10 +318,9 @@ export const questions: Question[] = [
         type: "radio",
         name: FIELD_ARRET_TRAVAIL,
         sub: [SITUATION_SALARIE, SITUATION_AGENT, SITUATION_INDEPENDANT],
-        label: "Êtes-vous en arrêt de travail pour maladie, accident du travail ou invalidité ?",
+        label: "Êtes-vous en arrêt de travail (maladie, accident du travail, invalidité)\u00a0?",
         required: true,
-        orientation: "horizontal",
-        visibleWhen: enActivite,
+        visibleWhen: (answers) => enActivite(answers) && isSituationPrecisee(answers),
         options: [
           { value: OUI, label: "Oui", flags: [FLAGS.ARRET_TRAVAIL] },
           { value: NON, label: "Non" },
@@ -288,7 +332,7 @@ export const questions: Question[] = [
   // ─── Q4. Ancienneté chez l'employeur actuel ────────────────────────────
   {
     id: Q_ANCIENNETE,
-    title: "Depuis quand travaillez-vous chez votre employeur actuel ?",
+    title: "Depuis quand travaillez-vous chez votre employeur actuel\u00a0?",
     subtitle: "Le mois et l'année suffisent.",
     when: aUnEmployeur,
     // Tant que la situation est inconnue, la question compte dans le total :
@@ -308,7 +352,7 @@ export const questions: Question[] = [
   // ─── Q5. Durée totale d'activité professionnelle ───────────────────────
   {
     id: Q_DUREE,
-    title: "Depuis combien de temps travaillez-vous au total ?",
+    title: "Depuis combien de temps travaillez-vous au total\u00a0?",
     subtitle: "Toutes vos périodes d'activité professionnelle cumulées.",
     fields: [
       {
@@ -330,7 +374,7 @@ export const questions: Question[] = [
   // ─── Q6. Lieu de résidence et lieu de travail ──────────────────────────
   {
     id: Q_LIEU,
-    title: "Où habitez-vous ?",
+    title: "Où habitez-vous\u00a0?",
     subtitle: "Les organismes compétents et une partie des aides dépendent de votre région.",
     // Porte d'inéligibilité : ni résidence ni travail en France. Une personne
     // qui n'est pas en activité ne se voit pas poser la question du travail :
@@ -344,7 +388,6 @@ export const questions: Question[] = [
         type: "radio",
         name: FIELD_RESIDENCE,
         required: true,
-        orientation: "horizontal",
         options: [
           { value: LOC_FRANCE, label: "En France" },
           {
@@ -373,9 +416,8 @@ export const questions: Question[] = [
       {
         type: "radio",
         name: FIELD_TRAVAIL_FRANCE,
-        label: "Travaillez-vous en France ?",
+        label: "Travaillez-vous en France\u00a0?",
         required: true,
-        orientation: "horizontal",
         visibleWhen: (answers) =>
           answers[FIELD_RESIDENCE] === LOC_HORS_FRANCE && enActivite(answers),
         options: [
@@ -398,7 +440,7 @@ export const questions: Question[] = [
   // ─── Q7. Reconnaissance de travailleur handicapé ───────────────────────
   {
     id: Q_RQTH,
-    title: "Êtes-vous reconnu·e travailleur·euse handicapé·e ?",
+    title: "Êtes-vous reconnu·e travailleur·euse handicapé·e\u00a0?",
     subtitle: "Cette reconnaissance ouvre des droits spécifiques. Choix unique.",
     fields: [
       {

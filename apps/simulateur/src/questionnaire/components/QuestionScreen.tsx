@@ -19,7 +19,7 @@ interface QuestionScreenProps {
    * Numéro de la tentative de validation ayant échoué sur CETTE question, ou
    * `undefined` si l'utilisateur n'a encore rien tenté. Il change à chaque
    * nouvel essai : c'est ce qui redéplace le focus quand on reclique
-   * « Suivant » sans avoir corrigé.
+   * « Continuer » sans avoir corrigé.
    */
   failedAttempt?: number;
 }
@@ -90,7 +90,7 @@ export function QuestionScreen({
   }, [failedAttempt, question.id]);
 
   return (
-    <div className="flex w-full flex-col gap-8 md:gap-12">
+    <div className="flex w-full flex-col gap-6 md:gap-10">
       <QuestionHeader
         step={stepNumber}
         title={question.title}

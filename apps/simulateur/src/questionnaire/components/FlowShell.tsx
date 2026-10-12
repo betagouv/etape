@@ -25,7 +25,7 @@ export function FlowShell() {
   const questionId = nav.question?.id;
 
   // Tentative de validation échouée : la question concernée, et un compteur
-  // pour que deux clics de suite sur « Suivant » redéplacent bien le focus.
+  // pour que deux clics de suite sur « Continuer » redéplacent bien le focus.
   const [attempt, setAttempt] = useState<{ questionId: string | null; count: number }>({
     questionId: null,
     count: 0,
@@ -87,12 +87,15 @@ export function FlowShell() {
   if (!nav.question) return null;
 
   return (
-    <div className="flex h-dvh flex-col">
+    // Fond blanc sur mobile, teal-50 sur desktop (maquettes). `bg-muted` : le
+    // teal-50 #f9faf9 du kit, indiscernable de notre neutral-50 #fafafa, sous
+    // lequel le gris des descriptions garde ses 4,5:1.
+    <div className="bg-background md:bg-muted flex h-dvh flex-col">
       <Topbar />
 
       <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
-        <div className="flex w-full max-w-[793px] flex-1 flex-col md:min-h-[836px] md:max-w-[600px] md:flex-none md:py-16">
-          <div className="flex flex-col gap-8 px-4 py-6 md:gap-10 md:p-0">
+        <div className="flex w-full max-w-2xl flex-1 flex-col md:flex-none md:py-16">
+          <div className="flex flex-col gap-6 px-6 pt-6 md:gap-10 md:p-0">
             <QuestionProgress step={nav.stepNumber} total={nav.total} />
             <QuestionScreen
               question={nav.question}
@@ -107,7 +110,7 @@ export function FlowShell() {
             isFirst={nav.isFirst}
             onPrev={nav.goPrev}
             onNext={handleNext}
-            nextLabel={nav.isLast ? "Voir les résultats" : "Suivant"}
+            nextLabel={nav.isLast ? "Voir les résultats" : "Continuer"}
             nextDisabled={!nav.isAnswered}
           />
         </div>

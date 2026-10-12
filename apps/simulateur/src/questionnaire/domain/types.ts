@@ -67,17 +67,19 @@ interface BaseField {
    * champ s'ouvre, dans le MÊME écran. Absent = champ de premier niveau.
    * Une liste quand la même précision se pose sous plusieurs options (l'arrêt
    * de travail, demandé aux salarié·es, aux agents et aux indépendant·es).
-   * Le rendu correspondant arrive à l'étape 5 ; le moteur, lui, traite un
-   * champ `sub` comme n'importe quel autre champ conditionnel.
+   * Le moteur traite un champ `sub` comme n'importe quel autre champ
+   * conditionnel ; seul le rendu le distingue.
    */
   sub?: string | string[];
 }
 
+/**
+ * Choix unique. Rendu en cartes au premier niveau, en pastilles quand c'est une
+ * précision (`sub`) ouverte dans la carte de l'option qui la déclenche.
+ */
 export interface RadioField extends BaseField {
   type: "radio";
   options: Option[];
-  /** Disposition des options. Défaut : "vertical". */
-  orientation?: "horizontal" | "vertical";
 }
 
 export interface CheckboxField extends BaseField {
