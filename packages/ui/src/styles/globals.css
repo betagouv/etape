@@ -24,9 +24,10 @@
  * - `--destructive-foreground` : #fef2f2 sur #dc2626 donne 4,41:1, sous les
  *   4,5:1 d'un texte courant. Remplacé par du blanc (4,83:1).
  *
- * À surveiller : `--input` (teal-200, bord des champs de saisie) ne fait que
- * 1,3:1 sur blanc, sous les 3:1 d'un composant d'interface. Gardé comme dans
- * le kit en attendant l'arbitrage de l'UI/UX.
+ * Les statuts reprennent les couleurs d'état du kit (`colors/succes`,
+ * `informational`, `warning`, `error` et leurs variantes `-dimmed`, `-border`,
+ * `-contrast`, collection « 2. Theme »), sous nos noms de tokens. Le kit ne
+ * les décline pas encore en Light / Dark : le thème sombre garde les siennes.
  *
  * Les tokens hors shadcn (`content-*`, `border-*`, `divider`, statuts,
  * voiles) n'ont pas d'équivalent dans le kit : ce sont des extensions ETAPE,
@@ -64,30 +65,30 @@
   --border-active: #134e4a; /* extension ETAPE (teal-900) */
   --border-disabled: #d3e2e0; /* extension ETAPE (teal-200) */
   --divider: #d3e2e0; /* extension ETAPE (= border) */
-  --input: #d3e2e0; /* base/input (teal-200) */
+  --input: #8f8f8f; /* base/input (neutral-400) — 3,23:1 sur blanc */
   --ring: #2b6f6b; /* base/ring (teal-700) */
   --ring-alpha: rgba(43, 111, 107, 0.5); /* ring à 50 % */
 
-  /* Statuts — extensions ETAPE, le kit n'a ni succès ni info */
-  --success: #047857; /* emerald-700 */
-  --success-foreground: #ffffff;
-  --success-muted: #ecfdf5; /* emerald-50 */
-  --success-border: #047857;
-  --success-text: #047857;
-  --warning: #b45309; /* amber-700 */
-  --warning-foreground: #ffffff;
-  --warning-muted: #fffbeb; /* amber-50 */
-  --warning-border: #b45309;
-  --warning-text: #b45309;
-  --info: #1d4ed8; /* blue-700 */
-  --info-foreground: #ffffff;
-  --info-muted: #eff6ff; /* blue-50 */
-  --info-border: #1d4ed8;
-  --info-text: #1d4ed8;
-  --destructive-muted: #fef2f2; /* red-50 */
-  --destructive-border: #dc2626; /* red-600 */
-  --destructive-text: #dc2626; /* red-600 — 4,83:1 sur blanc */
-  --destructive-border-alpha: rgba(220, 38, 38, 0.5);
+  /* Statuts — couleurs d'état du kit (collection « 2. Theme ») */
+  --success: #166534; /* colors/succes (green-800) */
+  --success-foreground: #ffffff; /* colors/succes-contrast */
+  --success-muted: #f0fdf4; /* colors/succes-dimmed (green-50) */
+  --success-border: #dcfce7; /* colors/succes-border (green-100) */
+  --success-text: #166534; /* colors/succes — 6,81:1 sur succes-dimmed */
+  --warning: #9a3412; /* colors/warning (orange-800) */
+  --warning-foreground: #ffffff; /* colors/warning-contrast */
+  --warning-muted: #fff7ed; /* colors/warning-dimmed (orange-50) */
+  --warning-border: #ffedd5; /* colors/warning-border (orange-100) */
+  --warning-text: #9a3412; /* colors/warning — 6,88:1 sur warning-dimmed */
+  --info: #1e40af; /* colors/informational (blue-800) */
+  --info-foreground: #ffffff; /* colors/informational-contrast */
+  --info-muted: #eff6ff; /* colors/informational-dimmed (blue-50) */
+  --info-border: #dbeafe; /* colors/informational-border (blue-100) */
+  --info-text: #1e40af; /* colors/informational — 8,01:1 sur informational-dimmed */
+  --destructive-muted: #fef2f2; /* colors/error-dimmed (red-50) */
+  --destructive-border: #fee2e2; /* colors/error-border (red-100) */
+  --destructive-text: #991b1b; /* colors/error (red-800) — 8,31:1 sur blanc */
+  --destructive-border-alpha: rgba(220, 38, 38, 0.5); /* destructive à 50 % */
 
   /* Contenu — extensions ETAPE */
   --content-secondary: #404040; /* neutral-700 */
