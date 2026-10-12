@@ -360,9 +360,11 @@
   /*
    * Bricolage Grotesque, rangée en `font-serif` dans le kit — d'où un nom à
    * nous. Chargée sur son seul axe de graisse : l'axe `opsz` reste à sa valeur
-   * par défaut, 14, celle des styles de titre du kit.
+   * par défaut, 14, celle des styles de titre du kit. Une app qui ne la charge
+   * pas affiche ses titres en Geist, comme son texte, plutôt que dans la
+   * police du système.
    */
-  --font-heading: var(--font-bricolage, ui-sans-serif, system-ui, sans-serif);
+  --font-heading: var(--font-bricolage, var(--font-geist, ui-sans-serif, system-ui, sans-serif));
 
   /* Styles de texte Figma — responsive par construction (cf. bloc ci-dessus) */
   --text-heading-xl: var(--type-heading-xl);
