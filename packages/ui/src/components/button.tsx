@@ -18,8 +18,9 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+        // Libellé en `secondary-foreground` (teal-900), comme l'« Outline » du kit.
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border bg-background text-secondary-foreground shadow-xs hover:bg-secondary dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
@@ -44,6 +45,8 @@ const buttonVariants = cva(
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
+        // Maquettes du simulateur : 44 px au doigt, 36 px à la souris (`md`).
+        responsive: "h-11 px-6 has-[>svg]:px-4 md:h-9 md:px-4 md:has-[>svg]:px-3",
         icon: "size-9",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",
