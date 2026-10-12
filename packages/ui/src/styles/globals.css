@@ -18,6 +18,10 @@
  * 800 #115e59 · 900 #134e4a · 950 #12423e.
  *
  * Écarts au kit, chacun marqué « écart » sur sa ligne :
+ * - `--muted` : le kit donne neutral-100 #f5f5f5, sur lequel son
+ *   `muted-foreground` #737373 ne fait que 4,35:1, sous les 4,5:1 d'un texte
+ *   courant (légendes des cartes, témoignages, récapitulatif). Remplacé par
+ *   neutral-50 #fafafa : 4,54:1.
  * - `--secondary` : le kit donne teal-50 #f9faf9, qui ne se distingue pas du
  *   blanc — sections, tags, pastilles et survols disparaissaient. Remplacé
  *   par teal-100 #eef4f2.
@@ -51,7 +55,7 @@
   --secondary: #eef4f2; /* écart : kit teal-50 #f9faf9 (teal-100) */
   --secondary-foreground: #134e4a; /* base/secondary-foreground (teal-900) */
   --secondary-selected: #d3e2e0; /* extension ETAPE (teal-200) */
-  --muted: #f5f5f5; /* base/muted (neutral-100) */
+  --muted: #fafafa; /* écart : kit neutral-100 #f5f5f5 (neutral-50) */
   --muted-foreground: #737373; /* base/muted-foreground (neutral-500) */
   --accent: #f5f5f5; /* base/accent (neutral-100) */
   --accent-foreground: #171717; /* base/accent-foreground */
