@@ -65,6 +65,14 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeResetPasswordSubtitle:
         "Renseignez votre adresse email : nous vous envoyons un lien pour en choisir un nouveau.",
       etapeResetPasswordCta: "Envoyer le lien",
+
+      etapeAltchaRequired:
+        "Le contrôle de sécurité est obligatoire : cochez « Je ne suis pas un robot ».",
+      etapeAltchaFailed:
+        "La vérification de sécurité a échoué. Cochez à nouveau la case pour réessayer.",
+      etapeAltchaVerifying: "Vérification de sécurité en cours…",
+      etapeAltchaVerified: "Vérification de sécurité réussie.",
+
       etapeUpdatePasswordSubtitle: "Choisissez un mot de passe d'au moins 12 caractères.",
       etapeUpdatePasswordCta: "Enregistrer le mot de passe",
       etapeVerifyEmailSubtitle: "Plus qu'une étape avant d'accéder à votre espace.",
@@ -125,6 +133,12 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeResetPasswordSubtitle:
         "Enter your email address and we will send you a link to choose a new one.",
       etapeResetPasswordCta: "Send the link",
+
+      etapeAltchaRequired: 'The security check is required: tick the "I am not a robot" box.',
+      etapeAltchaFailed: "The security check failed. Tick the box again to retry.",
+      etapeAltchaVerifying: "Security check in progress…",
+      etapeAltchaVerified: "Security check passed.",
+
       etapeUpdatePasswordSubtitle: "Choose a password of at least 12 characters.",
       etapeUpdatePasswordCta: "Save the password",
       etapeVerifyEmailSubtitle: "One last step before accessing your account.",

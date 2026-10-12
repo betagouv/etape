@@ -15,6 +15,8 @@ export type KcContextExtension = {
 
 export type KcContextExtensionPerPage = {
   "error.ftl": { url: { loginResetCredentialsUrl?: string } };
+  "register.ftl": { altchaChallenge?: string };
+  "login-reset-password.ftl": { altchaChallenge?: string; login?: { username?: string } };
 };
 
 export type KcContext = ExtendKcContext<KcContextExtension, KcContextExtensionPerPage>;
