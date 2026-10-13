@@ -4,6 +4,7 @@
 // entrée ici, pas du JSX.
 
 import type { FlagSet } from "./flags";
+import type { MonthValue } from "./month";
 
 /** Types de champs supportés. À étendre au fil des questions. */
 export type FieldType = "radio" | "checkbox" | "month" | "number" | "region" | "toggle";
@@ -94,8 +95,13 @@ export interface CheckboxField extends BaseField {
  */
 export interface MonthField extends BaseField {
   type: "month";
-  /** Année la plus ancienne proposée à la saisie. */
+  /** Année la plus ancienne acceptée à la saisie. */
   minYear?: number;
+  /**
+   * Phrase calculée affichée sous le champ dès que la date est valide (Q4 :
+   * l'ancienneté qu'elle représente).
+   */
+  describeValue?: (value: MonthValue) => string;
 }
 
 /** Entier positif saisi au clavier (ex. un nombre d'années). */
@@ -123,6 +129,13 @@ export interface ToggleField extends BaseField {
   type: "toggle";
   /** Libellé de la case elle-même : obligatoire, c'est le seul texte du champ. */
   label: string;
+  /**
+   * Réponse lue au récapitulatif quand la case est cochée — pour une case qui
+   * répond À LA PLACE d'un autre champ (Q5 : « Moins d'un an »). Décochée, elle
+   * n'y figure pas : c'est le champ qu'elle remplace qui répond. Absent, la case
+   * se lit « Oui » ou « Non ».
+   */
+  summary?: string;
 }
 
 export type Field =

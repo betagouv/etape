@@ -1,5 +1,12 @@
 import { FLAGS } from "./flags";
-import { monthLabel, monthsSince, oldestSelectableYear, parseMonth } from "./month";
+import {
+  MOIS_PAR_AN,
+  monthLabel,
+  monthsSince,
+  oldestAcceptedYear,
+  parseMonth,
+  type MonthValue,
+} from "./month";
 import type { Answers, Outcome, Question } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -26,6 +33,7 @@ export const FIELD_CADRE = "cadre";
 export const FIELD_VERSANT = "versant";
 export const FIELD_ARRET_TRAVAIL = "arretTravail";
 export const FIELD_ENTREE_EMPLOYEUR = "entreeEmployeur";
+export const FIELD_MOINS_UN_AN = "activiteMoinsUnAn";
 export const FIELD_DUREE_ACTIVITE = "dureeActivite";
 export const FIELD_RESIDENCE = "residence";
 export const FIELD_REGION_RESIDENCE = "regionResidence";
@@ -97,14 +105,60 @@ const isSituationPrecisee = (answers: Answers): boolean => {
   return true;
 };
 
+/** « 1 an », « 2 ans » : en français, 0 et 1 restent au singulier. */
+const enAnnees = (count: number): string => `${count} ${count > 1 ? "ans" : "an"}`;
+
+/**
+ * Ancienneté représentée par la date d'entrée de Q4, affichée sous le champ.
+ * Les parties nulles sont tues : « Soit 4 ans », « Soit 3 mois ».
+ */
+const ancienneteTexte = (entree: MonthValue): string => {
+  const mois = monthsSince(entree);
+  if (mois === 0) return "Soit moins d'un mois d'ancienneté.";
+  const annees = Math.floor(mois / MOIS_PAR_AN);
+  const reste = mois % MOIS_PAR_AN;
+  const parties = [annees > 0 ? enAnnees(annees) : "", reste > 0 ? `${reste} mois` : ""];
+  return `Soit ${parties.filter(Boolean).join(" et ")} d'ancienneté.`;
+};
+
+/** Ancienneté chez l'employeur actuel, en mois révolus. `null` sans Q4 valide. */
+const ancienneteMois = (answers: Answers): number | null => {
+  const entree = parseMonth(answers[FIELD_ENTREE_EMPLOYEUR]);
+  return entree ? monthsSince(entree) : null;
+};
+
+/**
+ * La case « moins d'un an » de Q5 n'est proposée qu'à qui peut y répondre oui :
+ * ni à la personne sans emploi, qui ne travaille pas ; ni à celle dont Q4 dit
+ * déjà au moins un an chez son employeur actuel.
+ */
+const isMoinsUnAnPropose = (answers: Answers): boolean => {
+  if (answers[FIELD_SITUATION] === SITUATION_SANS_EMPLOI) return false;
+  if (!aUnEmployeur(answers)) return true;
+  const mois = ancienneteMois(answers);
+  return mois === null || mois < MOIS_PAR_AN;
+};
+
+const isMoinsUnAn = (answers: Answers): boolean =>
+  isMoinsUnAnPropose(answers) && answers[FIELD_MOINS_UN_AN] === true;
+
+/**
+ * Durée totale d'activité en années (Q5) : 0 quand la case « moins d'un an » est
+ * cochée, sinon le nombre saisi. `null` si rien d'exploitable n'a été répondu.
+ */
+export function readDureeActivite(answers: Answers): number | null {
+  if (isMoinsUnAn(answers)) return 0;
+  const value = answers[FIELD_DUREE_ACTIVITE];
+  return typeof value === "string" && /^\d+$/.test(value) ? Number(value) : null;
+}
+
 /**
  * Q5 ne peut pas être inférieure à Q4 : on ne totalise pas 5 ans d'activité en
  * étant chez le même employeur depuis 10 ans.
  *
- * Le seuil est l'ancienneté arrondie à l'année INFÉRIEURE. Q5 se saisit « en
- * années, arrondies à l'année la plus proche » : une ancienneté de 10 ans et
- * 8 mois se déclare donc légitimement 10 comme 11, et seul 10 fait un seuil qui
- * n'accuse personne à tort.
+ * Le seuil est l'ancienneté arrondie à l'année INFÉRIEURE : une ancienneté de
+ * 10 ans et 8 mois se déclare légitimement 10 comme 11, et seul 10 fait un seuil
+ * qui n'accuse personne à tort.
  *
  * Porté par Q5 seule, jamais par Q4 : voir `Field.coherence`.
  */
@@ -113,11 +167,11 @@ const dureeCoherente = (answers: Answers): string | null => {
   // Ancienneté non demandée (sans employeur) ou pas encore saisie : rien à comparer.
   if (!entree) return null;
 
-  const seuil = Math.floor(monthsSince(entree) / 12);
+  const seuil = Math.floor(monthsSince(entree) / MOIS_PAR_AN);
   const total = Number(answers[FIELD_DUREE_ACTIVITE]);
   if (!Number.isFinite(total) || total >= seuil) return null;
 
-  return `Vous avez indiqué être chez votre employeur actuel depuis ${monthLabel(entree)}, soit ${seuil} ${seuil > 1 ? "ans" : "an"} : votre durée totale ne peut pas être inférieure. Corrigez-la, ou revenez à la question précédente.`;
+  return `Vous avez indiqué être chez votre employeur actuel depuis ${monthLabel(entree)}, soit ${enAnnees(seuil)} : votre durée totale ne peut pas être inférieure. Corrigez-la, ou revenez à la question précédente.`;
 };
 
 /**
@@ -333,7 +387,7 @@ export const questions: Question[] = [
   {
     id: Q_ANCIENNETE,
     title: "Depuis quand travaillez-vous chez votre employeur actuel\u00a0?",
-    subtitle: "Le mois et l'année suffisent.",
+    subtitle: "Votre ancienneté conditionne l'accès à certains dispositifs.",
     when: aUnEmployeur,
     // Tant que la situation est inconnue, la question compte dans le total :
     // celui-ci part du chemin le plus long et ne s'allonge jamais.
@@ -344,7 +398,8 @@ export const questions: Question[] = [
         type: "month",
         name: FIELD_ENTREE_EMPLOYEUR,
         required: true,
-        minYear: oldestSelectableYear(),
+        minYear: oldestAcceptedYear(),
+        describeValue: ancienneteTexte,
       },
     ],
   },
@@ -352,20 +407,32 @@ export const questions: Question[] = [
   // ─── Q5. Durée totale d'activité professionnelle ───────────────────────
   {
     id: Q_DUREE,
-    title: "Depuis combien de temps travaillez-vous au total\u00a0?",
-    subtitle: "Toutes vos périodes d'activité professionnelle cumulées.",
+    title: "Depuis combien d'années travaillez-vous au total\u00a0?",
+    subtitle: "Comptez toutes vos périodes d'activité, y compris chez d'autres employeurs.",
     fields: [
       {
+        // Libellé au passé et au total plutôt que « Je travaille depuis moins
+        // d'un an » (maquette) : la case est aussi proposée aux demandeur·ses
+        // d'emploi, qui ne travaillent pas en ce moment.
+        type: "toggle",
+        name: FIELD_MOINS_UN_AN,
+        label: "J'ai travaillé moins d'un an au total",
+        summary: "Moins d'un an",
+        visibleWhen: isMoinsUnAnPropose,
+      },
+      {
+        // Cochée, la case répond à la place du champ, qui disparaît : deux
+        // réponses à la même question ne pourraient que se contredire.
         type: "number",
         name: FIELD_DUREE_ACTIVITE,
-        // Pas de libellé propre : le titre de la question nomme le champ, et
-        // « ans » porte l'unité. Un « Nombre d'années » de plus serait redondant.
-        hint: "En années, arrondies à l'année la plus proche.",
+        label: "Nombre d'années",
+        hint: "Exemple\u00a0: 12",
         required: true,
+        visibleWhen: (answers) => !isMoinsUnAn(answers),
         coherence: dureeCoherente,
         min: 0,
-        max: 99,
-        placeholder: "12",
+        max: 50,
+        placeholder: "Saisissez le nombre d'années",
         suffix: "ans",
       },
     ],

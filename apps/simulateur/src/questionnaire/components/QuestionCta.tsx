@@ -5,7 +5,7 @@ interface QuestionCtaProps {
   onPrev: () => void;
   onNext: () => void;
   nextLabel?: string;
-  /** Aucune réponse donnée : « Continuer » se grise (règle du ticket). */
+  /** Réponse absente ou invalide : « Continuer » se grise (règle du ticket). */
   nextDisabled?: boolean;
 }
 
@@ -18,7 +18,7 @@ const NEXT_HINT_ID = "question-cta-next-hint";
  * pas d'étape avant, et un bouton qui ne peut que faire sortir du simulateur
  * doublerait le « Quitter » de la navbar.
  *
- * « Continuer » se grise tant qu'aucune réponse n'est donnée, mais reste
+ * « Continuer » se grise tant qu'une réponse manque ou est invalide, mais reste
  * ACTIONNABLE : `aria-disabled` et non l'attribut `disabled`. Le grisé annonce
  * qu'il manque quelque chose ; le clic dit quoi — la navigation est retenue, le
  * message s'affiche en bas de la question et le focus part sur le premier champ
@@ -61,7 +61,7 @@ export function QuestionCta({
 
       {nextDisabled && (
         <span id={NEXT_HINT_ID} className="sr-only">
-          Répondez à la question pour continuer.
+          Complétez ou corrigez votre réponse pour continuer.
         </span>
       )}
     </div>

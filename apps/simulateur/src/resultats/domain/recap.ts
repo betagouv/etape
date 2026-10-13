@@ -51,6 +51,8 @@ function answerText(field: Field, value: AnswerValue | undefined): string {
     case "region":
       return typeof value === "string" ? (regionName(value) ?? "") : "";
     case "toggle":
+      // Une case qui répond à la place d'un autre champ ne se lit que cochée.
+      if (field.summary !== undefined) return value === true ? field.summary : "";
       // Décochée EST une réponse : la taire laisserait croire à un oubli.
       return value === true ? "Oui" : "Non";
   }
@@ -60,16 +62,19 @@ export function buildRecap(answers: Answers): RecapEntry[] {
   return walkFlow(answers).path.flatMap((id) => {
     const question = findQuestion(id);
     if (!question) return [];
-    return question.fields
+    const answered = question.fields
       .filter((field) => isFieldVisible(field, answers))
-      .map((field) => ({
-        questionId: id,
-        fieldName: field.name,
-        // Le libellé du champ quand il en a un : sur un écran qui porte
-        // plusieurs champs (Q3, Q6), le titre de la question les confondrait.
-        question: field.label ?? question.title,
-        answer: answerText(field, answers[field.name]),
-      }))
+      .map((field) => ({ field, answer: answerText(field, answers[field.name]) }))
       .filter((entry) => entry.answer !== "");
+    // Le libellé du champ quand la question donne plusieurs réponses (Q3, Q6) :
+    // le titre les confondrait. Une réponse seule se lit sous le titre (Q5,
+    // « Nombre d'années » ou « Moins d'un an »).
+    const several = answered.length > 1;
+    return answered.map(({ field, answer }) => ({
+      questionId: id,
+      fieldName: field.name,
+      question: several ? (field.label ?? question.title) : question.title,
+      answer,
+    }));
   });
 }

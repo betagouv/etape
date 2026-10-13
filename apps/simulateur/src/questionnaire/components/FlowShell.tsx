@@ -111,7 +111,7 @@ export function FlowShell() {
             onPrev={nav.goPrev}
             onNext={handleNext}
             nextLabel={nav.isLast ? "Voir les résultats" : "Continuer"}
-            nextDisabled={!nav.isAnswered}
+            nextDisabled={!nav.canGoNext}
           />
         </div>
       </main>
