@@ -58,7 +58,7 @@ export function QuestionScreen({
   failedAttempt,
 }: QuestionScreenProps) {
   const titleId = `${question.id}-title`;
-  const subtitleId = question.subtitle ? `${question.id}-subtitle` : undefined;
+  const subtitleId = question.subtitle || question.notice ? `${question.id}-subtitle` : undefined;
 
   const {
     shown,
@@ -73,8 +73,8 @@ export function QuestionScreen({
   });
   const errors = new Map([...shown].map(([name, issue]) => [name, issue.message]));
 
-  // Un écran à champ unique (Q1, Q2, Q4, Q5, Q7) porte son message une seule
-  // fois, en bas. Un écran qui en a plusieurs (Q3, Q6) garde un message sous
+  // Un écran à champ unique (Q1, Q2, Q4, Q5, Q6) porte son message une seule
+  // fois, en bas. Un écran qui en a plusieurs (Q3, Q7) garde un message sous
   // chaque champ fautif — une ligne unique ne dirait pas LEQUEL — et se résume
   // en bas au nombre de réponses en attente. Une case à cocher ne compte pas :
   // elle n'est jamais en erreur (Q5 et sa case « moins d'un an »).
@@ -83,6 +83,7 @@ export function QuestionScreen({
   );
   const champUnique = saisies.length === 1 ? saisies[0] : undefined;
   const issueUnique = champUnique ? shown.get(champUnique.name) : undefined;
+  const hasInvalid = [...shown.values()].some((issue) => issue.kind === ISSUE_KIND.INVALID);
 
   // Une réponse absente ne se « corrige » pas, elle se donne ; une réponse
   // invalide est là mais fausse. Le résumé le dit avec le bon verbe.
@@ -119,8 +120,7 @@ export function QuestionScreen({
     <div className="flex w-full flex-col gap-6 md:gap-10">
       <QuestionHeader
         step={stepNumber}
-        title={question.title}
-        subtitle={question.subtitle}
+        question={question}
         titleId={titleId}
         subtitleId={subtitleId}
         headingRef={headingRef}
@@ -140,13 +140,20 @@ export function QuestionScreen({
           « Continuer », le focus part sur le premier champ fautif, qui le lit.
           Une valeur invalide révélée à la sortie du champ passe, elle, par la
           région ci-dessous. */}
-      {issueUnique?.kind === ISSUE_KIND.INVALID ? (
+      {hasInvalid ? (
         // Valeur impossible (maquettes « Completed invalid ») : un encart, dont
-        // le titre est celui de la maquette et la description dit quoi corriger.
+        // le titre est celui de la maquette. Sur un écran à champ unique, sa
+        // description dit quoi corriger ; sur un écran à plusieurs champs
+        // (Q7), chaque champ fautif porte déjà son message, l'encart ne fait
+        // que résumer s'il y en a plusieurs.
         <Alert variant="destructive">
           <CircleAlert aria-hidden="true" />
           <AlertTitle>Vérifiez votre saisie</AlertTitle>
-          <AlertDescription id={bilanId}>{issueUnique.message}</AlertDescription>
+          {issueUnique ? (
+            <AlertDescription id={bilanId}>{issueUnique.message}</AlertDescription>
+          ) : (
+            shown.size > 1 && <AlertDescription>{resume}</AlertDescription>
+          )}
         </Alert>
       ) : (
         shown.size > 0 && (

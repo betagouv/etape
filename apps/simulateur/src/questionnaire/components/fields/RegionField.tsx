@@ -1,41 +1,41 @@
 "use client";
 
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@etape/ui/components/select";
+  Combobox,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxList,
+  ComboboxOption,
+} from "@etape/ui/components/combobox";
 
-import { REGIONS } from "../../domain/regions";
 import type { RegionField as RegionFieldDef } from "../../domain/types";
+import { useRegionSearch } from "../../hooks/useRegionSearch";
 import { fieldErrorMark, joinIds } from "./aria";
 import { FieldError } from "./FieldError";
-import { FieldHeader } from "./FieldHeader";
 
 interface RegionFieldProps {
   field: RegionFieldDef;
   value: string | undefined;
-  onChange: (value: string) => void;
+  onChange: (value: string | null) => void;
   labelledBy?: string;
   describedBy?: string;
-  /** Message affiché sous la liste quand aucune région n'est choisie. */
+  /** Message affiché sous le champ : région absente ou introuvable. */
   error?: string;
 }
 
-const METROPOLE = REGIONS.filter((region) => !("outreMer" in region));
-const OUTRE_MER = REGIONS.filter((region) => "outreMer" in region);
+/** Annonce du nombre de régions proposées, selon ce qu'il en reste. */
+function countAnnouncement(count: number): string {
+  if (count === 0) return "Aucune région ne correspond à votre saisie.";
+  return count === 1 ? "1 région proposée." : `${count} régions proposées.`;
+}
 
 /**
- * Choix d'une région dans la liste fermée du produit.
+ * Choix d'une région en la cherchant par son nom (maquette Q7) : le champ filtre
+ * la liste, affichée dessous dans le fil de la page.
  *
- * Une liste déroulante, pas une recherche : les 18 régions tiennent à l'écran,
- * et la saisie au clavier de Radix amène directement sur celle dont le nom
- * commence par les lettres tapées. Les collectivités d'outre-mer sont groupées
- * à part pour que la métropole reste lisible d'un coup d'œil.
+ * Le nombre de régions proposées est annoncé à chaque frappe, dans une région
+ * `role="status"` toujours montée : la liste qui se raccourcit ne se voit pas
+ * au lecteur d'écran.
  */
 export function RegionField({
   field,
@@ -45,47 +45,75 @@ export function RegionField({
   describedBy,
   error,
 }: RegionFieldProps) {
-  const labelId = field.label ? `${field.name}-label` : undefined;
+  const inputId = field.name;
+  const listId = `${field.name}-list`;
   const hintId = field.hint ? `${field.name}-hint` : undefined;
-  const triggerId = field.name;
   const errorId = `${field.name}-error`;
+
+  const search = useRegionSearch({ idPrefix: field.name, value, onChange });
+  // Sans région à proposer, la liste n'est pas déployée : seul le message
+  // « Aucune région ne correspond » s'affiche à sa place.
+  const isListShown = search.isOpen && search.regions.length > 0;
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <FieldHeader labelId={labelId} label={field.label} hintId={hintId} hint={field.hint} />
-      <Select value={value ?? ""} onValueChange={onChange}>
-        {/* Le nom accessible combine le libellé et la région choisie : le bouton
-            s'annonce « Votre région de résidence, Occitanie ». */}
-        <SelectTrigger
-          id={triggerId}
-          aria-labelledby={joinIds(labelId ?? labelledBy, triggerId)}
+      {field.label && (
+        <label htmlFor={inputId} className="text-foreground text-sm font-medium">
+          {field.label}
+        </label>
+      )}
+      <Combobox>
+        <ComboboxInput
+          id={inputId}
+          value={search.text}
+          placeholder={field.placeholder}
+          aria-expanded={isListShown}
+          aria-controls={listId}
+          aria-activedescendant={search.activeCode ? search.optionId(search.activeCode) : undefined}
+          // Le `<label for>` nomme le champ quand il existe ; sinon c'est le
+          // titre de la question, seul texte disponible.
+          aria-labelledby={field.label ? undefined : labelledBy}
           aria-describedby={joinIds(hintId, error ? errorId : undefined, describedBy)}
           aria-invalid={error ? true : undefined}
           {...fieldErrorMark(error)}
-          className="h-11 w-full max-w-md md:h-9"
+          {...search.inputHandlers}
+        />
+        <ComboboxList
+          id={listId}
+          aria-label={field.label ?? "Régions"}
+          hidden={!isListShown}
+          // Garde le focus dans le champ : sans cela, un clic sur une option ou
+          // sur la barre de défilement le ferait sortir, et fermerait la liste
+          // avant que le choix ne soit pris.
+          onMouseDown={(event) => event.preventDefault()}
         >
-          <SelectValue placeholder={field.placeholder ?? "Choisir une région"} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel>Métropole</SelectLabel>
-            {METROPOLE.map((region) => (
-              <SelectItem key={region.code} value={region.code}>
-                {region.nom}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          <SelectGroup>
-            <SelectLabel>Outre-mer</SelectLabel>
-            {OUTRE_MER.map((region) => (
-              <SelectItem key={region.code} value={region.code}>
-                {region.nom}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+          {search.regions.map((region) => (
+            <ComboboxOption
+              key={region.code}
+              id={search.optionId(region.code)}
+              selected={region.code === value}
+              active={region.code === search.activeCode}
+              onClick={() => search.select(region.code)}
+            >
+              {region.nom}
+            </ComboboxOption>
+          ))}
+        </ComboboxList>
+        {search.isOpen && search.regions.length === 0 && (
+          <ComboboxEmpty>Aucune région ne correspond à votre saisie.</ComboboxEmpty>
+        )}
+      </Combobox>
+      {field.hint && (
+        // `content-secondary` et non `muted-foreground` : sur le fond de
+        // l'encart en retrait, ce dernier n'atteint pas 4,5:1.
+        <p id={hintId} className="text-content-secondary text-sm">
+          {field.hint}
+        </p>
+      )}
       <FieldError id={errorId} message={error} />
+      <p role="status" className="sr-only">
+        {search.isOpen ? countAnnouncement(search.regions.length) : ""}
+      </p>
     </div>
   );
 }

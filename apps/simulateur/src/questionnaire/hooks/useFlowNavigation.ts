@@ -83,7 +83,11 @@ export function useFlowNavigation(): UseFlowNavigationResult {
   // ou les résultats, le parcours est figé : sa longueur est celle du chemin.
   const total = question ? totalSteps(state.answers) : walk.path.length;
   const canGoNext = question ? isQuestionComplete(question, state.answers) : false;
-  const isLast = !!question && stepAfter(question.id, state.answers) === STEP_RESULTS;
+  // Dernière question aussi quand elle mène à un écran terminal : la personne
+  // qui réside hors de France (Q7) voit le même « Voir mes résultats », que la
+  // porte de sortie lui réponde ou non (maquette Q7, « Hors de France »).
+  const next = question ? stepAfter(question.id, state.answers) : undefined;
+  const isLast = next === STEP_RESULTS || (next !== undefined && findOutcome(next) !== undefined);
 
   function goNext() {
     if (!question || !canGoNext) return;

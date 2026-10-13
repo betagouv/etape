@@ -56,8 +56,8 @@ export function RadioField({
   };
 
   // Précision : des pastilles en ligne, sous son libellé, dans la carte du
-  // choix qui l'a ouverte.
-  if (field.sub !== undefined) {
+  // choix qui l'a ouverte ou dans un encart en retrait.
+  if (field.sub !== undefined || field.inset) {
     return (
       <div className="flex w-full flex-col gap-3">
         {field.label && (

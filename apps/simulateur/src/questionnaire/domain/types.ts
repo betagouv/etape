@@ -31,8 +31,9 @@ export interface Option {
 
 /**
  * Valeur stockée pour un champ donné dans la map des réponses.
- * `string` couvre les choix uniques, la région (code INSEE) et le mois
- * (`YYYY-MM-01`) ; `string[]` les choix multiples ; `boolean` les cases.
+ * `string` couvre les choix uniques, la région (code INSEE une fois choisie,
+ * texte saisi tant qu'il ne désigne aucune région) et le mois (`YYYY-MM-01`) ;
+ * `string[]` les choix multiples ; `boolean` les cases.
  */
 export type AnswerValue = string | string[] | boolean | null;
 
@@ -72,11 +73,19 @@ interface BaseField {
    * conditionnel ; seul le rendu le distingue.
    */
   sub?: string | string[];
+  /**
+   * Affiché en retrait, dans un encart, sous le champ qui l'a ouvert (Q7 : la
+   * région de travail sous « Je travaille dans une autre région »). Des champs
+   * `inset` consécutifs partagent le même encart. Comme `sub`, ne change que le
+   * rendu : c'est `visibleWhen` qui dit quand le champ existe.
+   */
+  inset?: boolean;
 }
 
 /**
  * Choix unique. Rendu en cartes au premier niveau, en pastilles quand c'est une
- * précision (`sub`) ouverte dans la carte de l'option qui la déclenche.
+ * précision : ouverte dans la carte de l'option qui la déclenche (`sub`) ou
+ * dans un encart en retrait (`inset`).
  */
 export interface RadioField extends BaseField {
   type: "radio";
@@ -115,7 +124,12 @@ export interface NumberField extends BaseField {
   suffix?: string;
 }
 
-/** Région administrative, choisie dans la liste fermée de `domain/regions.ts`. */
+/**
+ * Région administrative, cherchée par son nom dans la liste fermée de
+ * `domain/regions.ts`. Le texte saisi est conservé tant qu'il ne désigne aucune
+ * région : c'est la validation qui le déclare invalide, comme la saisie brute
+ * d'un mois.
+ */
 export interface RegionField extends BaseField {
   type: "region";
   placeholder?: string;
@@ -155,6 +169,11 @@ export interface Question {
   title: string;
   /** Sous-titre / consigne optionnel (ex. "Choix unique."). */
   subtitle?: string;
+  /**
+   * Mention mise en avant sous le sous-titre (Q6 : « Vos réponses ne sont ni
+   * conservées ni transmises. »). Lue avec lui, comme description du titre.
+   */
+  notice?: string;
   fields: Field[];
   /**
    * Applicabilité : la question n'est posée que si ce prédicat passe. Absente,

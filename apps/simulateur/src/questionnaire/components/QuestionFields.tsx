@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { InsetPanel } from "@etape/ui/components/inset-panel";
 import { Separator } from "@etape/ui/components/separator";
 
 import { isFieldVisible, opensUnder } from "../domain/conditions";
@@ -30,7 +31,8 @@ interface QuestionFieldsProps {
  * Une précision (`sub`) s'ouvre SOUS l'option qui la déclenche, dans le même
  * écran : le lien entre le choix et ce qu'il ouvre reste visible, plutôt que de
  * renvoyer l'utilisateur en bas de page. Les champs de premier niveau se
- * suivent normalement.
+ * suivent normalement ; ceux marqués `inset` se rangent dans un encart en
+ * retrait, sous le champ visible qui les précède — celui qui les a ouverts.
  */
 export function QuestionFields({
   question,
@@ -113,7 +115,42 @@ export function QuestionFields({
 
   return (
     <InlineFieldErrorProvider value={inlineErrors}>
-      <div className="flex w-full flex-col gap-8">{mainFields.map(renderField)}</div>
+      <div className="flex w-full flex-col gap-8">
+        {groupInsets(mainFields.filter((field) => isFieldVisible(field, answers))).map(
+          ({ anchor, insets }) =>
+            insets.length === 0 ? (
+              renderField(anchor)
+            ) : (
+              <div key={anchor.name} className="flex flex-col gap-2">
+                {renderField(anchor)}
+                <InsetPanel>{insets.map(renderField)}</InsetPanel>
+              </div>
+            ),
+        )}
+      </div>
     </InlineFieldErrorProvider>
   );
+}
+
+/** Un champ et l'encart des champs `inset` qu'il a ouverts. */
+interface InsetGroup {
+  anchor: Field;
+  insets: Field[];
+}
+
+/**
+ * Range chaque champ `inset` sous le champ visible qui le précède. Le
+ * regroupement se fait sur les champs VISIBLES : la région de travail s'ouvre
+ * sous la case « Je travaille dans une autre région » quand on réside en France,
+ * sous le choix « Hors de France », avec « Travaillez-vous en France ? », quand
+ * on réside à l'étranger.
+ */
+function groupInsets(fields: Field[]): InsetGroup[] {
+  const groups: InsetGroup[] = [];
+  for (const field of fields) {
+    const previous = groups.at(-1);
+    if (field.inset && previous) previous.insets.push(field);
+    else groups.push({ anchor: field, insets: [] });
+  }
+  return groups;
 }

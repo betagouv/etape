@@ -17,7 +17,7 @@ import type { Answers, Outcome, Question } from "./types";
 // champ de plus sur le MÊME écran, avec son `visibleWhen` et son `sub`, qui dit
 // sous quelle option elle s'ouvre.
 //
-// Les options ajoutent des flags, lus par la porte de sortie de Q6 et par le
+// Les options ajoutent des flags, lus par la porte de sortie de Q7 et par le
 // module `resultats/`.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -58,7 +58,7 @@ export const SITUATION_AGENT = "agent";
 export const SITUATION_INDEPENDANT = "independant";
 export const SITUATION_SANS_EMPLOI = "sans-emploi";
 
-// Valeurs de Q6.
+// Valeurs de Q7.
 export const LOC_FRANCE = "france";
 export const LOC_HORS_FRANCE = "hors-france";
 const OUI = "oui";
@@ -438,11 +438,40 @@ export const questions: Question[] = [
     ],
   },
 
-  // ─── Q6. Lieu de résidence et lieu de travail ──────────────────────────
+  // ─── Q6. Reconnaissance de travailleur handicapé ───────────────────────
+  {
+    id: Q_RQTH,
+    title: "Êtes-vous reconnu.e travailleur.euse handicapé.e\u00a0?",
+    subtitle: "Cette situation peut ouvrir des droits spécifiques, encore souvent méconnus.",
+    notice: "Vos réponses ne sont ni conservées ni transmises.",
+    fields: [
+      {
+        type: "radio",
+        name: FIELD_RQTH,
+        required: true,
+        options: [
+          {
+            value: OUI,
+            label: "Oui",
+            description: "Des aides spécifiques peuvent s'ajouter aux dispositifs classiques.",
+            flags: [FLAGS.RQTH],
+          },
+          { value: NON, label: "Non" },
+          {
+            value: "refus",
+            label: "Je ne souhaite pas répondre",
+            flags: [FLAGS.RQTH_REFUS],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ─── Q7. Lieu de résidence et lieu de travail ──────────────────────────
   {
     id: Q_LIEU,
     title: "Où habitez-vous\u00a0?",
-    subtitle: "Les organismes compétents et une partie des aides dépendent de votre région.",
+    subtitle: "Certaines aides à la formation dépendent de votre région.",
     // Porte d'inéligibilité : ni résidence ni travail en France. Une personne
     // qui n'est pas en activité ne se voit pas poser la question du travail :
     // résider hors de France suffit alors à fermer le parcours.
@@ -467,7 +496,8 @@ export const questions: Question[] = [
       {
         type: "region",
         name: FIELD_REGION_RESIDENCE,
-        label: "Votre région de résidence",
+        label: "Votre région",
+        placeholder: "Sélectionnez votre région",
         required: true,
         visibleWhen: (answers) => answers[FIELD_RESIDENCE] === LOC_FRANCE,
       },
@@ -481,10 +511,14 @@ export const questions: Question[] = [
         visibleWhen: (answers) => answers[FIELD_RESIDENCE] === LOC_FRANCE && enActivite(answers),
       },
       {
+        // Absente des maquettes, gardée : sans elle, une personne qui réside à
+        // l'étranger et travaille en France tomberait sur la porte de sortie.
+        // Ouverte dans le même encart que la région de travail.
         type: "radio",
         name: FIELD_TRAVAIL_FRANCE,
         label: "Travaillez-vous en France\u00a0?",
         required: true,
+        inset: true,
         visibleWhen: (answers) =>
           answers[FIELD_RESIDENCE] === LOC_HORS_FRANCE && enActivite(answers),
         options: [
@@ -496,33 +530,13 @@ export const questions: Question[] = [
         type: "region",
         name: FIELD_REGION_TRAVAIL,
         label: "Votre région de travail",
+        hint: "C'est elle qui détermine votre Transitions Pro, pas votre région de résidence.",
+        placeholder: "Sélectionnez votre région",
         required: true,
+        inset: true,
         visibleWhen: (answers) =>
           (answers[FIELD_RESIDENCE] === LOC_FRANCE && answers[FIELD_AUTRE_REGION] === true) ||
           (answers[FIELD_RESIDENCE] === LOC_HORS_FRANCE && answers[FIELD_TRAVAIL_FRANCE] === OUI),
-      },
-    ],
-  },
-
-  // ─── Q7. Reconnaissance de travailleur handicapé ───────────────────────
-  {
-    id: Q_RQTH,
-    title: "Êtes-vous reconnu·e travailleur·euse handicapé·e\u00a0?",
-    subtitle: "Cette reconnaissance ouvre des droits spécifiques. Choix unique.",
-    fields: [
-      {
-        type: "radio",
-        name: FIELD_RQTH,
-        required: true,
-        options: [
-          { value: OUI, label: "Oui", flags: [FLAGS.RQTH] },
-          { value: NON, label: "Non" },
-          {
-            value: "refus",
-            label: "Je ne souhaite pas répondre",
-            flags: [FLAGS.RQTH_REFUS],
-          },
-        ],
       },
     ],
   },

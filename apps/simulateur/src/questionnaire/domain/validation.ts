@@ -19,8 +19,9 @@ const NUMBER_MAX = 99;
  * - une réponse MANQUANTE ne se signale qu'au clic sur « Continuer » — la
  *   signaler plus tôt reprocherait à la personne de ne pas avoir encore
  *   répondu ;
- * - une réponse INVALIDE (mois 13, plus de 50 ans, durée inférieure à
- *   l'ancienneté) se signale dès la sortie du champ : elle est là, mais fausse.
+ * - une réponse INVALIDE (mois 13, plus de 50 ans, région introuvable, durée
+ *   inférieure à l'ancienneté) se signale dès la sortie du champ : elle est
+ *   là, mais fausse.
  */
 export const ISSUE_KIND = {
   MISSING: "missing",
@@ -77,6 +78,19 @@ function numberIssue(field: NumberField, value: AnswerValue | undefined): FieldI
 }
 
 /**
+ * Problème d'un champ de région. Le texte saisi est conservé tant qu'il ne
+ * désigne aucune région (« Nourmandie ») : il est là, mais faux.
+ */
+function regionIssue(field: Field, value: AnswerValue | undefined): FieldIssue | null {
+  if (isRegionCode(value)) return null;
+  if (typeof value !== "string" || value.trim() === "") return missing(field);
+  return {
+    kind: ISSUE_KIND.INVALID,
+    message: `« ${value.trim()} » ne correspond à aucune région : choisissez-en une dans la liste.`,
+  };
+}
+
+/**
  * Message d'une réponse absente. Il se suffit à lui-même — sur un écran à champ
  * unique, il s'affiche seul en bas, détaché du champ qu'il concerne.
  */
@@ -109,7 +123,7 @@ function valueIssue(field: Field, answers: Answers): FieldIssue | null {
     case "number":
       return numberIssue(field, value);
     case "region":
-      return isRegionCode(value) ? null : missing(field);
+      return regionIssue(field, value);
     case "toggle":
       // Une case à cocher est toujours complète : décochée EST une réponse.
       return null;

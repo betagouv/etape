@@ -66,17 +66,7 @@ export const FLAGS = {
   /** En arrêt de travail (maladie, accident du travail ou invalidité). */
   ARRET_TRAVAIL: "ARRET_TRAVAIL",
 
-  // ─── Q6. Résidence et travail ──────────────────────────────────────────
-  /** Réside hors de France. */
-  RESIDENCE_HORS_FRANCE: "RESIDENCE_HORS_FRANCE",
-  /**
-   * Travaille en France en résidant hors de France. Son ABSENCE, combinée à
-   * `RESIDENCE_HORS_FRANCE`, ferme le parcours : ni résidence ni travail en
-   * France.
-   */
-  TRAVAIL_FRANCE: "TRAVAIL_FRANCE",
-
-  // ─── Q7. Reconnaissance de travailleur handicapé ───────────────────────
+  // ─── Q6. Reconnaissance de travailleur handicapé ───────────────────────
   /** Reconnaissance de travailleur handicapé. */
   RQTH: "RQTH",
   /**
@@ -86,6 +76,16 @@ export const FLAGS = {
    * demandent un « oui » explicite.
    */
   RQTH_REFUS: "RQTH_REFUS",
+
+  // ─── Q7. Résidence et travail ──────────────────────────────────────────
+  /** Réside hors de France. */
+  RESIDENCE_HORS_FRANCE: "RESIDENCE_HORS_FRANCE",
+  /**
+   * Travaille en France en résidant hors de France. Son ABSENCE, combinée à
+   * `RESIDENCE_HORS_FRANCE`, ferme le parcours : ni résidence ni travail en
+   * France.
+   */
+  TRAVAIL_FRANCE: "TRAVAIL_FRANCE",
 } as const;
 
 export type Flag = (typeof FLAGS)[keyof typeof FLAGS];
