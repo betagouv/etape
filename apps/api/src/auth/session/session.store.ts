@@ -12,6 +12,13 @@ export abstract class SessionStore {
   abstract createSession(id: string, session: NewSession): Promise<void>;
   abstract getSession(id: string): Promise<AccountSession | null>;
   abstract deleteSession(id: string): Promise<void>;
+
+  /**
+   * Révoque immédiatement toutes les sessions d'un compte, quel que soit
+   * l'appareil. Désactiver le compte côté Keycloak seul ne suffit pas : une
+   * session déjà ouverte ne le revalide jamais avant expiration (12h).
+   */
+  abstract deleteSessionsByAccountId(accountId: string): Promise<void>;
 }
 
 /**
@@ -66,6 +73,10 @@ export class PrismaSessionStore extends SessionStore {
 
   async deleteSession(id: string): Promise<void> {
     await this.prisma.session.deleteMany({ where: { id } });
+  }
+
+  async deleteSessionsByAccountId(accountId: string): Promise<void> {
+    await this.prisma.session.deleteMany({ where: { accountId } });
   }
 
   private async purgeExpired(): Promise<void> {

@@ -24,7 +24,11 @@
       "persistent": true
     },
     "lint": {},
-    "test": {},
+    "test": {
+      // Suite d'intégration de l'API (ignorée sans ces variables) : le
+      // résultat dépend de la base visée, donc de la clé de cache.
+      "env": ["TEST_DATABASE_URL", "TEST_DATABASE_ADMIN_URL"]
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"]
     },
