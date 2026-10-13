@@ -29,6 +29,9 @@ const inputGroupVariants = cva(
         default: "h-9 rounded-md",
         // « Size=LG » du kit (48 px), celle des champs du simulateur.
         lg: "h-12 rounded-lg [&>input]:px-4",
+        // Champ de recherche d'une liste de suggestions (maquette SIMULATEUR-v3,
+        // Q7) : les 32 px du kit sur desktop, 44 px au doigt.
+        responsive: "h-11 rounded-lg md:h-8",
       },
     },
     defaultVariants: {
