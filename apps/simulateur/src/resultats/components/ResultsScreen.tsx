@@ -3,6 +3,8 @@
 import { useMemo, type RefObject } from "react";
 
 import { BackToTop } from "@etape/ui/components/back-to-top";
+import { Container } from "@etape/ui/components/container";
+import { focusRing } from "@etape/ui/lib/focus";
 
 import type { Answers } from "@/questionnaire/domain/types";
 
@@ -12,7 +14,7 @@ import { selectResultats } from "../domain/selection";
 import { AnswersRecap } from "./AnswersRecap";
 import { DownloadPdfButton } from "./DownloadPdfButton";
 import { EmptyResults } from "./EmptyResults";
-import { ResultCard } from "./ResultCard";
+import { ResultsList } from "./ResultsList";
 
 /** Cible du retour en haut : le titre de l'écran, focusable par programme. */
 const RESULTATS_TOP_ID = "resultats-top";
@@ -22,8 +24,6 @@ interface ResultsScreenProps {
   onEdit: (questionId: string) => void;
   headingRef?: RefObject<HTMLHeadingElement | null>;
 }
-
-const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10";
 
 /** « 1 résultat correspond » / « 12 résultats correspondent ». */
 function decompte(total: number): string {
@@ -38,30 +38,25 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
   const recapEntries = useMemo(() => buildRecap(answers), [answers]);
 
   return (
-    <main className="flex flex-1 flex-col">
-      {/*
-        Doit rester haut dans l'arbre : cf. `BackToTop`, dont la sentinelle est
-        positionnée par rapport à son point d'insertion. `md:hidden` conserve le
-        choix d'origine — la remontée ne sert qu'en mobile, où la liste de
-        résultats est en une seule colonne.
-      */}
+    <main className="bg-background md:bg-muted flex flex-1 flex-col">
+      {/* Haut dans l'arbre : la sentinelle de `BackToTop` se place à son point d'insertion. */}
       <BackToTop
         targetId={RESULTATS_TOP_ID}
         label="Revenir en haut de la page"
         className="md:hidden"
       />
 
-      <header className="border-border bg-background border-b">
-        <div className={`${CONTAINER} flex flex-col gap-3 py-8 md:gap-4 md:py-16`}>
+      <Container size="md" className="flex flex-col gap-6 pt-6 pb-24 md:pt-16 md:pb-16">
+        <header className="flex flex-col gap-3">
           <h1
             ref={headingRef}
             id={RESULTATS_TOP_ID}
             tabIndex={-1}
-            className="text-foreground focus-visible:outline-ring rounded-sm text-[28px] leading-9 font-bold focus-visible:outline-2 focus-visible:outline-offset-4 md:text-[32px] md:leading-10"
+            className={`font-heading text-heading-md text-foreground rounded-sm ${focusRing}`}
           >
-            Résultats
+            Les dispositifs accessibles avec votre profil
           </h1>
-          <p className="text-content-secondary max-w-3xl text-base leading-6 md:text-lg md:leading-7">
+          <p className="text-muted-foreground text-body">
             Voici les interlocuteurs à contacter, les outils à votre disposition et les dispositifs
             qui correspondent à vos réponses. Rien n’est automatique&nbsp;: un conseiller vous
             aidera à choisir par où commencer.
@@ -70,36 +65,24 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
           {resultats.length > 0 && (
             <DownloadPdfButton resultats={resultats} recapEntries={recapEntries} />
           )}
-        </div>
-      </header>
+        </header>
 
-      <section aria-labelledby="resultats-decompte" className={`${CONTAINER} py-8 md:py-12`}>
-        {resultats.length === 0 ? (
-          <EmptyResults />
-        ) : (
-          <>
-            <h2
-              id="resultats-decompte"
-              className="text-foreground mb-6 text-lg leading-7 font-bold md:mb-8"
-            >
-              {decompte(resultats.length)}
-            </h2>
-            <ul className="grid list-none grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {resultats.map((resultat) => (
-                <li key={resultat.id} className="h-full">
-                  <ResultCard resultat={resultat} />
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
+        <section aria-labelledby="resultats-decompte">
+          {resultats.length === 0 ? (
+            <EmptyResults />
+          ) : (
+            <>
+              {/* Absent de la maquette : donne le décompte et tient la hiérarchie h1 > h2 > h3. */}
+              <h2 id="resultats-decompte" className="sr-only">
+                {decompte(resultats.length)}
+              </h2>
+              <ResultsList resultats={resultats} />
+            </>
+          )}
+        </section>
 
-      <section className="border-border bg-muted border-t">
-        <div className={`${CONTAINER} pt-12 pb-24 md:py-14`}>
-          <AnswersRecap answers={answers} onEdit={onEdit} />
-        </div>
-      </section>
+        <AnswersRecap answers={answers} onEdit={onEdit} />
+      </Container>
     </main>
   );
 }

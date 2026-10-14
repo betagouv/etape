@@ -1,0 +1,51 @@
+"use client";
+
+import { CircleArrowDownIcon } from "lucide-react";
+
+import { Button } from "@etape/ui/components/button";
+
+import { NOMBRE_RESULTATS_INITIAL } from "../domain/selection";
+import type { ResultatAffiche } from "../domain/types";
+import { useVisibleResultats } from "../hooks/useVisibleResultats";
+import { ResultCard } from "./ResultCard";
+
+interface ResultsListProps {
+  resultats: ResultatAffiche[];
+}
+
+export function ResultsList({ resultats }: ResultsListProps) {
+  const { visibleResultats, hiddenCount, announcement, firstRevealedRef, showMore } =
+    useVisibleResultats(resultats);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <ul className="flex list-none flex-col gap-4">
+        {visibleResultats.map((resultat, index) => (
+          <li key={resultat.id}>
+            <ResultCard
+              resultat={resultat}
+              headingRef={index === NOMBRE_RESULTATS_INITIAL ? firstRevealedRef : undefined}
+            />
+          </li>
+        ))}
+      </ul>
+
+      {hiddenCount > 0 && (
+        <Button
+          type="button"
+          variant="ghost-primary"
+          size="responsive-sm"
+          onClick={showMore}
+          className="self-center"
+        >
+          Afficher plus de résultats
+          <CircleArrowDownIcon aria-hidden="true" />
+        </Button>
+      )}
+
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
+    </div>
+  );
+}

@@ -9,6 +9,8 @@ import { CATALOGUE } from "./catalogue";
 import type { Profil } from "./profil";
 import { CATEGORIES, type Resultat, type ResultatAffiche } from "./types";
 
+export const NOMBRE_RESULTATS_INITIAL = 10;
+
 /** Résout le lien d'une carte pour le profil de l'utilisateur. */
 function lien(url: Resultat["url"], profil: Profil): string {
   return typeof url === "function" ? url(profil) : url;

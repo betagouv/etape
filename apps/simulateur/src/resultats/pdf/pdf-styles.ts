@@ -26,9 +26,9 @@ const COLORS = {
 
 /** Couleur d'accent par catégorie — les mêmes tokens que `CategorieTag.tsx`. */
 export const CATEGORIE_COLORS: Record<Categorie, string> = {
-  interlocuteur: "#134e4a", // --secondary-foreground
-  outil: "#1e40af", // --info-text
-  dispositif: "#166534", // --success-text
+  interlocuteur: "#1e40af", // --info-text
+  outil: "#4c1d95", // --violet-text
+  dispositif: "#9a3412", // --warning-text
 };
 
 export const pdfStyles = StyleSheet.create({
