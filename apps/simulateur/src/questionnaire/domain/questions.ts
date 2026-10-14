@@ -1,6 +1,6 @@
 import { FLAGS } from "./flags";
 import {
-  MOIS_PAR_AN,
+  MONTHS_PER_YEAR,
   monthLabel,
   monthsSince,
   oldestAcceptedYear,
@@ -33,7 +33,7 @@ export const FIELD_CADRE = "cadre";
 export const FIELD_VERSANT = "versant";
 export const FIELD_ARRET_TRAVAIL = "arretTravail";
 export const FIELD_ENTREE_EMPLOYEUR = "entreeEmployeur";
-export const FIELD_MOINS_UN_AN = "activiteMoinsUnAn";
+export const FIELD_ACTIVITE_MOINS_UN_AN = "activiteMoinsUnAn";
 export const FIELD_DUREE_ACTIVITE = "dureeActivite";
 export const FIELD_RESIDENCE = "residence";
 export const FIELD_REGION_RESIDENCE = "regionResidence";
@@ -57,6 +57,10 @@ export const SITUATION_DEMANDEUR = "demandeur";
 export const SITUATION_AGENT = "agent";
 export const SITUATION_INDEPENDANT = "independant";
 export const SITUATION_SANS_EMPLOI = "sans-emploi";
+const CONTRAT_CDI = "cdi";
+const CONTRAT_CDD = "cdd";
+export const CADRE_OUI = "cadre";
+export const CADRE_NON = "non-cadre";
 
 // Valeurs de Q7.
 export const LOC_FRANCE = "france";
@@ -81,7 +85,7 @@ const enActivite = (answers: Answers): boolean =>
 
 const estSalarie = (answers: Answers): boolean => answers[FIELD_SITUATION] === SITUATION_SALARIE;
 
-const CONTRATS_CADRE = ["cdi", "cdd"];
+const CONTRATS_CADRE = [CONTRAT_CDI, CONTRAT_CDD];
 
 /**
  * Le statut cadre n'est demandé qu'en CDI et en CDD (règle du ticket) : il ne
@@ -91,61 +95,52 @@ const isCadreDemande = (answers: Answers): boolean =>
   estSalarie(answers) && CONTRATS_CADRE.includes(String(answers[FIELD_CONTRAT]));
 
 /**
- * Les précisions de Q3 s'ouvrent une à une, chacune une fois la précédente
- * donnée (maquettes « Q3 - Completed ») : l'arrêt de travail, posé en dernier,
- * attend le contrat et le statut cadre du salarié·e, ou le versant de l'agent·e.
- * L'indépendant·e n'a pas d'autre précision : la question lui vient d'emblée.
+ * L'arrêt de travail attend le contrat (et le statut cadre) ou le versant ;
+ * l'indépendant·e l'a d'emblée.
  */
 const isSituationPrecisee = (answers: Answers): boolean => {
   if (estSalarie(answers)) {
-    if (answers[FIELD_CONTRAT] === undefined) return false;
-    return !isCadreDemande(answers) || answers[FIELD_CADRE] !== undefined;
+    return (
+      answers[FIELD_CONTRAT] !== undefined &&
+      (!isCadreDemande(answers) || answers[FIELD_CADRE] !== undefined)
+    );
   }
-  if (answers[FIELD_SITUATION] === SITUATION_AGENT) return answers[FIELD_VERSANT] !== undefined;
-  return true;
+  return answers[FIELD_SITUATION] !== SITUATION_AGENT || answers[FIELD_VERSANT] !== undefined;
 };
 
-/** « 1 an », « 2 ans » : en français, 0 et 1 restent au singulier. */
-const enAnnees = (count: number): string => `${count} ${count > 1 ? "ans" : "an"}`;
+/** En français, 0 et 1 restent au singulier. */
+export const formatAnnees = (count: number): string => `${count} ${count > 1 ? "ans" : "an"}`;
 
-/**
- * Ancienneté représentée par la date d'entrée de Q4, affichée sous le champ.
- * Les parties nulles sont tues : « Soit 4 ans », « Soit 3 mois ».
- */
-const ancienneteTexte = (entree: MonthValue): string => {
+const describeAnciennete = (entree: MonthValue): string => {
   const mois = monthsSince(entree);
   if (mois === 0) return "Soit moins d'un mois d'ancienneté.";
-  const annees = Math.floor(mois / MOIS_PAR_AN);
-  const reste = mois % MOIS_PAR_AN;
-  const parties = [annees > 0 ? enAnnees(annees) : "", reste > 0 ? `${reste} mois` : ""];
-  return `Soit ${parties.filter(Boolean).join(" et ")} d'ancienneté.`;
+  const annees = Math.floor(mois / MONTHS_PER_YEAR);
+  const remainingMois = mois % MONTHS_PER_YEAR;
+  const parts = [
+    annees > 0 ? formatAnnees(annees) : "",
+    remainingMois > 0 ? `${remainingMois} mois` : "",
+  ];
+  return `Soit ${parts.filter(Boolean).join(" et ")} d'ancienneté.`;
 };
 
-/** Ancienneté chez l'employeur actuel, en mois révolus. `null` sans Q4 valide. */
-const ancienneteMois = (answers: Answers): number | null => {
+/** En mois révolus ; `null` sans Q4 valide. */
+export function readAncienneteMois(answers: Answers): number | null {
   const entree = parseMonth(answers[FIELD_ENTREE_EMPLOYEUR]);
   return entree ? monthsSince(entree) : null;
-};
+}
 
-/**
- * La case « moins d'un an » de Q5 n'est proposée qu'à qui peut y répondre oui :
- * ni à la personne sans emploi, qui ne travaille pas ; ni à celle dont Q4 dit
- * déjà au moins un an chez son employeur actuel.
- */
+/** Proposée seulement à qui peut répondre oui : ni sans emploi, ni Q4 ≥ 1 an. */
 const isMoinsUnAnPropose = (answers: Answers): boolean => {
   if (answers[FIELD_SITUATION] === SITUATION_SANS_EMPLOI) return false;
   if (!aUnEmployeur(answers)) return true;
-  const mois = ancienneteMois(answers);
-  return mois === null || mois < MOIS_PAR_AN;
+  const mois = readAncienneteMois(answers);
+  return mois === null || mois < MONTHS_PER_YEAR;
 };
 
 const isMoinsUnAn = (answers: Answers): boolean =>
-  isMoinsUnAnPropose(answers) && answers[FIELD_MOINS_UN_AN] === true;
+  isMoinsUnAnPropose(answers) && answers[FIELD_ACTIVITE_MOINS_UN_AN] === true;
 
-/**
- * Durée totale d'activité en années (Q5) : 0 quand la case « moins d'un an » est
- * cochée, sinon le nombre saisi. `null` si rien d'exploitable n'a été répondu.
- */
+/** En années, 0 quand « moins d'un an » est cochée. */
 export function readDureeActivite(answers: Answers): number | null {
   if (isMoinsUnAn(answers)) return 0;
   const value = answers[FIELD_DUREE_ACTIVITE];
@@ -167,19 +162,14 @@ const dureeCoherente = (answers: Answers): string | null => {
   // Ancienneté non demandée (sans employeur) ou pas encore saisie : rien à comparer.
   if (!entree) return null;
 
-  const seuil = Math.floor(monthsSince(entree) / MOIS_PAR_AN);
+  const seuil = Math.floor(monthsSince(entree) / MONTHS_PER_YEAR);
   const total = Number(answers[FIELD_DUREE_ACTIVITE]);
   if (!Number.isFinite(total) || total >= seuil) return null;
 
-  return `Vous avez indiqué être chez votre employeur actuel depuis ${monthLabel(entree)}, soit ${enAnnees(seuil)} : votre durée totale ne peut pas être inférieure. Corrigez-la, ou revenez à la question précédente.`;
+  return `Vous avez indiqué être chez votre employeur actuel depuis ${monthLabel(entree)}, soit ${formatAnnees(seuil)} : votre durée totale ne peut pas être inférieure. Corrigez-la, ou revenez à la question précédente.`;
 };
 
-/**
- * Séquence ordonnée des questions du flow.
- *
- * Les « ? » sont précédés d'une espace insécable (`\u00a0`) : sans elle, le
- * point d'interrogation peut se retrouver seul en début de ligne.
- */
+/** Espace insécable avant chaque « ? » pour qu'il ne passe pas seul à la ligne. */
 export const questions: Question[] = [
   // ─── Q1. Origine de la demande ─────────────────────────────────────────
   {
@@ -323,8 +313,8 @@ export const questions: Question[] = [
         required: true,
         visibleWhen: estSalarie,
         options: [
-          { value: "cdi", label: "CDI", flags: [FLAGS.CDI] },
-          { value: "cdd", label: "CDD", flags: [FLAGS.CDD] },
+          { value: CONTRAT_CDI, label: "CDI", flags: [FLAGS.CDI] },
+          { value: CONTRAT_CDD, label: "CDD", flags: [FLAGS.CDD] },
           { value: "interim", label: "Intérimaire", flags: [FLAGS.INTERIM] },
           {
             value: "intermittent",
@@ -341,8 +331,8 @@ export const questions: Question[] = [
         required: true,
         visibleWhen: isCadreDemande,
         options: [
-          { value: "cadre", label: "Oui", flags: [FLAGS.CADRE] },
-          { value: "non-cadre", label: "Non" },
+          { value: CADRE_OUI, label: "Oui", flags: [FLAGS.CADRE] },
+          { value: CADRE_NON, label: "Non" },
         ],
       },
       {
@@ -399,7 +389,7 @@ export const questions: Question[] = [
         name: FIELD_ENTREE_EMPLOYEUR,
         required: true,
         minYear: oldestAcceptedYear(),
-        describeValue: ancienneteTexte,
+        describeValue: describeAnciennete,
       },
     ],
   },
@@ -415,14 +405,13 @@ export const questions: Question[] = [
         // d'un an » (maquette) : la case est aussi proposée aux demandeur·ses
         // d'emploi, qui ne travaillent pas en ce moment.
         type: "toggle",
-        name: FIELD_MOINS_UN_AN,
+        name: FIELD_ACTIVITE_MOINS_UN_AN,
         label: "J'ai travaillé moins d'un an au total",
         summary: "Moins d'un an",
         visibleWhen: isMoinsUnAnPropose,
       },
       {
-        // Cochée, la case répond à la place du champ, qui disparaît : deux
-        // réponses à la même question ne pourraient que se contredire.
+        // Masqué si « moins d'un an » est cochée : deux réponses se contrediraient.
         type: "number",
         name: FIELD_DUREE_ACTIVITE,
         label: "Nombre d'années",
@@ -434,6 +423,7 @@ export const questions: Question[] = [
         max: 50,
         placeholder: "Saisissez le nombre d'années",
         suffix: "ans",
+        formatValue: formatAnnees,
       },
     ],
   },
@@ -513,7 +503,6 @@ export const questions: Question[] = [
       {
         // Absente des maquettes, gardée : sans elle, une personne qui réside à
         // l'étranger et travaille en France tomberait sur la porte de sortie.
-        // Ouverte dans le même encart que la région de travail.
         type: "radio",
         name: FIELD_TRAVAIL_FRANCE,
         label: "Travaillez-vous en France\u00a0?",

@@ -73,20 +73,10 @@ interface BaseField {
    * conditionnel ; seul le rendu le distingue.
    */
   sub?: string | string[];
-  /**
-   * Affiché en retrait, dans un encart, sous le champ qui l'a ouvert (Q7 : la
-   * région de travail sous « Je travaille dans une autre région »). Des champs
-   * `inset` consécutifs partagent le même encart. Comme `sub`, ne change que le
-   * rendu : c'est `visibleWhen` qui dit quand le champ existe.
-   */
+  /** Rendu en retrait, encart partagé par les `inset` consécutifs ; l'existence dépend de `visibleWhen`. */
   inset?: boolean;
 }
 
-/**
- * Choix unique. Rendu en cartes au premier niveau, en pastilles quand c'est une
- * précision : ouverte dans la carte de l'option qui la déclenche (`sub`) ou
- * dans un encart en retrait (`inset`).
- */
 export interface RadioField extends BaseField {
   type: "radio";
   options: Option[];
@@ -104,12 +94,8 @@ export interface CheckboxField extends BaseField {
  */
 export interface MonthField extends BaseField {
   type: "month";
-  /** Année la plus ancienne acceptée à la saisie. */
   minYear?: number;
-  /**
-   * Phrase calculée affichée sous le champ dès que la date est valide (Q4 :
-   * l'ancienneté qu'elle représente).
-   */
+  /** Phrase affichée sous le champ quand la date est valide (Q4). */
   describeValue?: (value: MonthValue) => string;
 }
 
@@ -122,6 +108,8 @@ export interface NumberField extends BaseField {
   placeholder?: string;
   /** Unité affichée après le champ (« ans »). Décorative : `aria-hidden`. */
   suffix?: string;
+  /** Lecture de la valeur au récapitulatif, unité accordée (« 1 an »). */
+  formatValue?: (value: number) => string;
 }
 
 /**
@@ -143,12 +131,7 @@ export interface ToggleField extends BaseField {
   type: "toggle";
   /** Libellé de la case elle-même : obligatoire, c'est le seul texte du champ. */
   label: string;
-  /**
-   * Réponse lue au récapitulatif quand la case est cochée — pour une case qui
-   * répond À LA PLACE d'un autre champ (Q5 : « Moins d'un an »). Décochée, elle
-   * n'y figure pas : c'est le champ qu'elle remplace qui répond. Absent, la case
-   * se lit « Oui » ou « Non ».
-   */
+  /** Lu au récapitulatif seulement cochée, quand la case répond à la place d'un autre champ (Q5). */
   summary?: string;
 }
 
@@ -169,10 +152,7 @@ export interface Question {
   title: string;
   /** Sous-titre / consigne optionnel (ex. "Choix unique."). */
   subtitle?: string;
-  /**
-   * Mention mise en avant sous le sous-titre (Q6 : « Vos réponses ne sont ni
-   * conservées ni transmises. »). Lue avec lui, comme description du titre.
-   */
+  /** Mention lue avec le sous-titre comme description du titre. */
   notice?: string;
   fields: Field[];
   /**
@@ -201,24 +181,14 @@ export interface Question {
   outcome?: (flags: FlagSet) => string | null;
 }
 
-/** Morceau d'un texte : simple, ou mis en avant (`emphasis`). */
 export type TextPart = string | { emphasis: string };
 
-/**
- * Écran terminal du flow (issue / dead-end) : la simulation s'arrête. Ce n'est
- * PAS une question — ni progression ni navigation ; on n'en sort qu'en
- * corrigeant une réponse ou en recommençant.
- */
+/** Écran terminal : on n'en sort qu'en corrigeant une réponse ou en recommençant. */
 export interface Outcome {
   id: string;
   title: string;
-  /** Explication sous le titre ; ses mots clés peuvent être mis en avant. */
   text: readonly TextPart[];
-  /**
-   * Questions dont les réponses mènent ici. Elles sont rappelées sur l'écran,
-   * pour que la personne voie ce qui a fermé le parcours et puisse le corriger.
-   */
+  /** Questions rappelées à l'écran pour corriger ce qui a fermé le parcours. */
   causes: readonly string[];
-  /** Conseil pour la suite, mis en avant sous le rappel. */
   advice?: string;
 }

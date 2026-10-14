@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { ResultsScreen } from "@/resultats/components/ResultsScreen";
 
@@ -12,6 +12,16 @@ import { QuestionCta } from "./QuestionCta";
 import { QuestionProgress } from "./QuestionProgress";
 import { QuestionScreen } from "./QuestionScreen";
 import { Topbar } from "./Topbar";
+
+// `bg-muted` plutôt que le teal-50 du kit : le gris des descriptions y garde 4,5:1.
+function ScreenFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className="bg-background md:bg-muted flex h-dvh flex-col">
+      <Topbar />
+      {children}
+    </div>
+  );
+}
 
 export function FlowShell() {
   const { state, hydrated, dispatch } = useFlow();
@@ -69,11 +79,8 @@ export function FlowShell() {
   }
 
   if (nav.outcome) {
-    // `goPrev` ramène à la dernière question répondue : un clic malheureux sur
-    // « Hors de France » ne condamne pas la simulation.
     return (
-      <div className="bg-background md:bg-muted flex h-dvh flex-col">
-        <Topbar />
+      <ScreenFrame>
         <OutcomeScreen
           outcome={nav.outcome}
           answers={state.answers}
@@ -81,19 +88,14 @@ export function FlowShell() {
           onRestart={nav.restart}
           headingRef={headingRef}
         />
-      </div>
+      </ScreenFrame>
     );
   }
 
   if (!nav.question) return null;
 
   return (
-    // Fond blanc sur mobile, teal-50 sur desktop (maquettes). `bg-muted` : le
-    // teal-50 #f9faf9 du kit, indiscernable de notre neutral-50 #fafafa, sous
-    // lequel le gris des descriptions garde ses 4,5:1.
-    <div className="bg-background md:bg-muted flex h-dvh flex-col">
-      <Topbar />
-
+    <ScreenFrame>
       <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
         <div className="flex w-full max-w-2xl flex-1 flex-col md:flex-none md:py-16">
           <div className="flex flex-col gap-6 px-6 pt-6 md:gap-10 md:p-0">
@@ -116,6 +118,6 @@ export function FlowShell() {
           />
         </div>
       </main>
-    </div>
+    </ScreenFrame>
   );
 }

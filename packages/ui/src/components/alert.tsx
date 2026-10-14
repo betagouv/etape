@@ -4,9 +4,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@etape/ui/lib/utils";
 
 /*
- * Encart de message posé dans le fil de la page. Source shadcn `alert`, aux
- * marges du kit Figma (10 × 8).
- *
  * Écarts à shadcn :
  * - pas de `role="alert"` imposé. Une région ajoutée au DOM en même temps que
  *   son texte n'est pas annoncée de façon fiable : l'annonce passe par une
@@ -24,8 +21,6 @@ const alertVariants = cva(
       variant: {
         default: "bg-card text-card-foreground",
         destructive: "bg-card text-destructive *:data-[slot=alert-description]:text-destructive",
-        // Variante ETAPE (maquette SIMULATEUR-v3, Q4) : un résultat calculé à
-        // partir de la saisie, mis en avant par un filet à gauche.
         emphasis:
           "bg-secondary text-primary rounded-l-none rounded-r-md border-0 border-l-3 border-l-primary px-3 font-medium",
       },

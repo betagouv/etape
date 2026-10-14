@@ -5,14 +5,7 @@ import { Badge } from "@etape/ui/components/badge";
 
 import { CATEGORIE_LABELS, type Categorie } from "../domain/types";
 
-/**
- * Habillage du tag. La liste des cartes n'étant pas découpée en sections, le
- * tag est le SEUL repère de catégorie : il porte donc à la fois un libellé, une
- * icône et une couleur — jamais la couleur seule.
- *
- * La couleur est choisie parmi les variantes de `Badge`, pas écrite ici : l'app
- * décide de la catégorie, le design system de son apparence.
- */
+// Seul repère de catégorie de la liste : libellé, icône et couleur, jamais la couleur seule.
 const TAG_UI: Record<
   Categorie,
   { Icon: LucideIcon; variant: NonNullable<ComponentProps<typeof Badge>["variant"]> }
@@ -24,15 +17,13 @@ const TAG_UI: Record<
 
 interface CategorieTagProps {
   categorie: Categorie;
-  isPrioritaire?: boolean;
 }
 
-/** Tag de catégorie d'un résultat : icône, libellé et couleur de la variante. */
-export function CategorieTag({ categorie, isPrioritaire = false }: CategorieTagProps) {
+export function CategorieTag({ categorie }: CategorieTagProps) {
   const { Icon, variant } = TAG_UI[categorie];
 
   return (
-    <Badge variant={isPrioritaire ? "on-primary" : variant} size="lg">
+    <Badge variant={variant} size="lg">
       <Icon aria-hidden="true" />
       <span className="sr-only">Catégorie : </span>
       {CATEGORIE_LABELS[categorie]}

@@ -10,8 +10,7 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
-// Titres et logo « etape. ». Axe de graisse seul : `opsz` reste à 14, la valeur
-// des titres du kit Figma.
+// Sans axe `opsz` : il reste à 14, comme les titres du kit.
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
   subsets: ["latin"],

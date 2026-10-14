@@ -6,19 +6,13 @@ import { OTPInput, OTPInputContext, REGEXP_ONLY_DIGITS } from "input-otp";
 import { cn } from "@etape/ui/lib/utils";
 
 /*
- * Saisie découpée en cases, un caractère par case : un code, une année, un
- * mois. Source shadcn `input-otp`, sur la bibliothèque du même nom.
- *
  * Un SEUL `<input>`, transparent et posé sur les cases, porte la saisie : le
  * champ a un nom accessible, se colle d'un coup (« 1990 ») et s'efface au
  * retour arrière comme n'importe quel champ. Les cases n'en sont que l'image —
  * `InputOTPGroup` les masque aux technologies d'assistance, qui liraient sinon
  * chaque chiffre une seconde fois.
  *
- * Écart au kit shadcn : des cases de 48 px séparées, aux angles arrondis, comme
- * la maquette SIMULATEUR-v3, plutôt qu'une barre soudée de 36 px. L'erreur se
- * lit sur l'`<input>` (`aria-invalid`), pas sur des cases qui n'en ont pas le
- * rôle.
+ * L'erreur se lit sur l'`<input>` (`aria-invalid`), pas sur les cases.
  */
 
 function InputOTP({
@@ -84,7 +78,6 @@ function InputOTPSlot({
   );
 }
 
-/** Motif de saisie : des chiffres seulement (filtre la frappe et le collage). */
 export { REGEXP_ONLY_DIGITS };
 
 export { InputOTP, InputOTPGroup, InputOTPSlot };

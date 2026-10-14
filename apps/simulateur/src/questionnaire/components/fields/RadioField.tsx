@@ -22,12 +22,8 @@ interface RadioFieldProps {
   onChange: (value: string) => void;
   labelledBy?: string;
   describedBy?: string;
-  /** Message affiché sous le groupe quand la réponse manque. */
   error?: string;
-  /**
-   * Précisions ouvertes par une option, affichées dans sa carte. Renvoyer
-   * `null` pour les options qui n'en ont pas.
-   */
+  /** Précisions affichées dans la carte de l'option ; `null` si aucune. */
   renderAfterOption?: (optionValue: string) => ReactNode;
 }
 
@@ -55,8 +51,7 @@ export function RadioField({
     ...fieldErrorMark(error),
   };
 
-  // Précision : des pastilles en ligne, sous son libellé, dans la carte du
-  // choix qui l'a ouverte ou dans un encart en retrait.
+  // Sous-question ou champ en encart : en pastilles.
   if (field.sub !== undefined || field.inset) {
     return (
       <div className="flex w-full flex-col gap-3">

@@ -7,16 +7,7 @@ import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import { cn } from "@etape/ui/lib/utils";
 import { Button } from "@etape/ui/components/button";
 
-// Source : registre shadcn, à l'apparence du kit Figma (« Alert Dialog ») — cadre
-// sans marge intérieure, en-tête et pied de 16 px, pied grisé sous un filet.
-// Contrairement à
-// `Dialog`, Radix y pose `role="alertdialog"` et ne ferme pas au clic hors du
-// cadre : une alerte attend une réponse.
-//
-// Sans animation quand la personne a demandé à les réduire : `tw-animate-css`
-// ne le prévoit pas. Le `!` de `motion-reduce:animate-none!` est nécessaire,
-// `data-[state=open]:animate-in` portant un sélecteur d'attribut, plus
-// spécifique qu'une simple media query.
+// Le `!` de `motion-reduce:animate-none!` l'emporte sur `data-[state=open]:animate-in`, plus spécifique.
 
 function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -32,14 +23,7 @@ function AlertDialogPortal({ ...props }: React.ComponentProps<typeof AlertDialog
   return <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />;
 }
 
-/**
- * `center` : au milieu de l'écran, sous un voile sombre.
- * `top-end` : ancré en haut à droite, sous le bouton qui l'ouvre, et sur un
- * voile clair qui estompe la page sans la masquer (maquette « Quitter » du
- * simulateur). En dessous de `sm`, il reste centré : l'écran est trop étroit
- * pour qu'un ancrage se lise. Sa position par défaut est le coin de l'écran ;
- * l'app l'aligne sur son déclencheur par `className` (`sm:top-*`, `sm:right-*`).
- */
+/** `top-end` : dès `sm`, en haut à droite sur voile clair ; l'app l'aligne sur son déclencheur (`sm:top-*`, `sm:right-*`). */
 const alertDialogPlacements = {
   center: { overlay: "bg-overlay-black-60", content: "" },
   "top-end": {
@@ -153,7 +137,6 @@ function AlertDialogDescription({
   );
 }
 
-/** Pastille d'icône de l'en-tête. `destructive` : une action qui fait perdre quelque chose. */
 const alertDialogMediaVariants = cva(
   "mb-2 inline-flex size-10 items-center justify-center rounded-md sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-6",
   {

@@ -6,9 +6,7 @@
 // figées ne justifie ni requête réseau, ni état de chargement, ni panne
 // possible.
 //
-// L'ordre du tableau est celui de l'affichage : une seule liste alphabétique,
-// métropole et outre-mer mêlés (maquette SIMULATEUR-v3) — la saisie la filtre
-// par le début du nom, un regroupement n'y aiderait pas.
+// Ordre d'affichage : alphabétique, outre-mer mêlé, la saisie filtrant par le début du nom.
 //
 // Seules les RÉGIONS y figurent. Saint-Pierre-et-Miquelon, Saint-Barthélemy et
 // Saint-Martin sont des collectivités d'outre-mer, pas des régions : elles ont
@@ -77,10 +75,7 @@ export function regionFromAnswers(answers: Answers): RegionCode | null {
   return regionOf(answers[FIELD_REGION_TRAVAIL]) ?? regionOf(answers[FIELD_REGION_RESIDENCE]);
 }
 
-/**
- * Forme comparable d'un nom : sans accent ni majuscule, tirets et apostrophes
- * réduits à une espace. « ile de france » retrouve ainsi « Île-de-France ».
- */
+/** Sans accent ni majuscule ; tirets et apostrophes → espace. */
 function normalize(text: string): string {
   return text
     .normalize("NFD")
@@ -93,29 +88,19 @@ function normalize(text: string): string {
 /** Article en tête de nom, que la saisie peut omettre (« Réunion »). */
 const ARTICLE = /^(la|le|les|l) /;
 
-/** Les formes sous lesquelles une région se cherche : son nom, et sans article. */
 function searchKeys(region: Region): string[] {
   const nom = normalize(region.nom);
-  const sansArticle = nom.replace(ARTICLE, "");
-  return sansArticle === nom ? [nom] : [nom, sansArticle];
+  return [nom, nom.replace(ARTICLE, "")];
 }
 
-/**
- * Régions dont le nom COMMENCE par la saisie (maquette Q7 : « No » propose
- * Normandie et Nouvelle-Aquitaine, « A » la seule Auvergne-Rhône-Alpes). Une
- * recherche au milieu des noms proposerait la moitié de la liste dès la
- * première lettre. Saisie vide : toute la liste.
- */
+/** Par début de nom : chercher au milieu proposerait la moitié de la liste dès la 1re lettre. */
 export function findRegions(query: string): readonly Region[] {
   const wanted = normalize(query);
   if (wanted === "") return REGIONS;
   return REGIONS.filter((region) => searchKeys(region).some((key) => key.startsWith(wanted)));
 }
 
-/**
- * Région dont le nom est EXACTEMENT la saisie, aux accents et majuscules près :
- * taper « normandie » en entier vaut un choix dans la liste. `null` sinon.
- */
+/** Le nom complet tapé, aux accents et majuscules près, vaut un choix. */
 export function findRegionByName(text: string): RegionCode | null {
   const wanted = normalize(text);
   if (wanted === "") return null;

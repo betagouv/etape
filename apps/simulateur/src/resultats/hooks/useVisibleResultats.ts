@@ -3,7 +3,7 @@
 import { useRef, useState, type RefObject } from "react";
 import { flushSync } from "react-dom";
 
-import { NOMBRE_RESULTATS_INITIAL } from "../domain/selection";
+import { INITIAL_RESULTAT_COUNT } from "../domain/selection";
 import type { ResultatAffiche } from "../domain/types";
 
 export interface UseVisibleResultatsResult {
@@ -15,7 +15,7 @@ export interface UseVisibleResultatsResult {
 }
 
 function revealAnnouncement(count: number): string {
-  return count <= 1
+  return count === 1
     ? `${count} résultat supplémentaire affiché.`
     : `${count} résultats supplémentaires affichés.`;
 }
@@ -29,10 +29,10 @@ export function useVisibleResultats(resultats: ResultatAffiche[]): UseVisibleRes
   const [isExpanded, setIsExpanded] = useState(false);
   const firstRevealedRef = useRef<HTMLHeadingElement | null>(null);
 
-  const hiddenCount = isExpanded ? 0 : Math.max(resultats.length - NOMBRE_RESULTATS_INITIAL, 0);
-  const visibleResultats = isExpanded ? resultats : resultats.slice(0, NOMBRE_RESULTATS_INITIAL);
-  const revealedCount = resultats.length - NOMBRE_RESULTATS_INITIAL;
-  const announcement = isExpanded && revealedCount > 0 ? revealAnnouncement(revealedCount) : "";
+  const extraCount = Math.max(resultats.length - INITIAL_RESULTAT_COUNT, 0);
+  const hiddenCount = isExpanded ? 0 : extraCount;
+  const visibleResultats = resultats.slice(0, resultats.length - hiddenCount);
+  const announcement = isExpanded && extraCount > 0 ? revealAnnouncement(extraCount) : "";
 
   function showMore() {
     flushSync(() => setIsExpanded(true));

@@ -19,13 +19,7 @@ function RadioGroup({
   );
 }
 
-/**
- * Bouton radio du kit (« RadioButton ») : bord en `primary` — le `border`
- * teal-200 des maquettes ne fait que 1,3:1, sous les 3:1 d'un composant
- * d'interface. Coché, le bord s'épaissit en anneau autour d'un centre blanc,
- * comme dans le kit : pas de puce dessinée, l'état reste lisible en contraste
- * élevé, où seules les bordures subsistent.
- */
+/** Bord en `primary` : le teal-200 du kit ne fait que 1,3:1. Coché, le bord s'épaissit (pas de puce) : lisible en contraste élevé. */
 function RadioGroupItem({
   className,
   ...props
@@ -47,9 +41,7 @@ const radioGroupChipVariants = cva(
   {
     variants: {
       size: {
-        /** « Chip » sm du kit : 24 px. */
         sm: "h-6 px-2",
-        /** Maquettes mobiles du simulateur : 40 px au doigt, 24 px à partir de `md`. */
         responsive: "h-10 px-5 md:h-6 md:px-2",
       },
     },
@@ -59,12 +51,7 @@ const radioGroupChipVariants = cva(
   },
 );
 
-/**
- * Choix en pastille (« Chip » du kit) : un bouton radio sans puce, dont le
- * libellé est le contenu. Pour les précisions courtes, posées en ligne sous un
- * choix principal (« CDI », « CDD »…). Il reste un vrai radio : navigation aux
- * flèches et annonce « coché » viennent de Radix.
- */
+/** Choix en pastille : un vrai radio Radix (flèches, « coché »), sans puce. */
 function RadioGroupChip({
   className,
   size,

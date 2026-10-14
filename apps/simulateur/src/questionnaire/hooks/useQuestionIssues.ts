@@ -9,27 +9,29 @@ interface UseQuestionIssuesOptions {
   question: Question;
   answers: Answers;
   setAnswer: (name: string, value: AnswerValue) => void;
-  /** Tentative de « Continuer » échouée sur cette question, s'il y en a eu une. */
   failedAttempt?: number;
 }
 
 export interface UseQuestionIssuesResult {
-  /** Problèmes à afficher maintenant, par nom de champ. */
   shown: ReadonlyMap<string, FieldIssue>;
   /** Texte de la région `role="status"` : vide au repos. */
   announcement: string;
-  /** `setAnswer`, qui retire aussi l'erreur d'un champ dès qu'il est corrigé. */
   setAnswer: (name: string, value: AnswerValue) => void;
-  /** À appeler à la sortie d'un champ : révèle les valeurs invalides. */
+  /** À appeler au blur d'un champ. */
   revealInvalid: () => void;
 }
 
-/** Champs dont la valeur invalide a été révélée, pour UNE question. */
 interface Revealed {
   questionId: string;
   names: readonly string[];
   announcement: string;
 }
+
+const emptyRevealed = (questionId: string): Revealed => ({
+  questionId,
+  names: [],
+  announcement: "",
+});
 
 const isInvalid = (issue: FieldIssue | undefined): boolean => issue?.kind === ISSUE_KIND.INVALID;
 
@@ -50,16 +52,9 @@ export function useQuestionIssues({
 }: UseQuestionIssuesOptions): UseQuestionIssuesResult {
   const issues = fieldIssues(question, answers);
 
-  const [state, setState] = useState<Revealed>({
-    questionId: question.id,
-    names: [],
-    announcement: "",
-  });
+  const [state, setState] = useState<Revealed>(() => emptyRevealed(question.id));
   // Changer de question repart de zéro, sans effet ni remise à zéro explicite.
-  const revealed =
-    state.questionId === question.id
-      ? state
-      : { questionId: question.id, names: [], announcement: "" };
+  const revealed = state.questionId === question.id ? state : emptyRevealed(question.id);
 
   const shown = new Map(
     [...issues].filter(

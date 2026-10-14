@@ -26,13 +26,8 @@ interface QuestionFieldsProps {
 }
 
 /**
- * Les champs d'une question.
- *
- * Une précision (`sub`) s'ouvre SOUS l'option qui la déclenche, dans le même
- * écran : le lien entre le choix et ce qu'il ouvre reste visible, plutôt que de
- * renvoyer l'utilisateur en bas de page. Les champs de premier niveau se
- * suivent normalement ; ceux marqués `inset` se rangent dans un encart en
- * retrait, sous le champ visible qui les précède — celui qui les a ouverts.
+ * Une précision (`sub`) s'ouvre sous l'option qui la déclenche : le lien entre
+ * le choix et ce qu'il ouvre reste visible.
  */
 export function QuestionFields({
   question,
@@ -85,9 +80,6 @@ export function QuestionFields({
                 if (opened.length === 0) return null;
                 const option = field.options.find((o) => o.value === optionValue);
                 return (
-                  // Chaque précision s'ouvre sous un filet, dans la carte de
-                  // l'option : le lien entre le choix et ce qu'il ouvre se lit
-                  // sans retrait, la carte faisant déjà le regroupement.
                   <div
                     role="group"
                     aria-label={`Précisions : ${option?.label ?? ""}`}
@@ -132,19 +124,12 @@ export function QuestionFields({
   );
 }
 
-/** Un champ et l'encart des champs `inset` qu'il a ouverts. */
 interface InsetGroup {
   anchor: Field;
   insets: Field[];
 }
 
-/**
- * Range chaque champ `inset` sous le champ visible qui le précède. Le
- * regroupement se fait sur les champs VISIBLES : la région de travail s'ouvre
- * sous la case « Je travaille dans une autre région » quand on réside en France,
- * sous le choix « Hors de France », avec « Travaillez-vous en France ? », quand
- * on réside à l'étranger.
- */
+/** Groupe sur les champs VISIBLES : un même champ `inset` s'ouvre sous un ancrage différent selon la résidence. */
 function groupInsets(fields: Field[]): InsetGroup[] {
   const groups: InsetGroup[] = [];
   for (const field of fields) {

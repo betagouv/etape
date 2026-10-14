@@ -23,19 +23,18 @@ import type { MonthField as MonthFieldDef } from "../../domain/types";
 import { fieldErrorGroupMark, joinIds } from "./aria";
 import { FieldError } from "./FieldError";
 
+const NO_INVALID_PART = { year: false, month: false } as const;
+
 interface MonthYearFieldProps {
   field: MonthFieldDef;
   value: string | undefined;
   onChange: (value: string | null) => void;
   labelledBy?: string;
   describedBy?: string;
-  /** Message du problème à afficher : saisie incomplète ou date impossible. */
   error?: string;
 }
 
 /**
- * Année puis mois, saisis chiffre par chiffre dans des cases (maquette Q4).
- *
  * La saisie est transmise BRUTE à chaque frappe (`formatMonthEntry`) : c'est la
  * validation du domaine qui dit si elle est incomplète, impossible (mois 13) ou
  * dans le futur, et le champ n'a qu'à afficher ce qu'elle décide.
@@ -58,10 +57,8 @@ export function MonthYearField({
   const month = problem === null ? parseMonth(value) : null;
   const description = month && field.describeValue ? field.describeValue(month) : "";
 
-  // Seules les parties fautives passent en rouge : un mois à 13 n'accuse pas
-  // l'année qui le précède.
-  const invalid =
-    error && problem !== null ? MONTH_PROBLEM_PARTS[problem](entry) : { year: false, month: false };
+  // Seules les parties fautives passent en rouge : un mois à 13 n'accuse pas l'année.
+  const invalid = error && problem !== null ? MONTH_PROBLEM_PARTS[problem](entry) : NO_INVALID_PART;
 
   const yearRef = useRef<HTMLInputElement>(null);
   const monthRef = useRef<HTMLInputElement>(null);
@@ -124,9 +121,7 @@ export function MonthYearField({
         </p>
       </div>
 
-      {/* Toujours montée : l'ancienneté calculée est annoncée dès qu'elle
-          apparaît, et à chaque correction de la date. L'écart porte sur l'encart
-          et non sur la région, qui ne doit rien occuper quand elle est vide. */}
+      {/* Toujours montée : l'ancienneté est annoncée à chaque correction. Marge sur l'encart, pas sur la région vide. */}
       <div role="status">
         {description && (
           <Alert variant="emphasis" className="mt-6 md:mt-10">
@@ -140,7 +135,6 @@ export function MonthYearField({
   );
 }
 
-/** Ce qui distingue l'année du mois. */
 interface DigitsPartSpec {
   id: string;
   label: string;
@@ -154,16 +148,13 @@ interface DigitsPartProps {
   inputRef: RefObject<HTMLInputElement | null>;
   value: string;
   onChange: (value: string) => void;
-  /** Passage d'une partie à l'autre : au mois une fois l'année complète, retour à l'année. */
   navigation: {
     onComplete?: () => void;
     onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   };
-  /** Description ajoutée à l'exemple (message d'erreur, consigne) et état d'erreur. */
   state: { describedBy?: string; invalid: boolean };
 }
 
-/** Une partie de la date : son libellé, ses cases et son exemple. */
 function DigitsPart({ part, inputRef, value, onChange, navigation, state }: DigitsPartProps) {
   const exampleId = `${part.id}-example`;
   return (
@@ -178,8 +169,7 @@ function DigitsPart({ part, inputRef, value, onChange, navigation, state }: Digi
         pattern={REGEXP_ONLY_DIGITS}
         inputMode="numeric"
         autoComplete="off"
-        // Pas de place réservée au badge d'un gestionnaire de mots de passe :
-        // ce n'est pas un code secret.
+        // Pas de place réservée au badge d'un gestionnaire de mots de passe.
         pushPasswordManagerStrategy="none"
         placeholder={part.placeholder}
         value={value}

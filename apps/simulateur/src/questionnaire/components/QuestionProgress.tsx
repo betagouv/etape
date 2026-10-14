@@ -6,14 +6,12 @@ interface QuestionProgressProps {
 }
 
 export function QuestionProgress({ step, total }: QuestionProgressProps) {
-  // La question EN COURS compte comme franchie : la barre est donc pleine sur
-  // la dernière, et déjà entamée sur la première — arriver sur un questionnaire
-  // à jauge vide donne l'impression que rien n'a démarré.
-  const pct = total > 0 ? Math.max(0, Math.min(100, (step / total) * 100)) : 0;
+  // La question en cours compte comme franchie : la jauge n'est jamais vide au départ.
+  const value = total > 0 ? Math.round(Math.min(100, (step / total) * 100)) : 0;
 
   return (
     <Progress
-      value={Math.round(pct)}
+      value={value}
       aria-label="Progression du questionnaire"
       getValueLabel={() => `Question ${step} sur environ ${total}`}
     />

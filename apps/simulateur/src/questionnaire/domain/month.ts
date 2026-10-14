@@ -6,10 +6,8 @@
 // la valeur stockée reste sérialisable, comparable par ordre lexicographique et
 // lisible telle quelle.
 //
-// La saisie se fait chiffre par chiffre : la valeur stockée est la saisie
-// BRUTE, mise sous cette même forme (`202-1-01`, `2022-13-01`). Seule une date
-// réelle passe `parseMonth` ; une saisie en cours ou impossible reste lisible
-// par `readMonthEntry`, et la validation peut dire précisément ce qui ne va pas.
+// Valeur stockée = saisie BRUTE sous cette forme (`202-1-01`) : seule une date
+// réelle passe `parseMonth`.
 //
 // Fichier FEUILLE sans import : partagé par la validation, le champ de saisie
 // et le récapitulatif.
@@ -26,9 +24,8 @@ export interface MonthEntry {
   month: string;
 }
 
-export const MOIS_PAR_AN = 12;
+export const MONTHS_PER_YEAR = 12;
 
-/** Longueur d'une saisie complète : 4 chiffres pour l'année, 2 pour le mois. */
 export const YEAR_LENGTH = 4;
 export const MONTH_LENGTH = 2;
 
@@ -48,13 +45,11 @@ export function parseMonth(value: unknown): MonthValue | null {
   return { year: Number(match[1]), month: Number(match[2]) };
 }
 
-/** Saisie brute → valeur stockée. `null` quand les deux parties sont vides. */
 export function formatMonthEntry({ year, month }: MonthEntry): string | null {
   if (year === "" && month === "") return null;
   return `${year}-${month}${STORED_SUFFIX}`;
 }
 
-/** Valeur stockée → saisie brute, pour la réafficher ou la valider. */
 export function readMonthEntry(value: unknown): MonthEntry {
   if (typeof value !== "string" || !value.endsWith(STORED_SUFFIX)) return { year: "", month: "" };
   const [year = "", month = ""] = value.slice(0, -STORED_SUFFIX.length).split("-");
@@ -88,14 +83,9 @@ export function monthLabel({ year, month }: MonthValue): string {
   return `${MONTH_NAMES[month - 1]} ${year}`;
 }
 
-/**
- * Profondeur acceptée : 50 ans, la durée totale d'activité maximale de Q5. Une
- * entrée plus ancienne donnerait une ancienneté que Q5 ne pourrait plus égaler,
- * et le parcours resterait bloqué.
- */
+/** 50 ans, le maximum de Q5 : au-delà, Q4 imposerait une durée que Q5 refuse. */
 const YEARS_BACK = 50;
 
-/** Année la plus ancienne acceptée à la saisie. */
 export function oldestAcceptedYear(): number {
   return currentMonth().year - YEARS_BACK;
 }
@@ -106,19 +96,14 @@ export function oldestAcceptedYear(): number {
  */
 export function monthsSince(value: MonthValue): number {
   const now = currentMonth();
-  return Math.max(0, (now.year - value.year) * MOIS_PAR_AN + (now.month - value.month));
+  return Math.max(0, (now.year - value.year) * MONTHS_PER_YEAR + (now.month - value.month));
 }
 
-/** Ce qui empêche une saisie de former une date acceptable. */
 export const MONTH_PROBLEM = {
-  /** Il manque des chiffres. */
   INCOMPLETE: "incomplete",
-  /** Mois à 00 ou au-delà de 12. */
   MONTH_OUT_OF_RANGE: "month-out-of-range",
   YEAR_TOO_OLD: "year-too-old",
-  /** Année postérieure à l'année en cours. */
   FUTURE_YEAR: "future-year",
-  /** Année en cours, mois pas encore arrivé. */
   FUTURE_MONTH: "future-month",
 } as const;
 
@@ -127,12 +112,7 @@ export type MonthProblem = (typeof MONTH_PROBLEM)[keyof typeof MONTH_PROBLEM];
 const isComplete = (digits: string, length: number) =>
   digits.length === length && /^\d+$/.test(digits);
 
-/**
- * Premier problème de la saisie, ou `null` si elle forme une date acceptable.
- *
- * Une partie complète est jugée sans attendre l'autre : une année future se
- * signale dès ses quatre chiffres, avant même que le mois soit tapé.
- */
+/** Une partie complète est jugée sans attendre l'autre (année future signalée avant le mois). */
 export function monthEntryProblem(entry: MonthEntry, minYear: number): MonthProblem | null {
   const now = currentMonth();
   const hasYear = isComplete(entry.year, YEAR_LENGTH);
@@ -142,25 +122,27 @@ export function monthEntryProblem(entry: MonthEntry, minYear: number): MonthProb
 
   if (hasYear && year < minYear) return MONTH_PROBLEM.YEAR_TOO_OLD;
   if (hasYear && year > now.year) return MONTH_PROBLEM.FUTURE_YEAR;
-  if (hasMonth && (month < 1 || month > MOIS_PAR_AN)) return MONTH_PROBLEM.MONTH_OUT_OF_RANGE;
+  if (hasMonth && (month < 1 || month > MONTHS_PER_YEAR)) return MONTH_PROBLEM.MONTH_OUT_OF_RANGE;
   if (!hasYear || !hasMonth) return MONTH_PROBLEM.INCOMPLETE;
   if (year === now.year && month > now.month) return MONTH_PROBLEM.FUTURE_MONTH;
   return null;
 }
 
-/** Parties de la saisie à signaler en erreur, selon le problème. */
 export interface MonthEntryParts {
   year: boolean;
   month: boolean;
 }
+
+const YEAR_ONLY = (): MonthEntryParts => ({ year: true, month: false });
+const MONTH_ONLY = (): MonthEntryParts => ({ year: false, month: true });
 
 export const MONTH_PROBLEM_PARTS: Record<MonthProblem, (entry: MonthEntry) => MonthEntryParts> = {
   [MONTH_PROBLEM.INCOMPLETE]: (entry) => ({
     year: !isComplete(entry.year, YEAR_LENGTH),
     month: !isComplete(entry.month, MONTH_LENGTH),
   }),
-  [MONTH_PROBLEM.MONTH_OUT_OF_RANGE]: () => ({ year: false, month: true }),
-  [MONTH_PROBLEM.YEAR_TOO_OLD]: () => ({ year: true, month: false }),
-  [MONTH_PROBLEM.FUTURE_YEAR]: () => ({ year: true, month: false }),
-  [MONTH_PROBLEM.FUTURE_MONTH]: () => ({ year: false, month: true }),
+  [MONTH_PROBLEM.MONTH_OUT_OF_RANGE]: MONTH_ONLY,
+  [MONTH_PROBLEM.YEAR_TOO_OLD]: YEAR_ONLY,
+  [MONTH_PROBLEM.FUTURE_YEAR]: YEAR_ONLY,
+  [MONTH_PROBLEM.FUTURE_MONTH]: MONTH_ONLY,
 };

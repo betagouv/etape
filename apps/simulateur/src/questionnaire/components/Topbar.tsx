@@ -22,10 +22,7 @@ import { Container } from "@etape/ui/components/container";
  */
 const EXIT_HREF = "/";
 
-/**
- * Barre commune à tous les écrans du simulateur : marque, nom de l'outil, et
- * « Quitter », confirmé par une alerte.
- */
+/** Barre commune aux écrans du simulateur. */
 export function Topbar() {
   return (
     <header className="border-divider bg-background shrink-0 border-b">
@@ -48,12 +45,7 @@ function ExitDialog() {
           Quitter
         </Button>
       </AlertDialogTrigger>
-      {/*
-        Ancrée sous « Quitter » à partir de `sm`. `top` : hauteur de la barre
-        (16 + 32 + 16, plus son filet) et 8 px d'écart. `right` : la gouttière
-        de `Container size="md"` (`sm:px-6`, puis `lg:px-8` une fois la largeur
-        maximale de 62rem atteinte), pour finir à l'aplomb du bouton.
-      */}
+      {/* Dès `sm`, sous « Quitter » : hauteur de la barre + 8 px, gouttière de `Container size="md"`. */}
       <AlertDialogContent
         placement="top-end"
         className="sm:top-[calc(4rem+1px+0.5rem)] sm:right-[max(1.5rem,calc((100vw-62rem)/2+2rem))]"

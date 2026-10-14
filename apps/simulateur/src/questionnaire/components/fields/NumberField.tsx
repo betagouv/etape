@@ -12,13 +12,11 @@ interface NumberFieldProps {
   onChange: (value: string | null) => void;
   labelledBy?: string;
   describedBy?: string;
-  /** Message affiché sous le champ quand la saisie manque ou est hors bornes. */
   error?: string;
 }
 
 /**
- * Saisie d'un entier au clavier : libellé, champ avec son unité, exemple dessous
- * (maquette Q5).
+ * Saisie d'un entier au clavier.
  *
  * `type="text"` avec `inputMode="numeric"` plutôt que `type="number"` : ce
  * dernier apporte des flèches d'incrément, réagit à la molette de la souris et

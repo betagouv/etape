@@ -18,51 +18,29 @@ const calloutVariants = cva("flex gap-4", {
   },
 });
 
-const calloutBodyVariants = cva("", {
-  variants: {
-    variant: {
-      default: "contents",
-      secondary: "flex min-w-0 flex-1 items-center gap-3.5",
-    },
-  },
-});
+type CalloutVariant = NonNullable<VariantProps<typeof calloutVariants>["variant"]>;
 
-const calloutIconVariants = cva("flex shrink-0 items-center justify-center", {
-  variants: {
-    variant: {
-      default: "bg-secondary rounded-sm p-2",
-      secondary: "bg-background size-11 rounded-md",
-    },
+// Classes des parties internes, commandées par la même variante que la racine.
+const CALLOUT_PARTS: Record<
+  CalloutVariant,
+  { body: string; icon: string; heading: string; title: string; text: string }
+> = {
+  default: {
+    body: "contents",
+    icon: "bg-secondary rounded-sm p-2",
+    heading: "gap-1",
+    title: "font-bold",
+    text: "text-body",
   },
-});
-
-const calloutHeadingVariants = cva("flex min-w-0 flex-col break-words", {
-  variants: {
-    variant: {
-      default: "gap-1",
-      secondary: "gap-0",
-    },
+  secondary: {
+    body: "flex min-w-0 flex-1 items-center gap-3.5",
+    icon: "bg-background size-11 rounded-md",
+    heading: "gap-0",
+    title: "font-semibold",
+    // Écart à la maquette : `muted-foreground` ne fait que 4,3:1 sur `secondary`.
+    text: "text-body-sm",
   },
-});
-
-const calloutTitleVariants = cva("text-foreground", {
-  variants: {
-    variant: {
-      default: "text-body font-bold",
-      secondary: "text-body font-semibold",
-    },
-  },
-});
-
-const calloutTextVariants = cva("", {
-  variants: {
-    variant: {
-      default: "text-body text-content-secondary",
-      // Écart à la maquette : `muted-foreground` ne fait que 4,3:1 sur `secondary`.
-      secondary: "text-body-sm text-content-secondary",
-    },
-  },
-});
+};
 
 function Callout({
   icon: Icon,
@@ -85,6 +63,8 @@ function Callout({
     titleAs?: CalloutTitleTag;
     action?: React.ReactNode;
   }) {
+  const parts = CALLOUT_PARTS[variant ?? "default"];
+
   return (
     <div
       data-slot="callout"
@@ -92,14 +72,14 @@ function Callout({
       className={cn(calloutVariants({ variant }), className)}
       {...props}
     >
-      <div data-slot="callout-body" className={calloutBodyVariants({ variant })}>
-        <div className={calloutIconVariants({ variant })}>
+      <div data-slot="callout-body" className={parts.body}>
+        <div className={cn("flex shrink-0 items-center justify-center", parts.icon)}>
           <Icon aria-hidden="true" focusable="false" className="text-primary size-6" />
         </div>
 
-        <div className={calloutHeadingVariants({ variant })}>
-          <TitleTag className={calloutTitleVariants({ variant })}>{title}</TitleTag>
-          <div className={calloutTextVariants({ variant })}>{children}</div>
+        <div className={cn("flex min-w-0 flex-col break-words", parts.heading)}>
+          <TitleTag className={cn("text-foreground text-body", parts.title)}>{title}</TitleTag>
+          <div className={cn("text-content-secondary", parts.text)}>{children}</div>
         </div>
       </div>
 

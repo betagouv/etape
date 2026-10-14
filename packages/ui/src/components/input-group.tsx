@@ -7,10 +7,6 @@ import { Input } from "@etape/ui/components/input";
 import { cn } from "@etape/ui/lib/utils";
 
 /*
- * Champ de saisie accompagné d'un complément affiché dans son cadre : une
- * unité (« ans »), une icône. Source shadcn `input-group`, réduite au champ
- * texte et aux compléments — ni bouton ni zone de texte, sans usage ici.
- *
  * Le cadre est porté par le groupe ; le champ, sans bordure, s'y fond. Focus et
  * erreur se lisent sur le champ (`:focus-visible`, `aria-invalid`) et
  * s'affichent sur le cadre.
@@ -27,10 +23,7 @@ const inputGroupVariants = cva(
     variants: {
       size: {
         default: "h-9 rounded-md",
-        // « Size=LG » du kit (48 px), celle des champs du simulateur.
         lg: "h-12 rounded-lg [&>input]:px-4",
-        // Champ de recherche d'une liste de suggestions (maquette SIMULATEUR-v3,
-        // Q7) : les 32 px du kit sur desktop, 44 px au doigt.
         responsive: "h-11 rounded-lg md:h-8",
       },
     },

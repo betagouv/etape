@@ -19,20 +19,17 @@ interface RegionFieldProps {
   onChange: (value: string | null) => void;
   labelledBy?: string;
   describedBy?: string;
-  /** Message affiché sous le champ : région absente ou introuvable. */
   error?: string;
 }
 
-/** Annonce du nombre de régions proposées, selon ce qu'il en reste. */
+const NO_MATCH = "Aucune région ne correspond à votre saisie.";
+
 function countAnnouncement(count: number): string {
-  if (count === 0) return "Aucune région ne correspond à votre saisie.";
+  if (count === 0) return NO_MATCH;
   return count === 1 ? "1 région proposée." : `${count} régions proposées.`;
 }
 
 /**
- * Choix d'une région en la cherchant par son nom (maquette Q7) : le champ filtre
- * la liste, affichée dessous dans le fil de la page.
- *
  * Le nombre de régions proposées est annoncé à chaque frappe, dans une région
  * `role="status"` toujours montée : la liste qui se raccourcit ne se voit pas
  * au lecteur d'écran.
@@ -51,9 +48,8 @@ export function RegionField({
   const errorId = `${field.name}-error`;
 
   const search = useRegionSearch({ idPrefix: field.name, value, onChange });
-  // Sans région à proposer, la liste n'est pas déployée : seul le message
-  // « Aucune région ne correspond » s'affiche à sa place.
-  const isListShown = search.isOpen && search.regions.length > 0;
+  const isEmpty = search.isOpen && search.regions.length === 0;
+  const isListShown = search.isOpen && !isEmpty;
 
   return (
     <div className="flex w-full flex-col gap-2">
@@ -99,9 +95,7 @@ export function RegionField({
             </ComboboxOption>
           ))}
         </ComboboxList>
-        {search.isOpen && search.regions.length === 0 && (
-          <ComboboxEmpty>Aucune région ne correspond à votre saisie.</ComboboxEmpty>
-        )}
+        {isEmpty && <ComboboxEmpty>{NO_MATCH}</ComboboxEmpty>}
       </Combobox>
       {field.hint && (
         // `content-secondary` et non `muted-foreground` : sur le fond de

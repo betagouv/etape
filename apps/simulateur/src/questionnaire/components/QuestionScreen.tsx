@@ -49,6 +49,18 @@ function focusFirstInvalid(container: HTMLElement | null): void {
   }
 }
 
+/** Une réponse absente se complète, une réponse invalide se corrige. */
+function summarize(count: number, hasInvalid: boolean): string {
+  if (hasInvalid) {
+    return count === 1
+      ? "Une réponse est à corriger pour continuer."
+      : `${count} réponses sont à corriger pour continuer.`;
+  }
+  return count === 1
+    ? "Une réponse manque : complétez-la pour continuer."
+    : `${count} réponses manquent : complétez-les pour continuer.`;
+}
+
 export function QuestionScreen({
   question,
   stepNumber,
@@ -73,33 +85,19 @@ export function QuestionScreen({
   });
   const errors = new Map([...shown].map(([name, issue]) => [name, issue.message]));
 
-  // Un écran à champ unique (Q1, Q2, Q4, Q5, Q6) porte son message une seule
-  // fois, en bas. Un écran qui en a plusieurs (Q3, Q7) garde un message sous
-  // chaque champ fautif — une ligne unique ne dirait pas LEQUEL — et se résume
-  // en bas au nombre de réponses en attente. Une case à cocher ne compte pas :
-  // elle n'est jamais en erreur (Q5 et sa case « moins d'un an »).
-  const saisies = question.fields.filter(
+  // Champ unique : un message, en bas. Plusieurs : un par champ, résumé en bas.
+  // Une case à cocher n'est jamais en erreur.
+  const inputFields = question.fields.filter(
     (field) => field.type !== "toggle" && isFieldVisible(field, answers),
   );
-  const champUnique = saisies.length === 1 ? saisies[0] : undefined;
-  const issueUnique = champUnique ? shown.get(champUnique.name) : undefined;
+  const singleField = inputFields.length === 1 ? inputFields[0] : undefined;
+  const singleIssue = singleField ? shown.get(singleField.name) : undefined;
   const hasInvalid = [...shown.values()].some((issue) => issue.kind === ISSUE_KIND.INVALID);
-
-  // Une réponse absente ne se « corrige » pas, elle se donne ; une réponse
-  // invalide est là mais fausse. Le résumé le dit avec le bon verbe.
-  const absences = [...shown.values()].filter((issue) => issue.kind === ISSUE_KIND.MISSING).length;
-  const resume =
-    shown.size === absences
-      ? shown.size === 1
-        ? "Une réponse manque : complétez-la pour continuer."
-        : `${shown.size} réponses manquent : complétez-les pour continuer.`
-      : shown.size === 1
-        ? "Une réponse est à corriger pour continuer."
-        : `${shown.size} réponses sont à corriger pour continuer.`;
+  const summary = summarize(shown.size, hasInvalid);
 
   // Sur un écran à champ unique, le message en bas EST celui du champ : il en
   // porte l'`id`, celui que l'`aria-describedby` du champ désigne déjà.
-  const bilanId = champUnique ? `${champUnique.name}-error` : undefined;
+  const summaryId = singleField ? `${singleField.name}-error` : undefined;
 
   const fieldsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -133,35 +131,27 @@ export function QuestionScreen({
           titleId={titleId}
           describedBy={subtitleId}
           errors={errors}
-          inlineErrors={champUnique === undefined}
+          inlineErrors={singleField === undefined}
         />
       </div>
-      {/* Le bilan est visible mais pas annoncé : après un clic sur
-          « Continuer », le focus part sur le premier champ fautif, qui le lit.
-          Une valeur invalide révélée à la sortie du champ passe, elle, par la
-          région ci-dessous. */}
+      {/* Visible mais pas annoncé : le focus part sur le premier champ fautif, qui le lit. */}
       {hasInvalid ? (
-        // Valeur impossible (maquettes « Completed invalid ») : un encart, dont
-        // le titre est celui de la maquette. Sur un écran à champ unique, sa
-        // description dit quoi corriger ; sur un écran à plusieurs champs
-        // (Q7), chaque champ fautif porte déjà son message, l'encart ne fait
-        // que résumer s'il y en a plusieurs.
         <Alert variant="destructive">
           <CircleAlert aria-hidden="true" />
           <AlertTitle>Vérifiez votre saisie</AlertTitle>
-          {issueUnique ? (
-            <AlertDescription id={bilanId}>{issueUnique.message}</AlertDescription>
+          {singleIssue ? (
+            <AlertDescription id={summaryId}>{singleIssue.message}</AlertDescription>
           ) : (
-            shown.size > 1 && <AlertDescription>{resume}</AlertDescription>
+            shown.size > 1 && <AlertDescription>{summary}</AlertDescription>
           )}
         </Alert>
       ) : (
         shown.size > 0 && (
           <p
-            id={bilanId}
+            id={summaryId}
             className="text-destructive-text text-sm leading-5 font-semibold md:text-base md:leading-6"
           >
-            {issueUnique?.message ?? resume}
+            {singleIssue?.message ?? summary}
           </p>
         )
       )}

@@ -10,9 +10,10 @@ const cardVariants = cva("flex flex-col py-6", {
       default: "bg-card text-card-foreground gap-6 rounded-xl border shadow-sm",
       muted: "bg-muted text-card-foreground gap-3 rounded-sm lg:gap-4",
       outline: "bg-card text-card-foreground gap-4 rounded-xl border",
-      // Le `muted-foreground` de `CardDescription` tomberait à 2:1 sur `primary`.
+      // Les enfants passent sur fond `primary` : le `muted-foreground` de
+      // `CardDescription` y tomberait à 2:1, le filet `border` y trancherait.
       primary:
-        "bg-primary text-primary-foreground gap-4 rounded-xl border border-primary [&_[data-slot=card-description]]:text-primary-foreground",
+        "bg-primary text-primary-foreground gap-4 rounded-xl border border-primary [&_[data-slot=card-description]]:text-primary-foreground [&_[data-slot=separator]]:bg-primary-subtle [&_[data-slot=badge]]:bg-primary-subtle [&_[data-slot=badge]]:text-primary-foreground",
     },
   },
   defaultVariants: {

@@ -32,11 +32,7 @@ export interface Resultat {
   nom: string;
   /** Deux phrases maximum : ce que c'est, et ce que ça change pour la personne. */
   description: string;
-  /**
-   * Lien « En savoir plus ». Une fonction quand il dépend du profil : de la
-   * région pour les réseaux régionalisés (Transitions Pro, offre de formation
-   * des Régions), de la situation pour le CEP (page dédiée aux agents publics).
-   */
+  /** Fonction quand le lien dépend du profil (région, ou situation pour le CEP). */
   url: string | ((profil: Profil) => string);
   /**
    * Condition d'affichage. Vraie = la carte est retenue. C'est la seule règle
@@ -45,7 +41,7 @@ export interface Resultat {
   quand: (profil: Profil) => boolean;
 }
 
-/** Une carte retenue, son lien déjà résolu pour la région de l'utilisateur. */
+/** Une carte retenue, son lien résolu pour le profil. */
 export interface ResultatAffiche extends Omit<Resultat, "url" | "quand"> {
   url: string;
   isPrioritaire: boolean;

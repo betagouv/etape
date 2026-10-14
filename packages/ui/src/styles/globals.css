@@ -408,8 +408,7 @@
   --text-caption: var(--type-caption);
   --text-caption--line-height: var(--type-caption-lh);
 
-  /* Animations */
-  /* Curseur simulé dans la case active d'`InputOTP` (source shadcn). */
+  /* Curseur d'`InputOTP`. */
   --animate-caret-blink: caret-blink 1.25s ease-out infinite;
 
   @keyframes caret-blink {

@@ -8,7 +8,8 @@ import { Callout } from "@etape/ui/components/callout";
 import { Container } from "@etape/ui/components/container";
 import { focusRing } from "@etape/ui/lib/focus";
 
-import type { Answers, TextPart } from "@/questionnaire/domain/types";
+import { TextParts } from "@/questionnaire/components/TextParts";
+import type { Answers } from "@/questionnaire/domain/types";
 
 import { buildPhraseRecapitulative } from "../domain/phrase-recapitulative";
 import { buildProfil } from "../domain/profil";
@@ -34,15 +35,6 @@ function decompte(total: number): string {
   return total <= 1
     ? `${total} résultat correspond à votre situation`
     : `${total} résultats correspondent à votre situation`;
-}
-
-function renderPart(part: TextPart, index: number) {
-  if (typeof part === "string") return part;
-  return (
-    <span key={index} className="text-foreground font-medium">
-      {part.emphasis}
-    </span>
-  );
 }
 
 export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProps) {
@@ -72,7 +64,9 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
           >
             Les dispositifs accessibles avec votre profil
           </h1>
-          <p className="text-muted-foreground text-body">{phrase.map(renderPart)}</p>
+          <p className="text-muted-foreground text-body">
+            <TextParts parts={phrase} emphasisClassName="text-foreground font-medium" />
+          </p>
         </header>
 
         {hasResultats && (
@@ -81,7 +75,7 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
           </div>
         )}
 
-        <section aria-labelledby="resultats-decompte">
+        <section aria-labelledby={hasResultats ? "resultats-decompte" : undefined}>
           {!hasResultats ? (
             <EmptyResults />
           ) : (

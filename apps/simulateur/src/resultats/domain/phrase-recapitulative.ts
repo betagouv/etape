@@ -1,12 +1,12 @@
-// Phrase récapitulative des réponses (ticket « phrase récapitulative »). Les
-// réponses sont reprises telles que libellées, première lettre en minuscule en
-// milieu de phrase. Sur la page de résultats, toutes les réponses du parcours
-// sont présentes et celles hors parcours effacées (`pruneAnswers`) : seuls les
-// compléments conditionnels sont testés.
+// Réponses reprises telles que libellées, en minuscule en milieu de phrase. Les
+// réponses hors parcours étant effacées (`pruneAnswers`), seuls les compléments
+// conditionnels sont testés.
 
 import { isFieldVisible } from "@/questionnaire/domain/conditions";
 import { MONTH_NAMES, parseMonth } from "@/questionnaire/domain/month";
 import {
+  CADRE_NON,
+  CADRE_OUI,
   FIELD_ARRET_TRAVAIL,
   FIELD_AUTRE_REGION,
   FIELD_CADRE,
@@ -14,7 +14,7 @@ import {
   FIELD_DUREE_ACTIVITE,
   FIELD_ENTREE_EMPLOYEUR,
   FIELD_METIER,
-  FIELD_MOINS_UN_AN,
+  FIELD_ACTIVITE_MOINS_UN_AN,
   FIELD_ORIGINE,
   FIELD_REGION_RESIDENCE,
   FIELD_REGION_TRAVAIL,
@@ -36,14 +36,17 @@ const FIELDS = new Map<string, Field>(
 );
 
 // « Êtes-vous cadre ? Oui » donnerait « un statut oui ».
-const STATUTS: Partial<Record<string, string>> = { cadre: "cadre", "non-cadre": "non cadre" };
+const CADRE_LABELS: Partial<Record<string, string>> = {
+  [CADRE_OUI]: "cadre",
+  [CADRE_NON]: "non cadre",
+};
 
-function texte(name: string, answers: Answers): string {
+function readAnswer(name: string, answers: Answers): string {
   const field = FIELDS.get(name);
   return field && isFieldVisible(field, answers) ? answerText(field, answers[name]) : "";
 }
 
-function origines(answers: Answers): string[] {
+function findOrigineLabels(answers: Answers): string[] {
   const field = FIELDS.get(FIELD_ORIGINE);
   const value = answers[FIELD_ORIGINE];
   if (field?.type !== "checkbox" || !Array.isArray(value)) return [];
@@ -53,62 +56,63 @@ function origines(answers: Answers): string[] {
 }
 
 /** « En France » → « en France », mais « CDI » reste « CDI ». */
-function minuscule(text: string): string {
-  const isSigle = /^\p{Lu}\p{Lu}/u.test(text);
-  return isSigle ? text : text.charAt(0).toLowerCase() + text.slice(1);
+function lowercaseFirst(text: string): string {
+  const isAcronym = /^\p{Lu}\p{Lu}/u.test(text);
+  return isAcronym ? text : text.charAt(0).toLowerCase() + text.slice(1);
 }
 
-const em = (text: string): TextPart => ({ emphasis: text });
-const emMinuscule = (text: string): TextPart => em(minuscule(text));
+const emphasize = (text: string): TextPart => ({ emphasis: text });
+const emphasizeLowercase = (text: string): TextPart => emphasize(lowercaseFirst(text));
 
 /** « a », « a et b », « a, b et c ». */
-function liste(items: TextPart[][]): TextPart[] {
+function joinList(items: TextPart[][]): TextPart[] {
   return items.flatMap((item, index) => {
     if (index === 0) return item;
     return [index === items.length - 1 ? " et " : ", ", ...item];
   });
 }
 
-function situation(answers: Answers): TextPart[] {
+function describeSituation(answers: Answers): TextPart[] {
   if (answers[FIELD_SITUATION] === SITUATION_AGENT) {
-    return [" avec le versant ", emMinuscule(texte(FIELD_VERSANT, answers))];
+    return [" avec le versant ", emphasizeLowercase(readAnswer(FIELD_VERSANT, answers))];
   }
   if (answers[FIELD_SITUATION] !== SITUATION_SALARIE) return [];
 
-  const statut = STATUTS[String(answers[FIELD_CADRE])];
+  const statut = CADRE_LABELS[String(answers[FIELD_CADRE])];
   return [
     " avec ",
-    ...liste([
-      ["un contrat ", emMinuscule(texte(FIELD_CONTRAT, answers))],
-      ...(statut ? [["un statut ", em(statut)]] : []),
+    ...joinList([
+      ["un contrat ", emphasizeLowercase(readAnswer(FIELD_CONTRAT, answers))],
+      ...(statut ? [["un statut ", emphasize(statut)]] : []),
       [
         "la réponse ",
-        emMinuscule(texte(FIELD_ARRET_TRAVAIL, answers)),
+        emphasizeLowercase(readAnswer(FIELD_ARRET_TRAVAIL, answers)),
         " à la question de l'arrêt de travail",
       ],
     ]),
   ];
 }
 
-function experience(answers: Answers): TextPart[] {
-  const duree = texte(FIELD_DUREE_ACTIVITE, answers) || texte(FIELD_MOINS_UN_AN, answers);
-  const cumul = [emMinuscule(duree), " d'expérience professionnelle."];
+function describeDureeActivite(answers: Answers): TextPart[] {
+  const duree =
+    readAnswer(FIELD_DUREE_ACTIVITE, answers) || readAnswer(FIELD_ACTIVITE_MOINS_UN_AN, answers);
+  const cumul = [emphasizeLowercase(duree), " d'expérience professionnelle."];
   const entree = parseMonth(answers[FIELD_ENTREE_EMPLOYEUR]);
   if (!entree) return ["Vous cumulez ", ...cumul];
 
   return [
     "Vous travaillez chez votre employeur actuel depuis ",
-    em(String(entree.year)),
+    emphasize(String(entree.year)),
     ", au mois de ",
-    em(MONTH_NAMES[entree.month - 1]),
+    emphasize(MONTH_NAMES[entree.month - 1]),
     ", et vous cumulez ",
     ...cumul,
   ];
 }
 
-function lieu(answers: Answers): TextPart[] {
-  const residence = emMinuscule(texte(FIELD_RESIDENCE, answers));
-  const regionTravail = texte(FIELD_REGION_TRAVAIL, answers);
+function describeLieu(answers: Answers): TextPart[] {
+  const residence = emphasizeLowercase(readAnswer(FIELD_RESIDENCE, answers));
+  const regionTravail = readAnswer(FIELD_REGION_TRAVAIL, answers);
 
   // Seul cas hors de France qui atteint les résultats : la personne travaille en France.
   if (answers[FIELD_RESIDENCE] !== LOC_FRANCE) {
@@ -116,7 +120,7 @@ function lieu(answers: Answers): TextPart[] {
       "Vous habitez ",
       residence,
       " et vous travaillez en France, dans la région ",
-      em(regionTravail),
+      emphasize(regionTravail),
       ".",
     ];
   }
@@ -125,13 +129,13 @@ function lieu(answers: Answers): TextPart[] {
     "Vous habitez ",
     residence,
     " dans la région ",
-    em(texte(FIELD_REGION_RESIDENCE, answers)),
+    emphasize(readAnswer(FIELD_REGION_RESIDENCE, answers)),
     ...(regionTravail
       ? [
           " et vous avez indiqué ",
-          em(FIELDS.get(FIELD_AUTRE_REGION)?.label ?? ""),
+          emphasize(FIELDS.get(FIELD_AUTRE_REGION)?.label ?? ""),
           ", dans la région ",
-          em(regionTravail),
+          emphasize(regionTravail),
         ]
       : []),
     ".",
@@ -139,21 +143,24 @@ function lieu(answers: Answers): TextPart[] {
 }
 
 export function buildPhraseRecapitulative(answers: Answers): TextPart[] {
-  const [origine, ...autresOrigines] = origines(answers);
+  const [origine, ...autresOrigines] = findOrigineLabels(answers);
 
   return [
     "Votre point de départ : ",
-    ...liste([[em(origine)], ...autresOrigines.map((autre) => [emMinuscule(autre)])]),
+    ...joinList([
+      [emphasize(origine)],
+      ...autresOrigines.map((autre) => [emphasizeLowercase(autre)]),
+    ]),
     ". Côté projet professionnel, vous avez répondu : ",
-    em(texte(FIELD_METIER, answers)),
+    emphasize(readAnswer(FIELD_METIER, answers)),
     ". Aujourd'hui, vous êtes ",
-    emMinuscule(texte(FIELD_SITUATION, answers)),
-    ...situation(answers),
+    emphasizeLowercase(readAnswer(FIELD_SITUATION, answers)),
+    ...describeSituation(answers),
     ". ",
-    ...experience(answers),
+    ...describeDureeActivite(answers),
     " Concernant la reconnaissance de travailleur·euse handicapé·e, vous avez répondu : ",
-    em(texte(FIELD_RQTH, answers)),
+    emphasize(readAnswer(FIELD_RQTH, answers)),
     ". ",
-    ...lieu(answers),
+    ...describeLieu(answers),
   ];
 }

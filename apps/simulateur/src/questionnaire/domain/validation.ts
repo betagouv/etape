@@ -13,16 +13,7 @@ import type { Answers, AnswerValue, Field, MonthField, NumberField, Question } f
 const NUMBER_MIN = 0;
 const NUMBER_MAX = 99;
 
-/**
- * Deux natures de problème, qui ne s'affichent pas au même moment ni sous la
- * même forme :
- * - une réponse MANQUANTE ne se signale qu'au clic sur « Continuer » — la
- *   signaler plus tôt reprocherait à la personne de ne pas avoir encore
- *   répondu ;
- * - une réponse INVALIDE (mois 13, plus de 50 ans, région introuvable, durée
- *   inférieure à l'ancienneté) se signale dès la sortie du champ : elle est
- *   là, mais fausse.
- */
+/** MANQUANTE : signalée au clic sur « Continuer » seulement. INVALIDE : dès la sortie du champ. */
 export const ISSUE_KIND = {
   MISSING: "missing",
   INVALID: "invalid",
@@ -36,26 +27,21 @@ export interface FieldIssue {
   message: string;
 }
 
+const FUTURE_DATE_MESSAGE =
+  "Cette date est dans le futur : indiquez le mois en cours ou un mois passé.";
+
 const MONTH_PROBLEM_MESSAGES: Record<
   Exclude<MonthProblem, typeof MONTH_PROBLEM.INCOMPLETE>,
   (minYear: number) => string
 > = {
   [MONTH_PROBLEM.MONTH_OUT_OF_RANGE]: () => "Le mois doit être compris entre 01 et 12.",
   [MONTH_PROBLEM.YEAR_TOO_OLD]: (minYear) => `L'année doit être ${minYear} ou postérieure.`,
-  [MONTH_PROBLEM.FUTURE_YEAR]: () =>
-    "Cette date est dans le futur : indiquez le mois en cours ou un mois passé.",
-  [MONTH_PROBLEM.FUTURE_MONTH]: () =>
-    "Cette date est dans le futur : indiquez le mois en cours ou un mois passé.",
+  [MONTH_PROBLEM.FUTURE_YEAR]: () => FUTURE_DATE_MESSAGE,
+  [MONTH_PROBLEM.FUTURE_MONTH]: () => FUTURE_DATE_MESSAGE,
 };
 
-const minYearOf = (field: MonthField): number => field.minYear ?? oldestAcceptedYear();
-
-/**
- * Problème d'un champ de mois. Une partie complète mais impossible rend la
- * saisie INVALIDE même si l'autre partie manque encore (une année future).
- */
 function monthIssue(field: MonthField, value: AnswerValue | undefined): FieldIssue | null {
-  const minYear = minYearOf(field);
+  const minYear = field.minYear ?? oldestAcceptedYear();
   const problem = monthEntryProblem(readMonthEntry(value), minYear);
   if (problem === null) return null;
   if (problem === MONTH_PROBLEM.INCOMPLETE) return missing(field);
@@ -77,10 +63,6 @@ function numberIssue(field: NumberField, value: AnswerValue | undefined): FieldI
   };
 }
 
-/**
- * Problème d'un champ de région. Le texte saisi est conservé tant qu'il ne
- * désigne aucune région (« Nourmandie ») : il est là, mais faux.
- */
 function regionIssue(field: Field, value: AnswerValue | undefined): FieldIssue | null {
   if (isRegionCode(value)) return null;
   if (typeof value !== "string" || value.trim() === "") return missing(field);
@@ -100,7 +82,7 @@ const MISSING_MESSAGES: Record<Field["type"], string> = {
   month: "Date incomplète : indiquez l'année et le mois pour continuer.",
   number: "Aucune valeur saisie : indiquez un nombre pour continuer.",
   region: "Aucune région sélectionnée : choisissez-la dans la liste pour continuer.",
-  // Jamais atteint : une case à cocher est toujours complète.
+  // Jamais atteint.
   toggle: "",
 };
 
@@ -131,14 +113,8 @@ function valueIssue(field: Field, answers: Answers): FieldIssue | null {
 }
 
 /**
- * Ce qui empêche de continuer sur cet écran, par nom de champ et dans l'ordre
- * d'affichage. Un écran peut en porter plusieurs (Q3 en a jusqu'à quatre) :
- * l'erreur se signale donc champ par champ, pas une fois en bas de page.
- *
- * Un champ ne porte qu'un problème : tant que sa valeur est absente ou
- * impossible, c'est cela qu'on signale — un contrôle de cohérence n'aurait rien
- * à comparer. Un champ facultatif laissé vide n'en a pas ; rempli, il doit
- * l'être correctement.
+ * Un problème par champ, dans l'ordre d'affichage : valeur absente ou impossible
+ * d'abord, puis cohérence ; un champ facultatif vide n'en a pas.
  */
 export function fieldIssues(question: Question, answers: Answers): Map<string, FieldIssue> {
   const issues = new Map<string, FieldIssue>();
@@ -157,11 +133,6 @@ export function fieldIssues(question: Question, answers: Answers): Map<string, F
   return issues;
 }
 
-/**
- * Une question est complète quand rien sur l'écran n'empêche de continuer :
- * ni réponse manquante, ni valeur impossible, ni incohérence avec une réponse
- * antérieure.
- */
 export function isQuestionComplete(question: Question, answers: Answers): boolean {
   return fieldIssues(question, answers).size === 0;
 }

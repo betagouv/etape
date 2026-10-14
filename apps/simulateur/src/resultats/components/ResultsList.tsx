@@ -4,7 +4,7 @@ import { CircleArrowDownIcon } from "lucide-react";
 
 import { Button } from "@etape/ui/components/button";
 
-import { NOMBRE_RESULTATS_INITIAL } from "../domain/selection";
+import { INITIAL_RESULTAT_COUNT } from "../domain/selection";
 import type { ResultatAffiche } from "../domain/types";
 import { useVisibleResultats } from "../hooks/useVisibleResultats";
 import { ResultCard } from "./ResultCard";
@@ -24,7 +24,7 @@ export function ResultsList({ resultats }: ResultsListProps) {
           <li key={resultat.id}>
             <ResultCard
               resultat={resultat}
-              headingRef={index === NOMBRE_RESULTATS_INITIAL ? firstRevealedRef : undefined}
+              headingRef={index === INITIAL_RESULTAT_COUNT ? firstRevealedRef : undefined}
             />
           </li>
         ))}

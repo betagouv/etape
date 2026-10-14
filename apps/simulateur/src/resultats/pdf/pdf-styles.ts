@@ -4,7 +4,7 @@
 // lit pas les variables CSS de `packages/ui/src/styles/globals.css` : les
 // couleurs utiles y sont reprises en dur. Document en une colonne — pas une
 // réplique de la grille de cartes de l'écran — mais habillé des couleurs de
-// marque (bandeau, tags de catégorie, encart), reprises des mêmes tokens que
+// marque (bandeau, tags de catégorie), reprises des mêmes tokens que
 // `CategorieTag.tsx` pour rester cohérent avec l'écran.
 
 import { StyleSheet } from "@react-pdf/renderer";
@@ -21,7 +21,7 @@ const COLORS = {
   primary: "#134e4a", // --primary / --content-accent
   border: "#d3e2e0", // --border
   white: "#ffffff",
-  calloutBg: "#eef4f2", // --secondary
+  bannerSubtitle: "#eef4f2", // --secondary
 };
 
 /** Couleur d'accent par catégorie — les mêmes tokens que `CategorieTag.tsx`. */
@@ -57,7 +57,7 @@ export const pdfStyles = StyleSheet.create({
   bannerSubtitle: {
     marginTop: 10,
     fontSize: 10,
-    color: COLORS.calloutBg,
+    color: COLORS.bannerSubtitle,
   },
   sectionTitle: {
     fontFamily: PDF_HEADING_FONT_FAMILY,

@@ -5,7 +5,6 @@ interface QuestionCtaProps {
   onPrev: () => void;
   onNext: () => void;
   nextLabel?: string;
-  /** Réponse absente ou invalide : « Continuer » se grise (règle du ticket). */
   nextDisabled?: boolean;
 }
 
@@ -16,7 +15,7 @@ const NEXT_HINT_ID = "question-cta-next-hint";
  *
  * « Précédent » n'apparaît qu'à partir de la 2e question : sur la 1re, il n'y a
  * pas d'étape avant, et un bouton qui ne peut que faire sortir du simulateur
- * doublerait le « Quitter » de la navbar.
+ * doublerait le « Quitter » de la barre du haut.
  *
  * « Continuer » se grise tant qu'une réponse manque ou est invalide, mais reste
  * ACTIONNABLE : `aria-disabled` et non l'attribut `disabled`. Le grisé annonce
@@ -32,8 +31,6 @@ export function QuestionCta({
   nextLabel = "Continuer",
   nextDisabled = false,
 }: QuestionCtaProps) {
-  // Mobile : barre opaque collée en bas de l'écran, boutons à pleine largeur.
-  // Desktop : à la suite de la question, alignés à droite. Comme les maquettes.
   return (
     <div className="bg-background sticky bottom-0 mt-auto flex items-center gap-3 self-stretch px-6 pt-6 pb-[calc(2rem+env(safe-area-inset-bottom))] md:static md:mt-10 md:justify-end md:bg-transparent md:p-0">
       {!isFirst && (

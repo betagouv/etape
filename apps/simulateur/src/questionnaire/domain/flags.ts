@@ -78,7 +78,6 @@ export const FLAGS = {
   RQTH_REFUS: "RQTH_REFUS",
 
   // ─── Q7. Résidence et travail ──────────────────────────────────────────
-  /** Réside hors de France. */
   RESIDENCE_HORS_FRANCE: "RESIDENCE_HORS_FRANCE",
   /**
    * Travaille en France en résidant hors de France. Son ABSENCE, combinée à

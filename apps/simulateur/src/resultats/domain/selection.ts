@@ -10,38 +10,37 @@ import { CATALOGUE } from "./catalogue";
 import type { Profil } from "./profil";
 import { CATEGORIES, type Resultat, type ResultatAffiche } from "./types";
 
-export const NOMBRE_RESULTATS_INITIAL = 10;
+export const INITIAL_RESULTAT_COUNT = 10;
 
-/** Le premier de ces résultats présent devient le résultat prioritaire (ticket « carte maîtresse »). */
+/** Le premier présent devient le résultat prioritaire. */
 const ORDRE_RESULTAT_PRIORITAIRE = ["demission-reconversion", "cep"];
 
-/** Résout le lien d'une carte pour le profil de l'utilisateur. */
-function lien(url: Resultat["url"], profil: Profil): string {
+function resolveUrl(url: Resultat["url"], profil: Profil): string {
   return typeof url === "function" ? url(profil) : url;
 }
 
 /** Cartes retenues pour ce profil, dans l'ordre d'affichage. */
 export function selectResultats(profil: Profil): ResultatAffiche[] {
-  const retenus = CATALOGUE.filter((resultat) => resultat.quand(profil));
+  const selected = CATALOGUE.filter((resultat) => resultat.quand(profil));
   const prioritaireId = ORDRE_RESULTAT_PRIORITAIRE.find((id) =>
-    retenus.some((resultat) => resultat.id === id),
+    selected.some((resultat) => resultat.id === id),
   );
 
-  const ordonnes = CATEGORIES.flatMap((categorie) =>
-    retenus
+  const ordered = CATEGORIES.flatMap((categorie) =>
+    selected
       .filter((resultat) => resultat.categorie === categorie)
       .map(({ id, nom, description, url }) => ({
         id,
         categorie,
         nom,
         description,
-        url: lien(url, profil),
+        url: resolveUrl(url, profil),
         isPrioritaire: id === prioritaireId,
       })),
   );
 
   return [
-    ...ordonnes.filter((resultat) => resultat.isPrioritaire),
-    ...ordonnes.filter((resultat) => !resultat.isPrioritaire),
+    ...ordered.filter((resultat) => resultat.isPrioritaire),
+    ...ordered.filter((resultat) => !resultat.isPrioritaire),
   ];
 }

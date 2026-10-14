@@ -8,10 +8,9 @@
 // Les traduire ici une fois évite que chaque règle du catalogue reparse les
 // réponses brutes.
 
-import { monthsSince, parseMonth } from "@/questionnaire/domain/month";
 import type { FlagSet } from "@/questionnaire/domain/flags";
 import { walkFlow } from "@/questionnaire/domain/flow";
-import { FIELD_ENTREE_EMPLOYEUR, readDureeActivite } from "@/questionnaire/domain/questions";
+import { readAncienneteMois, readDureeActivite } from "@/questionnaire/domain/questions";
 import { regionFromAnswers, type RegionCode } from "@/questionnaire/domain/regions";
 import type { Answers } from "@/questionnaire/domain/types";
 
@@ -32,17 +31,11 @@ export interface Profil {
   activiteAnnees: number | null;
 }
 
-/** Ancienneté en mois d'après le mois d'entrée saisi en Q4. */
-function ancienneteEnMois(value: unknown): number | null {
-  const month = parseMonth(value);
-  return month ? monthsSince(month) : null;
-}
-
 export function buildProfil(answers: Answers): Profil {
   return {
     flags: walkFlow(answers).flags,
     region: regionFromAnswers(answers),
-    ancienneteMois: ancienneteEnMois(answers[FIELD_ENTREE_EMPLOYEUR]),
+    ancienneteMois: readAncienneteMois(answers),
     activiteAnnees: readDureeActivite(answers),
   };
 }

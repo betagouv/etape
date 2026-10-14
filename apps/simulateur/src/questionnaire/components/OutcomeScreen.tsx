@@ -5,42 +5,24 @@ import { Alert, AlertTitle } from "@etape/ui/components/alert";
 import { Button } from "@etape/ui/components/button";
 import { Card } from "@etape/ui/components/card";
 
-import { buildRecap } from "@/resultats/domain/recap";
+import { buildOutcomeRecap } from "@/resultats/domain/recap";
 
-import type { Answers, Outcome, TextPart } from "../domain/types";
+import type { Answers, Outcome } from "../domain/types";
+import { TextParts } from "./TextParts";
 
 // `basePath` ne s'applique pas au `src` de `next/image` : voir `app/page.tsx`.
 const assets = process.env.NEXT_PUBLIC_BASE_PATH;
 
 interface OutcomeScreenProps {
   outcome: Outcome;
-  /** Réponses du parcours, dont celles qui ont mené ici sont rappelées. */
   answers: Answers;
-  /**
-   * Retour à la dernière question répondue. Un écran terminal reste atteint
-   * par une réponse : sans porte de sortie, une faute de clic obligerait à
-   * tout recommencer.
-   */
-  onBack?: () => void;
+  /** Retour à la dernière question répondue : une faute de clic ne condamne pas la simulation. */
+  onBack: () => void;
   onRestart: () => void;
-  headingRef?: RefObject<HTMLHeadingElement | null>;
+  headingRef: RefObject<HTMLHeadingElement | null>;
 }
 
-/** Un morceau de texte ; mis en avant, il passe en couleur pleine (maquette). */
-function renderPart(part: TextPart, index: number) {
-  if (typeof part === "string") return part;
-  return (
-    <span key={index} className="text-foreground">
-      {part.emphasis}
-    </span>
-  );
-}
-
-/**
- * Fin de la simulation, quand les réponses sortent du champ du simulateur
- * (maquette « Résultats / No result ») : ce qui l'a arrêtée, la réponse en
- * cause, un conseil pour la suite, et de quoi corriger ou recommencer.
- */
+/** Fin de la simulation quand les réponses sortent du champ du simulateur. */
 export function OutcomeScreen({
   outcome,
   answers,
@@ -48,12 +30,11 @@ export function OutcomeScreen({
   onRestart,
   headingRef,
 }: OutcomeScreenProps) {
-  const causes = buildRecap(answers).filter((entry) => outcome.causes.includes(entry.questionId));
+  const causes = buildOutcomeRecap(outcome, answers);
 
   return (
     <main className="flex flex-1 flex-col items-center overflow-y-auto px-6 py-8 md:justify-center md:py-16">
       <div className="flex w-full max-w-2xl flex-col items-center gap-8">
-        {/* Décorative : le titre dit déjà tout. */}
         <Image
           src={`${assets}/illustration-fin-simulation.svg`}
           alt=""
@@ -73,7 +54,9 @@ export function OutcomeScreen({
           >
             {outcome.title}
           </h1>
-          <p className="text-body-lg text-muted-foreground">{outcome.text.map(renderPart)}</p>
+          <p className="text-body-lg text-muted-foreground">
+            <TextParts parts={outcome.text} emphasisClassName="text-foreground" />
+          </p>
 
           {causes.length > 0 && (
             <Card className="flex-row flex-wrap items-center justify-between gap-4 px-5 py-4 text-start">
@@ -90,12 +73,10 @@ export function OutcomeScreen({
                   ))}
                 </dl>
               </div>
-              {onBack && (
-                <Button type="button" variant="outline" size="sm" onClick={onBack}>
-                  <PencilLine aria-hidden="true" />
-                  Modifier ma réponse
-                </Button>
-              )}
+              <Button type="button" variant="outline" size="sm" onClick={onBack}>
+                <PencilLine aria-hidden="true" />
+                Modifier ma réponse
+              </Button>
             </Card>
           )}
         </div>

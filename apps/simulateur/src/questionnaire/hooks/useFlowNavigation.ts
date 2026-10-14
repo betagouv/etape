@@ -36,24 +36,19 @@ export interface UseFlowNavigationResult {
 }
 
 function stepSearch(id: string, isEditing: boolean): string {
-  return isEditing && id !== STEP_RESULTS
-    ? `?${STEP_PARAM}=${id}&${EDIT_PARAM}`
-    : `?${STEP_PARAM}=${id}`;
+  const edit = isEditing && id !== STEP_RESULTS ? `&${EDIT_PARAM}` : "";
+  return `?${STEP_PARAM}=${id}${edit}`;
 }
 
 /** Seul point de contact avec l'historique navigateur. */
 const stepUrl = {
   push: (id: string, isEditing = false) =>
     window.history.pushState(null, "", stepSearch(id, isEditing)),
-  replace: (id: string, isEditing = false) =>
-    window.history.replaceState(null, "", stepSearch(id, isEditing)),
+  replace: (id: string) => window.history.replaceState(null, "", stepSearch(id, false)),
 };
 
 /** Une étape venant de l'URL n'est honorée que si le parcours réel y mène. */
 function isReachable(id: string, walk: FlowWalk): boolean {
-  // Un écran terminal comme les autres : « Recommencer la simulation » efface
-  // les réponses, et l'écran doit alors céder la place à la 1re question.
-  if (id === STEP_RESULTS) return walk.next === STEP_RESULTS;
   return walk.path.includes(id) || walk.next === id;
 }
 
@@ -74,8 +69,9 @@ export function useFlowNavigation(): UseFlowNavigationResult {
   // profond serait réécrit vers la 1re question à chaque rechargement.
   useEffect(() => {
     if (!hydrated) return;
-    if (requested !== currentId) stepUrl.replace(currentId, isEditing);
-  }, [hydrated, requested, currentId, isEditing]);
+    // Étape inatteignable (réponses effacées par « Recommencer ») : la modification s'arrête aussi.
+    if (requested !== currentId) stepUrl.replace(currentId);
+  }, [hydrated, requested, currentId]);
 
   const isResults = currentId === STEP_RESULTS;
   const question = isResults ? undefined : findQuestion(currentId);
@@ -101,15 +97,10 @@ export function useFlowNavigation(): UseFlowNavigationResult {
   const total = question ? totalSteps(state.answers) : walk.path.length;
   const canGoNext = question ? isQuestionComplete(question, state.answers) : false;
   // En modification, les questions déjà répondues qui suivent sont sautées.
-  const next = question
-    ? isEditing && canGoNext
-      ? walk.next
-      : stepAfter(question.id, state.answers)
-    : undefined;
-  // Dernière question aussi quand elle mène à un écran terminal : la personne
-  // qui réside hors de France (Q7) voit le même « Voir mes résultats », que la
-  // porte de sortie lui réponde ou non (maquette Q7, « Hors de France »).
-  const isLast = next === STEP_RESULTS || (next !== undefined && findOutcome(next) !== undefined);
+  const next =
+    question && (isEditing && canGoNext ? walk.next : stepAfter(question.id, state.answers));
+  // Mener à un écran terminal compte comme dernière question (même « Voir mes résultats »).
+  const isLast = next !== undefined && (next === STEP_RESULTS || findOutcome(next) !== undefined);
 
   function goNext() {
     if (!next || !canGoNext) return;
@@ -126,7 +117,6 @@ export function useFlowNavigation(): UseFlowNavigationResult {
 
   function restart() {
     dispatch({ type: "RESET" });
-    stepUrl.replace(walkFlow({}).next);
   }
 
   return {

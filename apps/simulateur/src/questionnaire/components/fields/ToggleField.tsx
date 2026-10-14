@@ -23,13 +23,11 @@ export function ToggleField({ field, value, onChange, describedBy }: ToggleField
 
   return (
     <div className="flex w-full flex-col gap-1">
-      {/* Zone cliquable limitée à la case et à son texte : sur toute la largeur,
-          un clic dans le vide pour quitter le champ voisin cochait la case. */}
+      {/* `w-fit` : un clic dans le vide à côté ne doit pas cocher la case. */}
       <Label
         htmlFor={field.name}
         className="min-h-11 w-fit max-w-full cursor-pointer items-start gap-2 md:min-h-0"
       >
-        {/* Case et libellé du kit (maquette Q5) : 16 px, libellé en medium. */}
         <Checkbox
           id={field.name}
           checked={value}

@@ -5,11 +5,6 @@ import { Progress as ProgressPrimitive } from "radix-ui";
 
 import { cn } from "@etape/ui/lib/utils";
 
-// Source : registre shadcn, à l'apparence du kit Figma (« Progress ») — rail de
-// 4 px en `primary/20`. Radix pose `role="progressbar"` et ses attributs
-// `aria-value*` ; un `getValueLabel` donne une lecture plus parlante qu'un
-// pourcentage (« Question 3 sur environ 7 »).
-
 function Progress({
   className,
   value,

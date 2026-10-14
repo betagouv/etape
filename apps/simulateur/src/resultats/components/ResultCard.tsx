@@ -29,13 +29,13 @@ export function ResultCard({ resultat, headingRef }: ResultCardProps) {
             >
               {nom}
             </h3>
-            <CategorieTag categorie={categorie} isPrioritaire={isPrioritaire} />
+            <CategorieTag categorie={categorie} />
           </div>
           <CardDescription>{description}</CardDescription>
         </CardContent>
 
         <CardContent>
-          <Separator variant={isPrioritaire ? "on-primary" : "default"} />
+          <Separator />
         </CardContent>
 
         <CardFooter>

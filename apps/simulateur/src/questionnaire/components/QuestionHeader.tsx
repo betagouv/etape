@@ -4,7 +4,6 @@ import type { Question } from "../domain/types";
 
 interface QuestionHeaderProps {
   step: number;
-  /** Textes de la question : titre, sous-titre et mention. */
   question: Pick<Question, "title" | "subtitle" | "notice">;
   titleId: string;
   subtitleId?: string;
@@ -32,8 +31,7 @@ export function QuestionHeader({
         {title}
       </h1>
       {(subtitle || notice) && (
-        // La mention fait partie de la description du titre : même paragraphe,
-        // à la ligne et mise en avant (maquette Q6).
+        // La mention reste dans le paragraphe désigné par l'aria-describedby du titre.
         <p id={subtitleId} className="text-body text-muted-foreground">
           {subtitle}
           {notice && <span className="text-foreground block font-medium">{notice}</span>}

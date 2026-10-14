@@ -3,11 +3,6 @@ import * as React from "react";
 import { cn } from "@etape/ui/lib/utils";
 
 /*
- * Carte de réponse du kit Figma (« RadioButton », `radio-card`) : un choix
- * présenté en carte, avec son libellé et sa description. Elle accueille un
- * bouton radio comme une case à cocher — c'est le contrôle placé dedans qui
- * porte la sémantique ; la carte n'en est que la surface.
- *
  * La ligne du choix est un `<label>` : toute sa surface coche le contrôle. Les
  * précisions qu'ouvre un choix (`ChoiceCardContent`) vivent DANS la carte mais
  * HORS du libellé, pour qu'un clic sur l'une d'elles ne recoche pas la carte.
@@ -37,15 +32,13 @@ function ChoiceCard({
   );
 }
 
-/** Ligne cliquable du choix : le contrôle, puis `ChoiceCardText`. */
+/** Le contrôle doit être le premier enfant (`*:first:`). */
 function ChoiceCardLabel({ className, ...props }: React.ComponentProps<"label">) {
   return (
     <label
       data-slot="choice-card-label"
       className={cn(
-        // `mt-1` sur le contrôle : sa boîte de 16 px centrée sur la première
-        // ligne de 24 px du libellé, quelle que soit la longueur du texte. Son
-        // propre anneau de focus s'efface devant celui de la carte.
+        // `*:first` : la case, centrée sur la 1re ligne ; son anneau s'efface devant celui de la carte.
         "flex w-full cursor-pointer items-start gap-2 p-4 *:first:mt-1 *:first:focus-visible:ring-0",
         className,
       )}
@@ -91,11 +84,7 @@ function ChoiceCardDescription({ className, ...props }: React.ComponentProps<"sp
   );
 }
 
-/**
- * Précisions ouvertes par le choix, sous sa ligne. `-mt-1` : 12 px entre la
- * ligne et le premier séparateur, comme dans la maquette, malgré les 16 px de
- * marge du libellé.
- */
+/** `-mt-1` : 12 px sous la ligne du choix (maquette), malgré son `p-4`. */
 function ChoiceCardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

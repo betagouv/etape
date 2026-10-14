@@ -7,9 +7,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/componen
 import { cn } from "@etape/ui/lib/utils";
 
 /*
- * Champ de recherche suivi de sa liste de suggestions, affichée dans le fil de
- * la page (maquette SIMULATEUR-v3, Q7). Apparence du `command` de shadcn ;
- * rôles du motif « combobox » de l'APG W3C, avec une liste à autocomplétion.
+ * Motif « combobox » de l'APG, liste à autocomplétion affichée dans le fil de la page.
  *
  * Pas de `cmdk`, la bibliothèque du `command` de shadcn : faite pour une palette
  * de commandes, elle annonce sa liste toujours ouverte (`aria-expanded` forcé à
@@ -20,10 +18,7 @@ import { cn } from "@etape/ui/lib/utils";
  * renseigne `aria-expanded`, `aria-controls` et `aria-activedescendant` sur le
  * champ.
  *
- * Le focus reste dans le champ : l'option active n'est qu'un focus « virtuel »
- * (`aria-activedescendant`). Écart au kit : elle porte un anneau en plus du fond
- * `accent`, qui ne se distingue pas assez du blanc pour servir d'indicateur de
- * focus.
+ * Écart au kit : l'option active porte un anneau, le fond `accent` seul ne marque pas assez le focus.
  */
 
 function Combobox({ className, ...props }: React.ComponentProps<"div">) {
@@ -39,7 +34,6 @@ function Combobox({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-/** Le champ de recherche, précédé d'une loupe. */
 function ComboboxInput({ className, ...props }: React.ComponentProps<"input">) {
   return (
     <div data-slot="combobox-input-wrapper" className="p-1">
@@ -87,7 +81,6 @@ function ComboboxOption({
   children,
   ...props
 }: React.ComponentProps<"li"> & {
-  /** Option retenue : cochée, et lue « sélectionnée ». */
   selected?: boolean;
   /** Option désignée au clavier (`aria-activedescendant` du champ). */
   active?: boolean;
@@ -111,7 +104,6 @@ function ComboboxOption({
   );
 }
 
-/** Message affiché à la place des options quand aucune ne correspond. */
 function ComboboxEmpty({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
