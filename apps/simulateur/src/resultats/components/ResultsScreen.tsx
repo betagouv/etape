@@ -3,11 +3,9 @@
 import { useMemo, type RefObject } from "react";
 
 import { BackToTop } from "@etape/ui/components/back-to-top";
-import { Button } from "@etape/ui/components/button";
 
 import type { Answers } from "@/questionnaire/domain/types";
 
-import { CEP_URL } from "../domain/catalogue";
 import { buildProfil } from "../domain/profil";
 import { buildRecap } from "../domain/recap";
 import { selectResultats } from "../domain/selection";
@@ -22,7 +20,6 @@ const RESULTATS_TOP_ID = "resultats-top";
 interface ResultsScreenProps {
   answers: Answers;
   onEdit: (questionId: string) => void;
-  onRestart: () => void;
   headingRef?: RefObject<HTMLHeadingElement | null>;
 }
 
@@ -35,7 +32,7 @@ function decompte(total: number): string {
     : `${total} résultats correspondent à votre situation`;
 }
 
-export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: ResultsScreenProps) {
+export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProps) {
   const profil = useMemo(() => buildProfil(answers), [answers]);
   const resultats = useMemo(() => selectResultats(profil), [profil]);
   const recapEntries = useMemo(() => buildRecap(answers), [answers]);
@@ -99,39 +96,10 @@ export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: Result
       </section>
 
       <section className="border-border bg-muted border-t">
-        <div className={`${CONTAINER} py-12 md:py-14`}>
+        <div className={`${CONTAINER} pt-12 pb-24 md:py-14`}>
           <AnswersRecap answers={answers} onEdit={onEdit} />
         </div>
       </section>
-
-      <footer className="border-border border-t">
-        <div
-          className={`${CONTAINER} flex flex-col items-center gap-6 pt-8 pb-24 text-center md:pb-8`}
-        >
-          <p className="text-muted-foreground max-w-2xl text-sm leading-6">
-            Cet outil donne une orientation indicative, susceptible d’évoluer, et ne remplace pas
-            l’accompagnement personnalisé et gratuit d’un{" "}
-            <a
-              href={CEP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-content-accent font-semibold"
-            >
-              conseiller CEP
-            </a>
-            .
-          </p>
-          <Button
-            type="button"
-            variant="outline-primary"
-            size="xl"
-            onClick={onRestart}
-            className="w-full sm:w-auto"
-          >
-            Recommencer la simulation
-          </Button>
-        </div>
-      </footer>
     </main>
   );
 }

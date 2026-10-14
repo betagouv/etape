@@ -73,9 +73,8 @@ const anciennete5Ans = (p: Profil) => activiteAnnees(p) >= 5;
 /**
  * Portail national du réseau CEP. Il oriente lui-même vers l'opérateur régional,
  * ce qui remplace la table des 18 portails Avenir Actifs qu'on servait avant.
- * Exporté parce que le pied de page des résultats renvoie au même endroit.
  */
-export const CEP_URL = "https://mon-cep.org/";
+const CEP_URL = "https://mon-cep.org/";
 
 export const CATALOGUE: Resultat[] = [
   // ═══ INTERLOCUTEURS ═════════════════════════════════════════════════════

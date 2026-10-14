@@ -1,7 +1,6 @@
 import { Fragment } from "react";
 import { Document, Link, Page, Text, View } from "@react-pdf/renderer";
 
-import { CEP_URL } from "../domain/catalogue";
 import type { RecapEntry } from "../domain/recap";
 import {
   CATEGORIE_LABELS,
@@ -124,17 +123,6 @@ export function ResultsPdfDocument({ resultats, recapEntries }: ResultsPdfDocume
             ))}
           </>
         )}
-
-        <View style={pdfStyles.footerBox} wrap={false}>
-          <Text style={pdfStyles.footerText}>
-            Cet outil donne une orientation indicative, susceptible d’évoluer, et ne remplace pas
-            l’accompagnement personnalisé et gratuit d’un{" "}
-            <Link src={CEP_URL} style={pdfStyles.footerLink}>
-              conseiller CEP
-            </Link>
-            .
-          </Text>
-        </View>
       </Page>
     </Document>
   );

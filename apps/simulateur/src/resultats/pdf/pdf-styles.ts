@@ -22,7 +22,6 @@ const COLORS = {
   border: "#d3e2e0", // --border
   white: "#ffffff",
   calloutBg: "#eef4f2", // --secondary
-  calloutText: "#134e4a", // --secondary-foreground
 };
 
 /** Couleur d'accent par catégorie — les mêmes tokens que `CategorieTag.tsx`. */
@@ -127,21 +126,5 @@ export const pdfStyles = StyleSheet.create({
   resultatUrl: {
     marginTop: 3,
     color: COLORS.primary,
-  },
-  footerBox: {
-    marginTop: 28,
-    padding: 14,
-    borderRadius: 4,
-    backgroundColor: COLORS.calloutBg,
-  },
-  footerText: {
-    fontSize: 9,
-    lineHeight: 1.5,
-    color: COLORS.calloutText,
-  },
-  // Les `Link` de react-pdf sont soulignés et bleus par défaut : on garde le
-  // soulignement (repère du lien dans un PDF) et on reprend la couleur du texte.
-  footerLink: {
-    color: COLORS.calloutText,
   },
 });
