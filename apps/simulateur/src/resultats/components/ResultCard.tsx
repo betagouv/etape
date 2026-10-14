@@ -15,10 +15,10 @@ interface ResultCardProps {
 }
 
 export function ResultCard({ resultat, headingRef }: ResultCardProps) {
-  const { nom, description, url, categorie } = resultat;
+  const { nom, description, url, categorie, isPrioritaire } = resultat;
 
   return (
-    <Card variant="outline" asChild>
+    <Card variant={isPrioritaire ? "primary" : "outline"} asChild>
       <article>
         <CardContent className="flex flex-col gap-2">
           <div className="flex flex-col-reverse items-start gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
@@ -29,13 +29,13 @@ export function ResultCard({ resultat, headingRef }: ResultCardProps) {
             >
               {nom}
             </h3>
-            <CategorieTag categorie={categorie} />
+            <CategorieTag categorie={categorie} isPrioritaire={isPrioritaire} />
           </div>
           <CardDescription>{description}</CardDescription>
         </CardContent>
 
         <CardContent>
-          <Separator />
+          <Separator variant={isPrioritaire ? "on-primary" : "default"} />
         </CardContent>
 
         <CardFooter>

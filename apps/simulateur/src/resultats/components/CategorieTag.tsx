@@ -24,14 +24,15 @@ const TAG_UI: Record<
 
 interface CategorieTagProps {
   categorie: Categorie;
+  isPrioritaire?: boolean;
 }
 
 /** Tag de catégorie d'un résultat : icône, libellé et couleur de la variante. */
-export function CategorieTag({ categorie }: CategorieTagProps) {
+export function CategorieTag({ categorie, isPrioritaire = false }: CategorieTagProps) {
   const { Icon, variant } = TAG_UI[categorie];
 
   return (
-    <Badge variant={variant} size="lg">
+    <Badge variant={isPrioritaire ? "on-primary" : variant} size="lg">
       <Icon aria-hidden="true" />
       <span className="sr-only">Catégorie : </span>
       {CATEGORIE_LABELS[categorie]}

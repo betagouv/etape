@@ -48,4 +48,5 @@ export interface Resultat {
 /** Une carte retenue, son lien déjà résolu pour la région de l'utilisateur. */
 export interface ResultatAffiche extends Omit<Resultat, "url" | "quand"> {
   url: string;
+  isPrioritaire: boolean;
 }
