@@ -106,7 +106,7 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
           </Callout>
         )}
 
-        <AnswersRecap answers={answers} onEdit={onEdit} />
+        <AnswersRecap entries={recapEntries} onEdit={onEdit} />
 
         <p role="status" className="sr-only">
           {pdf.announcement}
