@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, type RefObject } from "react";
+import { DownloadIcon } from "lucide-react";
 
 import { BackToTop } from "@etape/ui/components/back-to-top";
+import { Callout } from "@etape/ui/components/callout";
 import { Container } from "@etape/ui/components/container";
 import { focusRing } from "@etape/ui/lib/focus";
 
@@ -12,6 +14,7 @@ import { buildPhraseRecapitulative } from "../domain/phrase-recapitulative";
 import { buildProfil } from "../domain/profil";
 import { buildRecap } from "../domain/recap";
 import { selectResultats } from "../domain/selection";
+import { usePdfDownload } from "../hooks/usePdfDownload";
 import { AnswersRecap } from "./AnswersRecap";
 import { DownloadPdfButton } from "./DownloadPdfButton";
 import { EmptyResults } from "./EmptyResults";
@@ -47,6 +50,8 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
   const resultats = useMemo(() => selectResultats(profil), [profil]);
   const recapEntries = useMemo(() => buildRecap(answers), [answers]);
   const phrase = useMemo(() => buildPhraseRecapitulative(answers), [answers]);
+  const pdf = usePdfDownload(resultats, recapEntries);
+  const hasResultats = resultats.length > 0;
 
   return (
     <main className="bg-background md:bg-muted flex flex-1 flex-col">
@@ -68,14 +73,16 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
             Les dispositifs accessibles avec votre profil
           </h1>
           <p className="text-muted-foreground text-body">{phrase.map(renderPart)}</p>
-
-          {resultats.length > 0 && (
-            <DownloadPdfButton resultats={resultats} recapEntries={recapEntries} />
-          )}
         </header>
 
+        {hasResultats && (
+          <div>
+            <DownloadPdfButton {...pdf} />
+          </div>
+        )}
+
         <section aria-labelledby="resultats-decompte">
-          {resultats.length === 0 ? (
+          {!hasResultats ? (
             <EmptyResults />
           ) : (
             <>
@@ -88,7 +95,22 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
           )}
         </section>
 
+        {hasResultats && (
+          <Callout
+            variant="secondary"
+            icon={DownloadIcon}
+            title="Gardez une trace de vos résultats"
+            action={<DownloadPdfButton {...pdf} />}
+          >
+            Le PDF reprend les dispositifs proposés, leurs liens et vos réponses.
+          </Callout>
+        )}
+
         <AnswersRecap answers={answers} onEdit={onEdit} />
+
+        <p role="status" className="sr-only">
+          {pdf.announcement}
+        </p>
       </Container>
     </main>
   );

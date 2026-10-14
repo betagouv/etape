@@ -58,7 +58,8 @@ const calloutTextVariants = cva("", {
   variants: {
     variant: {
       default: "text-body text-content-secondary",
-      secondary: "text-body-sm text-muted-foreground",
+      // Écart à la maquette : `muted-foreground` ne fait que 4,3:1 sur `secondary`.
+      secondary: "text-body-sm text-content-secondary",
     },
   },
 });
