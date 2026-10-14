@@ -12,7 +12,7 @@
  */
 
 /** En `sessionStorage` : propre à l'onglet et à l'origine, donc à chaque front. */
-const LOGIN_ATTEMPTS_STORAGE_KEY = "etape.login-attempts";
+export const LOGIN_ATTEMPTS_STORAGE_KEY = "etape.login-attempts";
 
 /** Une boucle enchaîne ses tours en quelques secondes. */
 export const LOGIN_ATTEMPTS_WINDOW_MS = 60_000;
@@ -50,7 +50,12 @@ export function createLoginAttempts(
 
     // Illisible n'est pas inaccessible : on repart d'un compteur vide.
     const attempts = parseAttempts(stored);
-    return attempts.filter((attempt) => attempt > now() - LOGIN_ATTEMPTS_WINDOW_MS);
+    // Un départ « à venir » vient d'une horloge qui a reculé : il ne compte pas,
+    // sans quoi l'avis s'afficherait à tort jusqu'à ce qu'elle le rattrape.
+    const current = now();
+    return attempts.filter(
+      (attempt) => attempt <= current && attempt > current - LOGIN_ATTEMPTS_WINDOW_MS,
+    );
   }
 
   return {
@@ -63,7 +68,8 @@ export function createLoginAttempts(
       try {
         getStorage().setItem(LOGIN_ATTEMPTS_STORAGE_KEY, JSON.stringify([...attempts, now()]));
       } catch {
-        // Stockage inaccessible : `isLoginLoopSuspected` le signale déjà.
+        // Écriture refusée (quota plein) : le compteur n'avance pas. Seule une
+        // lecture refusée est signalée par `isLoginLoopSuspected`.
       }
     },
     clearLoginAttempts: () => {

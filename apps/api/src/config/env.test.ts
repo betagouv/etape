@@ -30,6 +30,15 @@ describe("validateEnv", () => {
     ).toThrow(/BACK_OFFICE_BASE_URL : même hôte/);
   });
 
+  it.each(["http://localhost:5173/", "http://localhost:5173/app", "http://localhost:5173?x=1"])(
+    "refuse une URL de front qui n'est pas une origine seule : %s",
+    (frontOfficeBaseUrl) => {
+      expect(() => validateEnv({ ...validEnv, FRONT_OFFICE_BASE_URL: frontOfficeBaseUrl })).toThrow(
+        /FRONT_OFFICE_BASE_URL : origine seule attendue/,
+      );
+    },
+  );
+
   it("refuse une API servie hors de l'origine de son front", () => {
     expect(() =>
       validateEnv({ ...validEnv, FRONT_OFFICE_API_BASE_URL: "http://localhost:3002/api" }),

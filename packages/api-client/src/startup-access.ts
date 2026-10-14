@@ -67,9 +67,18 @@ export function checkStartupAccess(
  * c'est un clic qui relance la connexion, jamais une redirection automatique.
  */
 export function describeStartupNotice(access: StartupAccess): NoticeContent | null {
-  if (access.kind === "auth-flow-failure") return describeAuthFlowFailure(access.failure);
-  if (access.kind === "login-loop") return LOGIN_LOOP_NOTICE;
-  return null;
+  switch (access.kind) {
+    case "auth-flow-failure":
+      return describeAuthFlowFailure(access.failure);
+    case "login-loop":
+      return LOGIN_LOOP_NOTICE;
+    case "login-required":
+    case "authenticated":
+      return null;
+    default:
+      // Un `kind` ajouté sans avis décidé ne compile pas.
+      return access satisfies never;
+  }
 }
 
 /** Texte du démarrage, commun à front-office et back-office. */

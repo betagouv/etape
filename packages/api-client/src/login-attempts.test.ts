@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createLoginAttempts,
+  LOGIN_ATTEMPTS_STORAGE_KEY,
   LOGIN_ATTEMPTS_WINDOW_MS,
   MAX_LOGIN_ATTEMPTS,
 } from "./login-attempts";
@@ -48,6 +49,18 @@ describe("createLoginAttempts", () => {
     expect(attempts.isLoginLoopSuspected()).toBe(false);
   });
 
+  it("ignore les départs datés du futur, laissés par une horloge qui a reculé", () => {
+    const storage = new MemoryStorage();
+    const clock = createClock();
+    const attempts = createLoginAttempts(() => storage, clock.now);
+
+    attempts.recordLoginAttempt();
+    attempts.recordLoginAttempt();
+    clock.advance(-2 * 60 * 60 * 1000);
+
+    expect(attempts.isLoginLoopSuspected()).toBe(false);
+  });
+
   it("soupçonne une boucle quand le stockage est inaccessible", () => {
     // Le cas des cookies bloqués : lire `window.sessionStorage` lève une exception.
     const attempts = createLoginAttempts(() => {
@@ -61,7 +74,7 @@ describe("createLoginAttempts", () => {
 
   it("ignore un contenu illisible", () => {
     const storage = new MemoryStorage();
-    storage.setItem("etape.login-attempts", "pas du JSON");
+    storage.setItem(LOGIN_ATTEMPTS_STORAGE_KEY, "pas du JSON");
     const attempts = createLoginAttempts(() => storage);
 
     // Illisible n'est pas inaccessible : pas de boucle soupçonnée, et le

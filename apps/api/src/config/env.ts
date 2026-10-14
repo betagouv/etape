@@ -64,6 +64,16 @@ const envSchema = z
     }
 
     for (const [frontKey, apiKey] of FRONT_URL_KEYS) {
+      // nginx en déduit l'hôte de son bloc `server` et les URL de retour en
+      // dérivent au caractère près : un chemin ou un slash final les casserait.
+      if (env[frontKey] !== new URL(env[frontKey]).origin) {
+        context.addIssue({
+          code: "custom",
+          path: [frontKey],
+          message: "origine seule attendue, sans chemin ni slash final",
+        });
+      }
+
       if (new URL(env[frontKey]).origin !== new URL(env[apiKey]).origin) {
         context.addIssue({
           code: "custom",
