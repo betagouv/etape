@@ -23,6 +23,7 @@ const buttonVariants = cva(
           "border bg-background text-secondary-foreground shadow-xs hover:bg-secondary dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        "ghost-primary": "text-secondary-foreground hover:bg-secondary",
         link: "text-primary underline-offset-4 hover:underline",
         // Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
         // CTA posés sur un fond coloré.
@@ -47,6 +48,8 @@ const buttonVariants = cva(
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
         // Maquettes du simulateur : 44 px au doigt, 36 px à la souris (`md`).
         responsive: "h-11 px-6 has-[>svg]:px-4 md:h-9 md:px-4 md:has-[>svg]:px-3",
+        "responsive-sm": "h-11 gap-1.5 px-4 has-[>svg]:px-3 md:h-8 md:px-3 md:has-[>svg]:px-2.5",
+        "icon-responsive-sm": "size-11 md:size-8",
         icon: "size-9",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",

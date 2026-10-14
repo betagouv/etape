@@ -5,7 +5,7 @@ import { Slot } from "radix-ui";
 import { cn } from "@etape/ui/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {
@@ -22,10 +22,18 @@ const badgeVariants = cva(
         // Info/Background + Info/Text et Success/Background + Success/Text.
         info: "bg-info-muted text-info-text [a&]:hover:bg-info-muted/80",
         success: "bg-success-muted text-success-text [a&]:hover:bg-success-muted/80",
+        warning: "bg-warning-muted text-warning-text [a&]:hover:bg-warning-muted/80",
+        violet: "bg-violet-muted text-violet-text [a&]:hover:bg-violet-muted/80",
+        "on-primary": "bg-primary-subtle text-primary-foreground [a&]:hover:bg-primary-subtle/90",
+      },
+      size: {
+        default: "py-0.5 [&>svg]:size-3",
+        lg: "py-1 [&>svg]:size-4",
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   },
 );
@@ -33,6 +41,7 @@ const badgeVariants = cva(
 function Badge({
   className,
   variant = "default",
+  size = "default",
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> & VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
@@ -42,7 +51,8 @@ function Badge({
     <Comp
       data-slot="badge"
       data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
+      data-size={size}
+      className={cn(badgeVariants({ variant, size }), className)}
       {...props}
     />
   );

@@ -9,6 +9,10 @@ const cardVariants = cva("flex flex-col py-6", {
     variant: {
       default: "bg-card text-card-foreground gap-6 rounded-xl border shadow-sm",
       muted: "bg-muted text-card-foreground gap-3 rounded-sm lg:gap-4",
+      outline: "bg-card text-card-foreground gap-4 rounded-xl border",
+      // Le `muted-foreground` de `CardDescription` tomberait à 2:1 sur `primary`.
+      primary:
+        "bg-primary text-primary-foreground gap-4 rounded-xl border border-primary [&_[data-slot=card-description]]:text-primary-foreground",
     },
   },
   defaultVariants: {
