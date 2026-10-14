@@ -88,7 +88,8 @@ export const CATALOGUE: Resultat[] = [
     url: CEP_URL,
     // Absent du parcours demandeur d'emploi (S7) : France Travail y est
     // l'opérateur CEP, la carte ferait doublon et enverrait au mauvais guichet.
-    quand: (p) => salarie(p) || agentPublic(p) || sansEmploi(p) || independant(p),
+    // Absent aussi du parcours sans emploi (S9), à la demande de la PO.
+    quand: (p) => salarie(p) || agentPublic(p) || independant(p),
   },
   {
     id: "employeur",
