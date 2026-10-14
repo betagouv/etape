@@ -12,6 +12,12 @@ import { useFlow } from "./useFlow";
 /** Nom du paramètre d'URL qui porte l'étape courante. */
 export const STEP_PARAM = "q";
 
+/**
+ * Présent quand on modifie une réponse depuis les résultats : « Continuer » mène
+ * alors à la première question incomplète, ou directement aux résultats.
+ */
+const EDIT_PARAM = "edit";
+
 export interface UseFlowNavigationResult {
   /** Question de l'étape courante ; absente sur un écran terminal ou les résultats. */
   question: Question | undefined;
@@ -25,14 +31,22 @@ export interface UseFlowNavigationResult {
   canGoNext: boolean;
   goNext: () => void;
   goPrev: () => void;
-  goTo: (id: string) => void;
+  editAnswer: (id: string) => void;
   restart: () => void;
+}
+
+function stepSearch(id: string, isEditing: boolean): string {
+  return isEditing && id !== STEP_RESULTS
+    ? `?${STEP_PARAM}=${id}&${EDIT_PARAM}`
+    : `?${STEP_PARAM}=${id}`;
 }
 
 /** Seul point de contact avec l'historique navigateur. */
 const stepUrl = {
-  push: (id: string) => window.history.pushState(null, "", `?${STEP_PARAM}=${id}`),
-  replace: (id: string) => window.history.replaceState(null, "", `?${STEP_PARAM}=${id}`),
+  push: (id: string, isEditing = false) =>
+    window.history.pushState(null, "", stepSearch(id, isEditing)),
+  replace: (id: string, isEditing = false) =>
+    window.history.replaceState(null, "", stepSearch(id, isEditing)),
 };
 
 /** Une étape venant de l'URL n'est honorée que si le parcours réel y mène. */
@@ -49,7 +63,9 @@ function isReachable(id: string, walk: FlowWalk): boolean {
  */
 export function useFlowNavigation(): UseFlowNavigationResult {
   const { state, hydrated, dispatch } = useFlow();
-  const requested = useSearchParams().get(STEP_PARAM);
+  const searchParams = useSearchParams();
+  const requested = searchParams.get(STEP_PARAM);
+  const isEditing = searchParams.has(EDIT_PARAM);
 
   const walk = walkFlow(state.answers);
   const currentId = requested && isReachable(requested, walk) ? requested : walk.next;
@@ -58,8 +74,8 @@ export function useFlowNavigation(): UseFlowNavigationResult {
   // profond serait réécrit vers la 1re question à chaque rechargement.
   useEffect(() => {
     if (!hydrated) return;
-    if (requested !== currentId) stepUrl.replace(currentId);
-  }, [hydrated, requested, currentId]);
+    if (requested !== currentId) stepUrl.replace(currentId, isEditing);
+  }, [hydrated, requested, currentId, isEditing]);
 
   const isResults = currentId === STEP_RESULTS;
   const question = isResults ? undefined : findQuestion(currentId);
@@ -84,27 +100,33 @@ export function useFlowNavigation(): UseFlowNavigationResult {
   // ou les résultats, le parcours est figé : sa longueur est celle du chemin.
   const total = question ? totalSteps(state.answers) : walk.path.length;
   const canGoNext = question ? isQuestionComplete(question, state.answers) : false;
+  // En modification, les questions déjà répondues qui suivent sont sautées.
+  const next = question
+    ? isEditing && canGoNext
+      ? walk.next
+      : stepAfter(question.id, state.answers)
+    : undefined;
   // Dernière question aussi quand elle mène à un écran terminal : la personne
   // qui réside hors de France (Q7) voit le même « Voir mes résultats », que la
   // porte de sortie lui réponde ou non (maquette Q7, « Hors de France »).
-  const next = question ? stepAfter(question.id, state.answers) : undefined;
   const isLast = next === STEP_RESULTS || (next !== undefined && findOutcome(next) !== undefined);
 
   function goNext() {
-    if (!question || !canGoNext) return;
-    stepUrl.push(stepAfter(question.id, state.answers));
+    if (!next || !canGoNext) return;
+    stepUrl.push(next, isEditing);
   }
 
   function goPrev() {
-    if (previousId) stepUrl.push(previousId);
+    if (previousId) stepUrl.push(previousId, isEditing);
   }
 
-  function goTo(id: string) {
-    stepUrl.push(id);
+  function editAnswer(id: string) {
+    stepUrl.push(id, true);
   }
 
   function restart() {
     dispatch({ type: "RESET" });
+    stepUrl.replace(walkFlow({}).next);
   }
 
   return {
@@ -118,7 +140,7 @@ export function useFlowNavigation(): UseFlowNavigationResult {
     canGoNext,
     goNext,
     goPrev,
-    goTo,
+    editAnswer,
     restart,
   };
 }

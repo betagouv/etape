@@ -63,7 +63,7 @@ export function FlowShell() {
     return (
       <>
         <Topbar />
-        <ResultsScreen answers={state.answers} onEdit={nav.goTo} headingRef={headingRef} />
+        <ResultsScreen answers={state.answers} onEdit={nav.editAnswer} headingRef={headingRef} />
       </>
     );
   }
