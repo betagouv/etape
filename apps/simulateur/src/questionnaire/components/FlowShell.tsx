@@ -77,10 +77,16 @@ export function FlowShell() {
     // `goPrev` ramène à la dernière question répondue : un clic malheureux sur
     // « Hors de France » ne condamne pas la simulation.
     return (
-      <>
+      <div className="bg-background md:bg-muted flex h-dvh flex-col">
         <Topbar />
-        <OutcomeScreen outcome={nav.outcome} onBack={nav.goPrev} headingRef={headingRef} />
-      </>
+        <OutcomeScreen
+          outcome={nav.outcome}
+          answers={state.answers}
+          onBack={nav.goPrev}
+          onRestart={nav.restart}
+          headingRef={headingRef}
+        />
+      </div>
     );
   }
 

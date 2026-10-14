@@ -37,7 +37,8 @@ const stepUrl = {
 
 /** Une étape venant de l'URL n'est honorée que si le parcours réel y mène. */
 function isReachable(id: string, walk: FlowWalk): boolean {
-  if (findOutcome(id)) return true;
+  // Un écran terminal comme les autres : « Recommencer la simulation » efface
+  // les réponses, et l'écran doit alors céder la place à la 1re question.
   if (id === STEP_RESULTS) return walk.next === STEP_RESULTS;
   return walk.path.includes(id) || walk.next === id;
 }

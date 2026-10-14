@@ -201,20 +201,24 @@ export interface Question {
   outcome?: (flags: FlagSet) => string | null;
 }
 
-/** Action (bouton) d'un écran terminal. */
-export interface OutcomeAction {
-  label: string;
-  href: string;
-  variant: "primary" | "secondary";
-}
+/** Morceau d'un texte : simple, ou mis en avant (`emphasis`). */
+export type TextPart = string | { emphasis: string };
 
 /**
- * Écran terminal du flow (issue / dead-end) : titre + texte + actions.
- * Ce n'est PAS une question — pas de navbar/progression, la simulation s'arrête.
+ * Écran terminal du flow (issue / dead-end) : la simulation s'arrête. Ce n'est
+ * PAS une question — ni progression ni navigation ; on n'en sort qu'en
+ * corrigeant une réponse ou en recommençant.
  */
 export interface Outcome {
   id: string;
   title: string;
-  text?: string;
-  actions: OutcomeAction[];
+  /** Explication sous le titre ; ses mots clés peuvent être mis en avant. */
+  text: readonly TextPart[];
+  /**
+   * Questions dont les réponses mènent ici. Elles sont rappelées sur l'écran,
+   * pour que la personne voie ce qui a fermé le parcours et puisse le corriger.
+   */
+  causes: readonly string[];
+  /** Conseil pour la suite, mis en avant sous le rappel. */
+  advice?: string;
 }

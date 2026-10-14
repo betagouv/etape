@@ -546,12 +546,22 @@ export const questions: Question[] = [
 export const outcomes: Record<string, Outcome> = {
   [OUTCOME_HORS_FRANCE]: {
     id: OUTCOME_HORS_FRANCE,
-    title: "Les dispositifs recensés ne s'appliquent pas hors de France.",
+    title: "Ce simulateur ne couvre pas votre situation",
     // La porte se déclenche pour deux profils : celui qui réside ET travaille
     // hors de France, et celui qui réside hors de France sans être en activité.
     // Le texte doit être juste pour les deux.
-    text: "Ils s'adressent aux personnes qui résident ou qui travaillent en France. Vous n'avez indiqué ni l'une ni l'autre : la simulation s'arrête ici.",
-    actions: [{ label: "Retour à l'accueil", href: "/", variant: "primary" }],
+    text: [
+      "Le simulateur recense les dispositifs français de reconversion professionnelle et s'adresse aux personnes qui ",
+      { emphasis: "vivent" },
+      " ou ",
+      { emphasis: "travaillent" },
+      " en ",
+      { emphasis: "France" },
+      ".",
+    ],
+    causes: [Q_LIEU],
+    advice:
+      "Pour un projet hors de France, adressez-vous au service public de l'emploi du pays où vous vivez ou travaillez : il pourra vous présenter les dispositifs qui s'y appliquent.",
   },
 };
 
