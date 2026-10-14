@@ -35,7 +35,7 @@ function optionText(options: Option[], value: AnswerValue | undefined): string {
 }
 
 /** Réponse telle qu'elle se lit — vide quand le champ n'a pas été renseigné. */
-function answerText(field: Field, value: AnswerValue | undefined): string {
+export function answerText(field: Field, value: AnswerValue | undefined): string {
   switch (field.type) {
     case "radio":
     case "checkbox":

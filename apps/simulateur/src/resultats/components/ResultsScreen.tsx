@@ -6,8 +6,9 @@ import { BackToTop } from "@etape/ui/components/back-to-top";
 import { Container } from "@etape/ui/components/container";
 import { focusRing } from "@etape/ui/lib/focus";
 
-import type { Answers } from "@/questionnaire/domain/types";
+import type { Answers, TextPart } from "@/questionnaire/domain/types";
 
+import { buildPhraseRecapitulative } from "../domain/phrase-recapitulative";
 import { buildProfil } from "../domain/profil";
 import { buildRecap } from "../domain/recap";
 import { selectResultats } from "../domain/selection";
@@ -32,10 +33,20 @@ function decompte(total: number): string {
     : `${total} résultats correspondent à votre situation`;
 }
 
+function renderPart(part: TextPart, index: number) {
+  if (typeof part === "string") return part;
+  return (
+    <span key={index} className="text-foreground font-medium">
+      {part.emphasis}
+    </span>
+  );
+}
+
 export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProps) {
   const profil = useMemo(() => buildProfil(answers), [answers]);
   const resultats = useMemo(() => selectResultats(profil), [profil]);
   const recapEntries = useMemo(() => buildRecap(answers), [answers]);
+  const phrase = useMemo(() => buildPhraseRecapitulative(answers), [answers]);
 
   return (
     <main className="bg-background md:bg-muted flex flex-1 flex-col">
@@ -56,11 +67,7 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
           >
             Les dispositifs accessibles avec votre profil
           </h1>
-          <p className="text-muted-foreground text-body">
-            Voici les interlocuteurs à contacter, les outils à votre disposition et les dispositifs
-            qui correspondent à vos réponses. Rien n’est automatique&nbsp;: un conseiller vous
-            aidera à choisir par où commencer.
-          </p>
+          <p className="text-muted-foreground text-body">{phrase.map(renderPart)}</p>
 
           {resultats.length > 0 && (
             <DownloadPdfButton resultats={resultats} recapEntries={recapEntries} />
