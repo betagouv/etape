@@ -12,8 +12,10 @@
 //
 // L'ordre de déclaration à l'intérieur de chaque catégorie est celui des
 // tableaux Gherkin, et c'est lui qui ordonne l'affichage (voir `selection.ts`).
-// Les dispositifs sont donc groupés par public — salarié·es, puis demandeur·euses
-// d'emploi, puis fonction publique — parce qu'aucun profil n'en croise deux.
+// Les dispositifs sont groupés par public — tous publics, salarié·es,
+// demandeur·euses d'emploi, fonction publique. Exception : le CPF et le C2P,
+// classés outils dans les tableaux et passés depuis en dispositifs ; le CPF
+// ouvre la catégorie, le C2P précède la PUR, qui en mobilise les droits.
 //
 // Les scénarios du ticket :
 //   S1/S2  salarié·e CDI (cadre / non-cadre) — le statut cadre ne change RIEN
@@ -24,8 +26,8 @@
 //   S8     agent·e de la fonction publique
 //   S9     sans emploi
 //   +      auto-entrepreneur·euse / chef·fe d'entreprise : absent des scénarios,
-//          arbitré avec la PO — CEP et les quatre outils ouverts à tous, aucun
-//          dispositif (pas d'employeur, donc ni OPCO ni Transitions Pro).
+//          arbitré avec la PO — CEP, les outils et le CPF ouverts à tous, aucun
+//          autre dispositif (pas d'employeur, donc ni OPCO ni Transitions Pro).
 //
 // Les liens sont ceux de la liste de la PO et ont été vérifiés (HTTP 200) au
 // moment de l'écriture.
@@ -157,18 +159,6 @@ export const CATALOGUE: Resultat[] = [
 
   // ═══ OUTILS ═════════════════════════════════════════════════════════════
   {
-    id: "cpf",
-    categorie: "outil",
-    nom: "Compte personnel de formation (CPF)",
-    description:
-      "Utiliser les droits à la formation acquis au cours de votre carrière pour financer une formation, développer vos compétences ou préparer un nouveau projet professionnel.",
-    // La liste de la PO renvoie vers Service Public, qui a une page par statut
-    // (privé, FPE, FPT, demandeur d'emploi) : en attendant son arbitrage, le
-    // service lui-même, valable pour tous les statuts.
-    url: "https://www.moncompteformation.gouv.fr/espace-public/consulter-mes-droits-formation",
-    quand: () => true,
-  },
-  {
     id: "vae",
     categorie: "outil",
     nom: "Validation des acquis de l'expérience (VAE)",
@@ -198,16 +188,19 @@ export const CATALOGUE: Resultat[] = [
     // Proposée à tous les profils sauf aux intermittent·es du spectacle (S6).
     quand: (p) => !intermittent(p),
   },
+
+  // ═══ DISPOSITIFS — tous publics ═════════════════════════════════════════
   {
-    id: "c2p",
-    categorie: "outil",
-    nom: "Compte professionnel de prévention (C2P)",
+    id: "cpf",
+    categorie: "dispositif",
+    nom: "Compte personnel de formation (CPF)",
     description:
-      "Mobiliser les droits acquis au titre de certains facteurs de pénibilité pour financer une formation ou préparer une évolution professionnelle vers un emploi moins exposé.",
-    url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F15504",
-    // Salarié·es du privé seulement (S1 à S6) : le C2P n'existe pas dans la
-    // fonction publique.
-    quand: salarie,
+      "Utiliser les droits à la formation acquis au cours de votre carrière pour financer une formation, développer vos compétences ou préparer un nouveau projet professionnel.",
+    // La liste de la PO renvoie vers Service Public, qui a une page par statut
+    // (privé, FPE, FPT, demandeur d'emploi) : en attendant son arbitrage, le
+    // service lui-même, valable pour tous les statuts.
+    url: "https://www.moncompteformation.gouv.fr/espace-public/consulter-mes-droits-formation",
+    quand: () => true,
   },
 
   // ═══ DISPOSITIFS — salarié·es (S1 à S6) ═════════════════════════════════
@@ -231,6 +224,17 @@ export const CATALOGUE: Resultat[] = [
     // intermittence, dont les règles d'accès sont propres à leur branche (S5, S6).
     quand: (p) =>
       salarie(p) && (interim(p) || intermittent(p) || (cdiOuCdd(p) && ancienneteePtp(p))),
+  },
+  {
+    id: "c2p",
+    categorie: "dispositif",
+    nom: "Compte professionnel de prévention (C2P)",
+    description:
+      "Mobiliser les droits acquis au titre de certains facteurs de pénibilité pour financer une formation ou préparer une évolution professionnelle vers un emploi moins exposé.",
+    url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F15504",
+    // Salarié·es du privé seulement (S1 à S6) : le C2P n'existe pas dans la
+    // fonction publique.
+    quand: salarie,
   },
   {
     id: "pur",
