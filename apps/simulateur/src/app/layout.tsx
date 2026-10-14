@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Open_Sans } from "next/font/google";
+import { Geist } from "next/font/google";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
 import { SkipLinks } from "@etape/ui/components/skip-links";
 import { Toaster } from "@etape/ui/components/sonner";
 import "./globals.css";
 
-const openSans = Open_Sans({
-  variable: "--font-open-sans",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
@@ -28,15 +28,14 @@ export default function RootLayout({
       lang="fr"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${openSans.variable} h-full antialiased motion-safe:scroll-smooth`}
+      className={`${geist.variable} h-full antialiased motion-safe:scroll-smooth`}
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        {/* Thème clair imposé : le mode sombre du kit Figma n'est pas encore décliné
+            aux couleurs ETAPE (primaire gris clair). `forcedTheme` ignore aussi un
+            choix « dark » resté en localStorage. Le thème `.dark` de globals.css
+            est gardé pour le jour où il le sera. */}
+        <ThemeProvider attribute="class" forcedTheme="light" disableTransitionOnChange>
           <SkipLinks />
           <div id="contenu" tabIndex={-1} className="flex flex-1 flex-col">
             {children}

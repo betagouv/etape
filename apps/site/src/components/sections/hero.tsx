@@ -28,7 +28,7 @@ export function Hero() {
       </div>
 
       <div className="flex flex-col items-start gap-6 lg:justify-center lg:gap-8">
-        <h1 id="titre-accroche" className="text-h1 font-bold">
+        <h1 id="titre-accroche" className="font-heading text-heading-md">
           {hero.titleLines.map((line) => (
             <span key={line} className="block">
               {line}

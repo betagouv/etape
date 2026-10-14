@@ -270,8 +270,8 @@ inverse: "bg-background text-primary shadow-xs hover:bg-background/90",
 Et les tokens qu'elles utilisent portent leur équivalent Figma :
 
 ```css
---primary: #00796b; /* Action/Primary/Default (Teal-700) */
---secondary: #e0f2f1; /* Surface/Base/Secondary (Teal-50) */
+--primary: #134e4a; /* base/primary (teal-900) */
+--secondary: #eef4f2; /* écart : kit teal-50 #f9faf9 (teal-100) */
 ```
 
 **Ce que le commentaire Figma permet concrètement** : devant une maquette, on retrouve le token par son nom au lieu de comparer des codes hexadécimaux à l'œil. Et le jour où la charte change une couleur, une seule ligne bouge — tous les composants suivent, thème sombre compris.

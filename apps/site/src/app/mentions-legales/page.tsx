@@ -86,7 +86,9 @@ export default function MentionsLegales() {
   return (
     <>
       <Section className="border-divider border-b">
-        <h1 className="text-h1 text-foreground font-bold text-balance">{MENTIONS_LEGALES_TITLE}</h1>
+        <h1 className="font-heading text-heading-md text-foreground text-balance">
+          {MENTIONS_LEGALES_TITLE}
+        </h1>
       </Section>
 
       <Section>
