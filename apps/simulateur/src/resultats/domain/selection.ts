@@ -5,15 +5,13 @@
 // l'ordre de déclaration du catalogue : parcourir les catégories dans l'ordre
 // suffit, sans tri à comparateur.
 
-import type { RegionCode } from "@/questionnaire/domain/regions";
-
 import { CATALOGUE } from "./catalogue";
 import type { Profil } from "./profil";
 import { CATEGORIES, type Resultat, type ResultatAffiche } from "./types";
 
-/** Résout le lien d'une carte pour la région de l'utilisateur. */
-function lien(url: Resultat["url"], region: RegionCode | null): string {
-  return typeof url === "function" ? url(region) : url;
+/** Résout le lien d'une carte pour le profil de l'utilisateur. */
+function lien(url: Resultat["url"], profil: Profil): string {
+  return typeof url === "function" ? url(profil) : url;
 }
 
 /** Cartes retenues pour ce profil, dans l'ordre d'affichage. */
@@ -28,7 +26,7 @@ export function selectResultats(profil: Profil): ResultatAffiche[] {
         categorie,
         nom,
         description,
-        url: lien(url, profil.region),
+        url: lien(url, profil),
       })),
   );
 }

@@ -6,8 +6,6 @@
 // carte est retenue ou elle ne l'est pas (règle du ticket — aucun filtre, aucun
 // onglet, uniquement ce à quoi la personne a droit).
 
-import type { RegionCode } from "@/questionnaire/domain/regions";
-
 import type { Profil } from "./profil";
 
 /**
@@ -35,11 +33,11 @@ export interface Resultat {
   /** Deux phrases maximum : ce que c'est, et ce que ça change pour la personne. */
   description: string;
   /**
-   * Lien « En savoir plus ». Une fonction quand le réseau est régionalisé
-   * (Transitions Pro et l'offre de formation des Régions dépendent de la région
-   * de l'utilisateur).
+   * Lien « En savoir plus ». Une fonction quand il dépend du profil : de la
+   * région pour les réseaux régionalisés (Transitions Pro, offre de formation
+   * des Régions), de la situation pour le CEP (page dédiée aux agents publics).
    */
-  url: string | ((region: RegionCode | null) => string);
+  url: string | ((profil: Profil) => string);
   /**
    * Condition d'affichage. Vraie = la carte est retenue. C'est la seule règle
    * d'éligibilité : pas de statut intermédiaire.

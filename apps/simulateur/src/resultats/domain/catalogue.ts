@@ -76,6 +76,9 @@ const anciennete5Ans = (p: Profil) => activiteAnnees(p) >= 5;
  */
 const CEP_URL = "https://mon-cep.org/";
 
+/** Page CEP servie aux agents publics à la place du portail, à la demande de la PO. */
+const CEP_AGENT_PUBLIC_URL = "https://www.service-public.gouv.fr/particuliers/vosdroits/F32457";
+
 export const CATALOGUE: Resultat[] = [
   // ═══ INTERLOCUTEURS ═════════════════════════════════════════════════════
   {
@@ -84,7 +87,7 @@ export const CATALOGUE: Resultat[] = [
     nom: "CEP régional",
     description:
       "Le conseiller en évolution professionnelle (CEP) vous accompagne gratuitement dans vos réflexions sur votre avenir professionnel. Il vous aide à faire le point sur votre situation, à construire votre projet et à identifier les solutions adaptées à vos objectifs.",
-    url: CEP_URL,
+    url: (p) => (agentPublic(p) ? CEP_AGENT_PUBLIC_URL : CEP_URL),
     // Absent du parcours demandeur d'emploi (S7) : France Travail y est
     // l'opérateur CEP, la carte ferait doublon et enverrait au mauvais guichet.
     // Absent aussi du parcours sans emploi (S9), à la demande de la PO.
@@ -119,7 +122,7 @@ export const CATALOGUE: Resultat[] = [
     description:
       "Que votre projet soit encore en réflexion ou déjà bien défini, Transitions Pro vous accompagne dans sa construction. Ses équipes peuvent vous aider à clarifier vos objectifs, comprendre les solutions mobilisables et identifier les financements adaptés à votre situation pour sécuriser votre évolution professionnelle.",
     // Réseau régionalisé : une association par région.
-    url: transitionsProUrl,
+    url: (p) => transitionsProUrl(p.region),
     // Absente du parcours intermittent (S6).
     quand: (p) => salarie(p) && (cdi(p) || cdd(p) || interim(p)),
   },
@@ -295,7 +298,7 @@ export const CATALOGUE: Resultat[] = [
     description:
       "Accéder à une formation prise en charge par votre Région pour développer vos compétences, préparer une reconversion ou faciliter votre retour à l'emploi.",
     // Réseau régionalisé : chaque Région a sa propre offre de formation.
-    url: conseilRegionalUrl,
+    url: (p) => conseilRegionalUrl(p.region),
     quand: demandeurEmploi,
   },
   {
