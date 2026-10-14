@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@etape/api-contract": "*",
-    "@tanstack/react-query": "^5.103.0",
+    "@tanstack/react-query": "^5.104.1",
     "axios": "^1.20.0"
   },
   "devDependencies": {
@@ -22,6 +22,6 @@
     "@etape/prettier-config": "*",
     "eslint": "^9",
     "typescript": "^5",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.3"
   }
 }
