@@ -223,8 +223,7 @@
  * 30/36 en Mobile et 36/40 en Desktop, sous le même nom. Les valeurs mobile
  * sont posées dans `:root`, redéfinies à `lg`, et exposées via `@theme inline`
  * — qui compile en `font-size: var(--type-heading-md)`, si bien que
- * `text-heading-md` bascule seul au breakpoint. Seul `heading-sm` est fixe : voir
- * son écart ci-dessous.
+ * `text-heading-md` bascule seul au breakpoint.
  *
  * Un titre s'écrit `font-heading text-heading-md` : la taille porte interlignage,
  * graisse (600) et approche (-0.025em, soit les -0.5 à -1.5px du kit), mais
@@ -238,10 +237,8 @@
   --type-heading-lg-lh: 2.5rem; /* 40 */
   --type-heading-md: 1.875rem; /* heading-md 30 */
   --type-heading-md-lh: 2.25rem; /* 36 */
-  /* écart : kit 20/28 en Mobile. Les maquettes mobiles du simulateur posent
-     leurs titres à 24/32 — valeur Desktop retenue dans les deux modes. */
-  --type-heading-sm: 1.5rem; /* 24 */
-  --type-heading-sm-lh: 2rem; /* 32 */
+  --type-heading-sm: 1.25rem; /* heading-sm 20 */
+  --type-heading-sm-lh: 1.75rem; /* 28 */
   --type-body-lg: 1rem; /* Body/Large 16 */
   --type-body-lg-lh: 1.5rem; /* 24 */
   --type-label-lg: 0.875rem; /* Label/Large 14 */
@@ -268,6 +265,8 @@
     --type-heading-lg-lh: 3rem; /* 48 */
     --type-heading-md: 2.25rem; /* 36 */
     --type-heading-md-lh: 2.5rem; /* 40 */
+    --type-heading-sm: 1.5rem; /* 24 */
+    --type-heading-sm-lh: 2rem; /* 32 */
   }
 }
 
