@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useRef, type RefObject } from "react";
+import { CircleAlert } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@etape/ui/components/alert";
 
 import { isFieldVisible } from "../domain/conditions";
 import type { Answers, AnswerValue, Question } from "../domain/types";
-import { fieldErrors, missingFields } from "../domain/validation";
+import { ISSUE_KIND } from "../domain/validation";
+import { useQuestionIssues } from "../hooks/useQuestionIssues";
 import { FIELD_ERROR_ATTRIBUTE } from "./fields/aria";
 import { QuestionFields } from "./QuestionFields";
 import { QuestionHeader } from "./QuestionHeader";
@@ -19,7 +22,7 @@ interface QuestionScreenProps {
    * Numéro de la tentative de validation ayant échoué sur CETTE question, ou
    * `undefined` si l'utilisateur n'a encore rien tenté. Il change à chaque
    * nouvel essai : c'est ce qui redéplace le focus quand on reclique
-   * « Suivant » sans avoir corrigé.
+   * « Continuer » sans avoir corrigé.
    */
   failedAttempt?: number;
 }
@@ -46,6 +49,18 @@ function focusFirstInvalid(container: HTMLElement | null): void {
   }
 }
 
+/** Une réponse absente se complète, une réponse invalide se corrige. */
+function summarize(count: number, hasInvalid: boolean): string {
+  if (hasInvalid) {
+    return count === 1
+      ? "Une réponse est à corriger pour continuer."
+      : `${count} réponses sont à corriger pour continuer.`;
+  }
+  return count === 1
+    ? "Une réponse manque : complétez-la pour continuer."
+    : `${count} réponses manquent : complétez-les pour continuer.`;
+}
+
 export function QuestionScreen({
   question,
   stepNumber,
@@ -55,33 +70,34 @@ export function QuestionScreen({
   failedAttempt,
 }: QuestionScreenProps) {
   const titleId = `${question.id}-title`;
-  const subtitleId = question.subtitle ? `${question.id}-subtitle` : undefined;
+  const subtitleId = question.subtitle || question.notice ? `${question.id}-subtitle` : undefined;
 
-  // Un écran à champ unique (Q1, Q2, Q4, Q5, Q7) porte son message une seule
-  // fois, en bas. Un écran qui en a plusieurs (Q3, Q6) garde un message sous
-  // chaque champ fautif — une ligne unique ne dirait pas LEQUEL — et se résume
-  // en bas au nombre de réponses en attente.
-  const visibles = question.fields.filter((field) => isFieldVisible(field, answers));
-  const champUnique = visibles.length === 1 ? visibles[0] : undefined;
+  const {
+    shown,
+    announcement,
+    setAnswer: answer,
+    revealInvalid,
+  } = useQuestionIssues({
+    question,
+    answers,
+    setAnswer,
+    failedAttempt,
+  });
+  const errors = new Map([...shown].map(([name, issue]) => [name, issue.message]));
 
-  const showErrors = failedAttempt !== undefined;
-  const errors = showErrors ? fieldErrors(question, answers) : new Map<string, string>();
-  // Une réponse absente ne se « corrige » pas, elle se donne ; une réponse
-  // incohérente est là mais fausse. Le résumé le dit avec le bon verbe.
-  const absences = showErrors ? missingFields(question, answers).length : 0;
-  const resume =
-    errors.size === absences
-      ? errors.size === 1
-        ? "Une réponse manque : complétez-la pour continuer."
-        : `${errors.size} réponses manquent : complétez-les pour continuer.`
-      : errors.size === 1
-        ? "Une réponse est à corriger pour continuer."
-        : `${errors.size} réponses sont à corriger pour continuer.`;
+  // Champ unique : un message, en bas. Plusieurs : un par champ, résumé en bas.
+  // Une case à cocher n'est jamais en erreur.
+  const inputFields = question.fields.filter(
+    (field) => field.type !== "toggle" && isFieldVisible(field, answers),
+  );
+  const singleField = inputFields.length === 1 ? inputFields[0] : undefined;
+  const singleIssue = singleField ? shown.get(singleField.name) : undefined;
+  const hasInvalid = [...shown.values()].some((issue) => issue.kind === ISSUE_KIND.INVALID);
+  const summary = summarize(shown.size, hasInvalid);
 
-  // Sur un écran à champ unique, cette ligne EST le message du champ : elle en
+  // Sur un écran à champ unique, le message en bas EST celui du champ : il en
   // porte l'`id`, celui que l'`aria-describedby` du champ désigne déjà.
-  const bilan = champUnique ? [...errors.values()][0] : resume;
-  const bilanId = champUnique ? `${champUnique.name}-error` : undefined;
+  const summaryId = singleField ? `${singleField.name}-error` : undefined;
 
   const fieldsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -89,12 +105,20 @@ export function QuestionScreen({
     focusFirstInvalid(fieldsRef.current);
   }, [failedAttempt, question.id]);
 
+  // `focusout` remonte de chaque contrôle : quitter un champ, y compris de
+  // l'année vers le mois, révèle ce qui est invalide. Écouté sur le DOM plutôt
+  // que par un `onBlur` posé sur un `<div>`, qui n'est pas un contrôle.
+  useEffect(() => {
+    const container = fieldsRef.current;
+    container?.addEventListener("focusout", revealInvalid);
+    return () => container?.removeEventListener("focusout", revealInvalid);
+  }, [revealInvalid]);
+
   return (
-    <div className="flex w-full flex-col gap-8 md:gap-12">
+    <div className="flex w-full flex-col gap-6 md:gap-10">
       <QuestionHeader
         step={stepNumber}
-        title={question.title}
-        subtitle={question.subtitle}
+        question={question}
         titleId={titleId}
         subtitleId={subtitleId}
         headingRef={headingRef}
@@ -103,23 +127,37 @@ export function QuestionScreen({
         <QuestionFields
           question={question}
           answers={answers}
-          setAnswer={setAnswer}
+          setAnswer={answer}
           titleId={titleId}
           describedBy={subtitleId}
           errors={errors}
-          inlineErrors={champUnique === undefined}
+          inlineErrors={singleField === undefined}
         />
       </div>
-      {/* Le bilan est visible mais pas annoncé : le focus part sur le premier
-          champ fautif, et deux annonces se marcheraient dessus. */}
-      {errors.size > 0 && (
-        <p
-          id={bilanId}
-          className="text-destructive-text text-sm leading-5 font-semibold md:text-base md:leading-6"
-        >
-          {bilan}
-        </p>
+      {/* Visible mais pas annoncé : le focus part sur le premier champ fautif, qui le lit. */}
+      {hasInvalid ? (
+        <Alert variant="destructive">
+          <CircleAlert aria-hidden="true" />
+          <AlertTitle>Vérifiez votre saisie</AlertTitle>
+          {singleIssue ? (
+            <AlertDescription id={summaryId}>{singleIssue.message}</AlertDescription>
+          ) : (
+            shown.size > 1 && <AlertDescription>{summary}</AlertDescription>
+          )}
+        </Alert>
+      ) : (
+        shown.size > 0 && (
+          <p
+            id={summaryId}
+            className="text-destructive-text text-sm leading-5 font-semibold md:text-base md:leading-6"
+          >
+            {singleIssue?.message ?? summary}
+          </p>
+        )
       )}
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
     </div>
   );
 }

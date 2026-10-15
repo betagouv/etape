@@ -1,81 +1,53 @@
-import { PenLineIcon } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 
-import type { Answers } from "@/questionnaire/domain/types";
+import { Button } from "@etape/ui/components/button";
+import { Card, CardContent } from "@etape/ui/components/card";
 
-import { buildRecap } from "../domain/recap";
+import type { RecapEntry } from "../domain/recap";
 
 interface AnswersRecapProps {
-  answers: Answers;
+  entries: RecapEntry[];
   onEdit: (questionId: string) => void;
 }
 
-export function AnswersRecap({ answers, onEdit }: AnswersRecapProps) {
-  const entries = buildRecap(answers);
-
+export function AnswersRecap({ entries, onEdit }: AnswersRecapProps) {
   return (
-    <section aria-labelledby="recap-title" className="flex w-full flex-col gap-6">
-      <h2 id="recap-title" className="text-foreground text-2xl leading-8 font-bold">
-        Récapitulatif de vos réponses
-      </h2>
+    <section aria-labelledby="recap-title" className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 id="recap-title" className="font-heading text-heading-sm text-foreground">
+          Vos réponses
+        </h2>
+        <p className="text-muted-foreground text-body">
+          Modifiez une réponse&nbsp;: les résultats se recalculent immédiatement.
+        </p>
+      </div>
 
-      <ul className="flex flex-col md:hidden">
-        {entries.map((entry) => (
-          <li
-            key={`${entry.questionId}-${entry.fieldName}`}
-            className="border-border flex items-center gap-2 border-b py-3 last:border-b-0"
-          >
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <p className="text-foreground text-sm leading-5 font-bold">{entry.question}</p>
-              <p className="text-foreground text-sm leading-5">{entry.answer}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onEdit(entry.questionId)}
-              aria-label={`Modifier : ${entry.question}`}
-              className="text-content-accent hover:bg-secondary flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm"
-            >
-              <PenLineIcon aria-hidden="true" className="size-6" />
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <table className="hidden w-full border-collapse text-left md:table">
-        <thead>
-          <tr className="border-border border-b">
-            <th className="text-muted-foreground py-2 pr-4 text-sm font-semibold">Question</th>
-            <th className="text-muted-foreground py-2 pr-4 text-sm font-semibold">Réponse</th>
-            <th className="w-10">
-              <span className="sr-only">Modifier</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr
-              key={`${entry.questionId}-${entry.fieldName}`}
-              className="border-border border-b align-top last:border-b-0"
-            >
-              <td className="text-content-secondary py-3 pr-4 text-sm leading-5">
-                {entry.question}
-              </td>
-              <td className="text-foreground py-3 pr-4 text-sm leading-5 font-semibold">
-                {entry.answer}
-              </td>
-              <td className="py-3">
-                <button
+      <Card variant="outline">
+        <CardContent>
+          <ul className="flex flex-col gap-4">
+            {entries.map((entry) => (
+              <li
+                key={`${entry.questionId}-${entry.fieldName}`}
+                className="border-border flex items-center gap-4 border-b pb-4 last:border-b-0 last:pb-0"
+              >
+                <div className="text-body-sm flex min-w-0 flex-1 flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
+                  <p className="text-muted-foreground">{entry.question}</p>
+                  <p className="text-foreground font-medium md:text-right">{entry.answer}</p>
+                </div>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon-responsive-sm"
                   onClick={() => onEdit(entry.questionId)}
                   aria-label={`Modifier : ${entry.question}`}
-                  className="text-muted-foreground hover:text-primary flex cursor-pointer items-center justify-center p-1"
                 >
-                  <PenLineIcon aria-hidden="true" className="size-4" />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                  <PencilIcon aria-hidden="true" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </section>
   );
 }

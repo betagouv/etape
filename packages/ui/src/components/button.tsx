@@ -19,9 +19,10 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border bg-background text-secondary-foreground shadow-xs hover:bg-secondary dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        "ghost-primary": "text-secondary-foreground hover:bg-secondary",
         link: "text-primary underline-offset-4 hover:underline",
         // Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
         // CTA posés sur un fond coloré.
@@ -31,6 +32,9 @@ const buttonVariants = cva(
         // le contraste tombe de 5,70:1 à 4,65:1.
         "outline-primary":
           "border border-primary bg-background text-primary hover:bg-secondary hover:text-secondary-foreground",
+        // Écart au kit : libellé en `destructive-text` (7:1), `destructive` n'y fait que 4,1:1.
+        "destructive-subdued":
+          "bg-destructive/10 text-destructive-text hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -39,6 +43,9 @@ const buttonVariants = cva(
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
+        responsive: "h-11 px-6 has-[>svg]:px-4 md:h-9 md:px-4 md:has-[>svg]:px-3",
+        "responsive-sm": "h-11 gap-1.5 px-4 has-[>svg]:px-3 md:h-8 md:px-3 md:has-[>svg]:px-2.5",
+        "icon-responsive-sm": "size-11 md:size-8",
         icon: "size-9",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",

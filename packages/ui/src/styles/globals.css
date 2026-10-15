@@ -55,6 +55,7 @@
   --secondary: #eef4f2; /* écart : kit teal-50 #f9faf9 (teal-100) */
   --secondary-foreground: #134e4a; /* base/secondary-foreground (teal-900) */
   --secondary-selected: #d3e2e0; /* extension ETAPE (teal-200) */
+  --primary-subtle: #115e59; /* extension ETAPE : relief posé sur primary (teal-800) */
   --muted: #fafafa; /* écart : kit neutral-100 #f5f5f5 (neutral-50) */
   --muted-foreground: #737373; /* base/muted-foreground (neutral-500) */
   --accent: #f5f5f5; /* base/accent (neutral-100) */
@@ -93,6 +94,10 @@
   --destructive-border: #fee2e2; /* colors/error-border (red-100) */
   --destructive-text: #991b1b; /* colors/error (red-800) — 8,31:1 sur blanc */
   --destructive-border-alpha: rgba(220, 38, 38, 0.5); /* destructive à 50 % */
+
+  /* Tags de catégorie — extension ETAPE, sans couleur d'état équivalente */
+  --violet-muted: #f5f3ff; /* violet-50 */
+  --violet-text: #4c1d95; /* violet-900 — 10:1 sur violet-50 */
 
   /* Contenu — extensions ETAPE */
   --content-secondary: #404040; /* neutral-700 */
@@ -143,6 +148,7 @@
   --secondary: #262626; /* base/secondary */
   --secondary-foreground: #fafafa;
   --secondary-selected: #404040; /* extension ETAPE (neutral-700) */
+  --primary-subtle: #d4d4d4; /* neutral-300, relief posé sur primary */
   --muted: #262626; /* base/muted */
   --muted-foreground: #a3a3a3; /* base/muted-foreground */
   --accent: #404040; /* base/accent */
@@ -182,6 +188,10 @@
   --destructive-text: #fca5a5;
   --destructive-border-alpha: rgba(252, 165, 165, 0.5);
 
+  /* Tags de catégorie */
+  --violet-muted: #4c1d95; /* violet-900 */
+  --violet-text: #c4b5fd; /* violet-300 */
+
   /* Contenu */
   --content-secondary: #d4d4d4; /* neutral-300 */
   --content-accent: #e5e5e5; /* = primary */
@@ -213,7 +223,8 @@
  * 30/36 en Mobile et 36/40 en Desktop, sous le même nom. Les valeurs mobile
  * sont posées dans `:root`, redéfinies à `lg`, et exposées via `@theme inline`
  * — qui compile en `font-size: var(--type-heading-md)`, si bien que
- * `text-heading-md` bascule seul au breakpoint.
+ * `text-heading-md` bascule seul au breakpoint. Seul `heading-sm` est fixe : voir
+ * son écart ci-dessous.
  *
  * Un titre s'écrit `font-heading text-heading-md` : la taille porte interlignage,
  * graisse (600) et approche (-0.025em, soit les -0.5 à -1.5px du kit), mais
@@ -227,8 +238,11 @@
   --type-heading-lg-lh: 2.5rem; /* 40 */
   --type-heading-md: 1.875rem; /* heading-md 30 */
   --type-heading-md-lh: 2.25rem; /* 36 */
-  --type-heading-sm: 1.25rem; /* heading-sm 20 */
-  --type-heading-sm-lh: 1.75rem; /* 28 */
+  /* écart : kit 20/28 en Mobile. Les maquettes mobiles du simulateur posent
+     leurs titres à 24/32 — valeur Desktop retenue dans les deux modes, pour
+     toutes les apps. */
+  --type-heading-sm: 1.5rem; /* 24 */
+  --type-heading-sm-lh: 2rem; /* 32 */
   --type-body-lg: 1rem; /* Body/Large 16 */
   --type-body-lg-lh: 1.5rem; /* 24 */
   --type-label-lg: 0.875rem; /* Label/Large 14 */
@@ -255,8 +269,6 @@
     --type-heading-lg-lh: 3rem; /* 48 */
     --type-heading-md: 2.25rem; /* 36 */
     --type-heading-md-lh: 2.5rem; /* 40 */
-    --type-heading-sm: 1.5rem; /* 24 */
-    --type-heading-sm-lh: 2rem; /* 32 */
   }
 }
 
@@ -282,6 +294,7 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary-selected: var(--secondary-selected);
+  --color-primary-subtle: var(--primary-subtle);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -317,6 +330,8 @@
   --color-info-muted: var(--info-muted);
   --color-info-border: var(--info-border);
   --color-info-text: var(--info-text);
+  --color-violet-muted: var(--violet-muted);
+  --color-violet-text: var(--violet-text);
 
   --color-content-secondary: var(--content-secondary);
   --color-content-accent: var(--content-accent);
@@ -393,6 +408,21 @@
   --text-label-lg--line-height: var(--type-label-lg-lh);
   --text-caption: var(--type-caption);
   --text-caption--line-height: var(--type-caption-lh);
+
+  /* Curseur d'`InputOTP`. */
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    50% {
+      opacity: 0;
+    }
+  }
 }
 
 @layer base {

@@ -1,9 +1,10 @@
 import type { RefObject } from "react";
 
+import type { Question } from "../domain/types";
+
 interface QuestionHeaderProps {
   step: number;
-  title: string;
-  subtitle?: string;
+  question: Pick<Question, "title" | "subtitle" | "notice">;
   titleId: string;
   subtitleId?: string;
   headingRef?: RefObject<HTMLHeadingElement | null>;
@@ -11,30 +12,29 @@ interface QuestionHeaderProps {
 
 export function QuestionHeader({
   step,
-  title,
-  subtitle,
+  question,
   titleId,
   subtitleId,
   headingRef,
 }: QuestionHeaderProps) {
+  const { title, subtitle, notice } = question;
   return (
-    <header className="flex w-full flex-col gap-3 md:gap-4">
-      <p className="text-content-accent text-xs leading-4 font-normal uppercase">Question {step}</p>
+    <header className="flex w-full flex-col gap-2 md:gap-3">
+      <p className="text-body text-primary leading-none font-semibold uppercase">Question {step}</p>
       <h1
         ref={headingRef}
         id={titleId}
         tabIndex={-1}
         aria-describedby={subtitleId}
-        className="text-foreground focus-visible:outline-ring rounded-sm text-2xl leading-8 font-bold focus-visible:outline-2 focus-visible:outline-offset-4 md:text-[28px] md:leading-9"
+        className="font-heading text-heading-sm md:text-heading-md text-foreground focus-visible:outline-ring rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
       >
         {title}
       </h1>
-      {subtitle && (
-        <p
-          id={subtitleId}
-          className="text-content-secondary text-sm leading-5 md:text-base md:leading-6"
-        >
+      {(subtitle || notice) && (
+        // La mention reste dans le paragraphe désigné par l'aria-describedby du titre.
+        <p id={subtitleId} className="text-body text-muted-foreground">
           {subtitle}
+          {notice && <span className="text-foreground block font-medium">{notice}</span>}
         </p>
       )}
     </header>

@@ -4,7 +4,7 @@
 // lit pas les variables CSS de `packages/ui/src/styles/globals.css` : les
 // couleurs utiles y sont reprises en dur. Document en une colonne — pas une
 // réplique de la grille de cartes de l'écran — mais habillé des couleurs de
-// marque (bandeau, tags de catégorie, encart), reprises des mêmes tokens que
+// marque (bandeau, tags de catégorie), reprises des mêmes tokens que
 // `CategorieTag.tsx` pour rester cohérent avec l'écran.
 
 import { StyleSheet } from "@react-pdf/renderer";
@@ -19,18 +19,21 @@ const COLORS = {
   secondary: "#404040", // --content-secondary
   muted: "#737373", // --muted-foreground
   primary: "#134e4a", // --primary / --content-accent
+  primaryForeground: "#fafafa", // --primary-foreground
   border: "#d3e2e0", // --border
   white: "#ffffff",
-  calloutBg: "#eef4f2", // --secondary
-  calloutText: "#134e4a", // --secondary-foreground
+  bannerSubtitle: "#eef4f2", // --secondary
 };
 
 /** Couleur d'accent par catégorie — les mêmes tokens que `CategorieTag.tsx`. */
 export const CATEGORIE_COLORS: Record<Categorie, string> = {
-  interlocuteur: "#134e4a", // --secondary-foreground
-  outil: "#1e40af", // --info-text
-  dispositif: "#166534", // --success-text
+  interlocuteur: "#1e40af", // --info-text
+  outil: "#4c1d95", // --violet-text
+  dispositif: "#9a3412", // --warning-text
 };
+
+/** Couleur d'accent du résultat prioritaire, posé sur `primary`. */
+export const ON_PRIMARY_COLOR = COLORS.primaryForeground;
 
 export const pdfStyles = StyleSheet.create({
   page: {
@@ -58,7 +61,7 @@ export const pdfStyles = StyleSheet.create({
   bannerSubtitle: {
     marginTop: 10,
     fontSize: 10,
-    color: COLORS.calloutBg,
+    color: COLORS.bannerSubtitle,
   },
   sectionTitle: {
     fontFamily: PDF_HEADING_FONT_FAMILY,
@@ -89,32 +92,35 @@ export const pdfStyles = StyleSheet.create({
     flex: 1,
     fontWeight: 600,
   },
-  // Le filet de catégorie est porté par chaque bloc (titre de catégorie, puis
-  // chaque résultat) ; des `padding` plutôt que des `margin` pour qu'il reste
-  // continu d'un bloc au suivant.
-  categorieBadgeRow: {
+  resultat: {
+    marginBottom: 12,
+    paddingLeft: 10,
+    borderLeftWidth: 3,
+  },
+  resultatPrioritaire: {
+    paddingVertical: 10,
+    paddingRight: 12,
+    borderRadius: 4,
+    borderLeftColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+    color: COLORS.primaryForeground,
+  },
+  categorieRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 14,
-    paddingBottom: 8,
-    paddingLeft: 10,
-    borderLeftWidth: 3,
+    gap: 5,
+    marginBottom: 3,
   },
   categorieDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   categorieLabel: {
-    fontSize: 11,
+    fontSize: 8,
     fontWeight: 700,
+    letterSpacing: 0.4,
     textTransform: "uppercase",
-  },
-  resultat: {
-    paddingBottom: 10,
-    paddingLeft: 10,
-    borderLeftWidth: 3,
   },
   resultatNom: {
     fontSize: 11,
@@ -127,21 +133,5 @@ export const pdfStyles = StyleSheet.create({
   resultatUrl: {
     marginTop: 3,
     color: COLORS.primary,
-  },
-  footerBox: {
-    marginTop: 28,
-    padding: 14,
-    borderRadius: 4,
-    backgroundColor: COLORS.calloutBg,
-  },
-  footerText: {
-    fontSize: 9,
-    lineHeight: 1.5,
-    color: COLORS.calloutText,
-  },
-  // Les `Link` de react-pdf sont soulignés et bleus par défaut : on garde le
-  // soulignement (repère du lien dans un PDF) et on reprend la couleur du texte.
-  footerLink: {
-    color: COLORS.calloutText,
   },
 });
