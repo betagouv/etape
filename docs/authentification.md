@@ -253,12 +253,19 @@ Ce qu'il faut savoir avant d'y toucher :
   et un robot pourrait verrouiller celui d'un tiers.
 - **FranceConnect n'est pas concerné** : la première connexion passe par
   `first broker login`, pas par l'inscription.
+- **Un réglage invalide est ignoré** : les valeurs par défaut s'appliquent et
+  Keycloak l'écrit dans ses journaux. Keycloak ne permet pas de valider la
+  configuration d'une étape au moment où on la saisit.
+- **Si le défi ne peut pas être créé**, la page affiche « Le contrôle de sécurité
+  est momentanément indisponible » à la place de la case ; l'envoi reste refusé.
 - **Sans l'extension, l'inscription répond 500** au lieu de s'ouvrir sans
   protection : les flows la référencent.
 
 Une base neuve reçoit les deux flows par le fichier de realm ; une base
 existante, par `deploy/keycloak-altcha.sh`, que lancent `keycloak-init.sh` en
-déploiement et le service `keycloak-init` en local.
+déploiement et le service `keycloak-init` en local. Sur une base existante, le
+script retire aussi reCAPTCHA : de la copie du flow d'inscription, où il serait
+resté exigé sans plus être affiché, et du flow natif, avec sa clé secrète.
 
 ## Thème
 
