@@ -12,6 +12,7 @@ RESET_CREDENTIALS_FLOW=etape-reset-credentials
 REGISTRATION_PROVIDER=etape-altcha-registration
 RESET_CREDENTIALS_PROVIDER=etape-altcha-reset-credentials
 CHOOSE_USER_PROVIDER=reset-credentials-choose-user
+RECAPTCHA_PROVIDER=registration-recaptcha-action
 
 urlencode() {
   echo "${1// /%20}"
@@ -35,6 +36,23 @@ require_execution() {
 
 if ! flow_exists "$REGISTRATION_FLOW"; then
   $KCADM create authentication/flows/registration/copy -r "$REALM" -s "newName=${REGISTRATION_FLOW}"
+fi
+
+COPIED_RECAPTCHA_EXECUTION=$(execution_of "$REGISTRATION_FLOW" "$RECAPTCHA_PROVIDER")
+if [ -n "$COPIED_RECAPTCHA_EXECUTION" ]; then
+  $KCADM delete "authentication/executions/${COPIED_RECAPTCHA_EXECUTION%%,*}" -r "$REALM"
+fi
+
+BUILTIN_RECAPTCHA_EXECUTION=$($KCADM get authentication/flows/registration/executions -r "$REALM" \
+  --fields id,providerId,priority,authenticationConfig --format csv --noquotes \
+  | { grep -F ",${RECAPTCHA_PROVIDER}," || true; })
+if [ -n "$BUILTIN_RECAPTCHA_EXECUTION" ]; then
+  IFS=, read -r BUILTIN_RECAPTCHA_ID _ BUILTIN_RECAPTCHA_PRIORITY BUILTIN_RECAPTCHA_CONFIG <<< "$BUILTIN_RECAPTCHA_EXECUTION"
+  $KCADM update authentication/flows/registration/executions -r "$REALM" \
+    -b "{\"id\": \"${BUILTIN_RECAPTCHA_ID}\", \"requirement\": \"DISABLED\", \"priority\": ${BUILTIN_RECAPTCHA_PRIORITY}}"
+  if [ -n "$BUILTIN_RECAPTCHA_CONFIG" ]; then
+    $KCADM delete "authentication/config/${BUILTIN_RECAPTCHA_CONFIG}" -r "$REALM"
+  fi
 fi
 
 if [ -z "$(execution_of "$REGISTRATION_FLOW" "$REGISTRATION_PROVIDER")" ]; then
