@@ -20,7 +20,10 @@ export function DidYouKnow() {
           {didYouKnow.caption}
         </p>
 
-        <h2 id="titre-le-saviez-vous" className="text-h2 flex flex-col items-start gap-2 font-bold">
+        <h2
+          id="titre-le-saviez-vous"
+          className="font-heading text-heading-sm flex flex-col items-start gap-2"
+        >
           <span className="flex flex-wrap items-center gap-x-2 gap-y-2">
             <span>{didYouKnow.sentenceBefore}</span>
             <span className="bg-primary text-primary-foreground rounded-lg px-4 py-2 whitespace-nowrap">

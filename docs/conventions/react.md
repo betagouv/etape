@@ -216,12 +216,12 @@ Aucune valeur hexadécimale, `rgb()` ou `hsl()` n'existe hors de `packages/ui/sr
 <details><summary><strong>Exemple — un token dit d'où il vient</strong></summary>
 
 ```css
---primary: #00796b; /* Action/Primary/Default (Teal-700) */
---secondary: #e0f2f1; /* Surface/Base/Secondary (Teal-50) */
---content-secondary: #434343; /* Content/Base/Secondary (Neutral-700) */
+--primary: #134e4a; /* base/primary (teal-900) */
+--secondary: #eef4f2; /* écart : kit teal-50 #f9faf9 (teal-100) */
+--content-secondary: #404040; /* neutral-700 */
 ```
 
-Le commentaire porte le nom Figma : c'est ce qui permet, devant une maquette, de retrouver le token sans deviner. Écrire `#00796b` dans un composant fait perdre ce lien, et le thème sombre avec.
+Le commentaire porte le nom Figma : c'est ce qui permet, devant une maquette, de retrouver le token sans deviner. Il dit aussi quand le code s'écarte du kit, et pourquoi (l'en-tête de `globals.css` liste ces écarts). Écrire `#134e4a` dans un composant fait perdre ce lien, et le thème sombre avec.
 
 **Seule exception** : le PDF (`resultats/pdf/pdf-styles.ts`), car `@react-pdf/renderer` a son propre moteur de styles et ne lit pas le CSS. Elle est commentée sur place.
 
@@ -315,11 +315,11 @@ Autorisé : largeur, marge, `gap`, `flex`. Interdit : couleur, fond, bordure, ra
 | Où                                        | Ce qui est écrit                                                                           | Ce qui existe                                                                                    |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | `ResultsScreen.tsx:24`                    | `const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10"`                          | `Container size="lg"` — avec, en prime, des paliers de gouttière cohérents avec le reste du site |
-| `ResultsScreen.tsx:45`                    | `text-[28px] leading-9 md:text-[32px] md:leading-10`                                       | Le token `text-h1`, qui vaut **exactement** ces valeurs, en mobile comme en desktop              |
+| `ResultsScreen.tsx:45`                    | `text-[28px] leading-9 md:text-[32px] md:leading-10`                                       | Le titre `font-heading text-heading-md` du design system                                         |
 | `ResultCard.tsx:15`                       | `<article className="border-border bg-card flex h-full flex-col … rounded-sm border p-6">` | `Card` / `CardContent`                                                                           |
 | ~~`ScrollToTopButton.tsx`~~ — **corrigé** | Un bouton de remontée écrit à la main, avec son écouteur de défilement                     | `BackToTop` de `packages/ui`, déjà utilisé par `apps/site`                                       |
 
-Le cas `text-[28px]` est le plus révélateur : la valeur est juste, mais elle ne suivra pas le jour où l'échelle typographique changera. Un token n'est pas une commodité d'écriture, c'est le point de synchronisation avec la maquette. **Attention en le reprenant** : `text-h1` porte bien 28 px puis 32 px, mais il bascule à **1024 px** (`--type-h1` n'est redéfini qu'en `@media (width >= 64rem)`) là où le `md:` en dur bascule à 768 px. Le remplacement n'est donc pas neutre à l'écran.
+Le cas `text-[28px]` est le plus révélateur : la valeur était juste, mais elle n'a pas suivi quand l'échelle typographique a changé. C'est arrivé avec le nouveau design system : le token `text-h1`, qui valait exactement 28 puis 32 px, a été remplacé par `text-heading-md`, qui vaut 30/36 puis 36/40 et bascule à 768 px. Les titres qui passaient par le token ont suivi seuls ; celui-ci est resté à l'ancienne taille. Un token n'est pas une commodité d'écriture, c'est le point de synchronisation avec la maquette.
 
 **Ce que le remplacement de `ScrollToTopButton` a changé de visible**, puisque les deux composants n'étaient pas équivalents :
 

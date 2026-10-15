@@ -3,11 +3,21 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 /**
  * `tailwind-merge` ignore les échelles ajoutées dans `@theme` : sans cette
- * déclaration il ne voit pas que `text-h1` et `text-sm` sont concurrentes, et
+ * déclaration il ne voit pas que `text-heading-md` et `text-sm` sont concurrentes, et
  * c'est l'ordre de la feuille de styles qui tranche au lieu de celui des classes.
  * À garder aligné sur les tokens `--text-*` de `src/styles/globals.css`.
  */
-const FONT_SIZES = ["display-lg", "h1", "h2", "body-lg", "body", "body-sm", "label-lg", "caption"];
+const FONT_SIZES = [
+  "heading-xl",
+  "heading-lg",
+  "heading-md",
+  "heading-sm",
+  "body-lg",
+  "body",
+  "body-sm",
+  "label-lg",
+  "caption",
+];
 
 const twMerge = extendTailwindMerge({
   extend: {

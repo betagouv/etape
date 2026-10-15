@@ -28,7 +28,7 @@ export function Audience() {
       <div className="mt-8 flex flex-col items-start gap-6 lg:col-span-3 lg:mt-0">
         {/* Le chapô « POUR QUI ? » existe dans la maquette mais y est invisible
             (teal sur teal) : ne pas le réintroduire. */}
-        <h2 id="titre-pour-qui" className="text-h2 font-bold">
+        <h2 id="titre-pour-qui" className="font-heading text-heading-sm">
           {audience.title}
         </h2>
         <p className="text-body-lg">{audience.subtext}</p>
