@@ -1,28 +1,21 @@
-import { Fragment } from "react";
 import { Document, Link, Page, Text, View } from "@react-pdf/renderer";
 
 import type { RecapEntry } from "../domain/recap";
-import {
-  CATEGORIE_LABELS,
-  CATEGORIES,
-  type Categorie,
-  type ResultatAffiche,
-} from "../domain/types";
+import { CATEGORIE_LABELS, type ResultatAffiche } from "../domain/types";
 import { registerPdfFonts } from "./fonts";
-import { CATEGORIE_COLORS, pdfStyles } from "./pdf-styles";
+import { CATEGORIE_COLORS, ON_PRIMARY_COLOR, pdfStyles } from "./pdf-styles";
 
 registerPdfFonts();
 
 /**
- * Pagination : un titre (de section ou de catégorie) ne doit pas rester seul en
- * bas de page. `minPresenceAhead` exige qu'au moins cette hauteur (en points)
- * de contenu le suive sur la même page — celle d'un résultat à trois lignes de
- * description, le plus courant, pour que le premier résultat suive toujours.
+ * Pagination : un titre de section ne doit pas rester seul en bas de page.
+ * `minPresenceAhead` exige qu'au moins cette hauteur (en points) de contenu le
+ * suive sur la même page — trois lignes du récapitulatif. Le titre des
+ * résultats, lui, suit le bandeau en haut de la première page.
  *
  * react-pdf n'applique cette règle qu'entre frères d'un même parent, et
  * seulement si le titre a des frères avant lui : tous les blocs sont donc des
- * enfants directs de `Page` (pas de `View` de section ni de groupe), et la
- * bordure de catégorie est portée par chaque bloc.
+ * enfants directs de `Page` (pas de `View` de section).
  */
 const MIN_PRESENCE_AHEAD = 80;
 
@@ -31,15 +24,46 @@ interface ResultsPdfDocumentProps {
   recapEntries: RecapEntry[];
 }
 
-/** « Interlocuteur » / « Interlocuteurs » selon le nombre de cartes du groupe. */
-function categorieTitle(categorie: Categorie, count: number): string {
-  const label = CATEGORIE_LABELS[categorie];
-  return count > 1 ? `${label}s` : label;
+interface ResultatBlockProps {
+  resultat: ResultatAffiche;
+}
+
+/** Un résultat ; le prioritaire reprend le fond `primary` de sa carte à l'écran. */
+function ResultatBlock({ resultat }: ResultatBlockProps) {
+  const { nom, description, url, categorie, isPrioritaire } = resultat;
+  const accent = { color: isPrioritaire ? ON_PRIMARY_COLOR : CATEGORIE_COLORS[categorie] };
+
+  return (
+    // Un résultat est un bloc insécable.
+    <View
+      style={[
+        pdfStyles.resultat,
+        isPrioritaire ? pdfStyles.resultatPrioritaire : { borderLeftColor: accent.color },
+      ]}
+      wrap={false}
+    >
+      <View style={pdfStyles.categorieRow}>
+        <View style={[pdfStyles.categorieDot, { backgroundColor: accent.color }]} />
+        <Text style={[pdfStyles.categorieLabel, accent]}>{CATEGORIE_LABELS[categorie]}</Text>
+      </View>
+      <Text style={pdfStyles.resultatNom}>{nom}</Text>
+      <Text
+        style={
+          isPrioritaire ? [pdfStyles.resultatDescription, accent] : pdfStyles.resultatDescription
+        }
+      >
+        {description}
+      </Text>
+      <Link src={url} style={[pdfStyles.resultatUrl, accent]}>
+        {url}
+      </Link>
+    </View>
+  );
 }
 
 /**
  * Document imprimable : une transcription en une colonne de ce qui est
- * affiché à l'écran (résultats groupés par catégorie, puis récapitulatif),
+ * affiché à l'écran (résultats dans le même ordre, puis récapitulatif),
  * pas une reproduction visuelle de la grille de cartes — voir
  * `pdf-styles.ts`. Ne recalcule rien à partir des réponses : reçoit les
  * données déjà calculées par `ResultsScreen`, pour ne jamais diverger de ce
@@ -71,37 +95,9 @@ export function ResultsPdfDocument({ resultats, recapEntries }: ResultsPdfDocume
             : `${resultats.length} résultats correspondent à votre situation`}
         </Text>
 
-        {CATEGORIES.map((categorie) => {
-          const items = resultats.filter((resultat) => resultat.categorie === categorie);
-          if (items.length === 0) return null;
-
-          const bordure = { borderLeftColor: CATEGORIE_COLORS[categorie] };
-          const accent = { color: CATEGORIE_COLORS[categorie] };
-
-          return (
-            <Fragment key={categorie}>
-              <View
-                style={[pdfStyles.categorieBadgeRow, bordure]}
-                minPresenceAhead={MIN_PRESENCE_AHEAD}
-              >
-                <View style={[pdfStyles.categorieDot, { backgroundColor: accent.color }]} />
-                <Text style={[pdfStyles.categorieLabel, accent]}>
-                  {categorieTitle(categorie, items.length)}
-                </Text>
-              </View>
-              {items.map((resultat) => (
-                // Un résultat est un bloc insécable.
-                <View key={resultat.id} style={[pdfStyles.resultat, bordure]} wrap={false}>
-                  <Text style={pdfStyles.resultatNom}>{resultat.nom}</Text>
-                  <Text style={pdfStyles.resultatDescription}>{resultat.description}</Text>
-                  <Link src={resultat.url} style={[pdfStyles.resultatUrl, accent]}>
-                    {resultat.url}
-                  </Link>
-                </View>
-              ))}
-            </Fragment>
-          );
-        })}
+        {resultats.map((resultat) => (
+          <ResultatBlock key={resultat.id} resultat={resultat} />
+        ))}
 
         {recapEntries.length > 0 && (
           <>

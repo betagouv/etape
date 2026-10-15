@@ -19,6 +19,7 @@ const COLORS = {
   secondary: "#404040", // --content-secondary
   muted: "#737373", // --muted-foreground
   primary: "#134e4a", // --primary / --content-accent
+  primaryForeground: "#fafafa", // --primary-foreground
   border: "#d3e2e0", // --border
   white: "#ffffff",
   bannerSubtitle: "#eef4f2", // --secondary
@@ -30,6 +31,9 @@ export const CATEGORIE_COLORS: Record<Categorie, string> = {
   outil: "#4c1d95", // --violet-text
   dispositif: "#9a3412", // --warning-text
 };
+
+/** Couleur d'accent du résultat prioritaire, posé sur `primary`. */
+export const ON_PRIMARY_COLOR = COLORS.primaryForeground;
 
 export const pdfStyles = StyleSheet.create({
   page: {
@@ -88,32 +92,35 @@ export const pdfStyles = StyleSheet.create({
     flex: 1,
     fontWeight: 600,
   },
-  // Le filet de catégorie est porté par chaque bloc (titre de catégorie, puis
-  // chaque résultat) ; des `padding` plutôt que des `margin` pour qu'il reste
-  // continu d'un bloc au suivant.
-  categorieBadgeRow: {
+  resultat: {
+    marginBottom: 12,
+    paddingLeft: 10,
+    borderLeftWidth: 3,
+  },
+  resultatPrioritaire: {
+    paddingVertical: 10,
+    paddingRight: 12,
+    borderRadius: 4,
+    borderLeftColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+    color: COLORS.primaryForeground,
+  },
+  categorieRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 14,
-    paddingBottom: 8,
-    paddingLeft: 10,
-    borderLeftWidth: 3,
+    gap: 5,
+    marginBottom: 3,
   },
   categorieDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   categorieLabel: {
-    fontSize: 11,
+    fontSize: 8,
     fontWeight: 700,
+    letterSpacing: 0.4,
     textTransform: "uppercase",
-  },
-  resultat: {
-    paddingBottom: 10,
-    paddingLeft: 10,
-    borderLeftWidth: 3,
   },
   resultatNom: {
     fontSize: 11,
