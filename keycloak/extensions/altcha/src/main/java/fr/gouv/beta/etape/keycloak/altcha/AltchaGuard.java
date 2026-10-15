@@ -13,6 +13,7 @@ final class AltchaGuard {
 
     static final String FIELD = "altcha";
     static final String CHALLENGE_ATTRIBUTE = "altchaChallenge";
+    static final String UNAVAILABLE_ATTRIBUTE = "altchaUnavailable";
     static final String EVENT_ERROR = "altcha_failed";
 
     private static final String REPLAY_KEY_PREFIX = "etape-altcha:";

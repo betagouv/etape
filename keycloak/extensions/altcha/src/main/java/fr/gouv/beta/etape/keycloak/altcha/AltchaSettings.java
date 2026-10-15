@@ -2,6 +2,7 @@ package fr.gouv.beta.etape.keycloak.altcha;
 
 import java.util.List;
 import java.util.Map;
+import org.jboss.logging.Logger;
 import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.provider.ProviderConfigProperty;
 
@@ -12,6 +13,8 @@ public record AltchaSettings(int cost, int counterMin, int counterMax) {
     public static final String COUNTER_MAX = "counterMax";
 
     public static final AltchaSettings DEFAULT = new AltchaSettings(2000, 2000, 4000);
+
+    private static final Logger LOGGER = Logger.getLogger(AltchaSettings.class);
 
     public static final List<ProviderConfigProperty> CONFIG_PROPERTIES = List.of(
             property(COST, "Cost", "PBKDF2 iterations per attempt.", DEFAULT.cost()),
@@ -27,10 +30,15 @@ public record AltchaSettings(int cost, int counterMin, int counterMax) {
 
     public static AltchaSettings from(AuthenticatorConfigModel config) {
         Map<String, String> values = config == null || config.getConfig() == null ? Map.of() : config.getConfig();
-        return new AltchaSettings(
-                read(values, COST, DEFAULT.cost()),
-                read(values, COUNTER_MIN, DEFAULT.counterMin()),
-                read(values, COUNTER_MAX, DEFAULT.counterMax()));
+        try {
+            return new AltchaSettings(
+                    read(values, COST, DEFAULT.cost()),
+                    read(values, COUNTER_MIN, DEFAULT.counterMin()),
+                    read(values, COUNTER_MAX, DEFAULT.counterMax()));
+        } catch (IllegalArgumentException e) {
+            LOGGER.warnf("Invalid ALTCHA settings %s, falling back to %s", values, DEFAULT);
+            return DEFAULT;
+        }
     }
 
     private static int read(Map<String, String> values, String key, int fallback) {

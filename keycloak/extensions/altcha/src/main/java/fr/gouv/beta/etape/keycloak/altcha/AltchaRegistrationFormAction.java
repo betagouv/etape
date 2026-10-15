@@ -37,6 +37,7 @@ public class AltchaRegistrationFormAction implements FormAction, FormActionFacto
                     new AltchaGuard(context.getSession(), context.getRealm()).createChallenge(settings));
         } catch (RuntimeException e) {
             LOGGER.error("Unable to create the ALTCHA challenge of the registration form", e);
+            form.setAttribute(AltchaGuard.UNAVAILABLE_ATTRIBUTE, true);
         }
     }
 

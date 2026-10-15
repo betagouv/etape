@@ -68,6 +68,7 @@ public class AltchaResetCredentialChooseUser extends ResetCredentialChooseUser {
                     new AltchaGuard(context.getSession(), context.getRealm()).createChallenge(settings));
         } catch (RuntimeException e) {
             LOGGER.error("Unable to create the ALTCHA challenge of the reset credentials form", e);
+            context.form().setAttribute(AltchaGuard.UNAVAILABLE_ATTRIBUTE, true);
         }
     }
 }

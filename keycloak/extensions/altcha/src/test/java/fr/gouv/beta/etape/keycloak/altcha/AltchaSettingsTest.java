@@ -38,8 +38,15 @@ class AltchaSettingsTest {
     }
 
     @Test
-    void rejectsANonNumericValue() {
-        assertThrows(NumberFormatException.class, () -> AltchaSettings.from(config(Map.of(AltchaSettings.COST, "beaucoup"))));
+    void fallsBackToTheDefaultsOnANonNumericValue() {
+        assertEquals(AltchaSettings.DEFAULT, AltchaSettings.from(config(Map.of(AltchaSettings.COUNTER_MAX, "4 000"))));
+    }
+
+    @Test
+    void fallsBackToTheDefaultsOnAnInvertedRange() {
+        assertEquals(AltchaSettings.DEFAULT, AltchaSettings.from(config(Map.of(
+                AltchaSettings.COUNTER_MIN, "3000",
+                AltchaSettings.COUNTER_MAX, "2000"))));
     }
 
     private static AuthenticatorConfigModel config(Map<String, String> values) {

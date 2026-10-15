@@ -23,8 +23,9 @@ compris.
 | `etape-altcha-registration`      | `form-action`   | Pose le défi sur `register.ftl`, vérifie la solution avant création du compte                    |
 | `etape-altcha-reset-credentials` | `authenticator` | Remplace « Choose User » : défi sur `login-reset-password.ftl`, vérifié avant l'envoi de l'email |
 
-Le défi arrive dans la page sous l'attribut `altchaChallenge`, et la solution
-revient dans le champ `altcha`. Les messages d'erreur `etapeAltchaRequired` et
+Le défi arrive dans la page sous l'attribut `altchaChallenge`, ou
+`altchaUnavailable` s'il n'a pas pu être créé, et la solution revient dans le
+champ `altcha`. Les messages d'erreur `etapeAltchaRequired` et
 `etapeAltchaFailed` sont traduits dans le thème.
 
 Keycloak signale au démarrage que ces deux SPI sont internes
@@ -53,6 +54,11 @@ kcadm.sh create "authentication/executions/<id de l'exécution>/config" -r etape
 Le temps de résolution suit le produit `cost × compteur`. Le mesurer sur un
 téléphone d'entrée de gamme avant de durcir : c'est lui qui fixe la limite, pas
 l'ordinateur de développement.
+
+Un réglage illisible (`4 000`, valeur négative, minimum au-dessus du maximum)
+est ignoré : les valeurs par défaut s'appliquent, et Keycloak écrit
+`Invalid ALTCHA settings` dans ses journaux. Keycloak ne propose pas de valider
+la configuration d'une étape au moment où on la saisit.
 
 ## Trois points à connaître
 
