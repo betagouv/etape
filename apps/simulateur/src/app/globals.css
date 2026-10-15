@@ -1,9 +1,1 @@
 @import "@etape/ui/globals.css";
-
-/* écart : kit 20/28 en Mobile. Les maquettes mobiles du simulateur posent
-   leurs titres à 24/32 — valeur Desktop retenue dans les deux modes, ici
-   seulement : le site garde l'échelle du kit. */
-:root {
-  --type-heading-sm: 1.5rem; /* 24 */
-  --type-heading-sm-lh: 2rem; /* 32 */
-}
