@@ -1,7 +1,19 @@
-import { Controller, Get, Inject, Query, Req, Res, UseFilters } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseFilters,
+  UseGuards,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { minutes, Throttle } from "@nestjs/throttler";
-import type { getSession, RouteResponse } from "@etape/api-contract";
+import type { getSession, refreshSession, RouteResponse } from "@etape/api-contract";
 import type { Request, Response } from "express";
 import * as client from "openid-client";
 
@@ -15,16 +27,17 @@ import { extractIdentityClaims, getStringClaim } from "./identity-claims.js";
 import { getIdentityProvider } from "./identity-provider.js";
 import { OidcService } from "./oidc.service.js";
 import { sanitizeReturnTo } from "./return-to.js";
+import { SessionGuard, type AuthenticatedRequest } from "./session/session.guard.js";
 import { SessionService } from "./session/session.service.js";
-import { toSessionResponse } from "./session/session.types.js";
+import { toPublicSession, toSessionResponse } from "./session/session.types.js";
 
 const AUTH_FLOW_THROTTLE = { default: { ttl: minutes(1), limit: 30 } };
 
 const FRANCECONNECT_IDP_HINT = "franceconnect";
 
 /**
- * Les quatre points d'entrée du parcours. Le front n'en connaît pas davantage :
- * il ne voit jamais un jeton et ne parle jamais à Keycloak.
+ * Les points d'entrée du parcours et de la session. Le front n'en connaît pas
+ * davantage : il ne voit jamais un jeton et ne parle jamais à Keycloak.
  */
 @Controller("auth")
 export class AuthController {
@@ -158,6 +171,25 @@ export class AuthController {
     return toSessionResponse(
       session,
       this.config.get("KEYCLOAK_FRANCECONNECT_ALIAS", { infer: true }),
+      Date.now(),
     );
+  }
+
+  /**
+   * `SessionGuard` fait le travail — refuser sans session (401), repousser la
+   * fin d'inactivité — ; la route ne fait que renvoyer les nouvelles échéances.
+   * Une requête qui modifie : la garde CSRF, globale, s'y applique.
+   */
+  @Post("session/refresh")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(SessionGuard)
+  refreshSession(@Req() request: AuthenticatedRequest): RouteResponse<typeof refreshSession> {
+    return {
+      session: toPublicSession(
+        request.session,
+        this.config.get("KEYCLOAK_FRANCECONNECT_ALIAS", { infer: true }),
+        Date.now(),
+      ),
+    };
   }
 }

@@ -1,15 +1,15 @@
+import { AppErrorScreen } from "@etape/session";
 import { createRouter } from "@tanstack/react-router";
 
-import { httpClient, queryClient } from "../lib/clients";
-import { AppErrorScreen } from "./error-screens";
+import { API_BASE_URL, httpClient, queryClient } from "../lib/clients";
 import { routeTree } from "./routes";
 
 export const router = createRouter({
   routeTree,
-  context: { httpClient, queryClient },
+  context: { apiBaseUrl: API_BASE_URL, httpClient, queryClient },
   // Sans lui, l'erreur d'un écran remonte à la route racine, qui remplace
-  // `RootLayout` — dialogue « Session expirée » compris. Posé sur chaque route
-  // qui n'a pas le sien, il reste dans l'`Outlet`.
+  // `SessionLayout` — dialogue « Session expirée » compris. Posé sur chaque
+  // route qui n'a pas le sien, il reste dans l'`Outlet`.
   defaultErrorComponent: AppErrorScreen,
 });
 

@@ -12,6 +12,7 @@ import type { AccountSession, NewSession } from "./session.types.js";
 export abstract class SessionStore {
   abstract createSession(id: string, session: NewSession): Promise<void>;
   abstract getSession(id: string): Promise<AccountSession | null>;
+  abstract extendSession(id: string, idleExpiresAt: number): Promise<void>;
   abstract deleteSession(id: string): Promise<void>;
 }
 
@@ -38,6 +39,7 @@ export class PrismaSessionStore extends SessionStore {
         claims: session.claims as Prisma.InputJsonValue,
         idToken: session.idToken,
         expiresAt: new Date(session.expiresAt),
+        idleExpiresAt: new Date(session.idleExpiresAt),
       },
     });
   }
@@ -50,7 +52,8 @@ export class PrismaSessionStore extends SessionStore {
 
     if (!row) return null;
 
-    if (row.expiresAt.getTime() <= Date.now()) {
+    const now = Date.now();
+    if (row.expiresAt.getTime() <= now || row.idleExpiresAt.getTime() <= now) {
       await this.deleteSession(id);
       return null;
     }
@@ -68,7 +71,15 @@ export class PrismaSessionStore extends SessionStore {
       claims: row.claims as Record<string, unknown>,
       idToken: row.idToken,
       expiresAt: row.expiresAt.getTime(),
+      idleExpiresAt: row.idleExpiresAt.getTime(),
     };
+  }
+
+  async extendSession(id: string, idleExpiresAt: number): Promise<void> {
+    await this.prisma.session.updateMany({
+      where: { id },
+      data: { idleExpiresAt: new Date(idleExpiresAt) },
+    });
   }
 
   async deleteSession(id: string): Promise<void> {
@@ -76,6 +87,9 @@ export class PrismaSessionStore extends SessionStore {
   }
 
   private async purgeExpired(): Promise<void> {
-    await this.prisma.session.deleteMany({ where: { expiresAt: { lte: new Date() } } });
+    const now = new Date();
+    await this.prisma.session.deleteMany({
+      where: { OR: [{ expiresAt: { lte: now } }, { idleExpiresAt: { lte: now } }] },
+    });
   }
 }

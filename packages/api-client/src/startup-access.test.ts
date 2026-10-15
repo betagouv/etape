@@ -10,12 +10,9 @@ import {
   type StartupAccess,
 } from "./startup-access";
 import { MemoryStorage } from "./testing/memory-storage";
+import { SESSION_FIXTURE } from "./testing/session-fixture";
 
-const SESSION = {
-  sub: "sub",
-  isFranceConnectSession: false,
-  claims: {},
-};
+const SESSION = SESSION_FIXTURE;
 
 describe("resolveStartupAccess", () => {
   it("laisse passer une personne connectée", () => {

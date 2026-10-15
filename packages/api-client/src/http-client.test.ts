@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "./api-error";
 import { CSRF_HEADER, CSRF_HEADER_VALUE } from "./csrf";
-import { createHttpClient, REQUEST_TIMEOUT_MS } from "./http-client";
+import { createHttpClient } from "./http-client";
 import { HTTP_STATUS } from "./http-status";
 import { sendJson, startTestServer, type TestServer } from "./testing/start-test-server";
 
@@ -106,12 +106,15 @@ describe("createHttpClient", () => {
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 
-  it("abandonne une requête sans réponse après le délai, en ApiError sans statut", async () => {
+  it("n'impose aucun délai commun, qui couperait l'envoi d'un fichier", () => {
     const httpClient = createHttpClient(server.baseUrl, { onUnauthorized: vi.fn() });
 
-    // Le délai réel (10 s) est vérifié sur l'instance ; la requête en prend un
-    // court pour que le test ne l'attende pas.
-    expect(httpClient.defaults.timeout).toBe(REQUEST_TIMEOUT_MS);
+    expect(httpClient.defaults.timeout).toBeFalsy();
+  });
+
+  it("abandonne après le délai qu'une requête fixe, en ApiError sans statut", async () => {
+    const httpClient = createHttpClient(server.baseUrl, { onUnauthorized: vi.fn() });
+
     const error = await captureError(httpClient.get("/muette", { timeout: 50 }));
 
     expect(error.status).toBeUndefined();
