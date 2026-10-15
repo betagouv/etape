@@ -16,6 +16,9 @@ dist_keycloak
 apps/keycloak-theme/src/kc.gen.tsx
 apps/keycloak-theme/public/keycloakify-dev-resources
 
+# extensions Keycloak (Maven)
+keycloak/extensions/*/target
+
 # misc
 .DS_Store
 *.pem

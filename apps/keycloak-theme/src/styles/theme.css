@@ -162,3 +162,27 @@
     text-decoration: underline;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* ALTCHA                                                              */
+/* ------------------------------------------------------------------ */
+
+altcha-widget {
+  --altcha-max-width: 100%;
+  --altcha-border-radius: var(--radius-sm);
+  --altcha-border-color: var(--border);
+  --altcha-color-base: var(--background);
+  --altcha-color-base-content: var(--foreground);
+  --altcha-color-neutral: var(--border);
+  --altcha-color-neutral-content: var(--muted-foreground);
+  --altcha-color-primary: var(--primary);
+  --altcha-color-primary-content: var(--primary-foreground);
+  --altcha-color-success: var(--success);
+  --altcha-color-success-content: var(--success-foreground);
+  --altcha-color-error: var(--destructive);
+  --altcha-color-error-content: var(--destructive-foreground);
+  --altcha-checkbox-border-color: var(--border-strong);
+  --altcha-spinner-color: var(--primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-sm);
+}

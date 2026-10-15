@@ -1,6 +1,7 @@
 import { Button } from "@etape/ui/components/button";
 import { Mail } from "lucide-react";
 
+import { AltchaField } from "../components/altcha";
 import { Field, FieldError, TextInput } from "../components/form";
 import { BackToLogin } from "../components/prose";
 import type { EtapePageProps } from "./PageProps";
@@ -11,10 +12,13 @@ export default function LoginResetPassword(
 ) {
   const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
 
-  const { url, realm, auth, messagesPerField } = kcContext;
+  const { url, realm, auth, login, messagesPerField, altchaChallenge, altchaUnavailable } =
+    kcContext;
   const { msg } = i18n;
 
   const hasError = messagesPerField.existsError("username");
+  const hasAltchaError = messagesPerField.existsError("altcha");
+  const shouldFocusAltcha = hasAltchaError && altchaChallenge !== undefined;
 
   const usernameLabel = !realm.loginWithEmailAllowed
     ? msg("username")
@@ -30,7 +34,7 @@ export default function LoginResetPassword(
       classes={classes}
       headerNode={msg("etapeResetPasswordTitle")}
       subtitle={msg("etapeResetPasswordSubtitle")}
-      displayMessage={!hasError}
+      displayMessage={!hasError && !hasAltchaError}
     >
       <form
         id="kc-reset-password-form"
@@ -53,14 +57,21 @@ export default function LoginResetPassword(
             name="username"
             type="text"
             icon={Mail}
-            autoFocus
+            autoFocus={!shouldFocusAltcha}
             autoComplete="username"
             aria-required
             aria-describedby={hasError ? "input-error-username" : undefined}
-            defaultValue={auth.attemptedUsername ?? ""}
+            defaultValue={auth.attemptedUsername ?? login?.username ?? ""}
             invalid={hasError}
           />
         </Field>
+
+        <AltchaField
+          challenge={altchaChallenge}
+          isUnavailable={altchaUnavailable ?? false}
+          serverError={hasAltchaError ? messagesPerField.get("altcha") : undefined}
+          i18n={i18n}
+        />
 
         <div className="flex flex-col gap-4">
           <Button type="submit" size="xl" className="w-full rounded-lg">

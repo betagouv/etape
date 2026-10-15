@@ -16,6 +16,7 @@
     "@etape/ui": "*",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/geist": "^5.3.0",
+    "altcha": "^3.3.0",
     "keycloakify": "^11.16.1",
     "lucide-react": "^1.54.0",
     "react": "^19",

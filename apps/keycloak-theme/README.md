@@ -80,6 +80,31 @@ Une transition de vue entre documents a été tentée pour aller plus loin ; ell
 démarre pas de façon fiable dans ce contexte et a été retirée plutôt que laissée
 à moitié fonctionnelle.
 
+## Case « Je ne suis pas un robot »
+
+`src/login/components/altcha.tsx` affiche le widget ALTCHA sur l'inscription et
+le « mot de passe oublié », avec le défi que pose l'extension Keycloak
+(`altchaChallenge`, voir [`keycloak/extensions/altcha`](../../keycloak/extensions/altcha/README.md)).
+Le widget est empaqueté dans le thème : aucun script ne vient d'un CDN.
+
+Il a trois manques, que le composant compense :
+
+- **il n'annonce pas ses états** : « vérification en cours » et « vérifiée » sont
+  lus dans une région `role="status"` toujours montée ;
+- **il laisse le navigateur afficher sa bulle** quand la case n'est pas cochée :
+  l'événement `invalid` est intercepté, le message du thème s'affiche sous la
+  case et le focus y revient ;
+- **il garde la case obligatoire pendant le calcul**, alors qu'elle est
+  invisible : un envoi à ce moment affiche « patientez » sans déplacer le focus.
+
+Quand le serveur refuse la solution, la page revient avec le focus sur la case.
+Quand l'extension n'a pas pu créer de défi (`altchaUnavailable`), un message
+remplace la case.
+
+Les pages écrivent `messagesPerField.existsError("altcha")` en littéral, et pas
+au travers d'une constante : Keycloakify ne transmet que les erreurs des champs
+qu'il repère ainsi dans le code.
+
 ## Polices
 
 Geist et Bricolage Grotesque viennent de `@fontsource-variable` et Marianne est versionnée dans
