@@ -64,6 +64,9 @@ function lowercaseFirst(text: string): string {
 const emphasize = (text: string): TextPart => ({ emphasis: text });
 const emphasizeLowercase = (text: string): TextPart => emphasize(lowercaseFirst(text));
 
+/** Mois précédés de « d' » : « au mois d'avril », pas « au mois de avril ». */
+const MOIS_AVEC_APOSTROPHE: ReadonlySet<string> = new Set(["avril", "août", "octobre"]);
+
 /** « a », « a et b », « a, b et c ». */
 function joinList(items: TextPart[][]): TextPart[] {
   return items.flatMap((item, index) => {
@@ -100,11 +103,12 @@ function describeDureeActivite(answers: Answers): TextPart[] {
   const entree = parseMonth(answers[FIELD_ENTREE_EMPLOYEUR]);
   if (!entree) return ["Vous cumulez ", ...cumul];
 
+  const mois = MONTH_NAMES[entree.month - 1];
   return [
     "Vous travaillez chez votre employeur actuel depuis ",
     emphasize(String(entree.year)),
-    ", au mois de ",
-    emphasize(MONTH_NAMES[entree.month - 1]),
+    MOIS_AVEC_APOSTROPHE.has(mois) ? ", au mois d'" : ", au mois de ",
+    emphasize(mois),
     ", et vous cumulez ",
     ...cumul,
   ];
