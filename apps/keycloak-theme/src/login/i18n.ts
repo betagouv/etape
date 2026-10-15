@@ -70,6 +70,10 @@ const { useI18n, ofTypeI18n } = i18nBuilder
         "Le contrôle de sécurité est obligatoire : cochez « Je ne suis pas un robot ».",
       etapeAltchaFailed:
         "La vérification de sécurité a échoué. Cochez à nouveau la case pour réessayer.",
+      etapeAltchaPending:
+        "La vérification de sécurité est en cours : patientez avant d'envoyer le formulaire.",
+      etapeAltchaUnavailable:
+        "Le contrôle de sécurité est momentanément indisponible. Réessayez dans quelques minutes.",
       etapeAltchaVerifying: "Vérification de sécurité en cours…",
       etapeAltchaVerified: "Vérification de sécurité réussie.",
 
@@ -136,6 +140,9 @@ const { useI18n, ofTypeI18n } = i18nBuilder
 
       etapeAltchaRequired: 'The security check is required: tick the "I am not a robot" box.',
       etapeAltchaFailed: "The security check failed. Tick the box again to retry.",
+      etapeAltchaPending: "The security check is in progress: wait before submitting the form.",
+      etapeAltchaUnavailable:
+        "The security check is temporarily unavailable. Try again in a few minutes.",
       etapeAltchaVerifying: "Security check in progress…",
       etapeAltchaVerified: "Security check passed.",
 

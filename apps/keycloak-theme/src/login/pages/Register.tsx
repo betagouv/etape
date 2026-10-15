@@ -19,9 +19,12 @@ type RegisterProps = EtapePageProps<Extract<KcContext, { pageId: "register.ftl" 
 export default function Register(props: RegisterProps) {
   const { kcContext, i18n, doUseDefaultCss, Template, classes, doMakeUserConfirmPassword } = props;
 
-  const { url, messagesPerField, termsAcceptanceRequired, altchaChallenge } = kcContext;
+  const { url, messagesPerField, termsAcceptanceRequired, altchaChallenge, altchaUnavailable } =
+    kcContext;
 
   const { msg, msgStr } = i18n;
+
+  const hasAltchaError = messagesPerField.existsError("altcha");
 
   /*
    * Keycloak sert bien ces deux valeurs sur `register.ftl`, mais les types de
@@ -118,15 +121,12 @@ export default function Register(props: RegisterProps) {
           </div>
         )}
 
-        {altchaChallenge !== undefined && (
-          <AltchaField
-            challenge={altchaChallenge}
-            serverError={
-              messagesPerField.existsError("altcha") ? messagesPerField.get("altcha") : undefined
-            }
-            i18n={i18n}
-          />
-        )}
+        <AltchaField
+          challenge={altchaChallenge}
+          isUnavailable={altchaUnavailable ?? false}
+          serverError={hasAltchaError ? messagesPerField.get("altcha") : undefined}
+          i18n={i18n}
+        />
 
         <div className="flex flex-col gap-4">
           <Button type="submit" size="xl" disabled={isSubmitDisabled} className="w-full rounded-lg">

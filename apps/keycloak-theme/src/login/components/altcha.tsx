@@ -10,6 +10,8 @@ const ALTCHA_FIELD = "altcha";
 
 const ERROR_ID = "input-error-altcha";
 
+const CHECKBOX_SELECTOR = 'input[type="checkbox"]';
+
 const WIDGET_CONFIGURATION = JSON.stringify({
   hideLogo: true,
   hideFooter: true,
@@ -38,29 +40,51 @@ const ANNOUNCEMENTS: Record<WidgetState, AnnouncementKey | undefined> = {
   [WIDGET_STATE.CODE]: undefined,
 };
 
+type BlockedSubmitKey = "etapeAltchaRequired" | "etapeAltchaPending" | "etapeAltchaFailed";
+
+interface BlockedSubmitResponse {
+  messageKey: BlockedSubmitKey;
+  shouldFocusCheckbox: boolean;
+}
+
+const BLOCKED_SUBMIT_RESPONSES: Record<WidgetState, BlockedSubmitResponse> = {
+  [WIDGET_STATE.UNVERIFIED]: { messageKey: "etapeAltchaRequired", shouldFocusCheckbox: true },
+  [WIDGET_STATE.VERIFYING]: { messageKey: "etapeAltchaPending", shouldFocusCheckbox: false },
+  [WIDGET_STATE.VERIFIED]: { messageKey: "etapeAltchaRequired", shouldFocusCheckbox: true },
+  [WIDGET_STATE.EXPIRED]: { messageKey: "etapeAltchaFailed", shouldFocusCheckbox: true },
+  [WIDGET_STATE.ERROR]: { messageKey: "etapeAltchaFailed", shouldFocusCheckbox: true },
+  [WIDGET_STATE.CODE]: { messageKey: "etapeAltchaRequired", shouldFocusCheckbox: true },
+};
+
 interface UseAltchaResult {
   widgetRef: RefObject<HTMLElement | null>;
   state: WidgetState;
-  isUnchecked: boolean;
+  blockedSubmitKey: BlockedSubmitKey | undefined;
 }
 
 function useAltcha(): UseAltchaResult {
   const widgetRef = useRef<HTMLElement>(null);
+  const stateRef = useRef<WidgetState>(WIDGET_STATE.UNVERIFIED);
   const [state, setState] = useState<WidgetState>(WIDGET_STATE.UNVERIFIED);
-  const [isUnchecked, setIsUnchecked] = useState(false);
+  const [blockedSubmitKey, setBlockedSubmitKey] = useState<BlockedSubmitKey | undefined>(undefined);
 
   useEffect(() => {
     const widget = widgetRef.current;
     if (widget === null) return;
 
     const handleStateChange = (event: Event) => {
-      setState((event as CustomEvent<{ state: WidgetState }>).detail.state);
-      setIsUnchecked(false);
+      const nextState = (event as CustomEvent<{ state: WidgetState }>).detail.state;
+      stateRef.current = nextState;
+      setState(nextState);
+      setBlockedSubmitKey(undefined);
     };
     const handleInvalid = (event: Event) => {
       event.preventDefault();
-      setIsUnchecked(true);
-      (event.target as HTMLElement).focus();
+      const response = BLOCKED_SUBMIT_RESPONSES[stateRef.current];
+      setBlockedSubmitKey(response.messageKey);
+      if (response.shouldFocusCheckbox) {
+        (event.target as HTMLElement).focus();
+      }
     };
 
     widget.addEventListener("statechange", handleStateChange);
@@ -71,34 +95,60 @@ function useAltcha(): UseAltchaResult {
     };
   }, []);
 
-  return { widgetRef, state, isUnchecked };
+  return { widgetRef, state, blockedSubmitKey };
 }
 
-function useCheckboxDescription(widgetRef: RefObject<HTMLElement | null>, hasError: boolean): void {
+function useCheckbox(
+  widgetRef: RefObject<HTMLElement | null>,
+  hasError: boolean,
+  shouldFocusOnLoad: boolean,
+): void {
   useEffect(() => {
-    const checkbox = widgetRef.current?.querySelector('input[type="checkbox"]');
-    if (checkbox === null || checkbox === undefined) return;
+    const widget = widgetRef.current;
+    if (widget === null) return;
 
-    checkbox.setAttribute("aria-invalid", String(hasError));
-    if (hasError) {
-      checkbox.setAttribute("aria-describedby", ERROR_ID);
-    } else {
-      checkbox.removeAttribute("aria-describedby");
-    }
+    const describeError = () => {
+      const checkbox = widget.querySelector(CHECKBOX_SELECTOR);
+      if (checkbox === null) return;
+      checkbox.setAttribute("aria-invalid", String(hasError));
+      if (hasError) {
+        checkbox.setAttribute("aria-describedby", ERROR_ID);
+      } else {
+        checkbox.removeAttribute("aria-describedby");
+      }
+    };
+
+    describeError();
+    widget.addEventListener("load", describeError);
+    return () => widget.removeEventListener("load", describeError);
   }, [widgetRef, hasError]);
+
+  useEffect(() => {
+    const widget = widgetRef.current;
+    if (widget === null || !shouldFocusOnLoad) return;
+
+    const focusCheckbox = () => widget.querySelector<HTMLElement>(CHECKBOX_SELECTOR)?.focus();
+
+    if (widget.querySelector(CHECKBOX_SELECTOR) !== null) {
+      focusCheckbox();
+      return;
+    }
+    widget.addEventListener("load", focusCheckbox, { once: true });
+    return () => widget.removeEventListener("load", focusCheckbox);
+  }, [widgetRef, shouldFocusOnLoad]);
 }
 
-export function AltchaField(props: { challenge: string; serverError?: string; i18n: I18n }) {
+function AltchaWidget(props: { challenge: string; serverError: string | undefined; i18n: I18n }) {
   const { challenge, serverError, i18n } = props;
   const { msgStr, currentLanguage } = i18n;
 
-  const { widgetRef, state, isUnchecked } = useAltcha();
-  const isVerified = state === WIDGET_STATE.VERIFIED;
-  const uncheckedError = isUnchecked ? msgStr("etapeAltchaRequired") : undefined;
-  const error = isVerified ? undefined : (uncheckedError ?? serverError);
+  const { widgetRef, state, blockedSubmitKey } = useAltcha();
+  const blockedSubmitError = blockedSubmitKey === undefined ? undefined : msgStr(blockedSubmitKey);
+  const visibleServerError = state === WIDGET_STATE.UNVERIFIED ? serverError : undefined;
+  const error = blockedSubmitError ?? visibleServerError;
   const announcement = ANNOUNCEMENTS[state];
 
-  useCheckboxDescription(widgetRef, error !== undefined);
+  useCheckbox(widgetRef, error !== undefined, serverError !== undefined);
 
   return (
     <div className="flex flex-col gap-2">
@@ -115,6 +165,28 @@ export function AltchaField(props: { challenge: string; serverError?: string; i1
         {announcement === undefined ? "" : msgStr(announcement)}
       </p>
       <div role="status">{error !== undefined && <FieldError id={ERROR_ID} message={error} />}</div>
+    </div>
+  );
+}
+
+interface AltchaFieldProps {
+  challenge: string | undefined;
+  isUnavailable: boolean;
+  serverError: string | undefined;
+  i18n: I18n;
+}
+
+export function AltchaField(props: AltchaFieldProps) {
+  const { challenge, isUnavailable, serverError, i18n } = props;
+
+  if (challenge !== undefined) {
+    return <AltchaWidget challenge={challenge} serverError={serverError} i18n={i18n} />;
+  }
+  if (!isUnavailable) return null;
+
+  return (
+    <div role="status">
+      <FieldError id={ERROR_ID} message={i18n.msgStr("etapeAltchaUnavailable")} />
     </div>
   );
 }

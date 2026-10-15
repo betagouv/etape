@@ -179,7 +179,6 @@ altcha-widget {
   --altcha-color-error: var(--destructive);
   --altcha-color-error-content: var(--destructive-foreground);
   --altcha-checkbox-border-color: var(--border-strong);
-  --altcha-checkbox-outline-color: var(--ring);
   --altcha-spinner-color: var(--primary);
   font-family: var(--font-sans);
   font-size: var(--text-body-sm);
