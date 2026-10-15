@@ -4,6 +4,8 @@ import { PrismaService } from "../database/prisma.service.js";
 import type { Account } from "../generated/prisma/client.ts";
 
 export interface IdentityProfile {
+  /** Un compte par realm : le `sub` n'est unique qu'au sein de son émetteur. */
+  keycloakRealm: string;
   keycloakSub: string;
   email?: string;
   prenom?: string;
@@ -18,10 +20,11 @@ export class AccountService {
   async recordLogin(profile: IdentityProfile): Promise<Account> {
     const [account] = await this.prisma.$queryRaw<Account[]>`
       insert into account (
-        keycloak_sub, email, prenom, nom,
+        keycloak_realm, keycloak_sub, email, prenom, nom,
         first_login_identity_provider, last_login_identity_provider
       )
       values (
+        ${profile.keycloakRealm},
         ${profile.keycloakSub},
         ${profile.email ?? null},
         ${profile.prenom ?? null},
@@ -29,7 +32,7 @@ export class AccountService {
         ${profile.identityProvider},
         ${profile.identityProvider}
       )
-      on conflict (keycloak_sub) do update set
+      on conflict (keycloak_realm, keycloak_sub) do update set
         email                        = excluded.email,
         prenom                       = excluded.prenom,
         nom                          = excluded.nom,
@@ -44,6 +47,7 @@ export class AccountService {
                                        end
       returning
         id,
+        keycloak_realm                as "keycloakRealm",
         keycloak_sub                  as "keycloakSub",
         email,
         prenom,

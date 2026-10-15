@@ -1,17 +1,26 @@
 # Realms Keycloak
 
-`etape-realm.json` est importé au démarrage de Keycloak (`docker compose up`
-lance le conteneur avec `--import-realm`). Il décrit le client `etape-api`,
-l'identity provider FranceConnect, la politique de mot de passe et la protection
-contre le bruteforce. Voir [docs/authentification.md](../../docs/authentification.md).
+Un realm par front, importés au démarrage de Keycloak (`docker compose up` lance
+le conteneur avec `--import-realm`) :
 
-## Ce fichier décrit l'environnement de développement, et lui seul
+- `etape-realm.json` — le front-office : client `etape-api`, identity provider
+  FranceConnect, inscription ;
+- `etape-back-office-realm.json` — le back-office : client `etape-api`, ni
+  FranceConnect ni inscription libre.
 
-Les URL qu'il contient sont celles du poste local (`localhost:3000`,
-`localhost:3001`, `localhost:3002`), il porte `sslRequired: none`, il fige le
-secret du client `etape-api` à une valeur connue. Rien de tout cela n'a sa place
-ailleurs qu'en local. Il ne crée en revanche aucun compte : le compte de test
-vient de `KEYCLOAK_TEST_USER_PASSWORD`, jamais d'un mot de passe versionné.
+Deux realms et non deux clients : la session de Keycloak est commune à tout un
+realm, et un compte du front-office se retrouverait connecté au back-office sans
+rien saisir. Voir [docs/authentification.md](../../docs/authentification.md).
+
+## Ces fichiers décrivent l'environnement de développement, et lui seul
+
+Les URL qu'ils contiennent sont celles du poste local (`localhost:5173` pour le
+front-office, `localhost:5174` pour le back-office), et ils portent
+`sslRequired: none`. Rien de tout cela n'a sa place ailleurs qu'en local. Ils ne
+portent en revanche **aucun secret** — Keycloak en tire un au sort à l'import, et
+`keycloak-init` le remplace par celui du `.env` à la racine — et ne créent aucun
+compte : le compte de test vient de `KEYCLOAK_TEST_USER_PASSWORD`, jamais d'un
+mot de passe versionné.
 
 Il ne porte pas non plus de `smtpServer`, et laisse donc `verifyEmail` désactivé :
 la clé Brevo n'a rien à faire dans un dépôt public. L'envoi est posé après
@@ -34,13 +43,15 @@ expédié l'URL d'intégration en production sans le moindre avertissement.
 
 Tout ce qui varie d'un environnement à l'autre est donc appliqué **après**
 l'import, par `kcadm` — c'est ce que fait le service `keycloak-init` du
-`docker-compose.yml` pour les identifiants FranceConnect. La configuration des
+`docker-compose.yml` pour les secrets des clients, leurs adresses et les
+identifiants FranceConnect. La configuration des
 autres environnements suivra la même voie, jamais ce fichier.
 
 ## Les modifications du fichier ne sont pas reprises au redémarrage
 
-L'import tourne en stratégie `IGNORE_EXISTING` : si le realm `etape` existe déjà,
-le fichier est ignoré en silence. Un `docker compose restart` après modification
+L'import tourne en stratégie `IGNORE_EXISTING` : si le realm existe déjà, son
+fichier est ignoré en silence. Seul ce que `keycloak-init` réapplique (secrets
+et adresses des clients) suit sans effort. Un `docker compose restart` après modification
 ne produit donc **aucun effet** — piège classique, qui se traduit par de longues
 minutes à se demander pourquoi un réglage ne prend pas.
 
@@ -63,6 +74,8 @@ docker compose cp keycloak:/tmp/export/etape-realm.json keycloak/realms/
 test du poste, et le fichier finit par contenir des données personnelles que
 personne n'a l'intention de versionner.
 
-Le secret du client n'est pas exporté — il est régénéré à chaque import et se
-récupère dans la console (**Clients → etape-api → Credentials**) pour alimenter
-`KEYCLOAK_CLIENT_SECRET`.
+Même chose avec `--realm etape-back-office` pour le realm du back-office.
+
+Le secret du client n'est pas exporté, et ne doit pas l'être : c'est
+`keycloak-init` qui le pose, depuis `FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET` et
+`BACK_OFFICE_KEYCLOAK_CLIENT_SECRET` du `.env` à la racine.

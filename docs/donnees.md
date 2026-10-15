@@ -38,12 +38,12 @@ aujourd'hui, et la minimisation doit rester défendable à l'homologation.
 Le schéma est dans [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma).
 En résumé :
 
-| Table     | Rôle                                                       |
-| --------- | ---------------------------------------------------------- |
-| `account` | Le compte local : `keycloak_sub`, identité, dates, origine |
-| `session` | Une session ouverte, rattachée à un compte                 |
+| Table     | Rôle                                                                           |
+| --------- | ------------------------------------------------------------------------------ |
+| `account` | Le compte local : `keycloak_realm` et `keycloak_sub`, identité, dates, origine |
+| `session` | Une session ouverte sur un front, rattachée à un compte                        |
 
-Six décisions méritent d'être connues avant de toucher au schéma.
+Sept décisions méritent d'être connues avant de toucher au schéma.
 
 ### Pas d'unicité sur `email`
 
@@ -120,6 +120,20 @@ Deux détails de mise en œuvre :
   seconde connexion ne peut pas réécrire l'histoire. Et
   `last_login_identity_provider` ne touche pas
   `updated_at`, puisqu'il décrit une connexion et non le profil.
+
+### Un compte par realm, une session par front
+
+Chaque front a son realm Keycloak (`etape` pour le front-office,
+`etape-back-office` pour le back-office). Un `sub` n'est unique qu'au sein de
+son émetteur : le compte est donc identifié par le couple `keycloak_realm`,
+`keycloak_sub`, et la même personne a deux comptes si elle utilise les deux
+fronts.
+
+La session porte le front sur lequel elle a été ouverte (`front`), et n'est
+rendue que là. Le navigateur n'envoie de lui-même le cookie qu'au front qui l'a
+reçu, mais une personne peut copier son identifiant de session depuis son
+navigateur et l'envoyer elle-même à l'autre front : sans cette colonne, l'API
+l'y accepterait. Pour l'autre front, personne n'est alors connecté.
 
 ### Les sessions sont en base, pas en mémoire
 
