@@ -19,7 +19,7 @@ function RadioGroup({
   );
 }
 
-/** Bord en `primary` : le teal-200 du kit ne fait que 1,3:1. Coché, le bord s'épaissit (pas de puce) : lisible en contraste élevé. */
+/** Bord en `primary`, comme les cases et radios du kit. Coché, le bord s'épaissit (pas de puce) : lisible en contraste élevé. */
 function RadioGroupItem({
   className,
   ...props
