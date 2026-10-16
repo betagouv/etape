@@ -1,0 +1,30 @@
+apps/api/eslint.config.mjs
+  s_280164ff7b1e80::t_ee6899de109364 62-64
+  s_280164ff7b1e80::t_d94ad5503a1ee8 1,4-61,65-70
+packages/eslint-config/base.js
+  s_280164ff7b1e80::t_f9746e3e43afc4 8-18,21-22
+  s_280164ff7b1e80::t_8b01cb58dc01f4 19-20
+  s_280164ff7b1e80::t_3a79bdda7b4356 38
+  s_280164ff7b1e80::t_74604acfe33b40 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6916bec3234c67d580c775607845cc568633e569",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_280164ff7b1e80": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fecf4754-fe50-4761-83a0-cc9345794b33",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
