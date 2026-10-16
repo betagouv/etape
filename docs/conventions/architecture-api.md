@@ -19,7 +19,7 @@ Chaque décision est suivie de ses **principes** — des règles courtes, vérif
 | `@nestjs/config` + zod        | 12.0.1 / 4.1.13 | Schéma d'environnement validé au démarrage (`src/config/env.ts`)                                   |
 | helmet, cookie-parser         | —               | Session par cookie opaque : aucun jeton visible du navigateur                                      |
 | `@nestjs/throttler`           | 6.7.1           | Limitation de débit **déjà en place**, en garde globale (décision 8)                               |
-| Vitest                        | 5.0.1           | **Cinq fichiers de test** dans `auth/`, lancés par `npm run test`, bloquants en CI (décision 11)   |
+| Vitest                        | 5.0.1           | Tests dans `auth/`, lancés par `npm run test`, bloquants en CI (décision 11)                       |
 
 **Comment l'API tourne**, car plusieurs décisions en dépendent : un conteneur Docker parmi six, décrit par `docker-compose.prod.yml`, construit et démarré par l'hébergeur (Cegedim). Elle n'est pas exposée directement — nginx sert les exports statiques et relaie `/api/`. Elle applique ses migrations au démarrage, avant de servir.
 
@@ -302,6 +302,9 @@ Ce que cette fonction protège : le jour où la table gagne une colonne — un j
 3. **La transaction appartient au service**, qui la déclare et la passe au repository.
 4. **L'abstraction décrit un besoin, pas un schéma** : `findBrouillon(beneficiaireId)`, pas `findFirstWhere(...)`.
 5. **Pas de repository pour un module qui ne touche pas la base** : il n'y a rien à séparer.
+6. **Le nom et le fichier disent la couche** : l'abstraction `XRepository` dans `<module>.repository.ts`, seule dans son fichier ; l'implémentation `PrismaXRepository` dans `<module>.prisma-repository.ts` (voir [Découpage des dossiers](#découpage-des-dossiers)). Ni `Store`, ni `Dao`, ni `Gateway` : un autre nom fait croire à une autre couche, et la règle « aucune règle métier » ne s'y applique plus aux yeux du lecteur.
+
+**Ce qui le vérifie** : ESLint, dans `apps/api/eslint.config.mjs`, refuse Prisma — client et types générés — hors d'un `*.prisma-repository.ts`, une classe nommée `…Store`, `…Dao` ou `…Gateway`, et une classe concrète dans un `*.repository.ts`. L'absence de règle métier ne se vérifie pas par un outil : c'est le sous-agent `revue-api` qui la relit en revue.
 
 <details><summary><strong>Exemple — ce que « renvoyer les types du module » veut dire, en code</strong> (proposition)</summary>
 
@@ -366,23 +369,38 @@ export function toAccount(ligne: AccountPrisma): Account {
 
 </details>
 
-<details><summary><strong>Exemple — la forme existe déjà dans le code</strong></summary>
+<details><summary><strong>Exemple — la session, et l'écart qu'elle porte encore</strong></summary>
 
-`auth/session/session.store.ts` : l'abstraction est écrite en termes de besoins, et chaque méthode porte sa contrainte métier en commentaire.
+**L'écart.** `auth/session/session.store.ts` est la couche d'accès aux sessions, mais sous un autre nom (`SessionStore` / `PrismaSessionStore`), avec l'abstraction et l'implémentation dans un même fichier — et une règle métier : `getSession` décide qu'une session est finie, la supprime et la refuse. La correction est demandée dans la revue de la PR #77 ; d'ici là, le fichier a une exception temporaire dans `apps/api/eslint.config.mjs`. **Ce n'est pas un modèle.**
+
+**La forme attendue.** L'abstraction, seule dans `auth/session/session.repository.ts`, écrite en termes de besoins :
 
 ```ts
-export abstract class SessionStore {
-  abstract createTransaction(id: string, transaction: LoginTransaction): Promise<void>;
-  /** Lecture unique : une transaction consommée ne se rejoue pas. */
-  abstract consumeTransaction(id: string): Promise<LoginTransaction | null>;
-
-  abstract createSession(id: string, session: SessionAOuvrir): Promise<void>;
-  abstract getSession(id: string): Promise<UserSession | null>;
+export abstract class SessionRepository {
+  abstract createSession(id: string, session: NewSession): Promise<void>;
+  /** La session telle qu'elle est en base, expirée ou non : c'est au service d'en juger. */
+  abstract findSession(id: string): Promise<AccountSession | null>;
+  abstract extendSession(id: string, idleExpiresAt: number): Promise<void>;
   abstract deleteSession(id: string): Promise<void>;
+  /** Ménage : supprime ce qui a expiré avant `now`, que le service fournit. */
+  abstract deleteExpiredSessions(now: number): Promise<void>;
 }
 ```
 
-`SessionService` ne connaît que cette classe. C'est pourquoi on peut tester la logique de session — durées de vie, révocation, rejeu — avec une implémentation en mémoire, sans base de données (décision 11).
+L'implémentation `PrismaSessionRepository` est dans `auth/session/session.prisma-repository.ts`. Et la règle revient au service, qui la porte en clair :
+
+```ts
+// session.service.ts
+const session = await this.sessions.findSession(id);
+if (!session) return null;
+
+if (isSessionOver(session, Date.now())) {
+  await this.sessions.deleteSession(id);
+  return null;
+}
+```
+
+`SessionService` ne connaît que l'abstraction. C'est pourquoi on peut tester la logique de session — durées de vie, révocation, rejeu — avec une implémentation en mémoire, sans base de données (décision 11). Tant que la règle d'expiration vit dans le repository, ce test est impossible : le double en mémoire devrait la recopier, et c'est la copie qu'on testerait.
 
 </details>
 
@@ -679,6 +697,8 @@ providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }];
 
 **Ce qui existe déjà**, et qu'il faut avoir en tête avant d'en discuter : une purge est en place. `PrismaSessionStore.purgeExpired()` supprime les sessions et transactions expirées, et elle est appelée au début de `createTransaction` et de `createSession`. À quoi s'ajoute un contrôle à la lecture : `getSession` et `consumeTransaction` refusent une ligne expirée même si elle est encore en base.
 
+**Ce contrôle à la lecture est une règle métier, il revient au service** (décision 2, principe 2) : le repository rend la session, `SessionService` juge qu'elle est finie et la supprime. La purge, elle, reste une requête du repository, exposée comme un besoin — `deleteExpiredSessions(now)`, la date de référence fournie par le service. La correction du code existant est demandée dans la revue de la PR #77.
+
 ```ts
 private async purgeExpired(): Promise<void> {
   const maintenant = new Date();
@@ -703,18 +723,18 @@ private async purgeExpired(): Promise<void> {
 ```ts
 @Injectable()
 export class SessionPurgeTask {
-  constructor(private readonly store: SessionStore) {}
+  constructor(private readonly sessions: SessionRepository) {}
 
   // Une fois par heure : les durées de vie se comptent en minutes ou en heures,
   // et une heure de retard sur une suppression reste une suppression.
   @Cron(CronExpression.EVERY_HOUR)
   async run(): Promise<void> {
-    await this.store.purgeExpired();
+    await this.sessions.deleteExpiredSessions(Date.now());
   }
 }
 ```
 
-Cela suppose d'**exposer** `purgeExpired()` sur `SessionStore` : la méthode existe et porte déjà le bon nom — le verbe français `purger()` a été corrigé par l'issue #51 — mais elle est encore `private`.
+Cela suppose d'**exposer** la purge sur `SessionRepository` : elle existe aujourd'hui sous le nom `purgeExpired()`, encore `private`, dans `PrismaSessionStore` — le verbe français `purger()` avait été corrigé par l'issue #51.
 
 **À réévaluer si l'API tourne un jour en plusieurs instances** : il faudra garantir qu'une seule exécute la purge, sinon les tâches se déclenchent en parallèle sur les mêmes lignes.
 
@@ -767,16 +787,16 @@ Les outils ci-dessous restent la cible pour les couches qui ne sont pas encore c
 
 <details><summary><strong>Exemple — ce que la décision 2 rend possible</strong> (proposition)</summary>
 
-`SessionService` dépend de `SessionStore`, pas de Prisma : son test n'a besoin d'aucune base.
+`SessionService` dépend de `SessionRepository`, pas de Prisma : son test n'a besoin d'aucune base.
 
 ```ts
-class InMemorySessionStore extends SessionStore {
-  private readonly sessions = new Map<string, UserSession>();
-  // … implémentation triviale
+class InMemorySessionRepository extends SessionRepository {
+  private readonly sessions = new Map<string, AccountSession>();
+  // … implémentation triviale : elle rend ce qu'on lui a donné, sans juger
 }
 
 const module = await Test.createTestingModule({
-  providers: [SessionService, { provide: SessionStore, useClass: InMemorySessionStore }],
+  providers: [SessionService, { provide: SessionRepository, useClass: InMemorySessionRepository }],
 }).compile();
 
 it("refuse une session expirée", async () => {

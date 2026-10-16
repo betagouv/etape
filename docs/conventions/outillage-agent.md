@@ -21,16 +21,16 @@ Les conventions du projet sont écrites dans `docs/conventions/`. Ce document di
 
 ## Où vit chaque convention
 
-| Convention       | Document              | Niveau 1 — bloquant                                                            | Niveau 2 — règle                  | Niveau 3 — procédure       |
-| ---------------- | --------------------- | ------------------------------------------------------------------------------ | --------------------------------- | -------------------------- |
-| Nommage FR/EN    | `nommage.md`          | —                                                                              | —                                 | Skill `convention-nommage` |
-| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax` | `.claude/rules/typescript.md`     | —                          |
-| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**         | `.claude/rules/accessibilite.md`  | —                          |
-| Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`   | `.claude/rules/react.md`          | Sous-agent `revue-front`   |
-| Design system    | `react.md` §4         | —                                                                              | `.claude/rules/design-system.md`  | Skill `composant-ui`       |
-| Stack front      | `stack-front.md`      | —                                                                              | `.claude/rules/react.md` (renvoi) | —                          |
-| Architecture API | `architecture-api.md` | —                                                                              | `.claude/rules/api.md`            | —                          |
-| Méthode de revue | —                     | —                                                                              | —                                 | Skill `review-pr`          |
+| Convention       | Document              | Niveau 1 — bloquant                                                                                                  | Niveau 2 — règle                  | Niveau 3 — procédure       |
+| ---------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------- | -------------------------- |
+| Nommage FR/EN    | `nommage.md`          | —                                                                                                                    | —                                 | Skill `convention-nommage` |
+| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax`                                       | `.claude/rules/typescript.md`     | —                          |
+| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**                                               | `.claude/rules/accessibilite.md`  | —                          |
+| Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`                                         | `.claude/rules/react.md`          | Sous-agent `revue-front`   |
+| Design system    | `react.md` §4         | —                                                                                                                    | `.claude/rules/design-system.md`  | Skill `composant-ui`       |
+| Stack front      | `stack-front.md`      | —                                                                                                                    | `.claude/rules/react.md` (renvoi) | —                          |
+| Architecture API | `architecture-api.md` | `no-restricted-imports` (Prisma hors repository), `no-restricted-syntax` (nom et fichier du repository) — `apps/api` | `.claude/rules/api.md`            | Sous-agent `revue-api`     |
+| Méthode de revue | —                     | —                                                                                                                    | —                                 | Skill `review-pr`          |
 
 ## Ce que le lint impose déjà, et qu'on n'avait pas mesuré
 
@@ -97,6 +97,7 @@ Une règle sans `paths` serait chargée à chaque session ; avec `paths`, elle n
 - **`review-pr`** — méthode de revue : suivi des constats précédents, niveaux, suggestions vérifiées, rien de posté sans validation. Existant.
 - **`composant-ui`** — procédure d'ajout ou d'extension d'un composant : chercher l'existant, récupérer la source officielle par le MCP `shadcn`, étendre par variante, brancher les tokens, vérifier le focus. Nouveau.
 - **`revue-front`** (sous-agent, lecture seule) — audite un diff contre `react.md` : logique dans les composants, props, `className` d'apparence, primitives réécrites. Appelé par `review-pr`. Nouveau.
+- **`revue-api`** (sous-agent, lecture seule) — audite un diff de `apps/api` contre `architecture-api.md` : couches, repository (nom, fichiers, aucune règle métier), frontière HTTP, journaux. Relit en entier chaque fichier touché, pas seulement les lignes modifiées. Appelé par `review-pr`, sur le modèle de `revue-front` (issue #82).
 
 ### Automatisations
 
@@ -172,8 +173,9 @@ Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour un
 | Valeurs Tailwind arbitraires                 | Même raison : `style={{ width: '42%' }}` d'une barre de progression est légitime, `max-w-[1184px]` ne l'est pas |
 | Primitive réécrite au lieu d'être réutilisée | Demande de savoir ce qui existe dans `packages/ui`                                                              |
 | Nommage métier                               | Demande le glossaire et un jugement                                                                             |
+| Règle métier dans un repository              | Aucun lint ne distingue une condition métier d'un filtre de requête                                             |
 
-Ces cinq-là sont vérifiées **en revue**, par le skill `review-pr` et le sous-agent `revue-front`. Le document le dit pour que personne ne croie la CI exhaustive.
+Ces six-là sont vérifiées **en revue**, par le skill `review-pr` et les sous-agents `revue-front` et `revue-api`. Le document le dit pour que personne ne croie la CI exhaustive.
 
 ## Pour les développeurs qui n'utilisent pas Claude Code
 
