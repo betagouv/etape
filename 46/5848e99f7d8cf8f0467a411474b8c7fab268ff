@@ -1,0 +1,38 @@
+docs/conventions/outillage-agent.md
+  s_280164ff7b1e80::t_c406a46ee5fc23 176,178
+  s_280164ff7b1e80::t_c2adfac6f1b0e8 100
+  s_280164ff7b1e80::t_5fdcc9e228a873 24-31,33
+  s_280164ff7b1e80::t_d50815398d3ea8 32
+docs/conventions/architecture-api.md
+  s_280164ff7b1e80::t_31184b6b3868b8 726,732,737
+  s_280164ff7b1e80::t_9ea061aff5ff2b 22
+  s_280164ff7b1e80::t_e2fe2a939f6a78 305-307
+  s_280164ff7b1e80::t_ba6f33c53538f2 372,374,376,378-383,385-399,403
+  s_280164ff7b1e80::t_fc1bc3080e48f9 790,793-795,799
+  s_280164ff7b1e80::t_0f1c5642c5953d 700
+  s_280164ff7b1e80::t_49f5b7690d2b46 701
+CLAUDE.md
+  s_280164ff7b1e80::t_6e081a6e043653 38
+  s_280164ff7b1e80::t_aea582608d6672 53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "465848e99f7d8cf8f0467a411474b8c7fab268ff",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_280164ff7b1e80": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fecf4754-fe50-4761-83a0-cc9345794b33",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
