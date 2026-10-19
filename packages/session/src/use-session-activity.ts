@@ -31,6 +31,9 @@ const ACTIVITY_EVENTS = [
 /** L'API n'écrit qu'une activité par minute : en signaler davantage ne sert à rien. */
 const ACTIVITY_REPORT_INTERVAL_MS = 60 * 1000;
 
+/** À l'échéance, une relecture sans réponse est retentée à ce rythme. */
+const SESSION_CHECK_RETRY_MS = 15 * 1000;
+
 /**
  * Le temps de laisser le lecteur d'écran annoncer « Votre session est
  * prolongée. », après quoi la région redevient vide (`accessibilite.md`, § 2).
@@ -139,13 +142,20 @@ export function useSessionActivity(
 
     // Relit l'échéance sans la repousser (la lecture n'est pas une activité) :
     // un autre onglet a pu la prolonger.
+    let retryTimer: number | undefined;
+    let isDisposed = false;
     const checkSession = async (): Promise<void> => {
+      window.clearTimeout(retryTimer);
       const fresh = await findSession(httpClient).catch(() => undefined);
       // L'API ne répond pas : avertir sur la foi de la dernière échéance
-      // connue ; à la fin, rester sur l'avertissement, le serveur tranchera
-      // à la prochaine requête.
+      // connue ; à la fin, réessayer jusqu'à ce que le serveur tranche, sans
+      // quoi la page resterait affichée derrière l'avertissement.
       if (fresh === undefined) {
-        if (!isWarning) setWarningCause(end.cause);
+        if (!isWarning) {
+          setWarningCause(end.cause);
+        } else if (Date.now() >= dueAt && !isDisposed) {
+          retryTimer = window.setTimeout(() => void checkSession(), SESSION_CHECK_RETRY_MS);
+        }
         return;
       }
       if (fresh === null) {
@@ -166,7 +176,9 @@ export function useSessionActivity(
     document.addEventListener("visibilitychange", checkOnReturn);
 
     return () => {
+      isDisposed = true;
       window.clearTimeout(timer);
+      window.clearTimeout(retryTimer);
       document.removeEventListener("visibilitychange", checkOnReturn);
     };
   }, [applySession, dataUpdatedAt, httpClient, isEnabled, isWarning, queryClient, session]);

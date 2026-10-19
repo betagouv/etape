@@ -348,6 +348,20 @@ describe("useSessionActivity", () => {
     expect(result.current.warning).toBeNull();
   });
 
+  it("expire la session quand la relecture à l'échéance échoue, puis aboutit", async () => {
+    const { queryClient } = renderSessionActivity();
+    await advance(0);
+    // Veille : au réveil, l'échéance est passée et le réseau pas encore revenu.
+    api.isOffline = true;
+    await advance(IDLE_TIMEOUT_MS + MINUTE_MS);
+    expect(queryClient.getQueryData(SESSION_QUERY_KEY)).not.toBeNull();
+
+    api.isOffline = false;
+    await advance(MINUTE_MS);
+
+    expect(queryClient.getQueryData(SESSION_QUERY_KEY)).toBeNull();
+  });
+
   it("relit l'échéance au retour sur l'onglet, quand le minuteur a pris du retard", async () => {
     const { result } = renderSessionActivity();
     await advance(0);
