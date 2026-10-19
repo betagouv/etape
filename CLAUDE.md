@@ -35,7 +35,7 @@ Les règles détaillées se chargent depuis `.claude/rules/` quand un fichier co
 ## Stack et architecture
 
 - **Front** (`docs/conventions/stack-front.md`) : Next.js en export statique (donc aucune Server Action), Tailwind + shadcn/ui, react-hook-form + zod pour les formulaires à venir, le moteur déclaratif du simulateur conservé.
-- **API** (`docs/conventions/architecture-api.md`) : trois couches — HTTP, métier, accès aux données. Un type Prisma ne franchit pas la frontière HTTP ; un repository ne s'extrait qu'à la demande, pas par principe.
+- **API** (`docs/conventions/architecture-api.md`) : trois couches — HTTP, métier, accès aux données. Un repository par module qui touche la base (`XRepository` / `PrismaXRepository`) : seule couche à voir Prisma, sans aucune règle métier. Un type Prisma ne franchit pas la frontière HTTP.
 
 Les quatre documents de conventions (`stack-front.md`, `architecture-api.md`, `react.md`, `outillage-agent.md`) sont au statut **« Décidé »** depuis la réunion d'arbitrage du 22 septembre 2026 : chacun se termine par son **relevé d'arbitrage**, qui dit ce qui a été répondu, et par les rares points **restés ouverts** — l'instance Sentry, le choix du pipe de validation, `trust proxy`, le périmètre des règles `jsx-a11y`, les porteurs de TanStack Query et de `packages/api-contract`, et le doublon éventuel entre `revue-front` et `review-pr`. Ne pas rouvrir une décision qui y figure comme tranchée.
 
@@ -50,4 +50,4 @@ Les quatre documents de conventions (`stack-front.md`, `architecture-api.md`, `r
 
 ## Revue de code
 
-Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage et d'accessibilité, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation. Pour un diff front, il s'appuie sur le sous-agent `revue-front`.
+Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage, d'accessibilité et d'architecture, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation. Il s'appuie sur le sous-agent `revue-front` pour un diff front, et sur `revue-api` pour un diff de `apps/api`.

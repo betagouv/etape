@@ -21,7 +21,9 @@ description: Revue d'une PR ou d'un diff ETAPE selon les conventions du projet (
 3. Lire les conventions (source de vérité — ne jamais répondre de mémoire) :
    - `docs/conventions/nommage.md` et `docs/conventions/glossaire.md` (charger le skill `convention-nommage`) ;
    - `docs/conventions/typescript.md` ;
-   - `docs/conventions/accessibilite.md` pour tout composant `.tsx`.
+   - `docs/conventions/accessibilite.md` pour tout composant `.tsx` ;
+   - `docs/conventions/architecture-api.md` pour tout fichier de `apps/api`.
+4. **Relire en entier chaque fichier touché par le diff**, pas seulement les lignes modifiées : un écart déjà présent dans un fichier que la PR étend se signale, avec la mention « antérieur à la PR ».
 
 ### 2. Revues précédentes : suivi obligatoire
 
@@ -41,6 +43,8 @@ S'il y en a, la synthèse **commence par un tableau de suivi** : chaque constat 
   - **Nommage** : langue selon la couche, termes du glossaire.
   - **Typage** : littéraux en dur dans les conditions ou les appels, correspondances en ternaire ou `switch` au lieu d'un `Record`, `useState` non typé par l'union.
   - **Accessibilité** : `disabled` sur une action asynchrone, annonces d'état, nom accessible, icônes décoratives.
+  - **Architecture API** : couches, repository (nom, fichiers, aucune règle métier), Prisma et types générés confinés au repository, frontière HTTP.
+- S'appuyer sur les sous-agents, lancés en parallèle selon ce que touche le diff : **`revue-front`** pour les composants et hooks React, **`revue-api`** pour `apps/api`. Chacun de leurs constats est vérifié dans le code avant d'être repris.
 - Correction : bugs, cas limites, régressions. Pour chacun, un scénario concret (entrée → résultat faux).
 
 ### 4. Constats
