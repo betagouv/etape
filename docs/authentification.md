@@ -58,12 +58,13 @@ n'écrit donc rien en base. Les routes du parcours sont limitées à 30 appels p
 minute et par IP, les autres à 300 (`@nestjs/throttler`). Le détail du schéma
 est dans [donnees.md](donnees.md).
 
-| Route                    | Rôle                                                                 |
-| ------------------------ | -------------------------------------------------------------------- |
-| `GET /api/auth/login`    | Démarre le parcours, redirige vers Keycloak                          |
-| `GET /api/auth/callback` | Échange le code, crée le compte, ouvre la session                    |
-| `GET /api/auth/logout`   | Ferme la session et propage la déconnexion                           |
-| `GET /api/auth/session`  | État de connexion : `{ session }`, `null` si personne n'est connecté |
+| Route                            | Rôle                                                                                         |
+| -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `GET /api/auth/login`            | Démarre le parcours, redirige vers Keycloak                                                  |
+| `GET /api/auth/callback`         | Échange le code, crée le compte, ouvre la session                                            |
+| `GET /api/auth/logout`           | Ferme la session et propage la déconnexion                                                   |
+| `GET /api/auth/session`          | État de connexion : `{ session }`, `null` si personne n'est connecté ; ne prolonge rien      |
+| `POST /api/auth/session/refresh` | Signale une activité, repousse la fin d'inactivité, renvoie `{ session }` ; 401 sans session |
 
 Une navigation vers `login`, `callback` ou `logout` ne reçoit jamais d'erreur
 brute : l'échec renvoie au front avec son motif, `?login=<motif>` ou
@@ -364,7 +365,7 @@ routeur — qui reçoit `apiBaseUrl`, lue dans son `.env` — et l'amorçage.
   qui a été chargé pendant la session et retire l'écran affiché — sur un poste
   partagé, rien ne doit rester lisible derrière le dialogue, et un écran monté
   garde ses données même cache vidé —, vide la session et ouvre le dialogue
-  « Session expirée » (`SessionExpiredDialog`). Rien ne le ferme, ni Échap ni un
+  « Session expirée » (`SessionDialog`). Rien ne le ferme, ni Échap ni un
   clic dehors ; « Se reconnecter » mène au formulaire et ramène sur la page en
   cours, ancre comprise. Si la personne quitte la page, par le bouton Précédent
   par exemple, la garde ne trouve plus de session et la redirige vers le
@@ -389,14 +390,24 @@ routeur — qui reçoit `apiBaseUrl`, lue dans son `.env` — et l'amorçage.
     toujours là ? » et un seul bouton, « Oui », qui prolonge ; pendant ce
     dialogue, bouger la souris ne compte pas, seul « Oui » prolonge (WCAG
     2.2.1). Si « Oui » n'aboutit pas (réseau), le dialogue reste ouvert et le
-    dit ; une fois fermé, le focus revient là où il était. Avant la durée maximale, que rien ne repousse : « Votre session se
-    termine bientôt » et « Se reconnecter », qui ouvre une session neuve.
+    dit ; une fois fermé, le focus revient là où il était. Avant la durée
+    maximale, que rien ne repousse : « Votre session se termine bientôt »,
+    avec « Continuer », qui reçoit le focus et l'écarte, comme Échap, le temps
+    de finir une saisie, et « Se reconnecter », qui ouvre une session neuve.
+    Écarté, l'avertissement ne déplace pas l'échéance.
   - **Sans réponse**, le front relit encore l'échéance et, la session finie,
     l'expire comme sur un 401 : dialogue « Session expirée », avec la cause
     quand elle est connue (« Votre session a expiré après 30 minutes
     d'inactivité », « … a atteint sa durée maximale de 10 heures »). Une fin
     sans cause plausible — déconnexion dans un autre onglet — garde le message
-    générique.
+    générique. Si cette relecture échoue (réseau), elle est retentée toutes
+    les 15 secondes : la page n'est vidée que sur la réponse du serveur — un
+    autre onglet a pu prolonger la session —, mais elle l'est dès le retour du
+    réseau.
+  - Côté API, c'est `SessionService` qui juge une session finie
+    (`isSessionExpired`) et la supprime dès qu'il la constate ; le repository
+    rend la ligne telle quelle. Les sessions expirées sont aussi purgées à
+    chaque connexion (`deleteExpiredSessions`).
   - Le minuteur est relu au retour sur l'onglet : le navigateur le ralentit en
     arrière-plan et le suspend en veille. Pendant l'avertissement, l'échéance
     est relue à chaque retour : un autre onglet a pu la repousser.

@@ -26,7 +26,7 @@ npm run test --workspace=@etape/session
 - `src/session-root-route.tsx` — `sessionRootRoute` (garde `beforeLoad`, `SessionLayout`) et `SessionRouterContext`, que chaque app passe à `createRouter`.
 - `src/session-app.tsx` — `SessionApp`, la racine de chaque app (`main.tsx`) : fournisseur de cache, routeur et région `role="status"`, montée hors du routeur pour durer de l'attente au démarrage jusqu'à l'app.
 - `src/use-session-activity.ts` — signale l'activité (au plus une fois par minute), avertit deux minutes avant la fin, expire la session à l'échéance. Les échéances viennent de l'API et sont relues avant chaque décision.
-- `src/session-dialogs.ts` — le dialogue d'avertissement selon la cause (« Oui » ou « Se reconnecter »).
+- `src/session-dialogs.ts` — le dialogue d'avertissement selon la cause : « Oui » avant la fin d'inactivité, « Continuer » et « Se reconnecter » avant la durée maximale.
 - `src/announcer.ts` — `useAnnounce`, pour écrire dans la région `role="status"`.
 - `src/error-screens.tsx` — `AppErrorScreen` (aussi `defaultErrorComponent` du routeur de chaque app), `NotFoundScreen`, `HOME_PATH`.
 

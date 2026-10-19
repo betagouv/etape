@@ -62,9 +62,9 @@ describe("isSessionEndNear", () => {
 
 describe("isStaleExpiry", () => {
   it("écarte une relecture revenue après une prolongation plus récente", () => {
-    const relecture = { ...expiry, idleRemainingMs: MINUTE_MS };
+    const staleRead = { ...expiry, idleRemainingMs: MINUTE_MS };
 
-    expect(isStaleExpiry(relecture, RECEIVED_AT + 100, expiry, RECEIVED_AT)).toBe(true);
+    expect(isStaleExpiry(staleRead, RECEIVED_AT + 100, expiry, RECEIVED_AT)).toBe(true);
   });
 
   it("garde une relecture de la même échéance, malgré le trajet des réponses", () => {

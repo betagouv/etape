@@ -368,21 +368,21 @@ export function toAccount(ligne: AccountPrisma): Account {
 
 <details><summary><strong>Exemple — la forme existe déjà dans le code</strong></summary>
 
-`auth/session/session.store.ts` : l'abstraction est écrite en termes de besoins, et chaque méthode porte sa contrainte métier en commentaire.
+`auth/session/session.repository.ts` : l'abstraction est écrite en termes de besoins, et une méthode dont l'usage n'est pas évident porte sa contrainte en commentaire. Son implémentation Prisma vit à côté, dans `session.prisma-repository.ts`.
 
 ```ts
-export abstract class SessionStore {
-  abstract createTransaction(id: string, transaction: LoginTransaction): Promise<void>;
-  /** Lecture unique : une transaction consommée ne se rejoue pas. */
-  abstract consumeTransaction(id: string): Promise<LoginTransaction | null>;
-
-  abstract createSession(id: string, session: SessionAOuvrir): Promise<void>;
-  abstract getSession(id: string): Promise<UserSession | null>;
+export abstract class SessionRepository {
+  abstract createSession(id: string, session: NewSession): Promise<void>;
+  /** Telle qu'en base, même expirée : c'est le service qui juge de sa fin. */
+  abstract getSession(id: string): Promise<AccountSession | null>;
+  abstract extendSession(id: string, idleExpiresAt: number): Promise<void>;
   abstract deleteSession(id: string): Promise<void>;
+  /** Les sessions dont l'une des deux fins est passée à `now`. */
+  abstract deleteExpiredSessions(now: number): Promise<void>;
 }
 ```
 
-`SessionService` ne connaît que cette classe. C'est pourquoi on peut tester la logique de session — durées de vie, révocation, rejeu — avec une implémentation en mémoire, sans base de données (décision 11).
+`SessionService` ne connaît que cette classe, et c'est lui qui juge une session finie (`isSessionExpired`) : le repository rend la ligne telle quelle (principe 2). C'est pourquoi on peut tester la logique de session — durées de vie, révocation, expiration — avec une implémentation en mémoire, sans base de données (décision 11).
 
 </details>
 
@@ -677,16 +677,14 @@ providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }];
 
 ## Décision 9 — La purge des données expirées
 
-**Ce qui existe déjà**, et qu'il faut avoir en tête avant d'en discuter : une purge est en place. `PrismaSessionStore.purgeExpired()` supprime les sessions et transactions expirées, et elle est appelée au début de `createTransaction` et de `createSession`. À quoi s'ajoute un contrôle à la lecture : `getSession` et `consumeTransaction` refusent une ligne expirée même si elle est encore en base.
+**Ce qui existe déjà**, et qu'il faut avoir en tête avant d'en discuter : une purge est en place. `PrismaSessionRepository.deleteExpiredSessions(now)` supprime les sessions dont l'une des deux fins est passée, et `SessionService.openSession` l'appelle à chaque connexion, avec la date de référence. À quoi s'ajoute un contrôle à la lecture : `SessionService.readSession` refuse une session expirée même si elle est encore en base, et la supprime. La transaction de connexion, elle, n'est plus en base : elle voyage dans un cookie chiffré, qui expire de lui-même.
 
 ```ts
-private async purgeExpired(): Promise<void> {
-  const maintenant = new Date();
-
-  await Promise.all([
-    this.prisma.transactionConnexion.deleteMany({ where: { expiresAt: { lte: maintenant } } }),
-    this.prisma.session.deleteMany({ where: { expiresAt: { lte: maintenant } } }),
-  ]);
+async deleteExpiredSessions(now: number): Promise<void> {
+  const date = new Date(now);
+  await this.prisma.session.deleteMany({
+    where: { OR: [{ expiresAt: { lte: date } }, { idleExpiresAt: { lte: date } }] },
+  });
 }
 ```
 
@@ -694,7 +692,7 @@ private async purgeExpired(): Promise<void> {
 
 - cette purge est **opportuniste** : elle ne s'exécute qu'à l'ouverture d'une connexion. Une nuit, un week-end, une période creuse — les lignes expirées restent ;
 - ce qui reste, ce sont des **données personnelles** : claims, courriel, `id_token`. La minimisation en demande la suppression, pas seulement l'ignorance à la lecture ;
-- elle s'exécute **sur le chemin critique** d'une connexion : deux `deleteMany` avant chaque création.
+- elle s'exécute **sur le chemin critique** d'une connexion : un `deleteMany` avant chaque création.
 
 **Décidé** : la purge opportuniste est gardée. **L'ajout d'une tâche planifiée n'est pas tranché** — l'arbitrage a renvoyé le point à l'issue #60, le temps de peser ce que la minimisation exige réellement face à un conteneur qui exécute un `deleteMany` toutes les heures pour rien la plupart du temps. La proposition instruite dans cette issue est une tâche `@nestjs/schedule` (12.0.2) ; l'exemple ci-dessous la décrit.
 
@@ -703,18 +701,18 @@ private async purgeExpired(): Promise<void> {
 ```ts
 @Injectable()
 export class SessionPurgeTask {
-  constructor(private readonly store: SessionStore) {}
+  constructor(private readonly sessionRepository: SessionRepository) {}
 
   // Une fois par heure : les durées de vie se comptent en minutes ou en heures,
   // et une heure de retard sur une suppression reste une suppression.
   @Cron(CronExpression.EVERY_HOUR)
   async run(): Promise<void> {
-    await this.store.purgeExpired();
+    await this.sessionRepository.deleteExpiredSessions(Date.now());
   }
 }
 ```
 
-Cela suppose d'**exposer** `purgeExpired()` sur `SessionStore` : la méthode existe et porte déjà le bon nom — le verbe français `purger()` a été corrigé par l'issue #51 — mais elle est encore `private`.
+La méthode est déjà exposée sur `SessionRepository`, puisque le service l'appelle à chaque connexion : la tâche n'aurait qu'à l'appeler à son tour.
 
 **À réévaluer si l'API tourne un jour en plusieurs instances** : il faudra garantir qu'une seule exécute la purge, sinon les tâches se déclenchent en parallèle sur les mêmes lignes.
 
@@ -767,19 +765,19 @@ Les outils ci-dessous restent la cible pour les couches qui ne sont pas encore c
 
 <details><summary><strong>Exemple — ce que la décision 2 rend possible</strong> (proposition)</summary>
 
-`SessionService` dépend de `SessionStore`, pas de Prisma : son test n'a besoin d'aucune base.
+`SessionService` dépend de `SessionRepository`, pas de Prisma : son test n'a besoin d'aucune base. Le double existe (`auth/session/session.repository.fake.ts`, exclu du build) ; les tests actuels construisent encore `SessionService` à la main, sans `@nestjs/testing`.
 
 ```ts
-class InMemorySessionStore extends SessionStore {
-  private readonly sessions = new Map<string, UserSession>();
-  // … implémentation triviale
+class FakeSessionRepository implements SessionRepository {
+  readonly sessions = new Map<string, NewSession>();
+  // … implémentation triviale, qui rend les sessions même expirées, comme la base
 }
 
 const module = await Test.createTestingModule({
-  providers: [SessionService, { provide: SessionStore, useClass: InMemorySessionStore }],
+  providers: [SessionService, { provide: SessionRepository, useClass: FakeSessionRepository }],
 }).compile();
 
-it("refuse une session expirée", async () => {
+it("refuse et supprime une session dont la fin d'inactivité est passée", async () => {
   // …
 });
 ```
