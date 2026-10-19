@@ -18,8 +18,6 @@ export class PrismaSessionRepository extends SessionRepository {
   }
 
   async createSession(id: string, session: NewSession): Promise<void> {
-    await this.purgeExpired();
-
     await this.prisma.session.create({
       data: {
         id,
@@ -41,12 +39,6 @@ export class PrismaSessionRepository extends SessionRepository {
     });
 
     if (!row) return null;
-
-    const now = Date.now();
-    if (row.expiresAt.getTime() <= now || row.idleExpiresAt.getTime() <= now) {
-      await this.deleteSession(id);
-      return null;
-    }
 
     // Une valeur inconnue en base ne désigne aucun front : la session n'est
     // valable nulle part.
@@ -76,10 +68,10 @@ export class PrismaSessionRepository extends SessionRepository {
     await this.prisma.session.deleteMany({ where: { id } });
   }
 
-  private async purgeExpired(): Promise<void> {
-    const now = new Date();
+  async deleteExpiredSessions(now: number): Promise<void> {
+    const date = new Date(now);
     await this.prisma.session.deleteMany({
-      where: { OR: [{ expiresAt: { lte: now } }, { idleExpiresAt: { lte: now } }] },
+      where: { OR: [{ expiresAt: { lte: date } }, { idleExpiresAt: { lte: date } }] },
     });
   }
 }

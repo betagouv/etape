@@ -1,4 +1,5 @@
 import { FRONT, type Front } from "../front.js";
+import type { AccountSession } from "./session.types.js";
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -42,4 +43,12 @@ export function isActivityWriteDue(
 ): boolean {
   const lastActivityAt = idleExpiresAt - policy.idleTimeoutMs;
   return now - lastActivityAt >= ACTIVITY_WRITE_INTERVAL_MS;
+}
+
+/** `true` dès que l'une des deux fins, d'inactivité ou absolue, est passée. */
+export function isSessionExpired(
+  session: Pick<AccountSession, "expiresAt" | "idleExpiresAt">,
+  now: number,
+): boolean {
+  return session.expiresAt <= now || session.idleExpiresAt <= now;
 }

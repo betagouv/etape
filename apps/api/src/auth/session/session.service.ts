@@ -8,7 +8,7 @@ import { NODE_ENV, type Env } from "../../config/env.js";
 import { FRONT, type Front } from "../front.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { openCookieValue, sealCookieValue } from "./cookie-cipher.js";
-import { isActivityWriteDue, SESSION_POLICY_BY_FRONT } from "./session-policy.js";
+import { isActivityWriteDue, isSessionExpired, SESSION_POLICY_BY_FRONT } from "./session-policy.js";
 import { SessionRepository } from "./session.repository.js";
 import type { AccountSession, NewSession, PendingLogin } from "./session.types.js";
 
@@ -141,6 +141,8 @@ export class SessionService {
     const policy = SESSION_POLICY_BY_FRONT[session.front];
     const now = Date.now();
 
+    // Purge opportuniste, à chaque connexion (`architecture-api.md`, décision 9).
+    await this.sessionRepository.deleteExpiredSessions(now);
     await this.sessionRepository.createSession(id, {
       ...session,
       expiresAt: now + policy.maxDurationMs,
@@ -181,7 +183,16 @@ export class SessionService {
     if (!id) return null;
 
     const session = await this.sessionRepository.getSession(id);
-    return session?.front === front ? { ...session, id } : null;
+    if (!session) return null;
+
+    // Une session finie est supprimée dès qu'on la constate, sans attendre la
+    // purge, qui ne passe qu'à la connexion suivante.
+    if (isSessionExpired(session, Date.now())) {
+      await this.sessionRepository.deleteSession(id);
+      return null;
+    }
+
+    return session.front === front ? { ...session, id } : null;
   }
 
   /**

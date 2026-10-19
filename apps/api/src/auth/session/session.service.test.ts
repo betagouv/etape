@@ -19,6 +19,7 @@ const BACK_OFFICE_SESSION_COOKIE = "__Host-Http-etape-back-office.sid";
 
 const key = randomBytes(32);
 
+/** Rend les sessions telles quelles, même expirées, comme la base. */
 class FakeSessionRepository implements SessionRepository {
   readonly sessions = new Map<string, NewSession>();
 
@@ -38,6 +39,12 @@ class FakeSessionRepository implements SessionRepository {
 
   async deleteSession(id: string): Promise<void> {
     this.sessions.delete(id);
+  }
+
+  async deleteExpiredSessions(now: number): Promise<void> {
+    for (const [id, session] of this.sessions) {
+      if (session.expiresAt <= now || session.idleExpiresAt <= now) this.sessions.delete(id);
+    }
   }
 }
 
@@ -352,6 +359,52 @@ describe("SessionService", () => {
       );
 
       expect(session.expiresAt).toBe(maxDurationMs);
+    });
+
+    it("refuse et supprime une session dont la fin d'inactivité est passée", async () => {
+      vi.useFakeTimers({ now: 0 });
+      const { idleTimeoutMs } = SESSION_POLICY_BY_FRONT[FRONT.FRONT_OFFICE];
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const id = openResponse.cookies.get(SESSION_COOKIE)!.value;
+      const request = createRequest({ [SESSION_COOKIE]: id });
+
+      vi.advanceTimersByTime(idleTimeoutMs - 1);
+      expect(await service.readSession(request, FRONT.FRONT_OFFICE)).not.toBeNull();
+
+      vi.advanceTimersByTime(1);
+      expect(await service.readSession(request, FRONT.FRONT_OFFICE)).toBeNull();
+      expect(repository.sessions.has(id)).toBe(false);
+    });
+
+    it("refuse et supprime une session à sa durée maximale, même active", async () => {
+      vi.useFakeTimers({ now: 0 });
+      const { idleTimeoutMs, maxDurationMs } = SESSION_POLICY_BY_FRONT[FRONT.FRONT_OFFICE];
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const id = openResponse.cookies.get(SESSION_COOKIE)!.value;
+      // Une activité juste avant : la fin d'inactivité est encore loin.
+      await repository.extendSession(id, maxDurationMs + idleTimeoutMs);
+
+      vi.advanceTimersByTime(maxDurationMs);
+
+      expect(
+        await service.readSession(createRequest({ [SESSION_COOKIE]: id }), FRONT.FRONT_OFFICE),
+      ).toBeNull();
+      expect(repository.sessions.has(id)).toBe(false);
+    });
+
+    it("purge les sessions expirées à chaque connexion", async () => {
+      vi.useFakeTimers({ now: 1_000 });
+      const deleteExpiredSessions = vi.spyOn(repository, "deleteExpiredSessions");
+
+      await service.openSession(
+        createRequest({}),
+        new FakeResponse() as unknown as Response,
+        newSession,
+      );
+
+      expect(deleteExpiredSessions).toHaveBeenCalledWith(1_000);
     });
   });
 
