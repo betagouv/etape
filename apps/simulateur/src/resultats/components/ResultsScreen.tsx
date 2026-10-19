@@ -1,20 +1,25 @@
 "use client";
 
 import { useMemo, type RefObject } from "react";
+import { DownloadIcon } from "lucide-react";
 
 import { BackToTop } from "@etape/ui/components/back-to-top";
-import { Button } from "@etape/ui/components/button";
+import { Callout } from "@etape/ui/components/callout";
+import { Container } from "@etape/ui/components/container";
+import { focusRing } from "@etape/ui/lib/focus";
 
+import { TextParts } from "@/questionnaire/components/TextParts";
 import type { Answers } from "@/questionnaire/domain/types";
 
-import { CEP_URL } from "../domain/catalogue";
+import { buildPhraseRecapitulative } from "../domain/phrase-recapitulative";
 import { buildProfil } from "../domain/profil";
 import { buildRecap } from "../domain/recap";
 import { selectResultats } from "../domain/selection";
+import { usePdfDownload } from "../hooks/usePdfDownload";
 import { AnswersRecap } from "./AnswersRecap";
 import { DownloadPdfButton } from "./DownloadPdfButton";
 import { EmptyResults } from "./EmptyResults";
-import { ResultCard } from "./ResultCard";
+import { ResultsList } from "./ResultsList";
 
 /** Cible du retour en haut : le titre de l'écran, focusable par programme. */
 const RESULTATS_TOP_ID = "resultats-top";
@@ -22,11 +27,8 @@ const RESULTATS_TOP_ID = "resultats-top";
 interface ResultsScreenProps {
   answers: Answers;
   onEdit: (questionId: string) => void;
-  onRestart: () => void;
   headingRef?: RefObject<HTMLHeadingElement | null>;
 }
-
-const CONTAINER = "mx-auto w-full max-w-[1184px] px-4 md:px-10";
 
 /** « 1 résultat correspond » / « 12 résultats correspondent ». */
 function decompte(total: number): string {
@@ -35,103 +37,75 @@ function decompte(total: number): string {
     : `${total} résultats correspondent à votre situation`;
 }
 
-export function ResultsScreen({ answers, onEdit, onRestart, headingRef }: ResultsScreenProps) {
+export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProps) {
   const profil = useMemo(() => buildProfil(answers), [answers]);
   const resultats = useMemo(() => selectResultats(profil), [profil]);
   const recapEntries = useMemo(() => buildRecap(answers), [answers]);
+  const phrase = useMemo(() => buildPhraseRecapitulative(answers), [answers]);
+  const pdf = usePdfDownload(resultats, recapEntries);
+  const hasResultats = resultats.length > 0;
 
   return (
-    <main className="flex flex-1 flex-col">
-      {/*
-        Doit rester haut dans l'arbre : cf. `BackToTop`, dont la sentinelle est
-        positionnée par rapport à son point d'insertion. `md:hidden` conserve le
-        choix d'origine — la remontée ne sert qu'en mobile, où la liste de
-        résultats est en une seule colonne.
-      */}
+    <main className="bg-background md:bg-muted flex flex-1 flex-col">
+      {/* Haut dans l'arbre : la sentinelle de `BackToTop` se place à son point d'insertion. */}
       <BackToTop
         targetId={RESULTATS_TOP_ID}
         label="Revenir en haut de la page"
         className="md:hidden"
       />
 
-      <header className="border-border bg-background border-b">
-        <div className={`${CONTAINER} flex flex-col gap-3 py-8 md:gap-4 md:py-16`}>
+      <Container size="md" className="flex flex-col gap-6 pt-6 pb-24 md:pt-16 md:pb-16">
+        <header className="flex flex-col gap-3">
           <h1
             ref={headingRef}
             id={RESULTATS_TOP_ID}
             tabIndex={-1}
-            className="text-foreground focus-visible:outline-ring rounded-sm text-[28px] leading-9 font-bold focus-visible:outline-2 focus-visible:outline-offset-4 md:text-[32px] md:leading-10"
+            className={`font-heading text-heading-md text-foreground rounded-sm ${focusRing}`}
           >
-            Résultats
+            Les dispositifs accessibles avec votre profil
           </h1>
-          <p className="text-content-secondary max-w-3xl text-base leading-6 md:text-lg md:leading-7">
-            Voici les interlocuteurs à contacter, les outils à votre disposition et les dispositifs
-            qui correspondent à vos réponses. Rien n’est automatique&nbsp;: un conseiller vous
-            aidera à choisir par où commencer.
+          <p className="text-muted-foreground text-body">
+            <TextParts parts={phrase} emphasisClassName="text-foreground font-medium" />
           </p>
+        </header>
 
-          {resultats.length > 0 && (
-            <DownloadPdfButton resultats={resultats} recapEntries={recapEntries} />
-          )}
-        </div>
-      </header>
-
-      <section aria-labelledby="resultats-decompte" className={`${CONTAINER} py-8 md:py-12`}>
-        {resultats.length === 0 ? (
-          <EmptyResults />
-        ) : (
-          <>
-            <h2
-              id="resultats-decompte"
-              className="text-foreground mb-6 text-lg leading-7 font-bold md:mb-8"
-            >
-              {decompte(resultats.length)}
-            </h2>
-            <ul className="grid list-none grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {resultats.map((resultat) => (
-                <li key={resultat.id} className="h-full">
-                  <ResultCard resultat={resultat} />
-                </li>
-              ))}
-            </ul>
-          </>
+        {hasResultats && (
+          <div>
+            <DownloadPdfButton {...pdf} />
+          </div>
         )}
-      </section>
 
-      <section className="border-border bg-muted border-t">
-        <div className={`${CONTAINER} py-12 md:py-14`}>
-          <AnswersRecap answers={answers} onEdit={onEdit} />
-        </div>
-      </section>
+        <section aria-labelledby={hasResultats ? "resultats-decompte" : undefined}>
+          {!hasResultats ? (
+            <EmptyResults />
+          ) : (
+            <>
+              {/* Absent de la maquette : donne le décompte et tient la hiérarchie h1 > h2 > h3. */}
+              <h2 id="resultats-decompte" className="sr-only">
+                {decompte(resultats.length)}
+              </h2>
+              <ResultsList resultats={resultats} />
+            </>
+          )}
+        </section>
 
-      <footer className="border-border border-t">
-        <div
-          className={`${CONTAINER} flex flex-col items-center gap-6 pt-8 pb-24 text-center md:pb-8`}
-        >
-          <p className="text-muted-foreground max-w-2xl text-sm leading-6">
-            Cet outil donne une orientation indicative, susceptible d’évoluer, et ne remplace pas
-            l’accompagnement personnalisé et gratuit d’un{" "}
-            <a
-              href={CEP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-content-accent font-semibold"
-            >
-              conseiller CEP
-            </a>
-            .
-          </p>
-          <Button
-            type="button"
-            variant="outline-primary"
-            size="xl"
-            onClick={onRestart}
-            className="w-full sm:w-auto"
+        {hasResultats && (
+          <Callout
+            variant="secondary"
+            icon={DownloadIcon}
+            title="Gardez une trace de vos résultats"
+            action={<DownloadPdfButton {...pdf} />}
           >
-            Recommencer la simulation
-          </Button>
-        </div>
-      </footer>
+            Le PDF reprend les dispositifs proposés, leurs liens et vos réponses.
+          </Callout>
+        )}
+
+        <AnswersRecap entries={recapEntries} onEdit={onEdit} />
+
+        <p role="status" className="sr-only">
+          {pdf.announcement}
+        </p>
+      </Container>
     </main>
   );
 }
