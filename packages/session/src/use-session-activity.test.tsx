@@ -320,6 +320,28 @@ describe("useSessionActivity", () => {
 
       expect(result.current.warning).toBeNull();
     });
+
+    it("n'affiche pas l'échec d'un « Oui » précédent au prochain avertissement", async () => {
+      const { result } = renderSessionActivity();
+      await advance(IDLE_TIMEOUT_MS - 2 * MINUTE_MS);
+      api.isOffline = true;
+      act(() => result.current.confirmPresence());
+      await advance(0);
+      expect(result.current.hasConfirmFailed).toBe(true);
+
+      // Le réseau revient, la personne a repris dans un autre onglet.
+      api.isOffline = false;
+      api.recordActivityElsewhere();
+      await act(async () => {
+        document.dispatchEvent(new Event("visibilitychange"));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(result.current.warning).toBeNull();
+
+      await advance(IDLE_TIMEOUT_MS - 2 * MINUTE_MS);
+      expect(result.current.warning).not.toBeNull();
+      expect(result.current.hasConfirmFailed).toBe(false);
+    });
   });
 
   it("vide l'annonce de la prolongation après l'avoir laissée lire", async () => {

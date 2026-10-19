@@ -97,7 +97,10 @@ export function useSessionActivity(
 
       queryClient.setQueryData(SESSION_QUERY_KEY, fresh);
       const end = resolveSessionEnd(fresh.expiry, receivedAt);
-      setWarningCause(isSessionEndNear(end, receivedAt) ? end.cause : null);
+      const isNear = isSessionEndNear(end, receivedAt);
+      setWarningCause(isNear ? end.cause : null);
+      // L'échec d'un « Oui » ne vaut que pour l'avertissement en cours.
+      if (!isNear) setHasConfirmFailed(false);
     },
     [queryClient],
   );
