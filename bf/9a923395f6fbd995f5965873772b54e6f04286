@@ -1,0 +1,33 @@
+apps/api/package.json
+  s_8a338635233e49::t_84a01a08c88e89 35-36
+apps/keycloak-theme/package.json
+  s_8a338635233e49::t_f60f70dd5884a3 16,24-25
+apps/simulateur/package.json
+  s_8a338635233e49::t_883601f2b80fc3 14,23-24
+apps/site/package.json
+  s_8a338635233e49::t_e049594d193ace 17,24-25
+package.json
+  s_8a338635233e49::t_0239875a2ec572 26
+packages/ui/package.json
+  s_8a338635233e49::t_077633ac484d26 35-36
+pnpm-lock.yaml
+  s_8a338635233e49::t_a6dfd3f524c8d9 1-11277
+pnpm-workspace.yaml
+  s_8a338635233e49::t_fb43a20db36daf 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bf9a923395f6fbd995f5965873772b54e6f04286",
+  "prompts": {},
+  "sessions": {
+    "s_8a338635233e49": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df458b41-29e2-44c7-b3bb-2e955d1996ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
