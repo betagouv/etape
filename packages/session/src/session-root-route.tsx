@@ -109,6 +109,7 @@ function SessionLayout() {
       confirmPresence: activity.confirmPresence,
       isConfirming: activity.isConfirming,
       hasConfirmFailed: activity.hasConfirmFailed,
+      dismissMaxDurationWarning: activity.dismissMaxDurationWarning,
     });
 
   return (

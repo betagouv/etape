@@ -56,6 +56,8 @@ export interface UseSessionActivityResult {
   hasConfirmFailed: boolean;
   /** Vrai un instant après la prolongation par « Oui », pour l'annoncer. */
   isConfirmed: boolean;
+  /** « Continuer » : écarte l'avertissement de durée maximale, sans repousser la fin. */
+  dismissMaxDurationWarning: () => void;
 }
 
 /**
@@ -81,6 +83,7 @@ export function useSessionActivity(
   const [isConfirming, setIsConfirming] = useState(false);
   const [hasConfirmFailed, setHasConfirmFailed] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isMaxDurationWarningDismissed, setIsMaxDurationWarningDismissed] = useState(false);
   const lastReportedAtRef = useRef(Number.NEGATIVE_INFINITY);
 
   // Toute session reçue passe ici, prolongation comme relecture : on écarte
@@ -99,8 +102,12 @@ export function useSessionActivity(
       const end = resolveSessionEnd(fresh.expiry, receivedAt);
       const isNear = isSessionEndNear(end, receivedAt);
       setWarningCause(isNear ? end.cause : null);
-      // L'échec d'un « Oui » ne vaut que pour l'avertissement en cours.
-      if (!isNear) setHasConfirmFailed(false);
+      // L'échec d'un « Oui », comme « Continuer », ne vaut que pour
+      // l'avertissement en cours.
+      if (!isNear) {
+        setHasConfirmFailed(false);
+        setIsMaxDurationWarningDismissed(false);
+      }
     },
     [queryClient],
   );
@@ -203,15 +210,20 @@ export function useSessionActivity(
       .finally(() => setIsConfirming(false));
   };
 
+  // Seul l'affichage est retiré : le minuteur vise toujours la fin, et
+  // « Session expirée » s'ouvre à l'échéance.
+  const dismissMaxDurationWarning = (): void => setIsMaxDurationWarningDismissed(true);
+
   return {
     // Une session finie l'emporte : son dialogue remplace l'avertissement.
     warning:
-      session && warningCause
+      session && warningCause && !isMaxDurationWarningDismissed
         ? { cause: warningCause, maxDurationMs: session.expiry.maxDurationMs }
         : null,
     confirmPresence,
     isConfirming,
     hasConfirmFailed,
     isConfirmed,
+    dismissMaxDurationWarning,
   };
 }

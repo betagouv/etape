@@ -243,6 +243,33 @@ describe("useSessionActivity", () => {
       expect(result.current.warning?.cause).toBe(SESSION_END_CAUSE.MAX_DURATION);
     });
 
+    it("laisse écarter l'avertissement par « Continuer », puis expire à l'échéance", async () => {
+      api.maxEndsAt = Date.now() + 20 * MINUTE_MS;
+      const { result, queryClient } = renderSessionActivity();
+      for (let minute = 0; minute < 18; minute += 1) {
+        await advance(MINUTE_MS);
+        fireEvent.pointerMove(window);
+      }
+      await advance(0);
+      expect(result.current.warning?.cause).toBe(SESSION_END_CAUSE.MAX_DURATION);
+
+      act(() => result.current.dismissMaxDurationWarning());
+      expect(result.current.warning).toBeNull();
+
+      // Une relecture au retour sur l'onglet ne le rouvre pas.
+      await act(async () => {
+        document.dispatchEvent(new Event("visibilitychange"));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(result.current.warning).toBeNull();
+
+      await advance(2 * MINUTE_MS);
+      expect(queryClient.getQueryData(SESSION_END_QUERY_KEY)).toEqual({
+        cause: SESSION_END_CAUSE.MAX_DURATION,
+        durationMs: MAX_DURATION_MS,
+      });
+    });
+
     it("expire la session à la durée maximale, avec sa cause", async () => {
       api.maxEndsAt = Date.now() + 20 * MINUTE_MS;
       const { queryClient } = renderSessionActivity();

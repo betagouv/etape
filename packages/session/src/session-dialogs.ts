@@ -3,6 +3,7 @@ import {
   PRESENCE_CHECK_FAILURE_MESSAGE,
   PRESENCE_CHECK_NOTICE,
   SESSION_END_CAUSE,
+  SESSION_ENDING_DISMISS_LABEL,
   type SessionEndCause,
 } from "@etape/api-client";
 import type { SessionDialogProps } from "@etape/ui/components/session-dialog";
@@ -14,6 +15,7 @@ interface WarningActions {
   confirmPresence: () => void;
   isConfirming: boolean;
   hasConfirmFailed: boolean;
+  dismissMaxDurationWarning: () => void;
 }
 
 type WarningDialog = Omit<SessionDialogProps, "open">;
@@ -32,9 +34,14 @@ const WARNING_DIALOGS: Record<
     },
   }),
   // Rien ne repousse la durée maximale : seule une nouvelle connexion.
-  [SESSION_END_CAUSE.MAX_DURATION]: ({ maxDurationMs }, { reconnectHref }) => ({
+  // « Continuer » laisse finir une saisie jusqu'à l'échéance.
+  [SESSION_END_CAUSE.MAX_DURATION]: (
+    { maxDurationMs },
+    { reconnectHref, dismissMaxDurationWarning },
+  ) => ({
     ...describeSessionEnding(maxDurationMs),
     action: { href: reconnectHref },
+    dismiss: { label: SESSION_ENDING_DISMISS_LABEL, onClick: dismissMaxDurationWarning },
   }),
 };
 

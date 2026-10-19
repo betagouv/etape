@@ -50,6 +50,7 @@ export {
   formatDuration,
   PRESENCE_CHECK_FAILURE_MESSAGE,
   PRESENCE_CHECK_NOTICE,
+  SESSION_ENDING_DISMISS_LABEL,
 } from "./session-messages";
 export {
   isSessionEndNear,

@@ -132,4 +132,32 @@ describe("SessionDialog", () => {
       expect(document.activeElement).toBe(link);
     });
   });
+
+  describe("bouton d'écart", () => {
+    const ENDING_PROPS: SessionDialogProps = {
+      ...PROPS,
+      title: "Votre session se termine bientôt",
+      actionLabel: "Se reconnecter",
+      action: { href: "/api/auth/login?returnTo=%2F" },
+    };
+
+    it("reçoit le focus à l'ouverture, à la place de « Se reconnecter »", () => {
+      render(
+        <SessionDialog {...ENDING_PROPS} dismiss={{ label: "Continuer", onClick: vi.fn() }} />,
+      );
+
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Continuer" }));
+      expect(screen.getByRole("link", { name: "Se reconnecter" })).not.toBeNull();
+    });
+
+    it("écarte le dialogue au clic comme sur Échap", () => {
+      const onClick = vi.fn();
+      render(<SessionDialog {...ENDING_PROPS} dismiss={{ label: "Continuer", onClick }} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+      fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Escape" });
+
+      expect(onClick).toHaveBeenCalledTimes(2);
+    });
+  });
 });

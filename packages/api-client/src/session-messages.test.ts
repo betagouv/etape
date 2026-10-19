@@ -31,7 +31,7 @@ describe("textes des dialogues de session", () => {
 
   it("prévient de la durée maximale, que seule une reconnexion dépasse", () => {
     expect(describeSessionEnding(10 * HOUR_MS).message).toBe(
-      "Elle atteindra dans 2 minutes sa durée maximale de 10 heures. Reconnectez-vous pour en ouvrir une nouvelle.",
+      "Elle atteindra dans 2 minutes sa durée maximale de 10 heures. Continuez le temps de terminer votre saisie, ou reconnectez-vous dès maintenant pour en ouvrir une nouvelle.",
     );
   });
 

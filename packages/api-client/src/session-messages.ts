@@ -41,10 +41,13 @@ export const PRESENCE_CHECK_FAILURE_MESSAGE =
 export function describeSessionEnding(maxDurationMs: number): NoticeContent {
   return {
     title: "Votre session se termine bientôt",
-    message: `Elle atteindra dans ${WARNING_DELAY} sa durée maximale de ${formatDuration(maxDurationMs)}. Reconnectez-vous pour en ouvrir une nouvelle.`,
+    message: `Elle atteindra dans ${WARNING_DELAY} sa durée maximale de ${formatDuration(maxDurationMs)}. Continuez le temps de terminer votre saisie, ou reconnectez-vous dès maintenant pour en ouvrir une nouvelle.`,
     actionLabel: RECONNECT_LABEL,
   };
 }
+
+/** Écarte l'avertissement de durée maximale ; l'échéance, elle, ne bouge pas. */
+export const SESSION_ENDING_DISMISS_LABEL = "Continuer";
 
 const SESSION_END_MESSAGES: Record<SessionEndCause, (duration: string) => string> = {
   [SESSION_END_CAUSE.IDLE]: (duration) =>
