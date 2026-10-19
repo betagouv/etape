@@ -8,9 +8,9 @@ import { FRONT } from "../front.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { sealCookieValue } from "./cookie-cipher.js";
 import { SESSION_POLICY_BY_FRONT } from "./session-policy.js";
-import { SessionService } from "./session.service.js";
+import { FakeSessionRepository } from "./session.repository.fake.js";
 import type { SessionRepository } from "./session.repository.js";
-import type { AccountSession, NewSession } from "./session.types.js";
+import { SessionService } from "./session.service.js";
 
 // Le service est créé en production : noms préfixés.
 const PENDING_LOGIN_COOKIE = "__Host-Http-etape-front-office.txn";
@@ -18,35 +18,6 @@ const SESSION_COOKIE = "__Host-Http-etape-front-office.sid";
 const BACK_OFFICE_SESSION_COOKIE = "__Host-Http-etape-back-office.sid";
 
 const key = randomBytes(32);
-
-/** Rend les sessions telles quelles, même expirées, comme la base. */
-class FakeSessionRepository implements SessionRepository {
-  readonly sessions = new Map<string, NewSession>();
-
-  async createSession(id: string, session: NewSession): Promise<void> {
-    this.sessions.set(id, session);
-  }
-
-  async getSession(id: string): Promise<AccountSession | null> {
-    const session = this.sessions.get(id);
-    return session ? { ...session, sub: "sub" } : null;
-  }
-
-  async extendSession(id: string, idleExpiresAt: number): Promise<void> {
-    const session = this.sessions.get(id);
-    if (session) this.sessions.set(id, { ...session, idleExpiresAt });
-  }
-
-  async deleteSession(id: string): Promise<void> {
-    this.sessions.delete(id);
-  }
-
-  async deleteExpiredSessions(now: number): Promise<void> {
-    for (const [id, session] of this.sessions) {
-      if (session.expiresAt <= now || session.idleExpiresAt <= now) this.sessions.delete(id);
-    }
-  }
-}
 
 class FakeResponse {
   readonly cookies = new Map<string, { value: string; options: CookieOptions }>();
