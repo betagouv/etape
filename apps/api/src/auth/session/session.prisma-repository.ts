@@ -3,18 +3,8 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service.js";
 import { Prisma } from "../../generated/prisma/client.ts";
 import { isFront } from "../front.js";
+import { SessionRepository } from "./session.repository.js";
 import type { AccountSession, NewSession } from "./session.types.js";
-
-/**
- * Le navigateur ne reçoit qu'un identifiant opaque : la session reste révocable,
- * et l'`id_token` ne transite pas dans un cookie, où il dépasserait les 4 Ko.
- */
-export abstract class SessionStore {
-  abstract createSession(id: string, session: NewSession): Promise<void>;
-  abstract getSession(id: string): Promise<AccountSession | null>;
-  abstract extendSession(id: string, idleExpiresAt: number): Promise<void>;
-  abstract deleteSession(id: string): Promise<void>;
-}
 
 /**
  * Sessions en base plutôt qu'en mémoire : elles survivent au redéploiement, et
@@ -22,7 +12,7 @@ export abstract class SessionStore {
  * redémarrable sans déconnecter tout le monde.
  */
 @Injectable()
-export class PrismaSessionStore extends SessionStore {
+export class PrismaSessionRepository extends SessionRepository {
   constructor(private readonly prisma: PrismaService) {
     super();
   }

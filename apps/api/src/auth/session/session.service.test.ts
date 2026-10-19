@@ -9,7 +9,7 @@ import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { sealCookieValue } from "./cookie-cipher.js";
 import { SESSION_POLICY_BY_FRONT } from "./session-policy.js";
 import { SessionService } from "./session.service.js";
-import type { SessionStore } from "./session.store.js";
+import type { SessionRepository } from "./session.repository.js";
 import type { AccountSession, NewSession } from "./session.types.js";
 
 // Le service est créé en production : noms préfixés.
@@ -19,7 +19,7 @@ const BACK_OFFICE_SESSION_COOKIE = "__Host-Http-etape-back-office.sid";
 
 const key = randomBytes(32);
 
-class FakeSessionStore implements SessionStore {
+class FakeSessionRepository implements SessionRepository {
   readonly sessions = new Map<string, NewSession>();
 
   async createSession(id: string, session: NewSession): Promise<void> {
@@ -63,7 +63,7 @@ function createRequest(cookies: Record<string, string>): Request {
 }
 
 function createService(
-  store: SessionStore,
+  repository: SessionRepository,
   nodeEnv: Env["NODE_ENV"] = NODE_ENV.PRODUCTION,
 ): SessionService {
   const values: Partial<Env> = {
@@ -72,7 +72,7 @@ function createService(
   };
   const config = { get: (name: keyof Env) => values[name] } as unknown as ConfigService<Env, true>;
 
-  return new SessionService(store, config);
+  return new SessionService(repository, config);
 }
 
 const pendingLogin = {
@@ -83,12 +83,12 @@ const pendingLogin = {
 };
 
 describe("SessionService", () => {
-  let store: FakeSessionStore;
+  let repository: FakeSessionRepository;
   let service: SessionService;
 
   beforeEach(() => {
-    store = new FakeSessionStore();
-    service = createService(store);
+    repository = new FakeSessionRepository();
+    service = createService(repository);
   });
 
   afterEach(() => {
@@ -204,13 +204,13 @@ describe("SessionService", () => {
       const secondId = secondResponse.cookies.get(SESSION_COOKIE)!.value;
 
       expect(secondId).not.toBe(firstId);
-      expect(store.sessions.has(firstId)).toBe(false);
-      expect(store.sessions.has(secondId)).toBe(true);
+      expect(repository.sessions.has(firstId)).toBe(false);
+      expect(repository.sessions.has(secondId)).toBe(true);
     });
 
     it("efface le cookie de session avant de toucher au stockage", async () => {
       const response = new FakeResponse();
-      vi.spyOn(store, "getSession").mockRejectedValue(new Error("base injoignable"));
+      vi.spyOn(repository, "getSession").mockRejectedValue(new Error("base injoignable"));
 
       await expect(
         service.closeSession(
@@ -234,11 +234,11 @@ describe("SessionService", () => {
       );
 
       expect(closed?.idToken).toBe(newSession.idToken);
-      expect(store.sessions.has(id)).toBe(false);
+      expect(repository.sessions.has(id)).toBe(false);
     });
 
     it("ignore un identifiant de session qui n'est pas un UUID", async () => {
-      const getSession = vi.spyOn(store, "getSession");
+      const getSession = vi.spyOn(repository, "getSession");
 
       expect(
         await service.readSession(
@@ -275,7 +275,7 @@ describe("SessionService", () => {
       );
 
       expect(closed).toBeNull();
-      expect(store.sessions.has(id)).toBe(true);
+      expect(repository.sessions.has(id)).toBe(true);
     });
 
     it("nomme le cookie selon le front, que localhost partage entre les ports", async () => {
@@ -301,7 +301,7 @@ describe("SessionService", () => {
 
         const [cookie] = response.cookies.values();
         const policy = SESSION_POLICY_BY_FRONT[front];
-        expect(store.sessions.get(cookie!.value)).toMatchObject({
+        expect(repository.sessions.get(cookie!.value)).toMatchObject({
           expiresAt: policy.maxDurationMs,
           idleExpiresAt: policy.idleTimeoutMs,
         });
@@ -318,7 +318,7 @@ describe("SessionService", () => {
       const request = createRequest({
         [SESSION_COOKIE]: openResponse.cookies.get(SESSION_COOKIE)!.value,
       });
-      const extendSession = vi.spyOn(store, "extendSession");
+      const extendSession = vi.spyOn(repository, "extendSession");
 
       vi.advanceTimersByTime(30 * 1000);
       const early = await service.recordActivity(
@@ -408,7 +408,7 @@ describe("SessionService", () => {
     });
 
     it("garde en local des noms sans préfixe, sans Secure", async () => {
-      const localService = createService(store, NODE_ENV.DEVELOPMENT);
+      const localService = createService(repository, NODE_ENV.DEVELOPMENT);
       const response = new FakeResponse();
       await localService.openSession(
         createRequest({}),

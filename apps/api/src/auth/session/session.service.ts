@@ -9,7 +9,7 @@ import { FRONT, type Front } from "../front.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { openCookieValue, sealCookieValue } from "./cookie-cipher.js";
 import { isActivityWriteDue, SESSION_POLICY_BY_FRONT } from "./session-policy.js";
-import { SessionStore } from "./session.store.js";
+import { SessionRepository } from "./session.repository.js";
 import type { AccountSession, NewSession, PendingLogin } from "./session.types.js";
 
 /**
@@ -59,7 +59,7 @@ export class SessionService {
   private readonly cookieKey: Buffer;
 
   constructor(
-    private readonly store: SessionStore,
+    private readonly sessionRepository: SessionRepository,
     private readonly config: ConfigService<Env, true>,
   ) {
     const encodedKey: string = config.get("COOKIE_ENCRYPTION_KEY", { infer: true });
@@ -135,13 +135,13 @@ export class SessionService {
     session: Omit<NewSession, "expiresAt" | "idleExpiresAt">,
   ): Promise<void> {
     const previous = await this.readSession(request, session.front);
-    if (previous) await this.store.deleteSession(previous.id);
+    if (previous) await this.sessionRepository.deleteSession(previous.id);
 
     const id = randomUUID();
     const policy = SESSION_POLICY_BY_FRONT[session.front];
     const now = Date.now();
 
-    await this.store.createSession(id, {
+    await this.sessionRepository.createSession(id, {
       ...session,
       expiresAt: now + policy.maxDurationMs,
       idleExpiresAt: now + policy.idleTimeoutMs,
@@ -162,7 +162,7 @@ export class SessionService {
     if (!isActivityWriteDue(session.idleExpiresAt, policy, now)) return session;
 
     const idleExpiresAt = now + policy.idleTimeoutMs;
-    await this.store.extendSession(session.id, idleExpiresAt);
+    await this.sessionRepository.extendSession(session.id, idleExpiresAt);
 
     return { ...session, idleExpiresAt };
   }
@@ -180,7 +180,7 @@ export class SessionService {
     const id = this.readSessionId(request, front);
     if (!id) return null;
 
-    const session = await this.store.getSession(id);
+    const session = await this.sessionRepository.getSession(id);
     return session?.front === front ? { ...session, id } : null;
   }
 
@@ -198,7 +198,7 @@ export class SessionService {
     const session = await this.readSession(request, front);
     if (!session) return null;
 
-    await this.store.deleteSession(session.id);
+    await this.sessionRepository.deleteSession(session.id);
     return session;
   }
 
