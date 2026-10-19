@@ -3,6 +3,7 @@
 import { CircleArrowDownIcon } from "lucide-react";
 
 import { Button } from "@etape/ui/components/button";
+import { TooltipProvider } from "@etape/ui/components/tooltip";
 
 import { INITIAL_RESULTAT_COUNT } from "../domain/selection";
 import type { ResultatAffiche } from "../domain/types";
@@ -19,16 +20,18 @@ export function ResultsList({ resultats }: ResultsListProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <ul className="flex list-none flex-col gap-4">
-        {visibleResultats.map((resultat, index) => (
-          <li key={resultat.id}>
-            <ResultCard
-              resultat={resultat}
-              headingRef={index === INITIAL_RESULTAT_COUNT ? firstRevealedRef : undefined}
-            />
-          </li>
-        ))}
-      </ul>
+      <TooltipProvider>
+        <ul className="flex list-none flex-col gap-4">
+          {visibleResultats.map((resultat, index) => (
+            <li key={resultat.id}>
+              <ResultCard
+                resultat={resultat}
+                headingRef={index === INITIAL_RESULTAT_COUNT ? firstRevealedRef : undefined}
+              />
+            </li>
+          ))}
+        </ul>
+      </TooltipProvider>
 
       {hiddenCount > 0 && (
         <Button
