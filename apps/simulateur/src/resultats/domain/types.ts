@@ -23,6 +23,16 @@ export const CATEGORIE_LABELS: Record<Categorie, string> = {
   dispositif: "Dispositif",
 };
 
+/** Définition du tag, affichée dans son tooltip. */
+export const CATEGORIE_DEFINITIONS: Record<Categorie, string> = {
+  interlocuteur:
+    "Organisme ou institution intervenant dans le parcours professionnel du bénéficiaire, en assurant une mission d’information, d’accompagnement, d’instruction, de financement ou de gestion d’un dispositif.",
+  outil:
+    "Un levier d’action est une ressource, une prestation ou un droit permettant à un bénéficiaire d’explorer, de construire, de valider ou de mettre en œuvre son projet professionnel.",
+  dispositif:
+    "Un dispositif est une solution mobilisable par un bénéficiaire pour répondre à un besoin d’évolution, de reconversion ou de sécurisation de son parcours professionnel. Il s’inscrit dans un cadre réglementaire défini et peut ouvrir des droits à un accompagnement, à un financement, à une formation ou à une compensation de revenus.",
+};
+
 /** Une carte du catalogue. */
 export interface Resultat {
   /** Identifiant stable (clé de rendu, et repère dans le ticket). */
