@@ -54,6 +54,22 @@ describe("Tooltip", () => {
     expect(screen.queryByRole("tooltip")).toBeNull();
   });
 
+  it("décrit le déclencheur une seule fois, fermé comme ouvert", () => {
+    renderTooltips();
+    const trigger = screen.getByRole("button", { name: "Outil" });
+    const description = (): string | undefined =>
+      trigger
+        .getAttribute("aria-describedby")
+        ?.split(" ")
+        .map((id) => document.getElementById(id)?.textContent)
+        .join(" ");
+
+    expect(description()).toBe("Définition Outil");
+
+    fireEvent.focus(trigger);
+    expect(description()).toBe("Définition Outil");
+  });
+
   it("s'ouvre et se ferme à l'appui, que Radix ignore seul", () => {
     renderTooltips();
     const trigger = screen.getByRole("button", { name: "Dispositif" });
