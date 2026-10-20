@@ -1,0 +1,24 @@
+package-lock.json
+  s_8a338635233e49::t_d8dc45f7aaae9f 3196-3198,3259-3261,3297-3317,8703-8705,8716-8718,8721-8725,10080-10082,10086-10088,10104-10105,10111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c1cae454706231cd72cb5479534b6d47ff8dd262",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_8a338635233e49": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df458b41-29e2-44c7-b3bb-2e955d1996ac",
+        "model": "unknown"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
