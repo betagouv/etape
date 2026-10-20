@@ -1,5 +1,7 @@
 import type { PublicSession, SessionResponse } from "@etape/api-contract";
 
+import type { Front } from "../front.js";
+
 /**
  * État retenu entre le départ vers Keycloak et le retour sur `/callback`. Hors
  * de la session du compte : elle précède toute authentification.
@@ -19,6 +21,8 @@ export interface PendingLogin {
 export interface AccountSession {
   sub: string;
   accountId: string;
+  /** Front sur lequel la session a été ouverte : elle n'est valable que là. */
+  front: Front;
   email?: string;
   identityProvider: string;
   /** Non typée : les champs varient d'un fournisseur d'identité à l'autre. */

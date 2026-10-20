@@ -1,78 +1,96 @@
-import type { ComponentProps, RefObject } from "react";
-import Link from "next/link";
-
+import type { RefObject } from "react";
+import Image from "next/image";
+import { MapPin, PencilLine, RotateCcw } from "lucide-react";
+import { Alert, AlertTitle } from "@etape/ui/components/alert";
 import { Button } from "@etape/ui/components/button";
+import { Card } from "@etape/ui/components/card";
 
-import type { Outcome, OutcomeAction } from "../domain/types";
+import { buildOutcomeRecap } from "@/resultats/domain/recap";
 
-/**
- * L'action métier dit son rôle, le design system dit à quoi il ressemble.
- * `outline-primary` et `size="xl"` (44 px, la hauteur des maquettes) couvrent
- * exactement le besoin : rien à redéfinir par `className`.
- */
-const ACTION_VARIANTS: Record<
-  OutcomeAction["variant"],
-  NonNullable<ComponentProps<typeof Button>["variant"]>
-> = {
-  primary: "default",
-  secondary: "outline-primary",
-};
+import type { Answers, Outcome } from "../domain/types";
+import { TextParts } from "./TextParts";
+
+// `basePath` ne s'applique pas au `src` de `next/image` : voir `app/page.tsx`.
+const assets = process.env.NEXT_PUBLIC_BASE_PATH;
 
 interface OutcomeScreenProps {
   outcome: Outcome;
-  /**
-   * Retour à la dernière question répondue. Un écran terminal reste atteint
-   * par une réponse : sans porte de sortie, une faute de clic obligerait à
-   * tout recommencer.
-   */
-  onBack?: () => void;
-  headingRef?: RefObject<HTMLHeadingElement | null>;
+  answers: Answers;
+  /** Retour à la dernière question répondue : une faute de clic ne condamne pas la simulation. */
+  onBack: () => void;
+  onRestart: () => void;
+  headingRef: RefObject<HTMLHeadingElement | null>;
 }
 
-export function OutcomeScreen({ outcome, onBack, headingRef }: OutcomeScreenProps) {
+/** Fin de la simulation quand les réponses sortent du champ du simulateur. */
+export function OutcomeScreen({
+  outcome,
+  answers,
+  onBack,
+  onRestart,
+  headingRef,
+}: OutcomeScreenProps) {
+  const causes = buildOutcomeRecap(outcome, answers);
+
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:px-6">
-      <div className="flex w-full max-w-[600px] flex-col items-center gap-8 md:gap-12">
-        <div className="flex w-full flex-col gap-3 text-center md:gap-4">
+    <main className="flex flex-1 flex-col items-center overflow-y-auto px-6 py-8 md:justify-center md:py-16">
+      <div className="flex w-full max-w-2xl flex-col items-center gap-8">
+        <Image
+          src={`${assets}/illustration-fin-simulation.svg`}
+          alt=""
+          width={280}
+          height={219}
+          className="h-auto w-52 md:w-70"
+        />
+
+        <div className="flex w-full flex-col gap-4 text-center">
+          <p className="text-body-lg text-primary leading-none font-semibold uppercase">
+            Fin de la simulation
+          </p>
           <h1
             ref={headingRef}
             tabIndex={-1}
-            className="text-foreground focus-visible:outline-ring rounded-sm text-2xl leading-8 font-bold focus-visible:outline-2 focus-visible:outline-offset-4 md:text-[28px] md:leading-9"
+            className="font-heading text-heading-sm md:text-heading-md text-foreground focus-visible:outline-ring rounded-sm text-balance focus-visible:outline-2 focus-visible:outline-offset-4"
           >
             {outcome.title}
           </h1>
-          {outcome.text && (
-            <p className="text-content-secondary text-sm leading-5 md:text-base md:leading-6">
-              {outcome.text}
-            </p>
+          <p className="text-body-lg text-muted-foreground">
+            <TextParts parts={outcome.text} emphasisClassName="text-foreground" />
+          </p>
+
+          {causes.length > 0 && (
+            <Card className="flex-row flex-wrap items-center justify-between gap-4 px-5 py-4 text-start">
+              <div className="flex min-w-0 items-center gap-3.5">
+                <div className="bg-secondary flex size-13 shrink-0 items-center justify-center rounded-md">
+                  <MapPin aria-hidden="true" className="text-primary size-8" />
+                </div>
+                <dl className="flex min-w-0 flex-col gap-2">
+                  {causes.map((entry) => (
+                    <div key={entry.fieldName}>
+                      <dt className="text-body text-muted-foreground">{entry.question}</dt>
+                      <dd className="text-body-lg text-foreground font-medium">{entry.answer}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={onBack}>
+                <PencilLine aria-hidden="true" />
+                Modifier ma réponse
+              </Button>
+            </Card>
           )}
         </div>
 
-        <div className="flex w-full max-w-[400px] flex-col gap-4 md:gap-6">
-          {outcome.actions.map((action) => (
-            <Button
-              key={action.label}
-              asChild
-              variant={ACTION_VARIANTS[action.variant]}
-              size="xl"
-              className="w-full"
-            >
-              <Link href={action.href}>{action.label}</Link>
-            </Button>
-          ))}
+        {outcome.advice && (
+          <Alert variant="emphasis">
+            <AlertTitle>{outcome.advice}</AlertTitle>
+          </Alert>
+        )}
 
-          {onBack && (
-            <Button
-              type="button"
-              variant="outline-primary"
-              size="xl"
-              onClick={onBack}
-              className="w-full"
-            >
-              Modifier ma réponse
-            </Button>
-          )}
-        </div>
+        <Button type="button" size="responsive" onClick={onRestart}>
+          <RotateCcw aria-hidden="true" />
+          Recommencer la simulation
+        </Button>
       </div>
     </main>
   );

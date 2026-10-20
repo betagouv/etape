@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import type { Request } from "express";
 
+import type { FrontRequest } from "../front.guard.js";
 import { SessionService } from "./session.service.js";
 import type { AccountSession } from "./session.types.js";
 
@@ -21,7 +22,8 @@ export class SessionGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const session = await this.sessions.readSession(request);
+    // `FrontGuard`, global, a déjà reconnu le front.
+    const session = await this.sessions.readSession(request, (request as FrontRequest).front);
 
     if (!session) throw new UnauthorizedException();
 

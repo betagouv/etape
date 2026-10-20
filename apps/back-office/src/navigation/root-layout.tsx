@@ -1,4 +1,4 @@
-import { buildLoginUrl, describeAuthFlowFailure, useSessionExpired } from "@etape/api-client";
+import { buildLoginUrl, describeStartupNotice, useSessionExpired } from "@etape/api-client";
 import { NoticeScreen } from "@etape/ui/components/notice-screen";
 import { SessionExpiredDialog } from "@etape/ui/components/session-expired-dialog";
 import { Outlet, rootRouteId, useRouteContext } from "@tanstack/react-router";
@@ -10,12 +10,13 @@ export function RootLayout() {
   const { access } = useRouteContext({ from: rootRouteId });
   const { isExpired, reconnect } = useSessionExpired(API_BASE_URL);
 
-  if (access.kind === "auth-flow-failure") {
+  // Échec du parcours, ou cookie de session non conservé : un clic, jamais une
+  // redirection automatique, sans quoi l'on bouclerait.
+  const notice = describeStartupNotice(access);
+  if (notice) {
     return (
       <NoticeScreen
-        {...describeAuthFlowFailure(access.failure)}
-        // Un clic, jamais une redirection automatique : si le service de
-        // connexion reste en panne, on ne boucle pas.
+        {...notice}
         onAction={() => window.location.assign(buildLoginUrl(API_BASE_URL, "/"))}
       />
     );
