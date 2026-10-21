@@ -7,10 +7,11 @@
 #   web  site et fronts   api   NestJS
 #   auth proxy Keycloak   keycloak  IAM + thème ETAPE
 
-# pnpm, à la version du champ `packageManager`, que corepack lit et télécharge.
+# pnpm à la version du champ `packageManager`, installé par npm comme en CI :
+# derrière le shim de corepack, les tâches turbo restaient bloquées des minutes.
 FROM node:22-alpine AS pnpm
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-RUN corepack enable pnpm
+COPY package.json /tmp/package.json
+RUN npm install -g "$(node -p "require('/tmp/package.json').packageManager")"
 
 # Seuls les manifestes avant l'installation : la couche n'est invalidée qu'au
 # changement d'une dépendance. Chaque espace de travail doit y figurer.
