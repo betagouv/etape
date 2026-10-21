@@ -33,9 +33,11 @@ jobs:
       # qu'on vient de poser. Ni pnpm/action-setup, qui passe par le npm du Node
       # embarqué par le runner, incomplet sur OPS01 ; ni le shim de corepack,
       # qui bloquait six minutes les premières tâches turbo. Pas de cache : le
-      # runner est auto-hébergé, le store pnpm reste d'un job à l'autre.
+      # runner est auto-hébergé, le store pnpm reste d'un job à l'autre. Le Node
+      # posé par setup-node l'est aussi : `corepack disable` retire un shim qu'un
+      # job précédent y aurait laissé, et sur lequel npm refuserait d'écrire.
       - name: Setup pnpm
-        run: npm install -g "$(node -p "require('./package.json').packageManager")" && pnpm --version
+        run: corepack disable pnpm && npm install -g "$(node -p "require('./package.json').packageManager")" && pnpm --version
 
       - name: Install (lockfile)
         run: pnpm install --frozen-lockfile
