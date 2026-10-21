@@ -1,0 +1,144 @@
+apps/keycloak-theme/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 19,21-22,43
+packages/prettier-config/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 11
+Dockerfile
+  s_590a0e2d496db2::t_e0d504d81348b8 10-15,17,20,34,42,48-49,52,54-55,60,62-63,65-66,104
+.claude/skills/review-pr/SKILL.md
+  s_590a0e2d496db2::t_03d762c13730a0 39
+.github/pull_request_template.md
+  s_590a0e2d496db2::t_03d762c13730a0 21-22
+apps/back-office/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 20-22
+docs/previews.md
+  s_590a0e2d496db2::t_03d762c13730a0 146-147
+packages/session/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 19-21
+AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 22
+README.md
+  s_590a0e2d496db2::t_4fc3db8da29b73 34-35
+  s_590a0e2d496db2::t_03d762c13730a0 40,49,52,55,61-62
+apps/simulateur/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 14,23-24
+packages/prettier-config/index.js
+  s_590a0e2d496db2::t_8002a2eb792124 1-2
+  s_590a0e2d496db2::t_d26fb152a54f08 12-15,25
+apps/keycloak-theme/src/main.tsx
+  s_590a0e2d496db2::t_c9cf2e7dca86d5 18-19
+apps/site/src/components/site-footer.figma.tsx
+  s_590a0e2d496db2::t_03d762c13730a0 10
+.claude/settings.json
+  s_590a0e2d496db2::t_03d762c13730a0 5-7
+apps/site/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 29-31
+docs/cartographie.md
+  s_590a0e2d496db2::t_03d762c13730a0 5,117,122,128,150-154,158,160
+  s_590a0e2d496db2::t_c9cf2e7dca86d5 84,148-149,155-156
+packages/api-contract/package.json
+  s_590a0e2d496db2::t_eba7972d517d4f 20
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 18-19
+.claude/hooks/eslint-fix.sh
+  s_590a0e2d496db2::t_03d762c13730a0 8,30
+apps/simulateur/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 29-31
+apps/front-office/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 15-17,29-30
+packages/ui/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 37-38
+packages/api-client/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 16,21-22
+  s_590a0e2d496db2::t_eba7972d517d4f 23
+scripts/check-workspace-map.mjs
+  s_590a0e2d496db2::t_03d762c13730a0 14
+docs/authentification.md
+  s_590a0e2d496db2::t_03d762c13730a0 454,467,469-470,473
+packages/prettier-config/README.md
+  s_590a0e2d496db2::t_03d762c13730a0 22-23
+apps/front-office/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 20-22
+.prettierignore
+  s_590a0e2d496db2::t_c9cf2e7dca86d5 10
+.husky/pre-commit
+  s_590a0e2d496db2::t_03d762c13730a0 1
+apps/site/src/components/nav-link.figma.tsx
+  s_590a0e2d496db2::t_03d762c13730a0 14
+docs/conventions/architecture-api.md
+  s_590a0e2d496db2::t_c9cf2e7dca86d5 22
+  s_590a0e2d496db2::t_03d762c13730a0 754
+apps/keycloak-theme/README.md
+  s_590a0e2d496db2::t_03d762c13730a0 15,21,29
+apps/keycloak-theme/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 16,25-26
+  s_590a0e2d496db2::t_03d762c13730a0 9
+packages/eslint-config/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 22
+apps/simulateur/README.md
+  s_590a0e2d496db2::t_03d762c13730a0 11,14,17,20,23
+.github/dependabot.yml
+  s_590a0e2d496db2::t_c9cf2e7dca86d5 3-4,7,13-17
+pnpm-workspace.yaml
+  s_590a0e2d496db2::t_6e1f9cfec5d0bd 1-11,13,16
+  s_590a0e2d496db2::t_175c88570d5a92 12,14-15
+apps/api/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 35-37
+apps/site/src/components/site-header.figma.tsx
+  s_590a0e2d496db2::t_03d762c13730a0 13
+docs/conventions/stack-front.md
+  s_590a0e2d496db2::t_03d762c13730a0 328,364
+docs/conventions/outillage-agent.md
+  s_590a0e2d496db2::t_03d762c13730a0 51,108,127-129,152,157
+  s_590a0e2d496db2::t_e34c2441032974 106,110
+  s_590a0e2d496db2::t_c9cf2e7dca86d5 34
+packages/session/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 16-18,28-29
+packages/api-client/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 19-20
+.github/actions/deployer-statique/action.yml
+  s_590a0e2d496db2::t_4baab641b262ac 25-28,33,37,41
+.claude/skills/composant-ui/SKILL.md
+  s_590a0e2d496db2::t_03d762c13730a0 52
+docker-compose.yml
+  s_590a0e2d496db2::t_03d762c13730a0 109
+docs/donnees.md
+  s_590a0e2d496db2::t_03d762c13730a0 183-184,203
+apps/back-office/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 15-17,29-30
+.github/workflows/ci.yml
+  s_590a0e2d496db2::t_4baab641b262ac 27-30,35,38,41,44,47,50,53,56,59
+apps/api/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 21-24
+packages/ui/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 21-22
+apps/site/README.md
+  s_590a0e2d496db2::t_03d762c13730a0 11,14,17,20,23,35,42,49
+package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 20-29,32,38
+apps/site/package.json
+  s_590a0e2d496db2::t_1ff009a6f3c4b9 17,24-25
+packages/api-contract/AGENTS.md
+  s_590a0e2d496db2::t_03d762c13730a0 19-20
+pnpm-lock.yaml
+  s_590a0e2d496db2::t_6ac54877eeb6c8 1-11802
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c6635182a0f6ff7ee3e91320671fe90dd528f60e",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_590a0e2d496db2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "287be6f0-73ca-4dec-ac24-b9b36353dd6a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
