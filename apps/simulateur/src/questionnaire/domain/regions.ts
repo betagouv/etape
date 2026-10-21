@@ -1,13 +1,12 @@
 // Régions administratives — liste fermée, source unique du produit.
 //
-// La région est demandée directement en Q6 : c'est la maille des organismes
+// La région est demandée directement en Q7 : c'est la maille des organismes
 // (Transitions Pro, programmes régionaux de formation), et elle ne bouge pas. Elle
 // est donc écrite ici plutôt que cherchée sur une API : une liste de 18 entrées
 // figées ne justifie ni requête réseau, ni état de chargement, ni panne
 // possible.
 //
-// L'ordre du tableau est celui de l'affichage : métropole puis outre-mer,
-// chacune par ordre alphabétique.
+// Ordre d'affichage : alphabétique, outre-mer mêlé, la saisie filtrant par le début du nom.
 //
 // Seules les RÉGIONS y figurent. Saint-Pierre-et-Miquelon, Saint-Barthélemy et
 // Saint-Martin sont des collectivités d'outre-mer, pas des régions : elles ont
@@ -21,8 +20,6 @@ import type { Answers, AnswerValue } from "./types";
 export interface Region {
   code: string;
   nom: string;
-  /** Les collectivités d'outre-mer sont groupées à part dans la liste. */
-  outreMer?: true;
 }
 
 export const REGIONS = [
@@ -32,18 +29,18 @@ export const REGIONS = [
   { code: "24", nom: "Centre-Val de Loire" },
   { code: "94", nom: "Corse" },
   { code: "44", nom: "Grand Est" },
+  { code: "01", nom: "Guadeloupe" },
+  { code: "03", nom: "Guyane" },
   { code: "32", nom: "Hauts-de-France" },
   { code: "11", nom: "Île-de-France" },
+  { code: "04", nom: "La Réunion" },
+  { code: "02", nom: "Martinique" },
+  { code: "06", nom: "Mayotte" },
   { code: "28", nom: "Normandie" },
   { code: "75", nom: "Nouvelle-Aquitaine" },
   { code: "76", nom: "Occitanie" },
   { code: "52", nom: "Pays de la Loire" },
   { code: "93", nom: "Provence-Alpes-Côte d'Azur" },
-  { code: "01", nom: "Guadeloupe", outreMer: true },
-  { code: "03", nom: "Guyane", outreMer: true },
-  { code: "04", nom: "La Réunion", outreMer: true },
-  { code: "02", nom: "Martinique", outreMer: true },
-  { code: "06", nom: "Mayotte", outreMer: true },
 ] as const satisfies readonly Region[];
 
 /**
@@ -76,4 +73,36 @@ function regionOf(value: AnswerValue | undefined): RegionCode | null {
  */
 export function regionFromAnswers(answers: Answers): RegionCode | null {
   return regionOf(answers[FIELD_REGION_TRAVAIL]) ?? regionOf(answers[FIELD_REGION_RESIDENCE]);
+}
+
+/** Sans accent ni majuscule ; tirets et apostrophes → espace. */
+function normalize(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[\s'’-]+/g, " ")
+    .trim();
+}
+
+/** Article en tête de nom, que la saisie peut omettre (« Réunion »). */
+const ARTICLE = /^(la|le|les|l) /;
+
+function searchKeys(region: Region): string[] {
+  const nom = normalize(region.nom);
+  return [nom, nom.replace(ARTICLE, "")];
+}
+
+/** Par début de nom : chercher au milieu proposerait la moitié de la liste dès la 1re lettre. */
+export function findRegions(query: string): readonly Region[] {
+  const wanted = normalize(query);
+  if (wanted === "") return REGIONS;
+  return REGIONS.filter((region) => searchKeys(region).some((key) => key.startsWith(wanted)));
+}
+
+/** Le nom complet tapé, aux accents et majuscules près, vaut un choix. */
+export function findRegionByName(text: string): RegionCode | null {
+  const wanted = normalize(text);
+  if (wanted === "") return null;
+  return REGIONS.find((region) => searchKeys(region).includes(wanted))?.code ?? null;
 }

@@ -11,7 +11,7 @@ import { walkFlow } from "@/questionnaire/domain/flow";
 import { monthLabel, parseMonth } from "@/questionnaire/domain/month";
 import { findQuestion } from "@/questionnaire/domain/questions";
 import { regionName } from "@/questionnaire/domain/regions";
-import type { Answers, AnswerValue, Field, Option } from "@/questionnaire/domain/types";
+import type { Answers, AnswerValue, Field, Option, Outcome } from "@/questionnaire/domain/types";
 
 export interface RecapEntry {
   questionId: string;
@@ -35,7 +35,7 @@ function optionText(options: Option[], value: AnswerValue | undefined): string {
 }
 
 /** Réponse telle qu'elle se lit — vide quand le champ n'a pas été renseigné. */
-function answerText(field: Field, value: AnswerValue | undefined): string {
+export function answerText(field: Field, value: AnswerValue | undefined): string {
   switch (field.type) {
     case "radio":
     case "checkbox":
@@ -46,11 +46,13 @@ function answerText(field: Field, value: AnswerValue | undefined): string {
     }
     case "number": {
       if (typeof value !== "string" || value === "") return "";
-      return field.suffix ? `${value} ${field.suffix}` : value;
+      return field.formatValue?.(Number(value)) ?? value;
     }
     case "region":
       return typeof value === "string" ? (regionName(value) ?? "") : "";
     case "toggle":
+      // Une case qui répond à la place d'un autre champ ne se lit que cochée.
+      if (field.summary !== undefined) return value === true ? field.summary : "";
       // Décochée EST une réponse : la taire laisserait croire à un oubli.
       return value === true ? "Oui" : "Non";
   }
@@ -60,16 +62,22 @@ export function buildRecap(answers: Answers): RecapEntry[] {
   return walkFlow(answers).path.flatMap((id) => {
     const question = findQuestion(id);
     if (!question) return [];
-    return question.fields
+    const answered = question.fields
       .filter((field) => isFieldVisible(field, answers))
-      .map((field) => ({
-        questionId: id,
-        fieldName: field.name,
-        // Le libellé du champ quand il en a un : sur un écran qui porte
-        // plusieurs champs (Q3, Q6), le titre de la question les confondrait.
-        question: field.label ?? question.title,
-        answer: answerText(field, answers[field.name]),
-      }))
+      .map((field) => ({ field, answer: answerText(field, answers[field.name]) }))
       .filter((entry) => entry.answer !== "");
+    // Plusieurs réponses (Q3, Q7) : le libellé du champ les distingue ; une seule se lit sous le titre.
+    const several = answered.length > 1;
+    return answered.map(({ field, answer }) => ({
+      questionId: id,
+      fieldName: field.name,
+      question: several ? (field.label ?? question.title) : question.title,
+      answer,
+    }));
   });
+}
+
+/** Réponses qui ont mené à un écran terminal. */
+export function buildOutcomeRecap(outcome: Outcome, answers: Answers): RecapEntry[] {
+  return buildRecap(answers).filter((entry) => outcome.causes.includes(entry.questionId));
 }

@@ -77,6 +77,7 @@ Référentiel des noms métier du projet. Règles d'usage : `docs/conventions/no
 | Profil                         | `profil`                | Tout ce que le catalogue a besoin de savoir d'un parcours                                                                        | `apps/simulateur/src/resultats/domain/profil.ts`    |
 | Résultat                       | `resultat`              | Carte proposée à l'issue du questionnaire : un interlocuteur, un outil ou un dispositif que les réponses rendent pertinent       | `apps/simulateur/src/resultats/domain/types.ts`     |
 | Catégorie de résultat          | `categorie`             | Interlocuteur, outil ou dispositif ; l'ordre est l'ordre d'affichage                                                             | `apps/simulateur/src/resultats/domain/types.ts`     |
+| Résultat prioritaire           | `prioritaire`           | Carte maîtresse, mise en avant en première position : Démission-Reconversion, à défaut le CEP, sinon aucune                      | `apps/simulateur/src/resultats/domain/selection.ts` |
 | Catalogue                      | `catalogue`             | Ensemble des résultats possibles, une entrée par carte                                                                           | `apps/simulateur/src/resultats/domain/catalogue.ts` |
 | Barème                         | `bareme`                | à compléter (terme présent seulement dans un libellé du site)                                                                    | `apps/site/src/lib/footer.ts`                       |
 
