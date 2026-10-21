@@ -24,15 +24,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # Version lue dans le champ `packageManager` du `package.json`.
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: pnpm
+
+      # pnpm par corepack, à la version du champ `packageManager`. Pas de
+      # pnpm/action-setup : il s'installe avec le npm du Node embarqué par le
+      # runner, incomplet sur OPS01. Pas de cache non plus : le runner est
+      # auto-hébergé, le store pnpm reste d'un job à l'autre.
+      - name: Setup pnpm
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: 0
+        run: corepack enable pnpm && pnpm --version
 
       - name: Install (lockfile)
         run: pnpm install --frozen-lockfile
