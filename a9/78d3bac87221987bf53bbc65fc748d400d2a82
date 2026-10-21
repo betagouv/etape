@@ -1,0 +1,18 @@
+.github/actions/deployer-statique/action.yml
+  h_99d85a1b622bfd 31-32
+.github/workflows/ci.yml
+  h_99d85a1b622bfd 33-34
+Dockerfile
+  h_99d85a1b622bfd 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a978d3bac87221987bf53bbc65fc748d400d2a82",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
