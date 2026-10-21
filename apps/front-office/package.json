@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@etape/api-client": "*",
+    "@etape/session": "*",
     "@etape/ui": "*",
     "@fontsource-variable/geist": "^5.3.0",
     "@hookform/resolvers": "^5.9.2",

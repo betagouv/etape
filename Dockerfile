@@ -23,6 +23,7 @@ COPY packages/api-contract/package.json packages/api-contract/
 COPY packages/api-client/package.json packages/api-client/
 COPY packages/eslint-config/package.json packages/eslint-config/
 COPY packages/prettier-config/package.json packages/prettier-config/
+COPY packages/session/package.json packages/session/
 COPY packages/ui/package.json packages/ui/
 
 RUN npm ci

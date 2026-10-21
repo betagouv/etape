@@ -18,6 +18,7 @@ flowchart LR
   end
   subgraph packages["packages/"]
     ui["ui<br/>design system"]
+    session["session<br/>session des SPA"]
     client["api-client<br/>axios + TanStack Query"]
     contract["api-contract<br/>contrats zod (vide)"]
   end
@@ -30,6 +31,8 @@ flowchart LR
   theme["apps/keycloak-theme<br/>JAR Keycloakify"]
 
   site & simulateur & fo & bo & theme --> ui
+  fo & bo --> session
+  session --> client & ui
   fo & bo --> client
   contract -. prévu .-> api
   contract -. prévu .-> client
@@ -55,6 +58,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | `apps/keycloak-theme`      | Écrans de connexion et e-mails de Keycloak                                | Toute personne qui se connecte | Keycloakify 11 → JAR `dist_keycloak/` ; **pas un serveur** | —        | Mature                             |
 | `packages/ui`              | Design system unique : shadcn/ui + tokens Tailwind                        | Toutes les apps React          | Sources TS, sans build                                     | —        | Mature                             |
 | `packages/api-client`      | Couche HTTP des SPA : `createHttpClient`, `ApiError`, `createQueryClient` | FO, BO                         | Sources TS, axios + TanStack Query                         | —        | Socle, aucun hook métier           |
+| `packages/session`         | Session commune des SPA : garde, inactivité, « Session expirée »          | FO, BO                         | Sources TS, TanStack Router + Query                        | —        | En place                           |
 | `packages/api-contract`    | Contrats de route partagés front/API (méthode, chemin, schémas zod)       | API, FO, BO (prévu)            | Sources TS, ne dépend que de zod                           | —        | **Squelette vide volontaire**      |
 | `packages/eslint-config`   | Presets ESLint `base`, `next`, `react-internal`                           | Tous les workspaces            | JS                                                         | —        | Stable                             |
 | `packages/prettier-config` | Configuration Prettier partagée                                           | Tout le dépôt                  | JS                                                         | —        | Stable                             |
@@ -79,6 +83,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | Une route métier, de bout en bout                              | 1. `packages/api-contract` (contrat zod) → 2. `apps/api/src/<module>/` (contrôleur, service, repository) → 3. FO ou BO (TanStack Query sur `api-client`) | `architecture-api.md`, skill `convention-nommage`              |
 | Une table, une colonne, une migration                          | `apps/api/prisma/schema.prisma`, puis `npm run db:migrate --workspace=@etape/api`                                                                        | **lire `nommage.md` en entier**, `docs/donnees.md`             |
 | Le parcours de connexion, la session, le compte                | `apps/api/src/auth/`, `apps/api/src/account/`                                                                                                            | `docs/authentification.md`                                     |
+| La session dans FO et BO (garde, inactivité, session expirée)  | `packages/session/src/` ; la logique sans React (échéances, messages, 401) dans `packages/api-client/src/`                                               | `docs/authentification.md`                                     |
 | Un écran de connexion ou un e-mail (inscription, mot de passe) | `apps/keycloak-theme/src/login/pages/`, `apps/keycloak-theme/src/email/`                                                                                 | README du thème, section 5 ci-dessous                          |
 | Un client OIDC, une URI de redirection, FranceConnect          | `keycloak/realms/etape-realm.json`                                                                                                                       | `docs/authentification.md`                                     |
 | L'appel HTTP commun (401, erreurs, cookie)                     | `packages/api-client/src/http-client.ts`                                                                                                                 | `stack-front.md` décision 12                                   |

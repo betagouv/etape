@@ -9,7 +9,7 @@ SPA qui portera l'espace connecté du **bénéficiaire** (`beneficiaire`) : dép
 ## Ici / ailleurs
 
 - Ici : les écrans, les routes et la logique d'écran de cette app.
-- Ailleurs : un écran pour l'instructeur → `apps/back-office` ; un composant ou une variante → `packages/ui` (skill `composant-ui`) ; l'appel HTTP commun → `packages/api-client` ; le contrat d'une route → `packages/api-contract`, puis `apps/api` (voir la route métier de bout en bout, `docs/cartographie.md` section 3).
+- Ailleurs : un écran pour l'instructeur → `apps/back-office` ; la session (garde de démarrage, inactivité, « Session expirée », écrans d'erreur) → `packages/session` ; un composant ou une variante → `packages/ui` (skill `composant-ui`) ; l'appel HTTP commun → `packages/api-client` ; le contrat d'une route → `packages/api-contract`, puis `apps/api` (voir la route métier de bout en bout, `docs/cartographie.md` section 3).
 
 ## Lancer et vérifier
 
@@ -26,9 +26,9 @@ Pas de script `test` pour l'instant.
 
 ## Où vivent les choses
 
-- `src/main.tsx` — providers (`QueryClientProvider`, `RouterProvider`).
-- `src/navigation/` — `router.ts` et `routes.tsx` (`createRootRoute` / `createRoute`). Pas de routage par fichiers : `tsc -b` tourne avant Vite et ne trouverait pas `routeTree.gen.ts` (`stack-front.md`, décision 12).
-- `src/lib/http-client.ts` — instance axios issue de `createHttpClient` (`packages/api-client`) ; `src/lib/query-client.ts`.
+- `src/main.tsx` — monte `SessionApp` (`packages/session`) : cache, routeur et région `role="status"`.
+- `src/navigation/` — `router.ts` (contexte du routeur : `apiBaseUrl`, `httpClient`, `queryClient` ; `AppErrorScreen` par défaut) et `routes.tsx`, dont chaque route s'accroche à `sessionRootRoute`. Pas de routage par fichiers : `tsc -b` tourne avant Vite et ne trouverait pas `routeTree.gen.ts` (`stack-front.md`, décision 12).
+- `src/lib/clients.ts` — `httpClient` et `queryClient`, reliés par `createSessionClients` (`packages/api-client`) : un 401 expire la session.
 - `src/App.tsx` — écran de démonstration, à remplacer.
 
 ## Conventions
@@ -39,11 +39,9 @@ Pas de script `test` pour l'instant.
 
 ## État et pièges
 
-- **Scaffold** : un seul écran de démonstration, aucun appel à l'API. Ne pas le prendre pour un modèle — le code de référence du front est `apps/simulateur`.
-- Le premier appel à l'API ne passera pas tel quel :
-  - `VITE_API_BASE_URL` de `.env.example` n'a pas le préfixe `/api` de l'API (`http://localhost:3002/api`) ;
-  - le CORS de l'API n'autorise que `FRONT_BASE_URL` (le site, port 3000) ;
-  - les URI de redirection après déconnexion du realm Keycloak ne couvrent pas ce port.
-- `onUnauthorized` (401) ne fait qu'un rechargement de page en attendant la vraie redirection vers Keycloak.
-- `VITE_API_BASE_URL` est figée au build (déclarée dans `turbo.json`).
-- Cette app n'est pas encore construite ni servie par le déploiement (`Dockerfile`, nginx).
+- **Scaffold** : un seul écran de démonstration ; seule la session appelle l'API. Ne pas le prendre pour un modèle — le code de référence du front est `apps/simulateur`.
+- Toute l'app est derrière la connexion : sans session, la garde de `sessionRootRoute` part vers le formulaire de Keycloak. Il faut l'API et `docker compose up -d` (`docs/authentification.md`).
+- `VITE_API_BASE_URL` est relative (`/api`) et figée au build (déclarée dans `turbo.json`). En local, le proxy de Vite la relaie à l'API sur la même origine : pas de CORS.
+- Le proxy de `vite.config.ts` garde sa forme objet : la forme courte réécrit l'en-tête `Host`, auquel l'API reconnaît le front (421 sinon).
+- Port fixe (`strictPort`) : l'API et le realm Keycloak attendent ce port au retour de la connexion et de la déconnexion.
+- Aucune durée de session ici : la règle de chaque front vit dans l'API (`SESSION_POLICY_BY_FRONT`).
