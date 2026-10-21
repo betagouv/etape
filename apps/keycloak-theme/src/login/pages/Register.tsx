@@ -2,7 +2,7 @@ import { Button } from "@etape/ui/components/button";
 import { useUserProfileForm } from "keycloakify/login/lib/useUserProfileForm";
 import { useMemo, useState } from "react";
 
-import { AltchaField } from "../components/altcha";
+import { AltchaField } from "../components/altcha/altcha-field";
 import { CheckboxField, FieldError } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
 import { AccountSwitch } from "../components/prose";

@@ -1,7 +1,7 @@
 import { Button } from "@etape/ui/components/button";
 import { Mail } from "lucide-react";
 
-import { AltchaField } from "../components/altcha";
+import { AltchaField } from "../components/altcha/altcha-field";
 import { Field, FieldError, TextInput } from "../components/form";
 import { BackToLogin } from "../components/prose";
 import type { EtapePageProps } from "./PageProps";
