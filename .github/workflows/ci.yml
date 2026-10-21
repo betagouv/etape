@@ -30,9 +30,8 @@ jobs:
           node-version-file: .nvmrc
 
       # pnpm à la version du champ `packageManager`, installé par le npm du Node
-      # qu'on vient de poser. Ni pnpm/action-setup, qui passe par le npm du Node
-      # embarqué par le runner, incomplet sur OPS01 ; ni le shim de corepack,
-      # qui bloquait six minutes les premières tâches turbo. Pas de cache : le
+      # qu'on vient de poser. Pas de pnpm/action-setup, qui passe par le npm du
+      # Node embarqué par le runner, incomplet sur OPS01. Pas de cache : le
       # runner est auto-hébergé, le store pnpm reste d'un job à l'autre. Le Node
       # posé par setup-node l'est aussi : `corepack disable` retire un shim qu'un
       # job précédent y aurait laissé, et sur lequel npm refuserait d'écrire.

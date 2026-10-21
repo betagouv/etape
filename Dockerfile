@@ -7,8 +7,7 @@
 #   web  site et fronts   api   NestJS
 #   auth proxy Keycloak   keycloak  IAM + thème ETAPE
 
-# pnpm à la version du champ `packageManager`, installé par npm comme en CI :
-# derrière le shim de corepack, les tâches turbo restaient bloquées des minutes.
+# pnpm à la version du champ `packageManager`, installé par npm comme en CI.
 FROM node:22-alpine AS pnpm
 COPY package.json /tmp/package.json
 RUN npm install -g "$(node -p "require('/tmp/package.json').packageManager")"
