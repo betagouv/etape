@@ -1,0 +1,24 @@
+Dockerfile
+  s_590a0e2d496db2::t_527b34cc721693 10-11,13-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c4cc7eab25e40786967e4b60ccfcccef8c81dae2",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_590a0e2d496db2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "287be6f0-73ca-4dec-ac24-b9b36353dd6a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
