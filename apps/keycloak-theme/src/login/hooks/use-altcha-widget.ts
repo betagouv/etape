@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import type { I18n } from "../../../i18n";
-import { describeCheckbox, focusCheckbox } from "../checkbox";
+import type { I18n } from "../i18n";
+import { describeCheckbox, focusCheckbox } from "../components/altcha/checkbox";
 import {
   ANNOUNCEMENTS,
   BLOCKED_SUBMIT_RESPONSES,
@@ -9,7 +9,7 @@ import {
   getVisibleError,
   type BlockedSubmitKey,
   type WidgetState,
-} from "../widget-state";
+} from "../components/altcha/widget-state";
 
 /** Écouteurs posés par React sur `<altcha-widget>` : en minuscules, React 19 les branche tels quels sur un custom element. */
 export interface AltchaWidgetHandlers {

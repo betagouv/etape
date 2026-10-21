@@ -82,7 +82,7 @@ démarre pas de façon fiable dans ce contexte et a été retirée plutôt que l
 
 ## Case « Je ne suis pas un robot »
 
-`src/login/components/altcha/` affiche le widget ALTCHA sur l'inscription et
+`src/login/components/altcha/`, avec le hook `src/login/hooks/use-altcha-widget.ts`, affiche le widget ALTCHA sur l'inscription et
 le « mot de passe oublié », avec le défi que pose l'extension Keycloak
 (`altchaChallenge`, voir [`keycloak/extensions/altcha`](../../keycloak/extensions/altcha/README.md)).
 Le widget est empaqueté dans le thème : aucun script ne vient d'un CDN.

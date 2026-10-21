@@ -1,7 +1,7 @@
 import type { I18n } from "../../i18n";
 import { FieldError } from "../form";
 import { AltchaWidget } from "./altcha-widget";
-import { useAltchaWidget } from "./hooks/use-altcha-widget";
+import { useAltchaWidget } from "../../hooks/use-altcha-widget";
 import { ERROR_ID } from "./checkbox";
 
 interface AltchaFieldProps {

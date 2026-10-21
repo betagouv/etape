@@ -4,7 +4,7 @@ import type {} from "altcha/types/react";
 
 import { FieldError } from "../form";
 import { ERROR_ID } from "./checkbox";
-import type { AltchaWidgetHandlers } from "./hooks/use-altcha-widget";
+import type { AltchaWidgetHandlers } from "../../hooks/use-altcha-widget";
 
 const ALTCHA_FIELD = "altcha";
 
