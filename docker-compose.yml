@@ -81,6 +81,7 @@ services:
       # Absente sur un dépôt fraîchement cloné : Keycloak démarre alors avec son
       # thème par défaut.
       - ./apps/keycloak-theme/dist_keycloak:/theme:ro
+      - ./keycloak/extensions/altcha/target:/altcha:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -107,6 +108,15 @@ services:
         else
           echo "thème ETAPE non construit — Keycloak servira son thème par défaut."
           echo "  npm run build -- --filter=@etape/keycloak-theme pour l'obtenir."
+        fi
+
+        rm -f /providers/etape-keycloak-altcha.jar
+        if [ -f /altcha/etape-keycloak-altcha.jar ]; then
+          cp /altcha/etape-keycloak-altcha.jar /providers/
+          echo "extension ALTCHA installée."
+        else
+          echo "extension ALTCHA non construite — inscription et « mot de passe oublié » en erreur."
+          echo "  mvn -f keycloak/extensions/altcha/pom.xml package pour l'obtenir."
         fi
 
   # Applique après import ce qu'un fichier de realm ne peut pas porter. Deux
@@ -139,6 +149,8 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
+    volumes:
+      - ./deploy/keycloak-altcha.sh:/opt/keycloak/bin/etape-altcha.sh:ro
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -174,6 +186,9 @@ services:
             echo "  l'API ne pourra pas s'y connecter (voir .env.example)."
           fi
         done
+
+        bash /opt/keycloak/bin/etape-altcha.sh \
+          || echo "altcha : flows non configurés — l'extension est-elle construite ?"
 
         if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then
           $$KCADM update identity-provider/instances/franceconnect -r etape \
