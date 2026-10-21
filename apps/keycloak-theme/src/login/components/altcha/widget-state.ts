@@ -36,3 +36,12 @@ export const BLOCKED_SUBMIT_RESPONSES: Record<WidgetState, BlockedSubmitResponse
   [WIDGET_STATE.ERROR]: { messageKey: "etapeAltchaFailed", shouldFocusCheckbox: true },
   [WIDGET_STATE.CODE]: { messageKey: "etapeAltchaRequired", shouldFocusCheckbox: true },
 };
+
+/** Un envoi bloqué l'emporte ; l'erreur du serveur ne vaut que tant que la case n'a pas été cochée. */
+export function getVisibleError(
+  state: WidgetState,
+  blockedSubmitError: string | undefined,
+  serverError: string | undefined,
+): string | undefined {
+  return blockedSubmitError ?? (state === WIDGET_STATE.UNVERIFIED ? serverError : undefined);
+}

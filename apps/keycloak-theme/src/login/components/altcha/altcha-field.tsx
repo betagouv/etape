@@ -2,7 +2,7 @@ import type { I18n } from "../../i18n";
 import { FieldError } from "../form";
 import { AltchaWidget } from "./altcha-widget";
 import { useAltchaWidget } from "./hooks/use-altcha-widget";
-import { ERROR_ID } from "./hooks/use-checkbox";
+import { ERROR_ID } from "./checkbox";
 
 interface AltchaFieldProps {
   challenge: string | undefined;
@@ -35,11 +35,11 @@ interface AltchaChallengeProps {
 
 function AltchaChallenge(props: AltchaChallengeProps) {
   const { challenge, serverError, i18n } = props;
-  const { widgetRef, error, announcement } = useAltchaWidget(serverError, i18n);
+  const { handlers, error, announcement } = useAltchaWidget(serverError, i18n);
 
   return (
     <AltchaWidget
-      widgetRef={widgetRef}
+      handlers={handlers}
       challenge={challenge}
       language={i18n.currentLanguage.languageTag}
       error={error}

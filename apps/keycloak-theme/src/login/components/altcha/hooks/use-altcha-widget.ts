@@ -1,12 +1,25 @@
-import type { RefObject } from "react";
+import { useState } from "react";
 
 import type { I18n } from "../../../i18n";
-import { ANNOUNCEMENTS, WIDGET_STATE } from "../widget-state";
-import { useCheckbox } from "./use-checkbox";
-import { useWidgetState } from "./use-widget-state";
+import { describeCheckbox, focusCheckbox } from "../checkbox";
+import {
+  ANNOUNCEMENTS,
+  BLOCKED_SUBMIT_RESPONSES,
+  WIDGET_STATE,
+  getVisibleError,
+  type BlockedSubmitKey,
+  type WidgetState,
+} from "../widget-state";
+
+/** Écouteurs posés par React sur `<altcha-widget>` : en minuscules, React 19 les branche tels quels sur un custom element. */
+export interface AltchaWidgetHandlers {
+  onload: (event: Event) => void;
+  onstatechange: (event: Event) => void;
+  oninvalidCapture: (event: Event) => void;
+}
 
 export interface UseAltchaWidgetResult {
-  widgetRef: RefObject<HTMLElement | null>;
+  handlers: AltchaWidgetHandlers;
   error: string | undefined;
   announcement: string;
 }
@@ -17,17 +30,40 @@ export function useAltchaWidget(
   i18n: I18n,
 ): UseAltchaWidgetResult {
   const { msgStr } = i18n;
+  const [state, setState] = useState<WidgetState>(WIDGET_STATE.UNVERIFIED);
+  const [blockedSubmitKey, setBlockedSubmitKey] = useState<BlockedSubmitKey | undefined>(undefined);
 
-  const { widgetRef, state, blockedSubmitKey } = useWidgetState();
   const blockedSubmitError = blockedSubmitKey === undefined ? undefined : msgStr(blockedSubmitKey);
-  const visibleServerError = state === WIDGET_STATE.UNVERIFIED ? serverError : undefined;
-  const error = blockedSubmitError ?? visibleServerError;
+  const error = getVisibleError(state, blockedSubmitError, serverError);
   const announcementKey = ANNOUNCEMENTS[state];
 
-  useCheckbox(widgetRef, error !== undefined, serverError !== undefined);
+  const handlers: AltchaWidgetHandlers = {
+    onload: (event) => {
+      const widget = event.currentTarget as HTMLElement;
+      const hasServerError = serverError !== undefined;
+      describeCheckbox(widget, hasServerError);
+      if (hasServerError) focusCheckbox(widget);
+    },
+    onstatechange: (event) => {
+      const nextState = (event as CustomEvent<{ state: WidgetState }>).detail.state;
+      setState(nextState);
+      setBlockedSubmitKey(undefined);
+      const hasError = getVisibleError(nextState, undefined, serverError) !== undefined;
+      describeCheckbox(event.currentTarget as HTMLElement, hasError);
+    },
+    oninvalidCapture: (event) => {
+      event.preventDefault();
+      const response = BLOCKED_SUBMIT_RESPONSES[state];
+      setBlockedSubmitKey(response.messageKey);
+      describeCheckbox(event.currentTarget as HTMLElement, true);
+      if (response.shouldFocusCheckbox) {
+        (event.target as HTMLElement).focus();
+      }
+    },
+  };
 
   return {
-    widgetRef,
+    handlers,
     error,
     announcement: announcementKey === undefined ? "" : msgStr(announcementKey),
   };
