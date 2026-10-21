@@ -16,8 +16,8 @@ La seule chose que le front et l'API partagent : le **contrat de chaque route** 
 Sources TypeScript sans build, **ne dépend que de zod** : ni NestJS, ni React, ni axios.
 
 ```bash
-npm run lint --workspace=@etape/api-contract
-npm run typecheck --workspace=@etape/api-contract
+pnpm --filter @etape/api-contract run lint
+pnpm --filter @etape/api-contract run typecheck
 ```
 
 ## Où vivent les choses

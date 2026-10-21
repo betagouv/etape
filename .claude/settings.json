@@ -2,9 +2,9 @@
   "permissions": {
     "allow": [
       "mcp__shadcn",
-      "Bash(npm run lint)",
-      "Bash(npm run typecheck)",
-      "Bash(npm run format:check)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm run typecheck)",
+      "Bash(pnpm run format:check)",
       "Bash(gh pr view *)",
       "Bash(gh pr diff *)"
     ]

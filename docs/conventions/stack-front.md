@@ -325,7 +325,7 @@ Le reste des 21 règles ne produit aucune violation — sur les deux apps Next, 
 
 ## Décision 8 — Tests : le domaine et les composants maintenant, l'E2E ensuite
 
-**Il n'existait aucun test du front** au 22 septembre : ni dans `apps/site`, ni dans `apps/simulateur`, ni dans `packages/ui`. Les premiers sont arrivés le 5 octobre 2026, dans `packages/ui` (composants) et `packages/api-client`. L'outillage, lui, existe déjà — `apps/api` est testé avec Vitest, `turbo.json` porte une tâche `test` et la CI lance `npm run test` de façon bloquante. **Il n'y a donc pas d'infrastructure à monter, seulement des tests à écrire** et Vitest à déclarer dans les workspaces du front.
+**Il n'existait aucun test du front** au 22 septembre : ni dans `apps/site`, ni dans `apps/simulateur`, ni dans `packages/ui`. Les premiers sont arrivés le 5 octobre 2026, dans `packages/ui` (composants) et `packages/api-client`. L'outillage, lui, existe déjà — `apps/api` est testé avec Vitest, `turbo.json` porte une tâche `test` et la CI lance `pnpm run test` de façon bloquante. **Il n'y a donc pas d'infrastructure à monter, seulement des tests à écrire** et Vitest à déclarer dans les workspaces du front.
 
 L'arbitrage a tranché le **périmètre**, et il est volontairement en deux temps :
 
@@ -361,7 +361,7 @@ it("n'affiche pas le CEP à un demandeur d'emploi", () => {
 
 </details>
 
-**Condition pour que ça tienne** : elle est déjà remplie côté CI — `npm run test` y est une étape bloquante. Un test de front écrit dans un workspace qui déclare Vitest sera donc exécuté et bloquant dès sa première PR, sans rien ajouter au pipeline.
+**Condition pour que ça tienne** : elle est déjà remplie côté CI — `pnpm run test` y est une étape bloquante. Un test de front écrit dans un workspace qui déclare Vitest sera donc exécuté et bloquant dès sa première PR, sans rien ajouter au pipeline.
 
 ## Décision 9 — Langue de l'interface : français uniquement
 

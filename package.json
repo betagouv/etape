@@ -2,10 +2,6 @@
   "name": "etape",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "prettier": "@etape/prettier-config",
   "scripts": {
     "dev": "turbo run dev",
@@ -21,25 +17,25 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}": "prettier --write",
-    "apps/api/**/*.ts": "npm run lint --workspace=@etape/api -- --fix",
-    "apps/back-office/**/*.{ts,tsx}": "npm run lint --workspace=@etape/back-office -- --fix",
-    "apps/front-office/**/*.{ts,tsx}": "npm run lint --workspace=@etape/front-office -- --fix",
-    "apps/keycloak-theme/**/*.{ts,tsx}": "npm run lint --workspace=@etape/keycloak-theme -- --fix",
-    "apps/simulateur/**/*.{ts,tsx}": "npm run lint --workspace=@etape/simulateur -- --fix",
-    "apps/site/**/*.{ts,tsx}": "npm run lint --workspace=@etape/site -- --fix",
-    "packages/api-client/**/*.ts": "npm run lint --workspace=@etape/api-client -- --fix",
-    "packages/api-contract/**/*.ts": "npm run lint --workspace=@etape/api-contract -- --fix",
-    "packages/session/**/*.{ts,tsx}": "npm run lint --workspace=@etape/session -- --fix",
-    "packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"
+    "apps/api/**/*.ts": "pnpm --filter @etape/api run lint --fix",
+    "apps/back-office/**/*.{ts,tsx}": "pnpm --filter @etape/back-office run lint --fix",
+    "apps/front-office/**/*.{ts,tsx}": "pnpm --filter @etape/front-office run lint --fix",
+    "apps/keycloak-theme/**/*.{ts,tsx}": "pnpm --filter @etape/keycloak-theme run lint --fix",
+    "apps/simulateur/**/*.{ts,tsx}": "pnpm --filter @etape/simulateur run lint --fix",
+    "apps/site/**/*.{ts,tsx}": "pnpm --filter @etape/site run lint --fix",
+    "packages/api-client/**/*.ts": "pnpm --filter @etape/api-client run lint --fix",
+    "packages/api-contract/**/*.ts": "pnpm --filter @etape/api-contract run lint --fix",
+    "packages/session/**/*.{ts,tsx}": "pnpm --filter @etape/session run lint --fix",
+    "packages/ui/**/*.{ts,tsx}": "pnpm --filter @etape/ui run lint --fix"
   },
   "devDependencies": {
-    "@etape/prettier-config": "*",
+    "@etape/prettier-config": "workspace:*",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "turbo": "^2"
   },
-  "packageManager": "npm@11.17.0+sha512.3eeaf18997b11070d313849268b23766b9db0068997dec9471073170fe43fa17f2b4d0337bf0f52330ee2274e7f5754b21b01052742e48f5c9c74d8b1e32ef43",
+  "packageManager": "pnpm@11.28.6",
   "engines": {
     "node": ">=24"
   }

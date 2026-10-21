@@ -7,12 +7,17 @@
 #   web  site et fronts   api   NestJS
 #   auth proxy Keycloak   keycloak  IAM + thème ETAPE
 
-# Seuls les manifestes avant `npm ci` : la couche n'est invalidée qu'au
+# pnpm, à la version du champ `packageManager`, que corepack lit et télécharge.
+FROM node:22-alpine AS pnpm
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable pnpm
+
+# Seuls les manifestes avant l'installation : la couche n'est invalidée qu'au
 # changement d'une dépendance. Chaque espace de travail doit y figurer.
-FROM node:22-alpine AS deps
+FROM pnpm AS deps
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
 COPY apps/site/package.json apps/site/
 COPY apps/simulateur/package.json apps/simulateur/
@@ -26,7 +31,7 @@ COPY packages/prettier-config/package.json packages/prettier-config/
 COPY packages/session/package.json packages/session/
 COPY packages/ui/package.json packages/ui/
 
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 WORKDIR /app
@@ -34,32 +39,33 @@ COPY . .
 
 # `/api` relatif : chaque front relaie lui-même `/api/` vers l'API, sur sa propre
 # origine. Vite fige la valeur dans le bundle.
-RUN VITE_API_BASE_URL=/api npx turbo run build \
+RUN VITE_API_BASE_URL=/api pnpm exec turbo run build \
       --filter=@etape/site --filter=@etape/simulateur \
       --filter=@etape/front-office --filter=@etape/back-office \
       --filter=@etape/api
 RUN node scripts/assemble-static.mjs /srv/static
 
-# Réinstallation plutôt qu'élagage : `npm ci` restaure exactement le verrou, là
-# où `npm prune` laisse ce qu'il ne sait pas rattacher.
+# `pnpm deploy` sort l'API du monorepo : son `package.json` et ses seules
+# dépendances de production, d'après le verrou, dans un dossier autonome.
 FROM deps AS api-deps
 WORKDIR /app
-RUN npm ci --omit=dev --workspace=@etape/api --include-workspace-root
+RUN pnpm --filter @etape/api deploy --prod /srv/api
 
+# Le dossier déployé devient `/app` : `/app/node_modules/.bin/prisma` reste où
+# `api-start.sh` l'attend.
 FROM node:22-alpine AS api
 ENV NODE_ENV=production
 WORKDIR /app
 
-# Manifestes compris : sans le `"type": "module"` d'`apps/api/package.json`, Node
+# Manifeste compris : sans le `"type": "module"` d'`apps/api/package.json`, Node
 # lirait le code émis comme du CommonJS.
-COPY --from=api-deps /app ./
-COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=api-deps /srv/api ./
+COPY --from=build /app/apps/api/dist ./dist
 
-COPY apps/api/prisma ./apps/api/prisma
-COPY apps/api/prisma.config.ts ./apps/api/
+COPY apps/api/prisma ./prisma
+COPY apps/api/prisma.config.ts ./
 COPY --chmod=0755 deploy/api-start.sh /usr/local/bin/etape-api-start.sh
 
-WORKDIR /app/apps/api
 USER node
 EXPOSE 3002
 CMD ["/usr/local/bin/etape-api-start.sh"]
@@ -95,7 +101,7 @@ RUN apk add --no-cache maven
 
 # Sans cache Maven, volontairement : deux services construisent cette cible, et
 # un cache partagé les ferait écrire à deux dans le même dossier.
-RUN npx turbo run build --filter=@etape/keycloak-theme
+RUN pnpm exec turbo run build --filter=@etape/keycloak-theme
 
 # Extension FranceConnect (INSEE). Le broker OIDC générique ne suffit pas :
 # FranceConnect v2 exige un `nonce` d'au moins 32 caractères là où Keycloak en

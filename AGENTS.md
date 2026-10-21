@@ -19,7 +19,7 @@ Monorepo Turborepo. **Quel workspace sert à quoi, pour qui, et où faire quoi :
 
 L'authentification passe par **Keycloak, lancé par Docker avec sa propre base** (`docker compose up -d`), distincte de la base applicative de `apps/api` : voir `docs/cartographie.md`, section 5.
 
-Commandes : `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run format:check`, `npm run check:workspace-map` (tous vérifiés en CI). Pour une seule app : `npm run dev -- --filter=@etape/<nom>`.
+Commandes : `pnpm run dev`, `pnpm run build`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run test`, `pnpm run format:check`, `pnpm run check:workspace-map` (tous vérifiés en CI). Pour une seule app : `pnpm run dev --filter=@etape/<nom>`.
 
 Messages de commit, titres et descriptions de PR : en français. Branches : préfixe anglais + description en français (`feat/mentions-legales`).
 

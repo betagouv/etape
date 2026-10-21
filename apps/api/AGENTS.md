@@ -18,10 +18,10 @@ NestJS 12 (ESM), Prisma 7 + `@prisma/adapter-pg`, PostgreSQL. Port **3002**, pr�
 ```bash
 docker compose up -d                       # app-db, Keycloak et keycloak-db
 cp .env.example .env
-npm run db:migrate --workspace=@etape/api  # à rejouer après chaque migration
-npm run dev -- --filter=@etape/api
-npm run test --workspace=@etape/api        # Vitest, bloquant en CI
-npm run typecheck --workspace=@etape/api
+pnpm --filter @etape/api run db:migrate  # à rejouer après chaque migration
+pnpm run dev --filter=@etape/api
+pnpm --filter @etape/api run test        # Vitest, bloquant en CI
+pnpm --filter @etape/api run typecheck
 ```
 
 `app-db` est la seule base que l'API touche. `keycloak-db` appartient à Keycloak : ne jamais y écrire.

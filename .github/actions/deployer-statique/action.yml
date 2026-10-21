@@ -22,19 +22,23 @@ inputs:
 runs:
   using: composite
   steps:
+    # Version lue dans le champ `packageManager` du `package.json`.
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v6
+
     - name: Setup Node
       uses: actions/setup-node@v7
       with:
         node-version-file: .nvmrc
-        cache: npm
+        cache: pnpm
 
     - name: Install (lockfile)
       shell: bash
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build
       shell: bash
-      run: npx turbo run build --filter=@etape/site --filter=@etape/simulateur
+      run: pnpm exec turbo run build --filter=@etape/site --filter=@etape/simulateur
 
     - name: Assemblage statique
       shell: bash

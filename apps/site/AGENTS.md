@@ -26,9 +26,9 @@ Site vitrine **public** d'ETAPE, plus l'entrée du parcours de connexion : bouto
 Next 16 en export statique (`out/`). Port **3000**. `NEXT_PUBLIC_API_BASE_URL` est figée au build (`http://localhost:3002/api` en dev, `/api` en prod, voir `next.config.ts`).
 
 ```bash
-npm run dev -- --filter=@etape/site
-npm run lint --workspace=@etape/site
-npm run typecheck --workspace=@etape/site
+pnpm run dev --filter=@etape/site
+pnpm --filter @etape/site run lint
+pnpm --filter @etape/site run typecheck
 ```
 
 Le parcours de connexion demande en plus l'API et Keycloak : `docker compose up -d` (voir `docs/authentification.md`). Aucun test pour l'instant.
