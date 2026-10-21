@@ -31,7 +31,7 @@ Les conventions du projet sont écrites dans `docs/conventions/`. Ce document di
 | Stack front      | `stack-front.md`      | —                                                                              | `.claude/rules/react.md` (renvoi)       | —                          |
 | Architecture API | `architecture-api.md` | —                                                                              | `.claude/rules/api.md`                  | —                          |
 | Méthode de revue | —                     | —                                                                              | —                                       | Skill `review-pr`          |
-| Cartographie     | `../cartographie.md`  | `npm run check:workspace-map` (CI)                                             | `AGENTS.md` / `CLAUDE.md` par workspace | —                          |
+| Cartographie     | `../cartographie.md`  | `pnpm run check:workspace-map` (CI)                                            | `AGENTS.md` / `CLAUDE.md` par workspace | —                          |
 
 ## Ce que le lint impose déjà, et qu'on n'avait pas mesuré
 
@@ -48,7 +48,7 @@ Ce qui manquait, et que cette PR change :
 
 **Ce que ce durcissement a coûté, mesuré sur tout le dépôt** : deux corrections, aucune régression. Un type de retour manquant sur `registerPdfFonts`, hérité de la PR #49. Et un `onKeyDown` posé sur un élément non interactif dans `main-nav.tsx` : la règle avait raison sur le fond, puisque la touche Échap ne refermait le menu que si le focus était resté dans le panneau — l'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
 
-> **Leçon d'outillage, apprise en se trompant.** La première mesure, faite avec `turbo run lint`, avait conclu « aucune violation » : c'était un résultat servi par le **cache** de turbo, calculé avant le changement de configuration. Une vérification de ce genre se fait avec `--force`, ou en appelant le workspace directement (`npm run lint --workspace=@etape/site`). Un cache qui répond « tout va bien » est un piège d'autant plus efficace qu'il est rapide.
+> **Leçon d'outillage, apprise en se trompant.** La première mesure, faite avec `turbo run lint`, avait conclu « aucune violation » : c'était un résultat servi par le **cache** de turbo, calculé avant le changement de configuration. Une vérification de ce genre se fait avec `--force`, ou en appelant le workspace directement (`pnpm --filter @etape/site run lint`). Un cache qui répond « tout va bien » est un piège d'autant plus efficace qu'il est rapide.
 
 **Pourquoi pas le preset `jsx-a11y` complet** : le plugin n'est pas une dépendance déclarée de `@etape/eslint-config`, il arrive par `eslint-config-next`. Activer ses règles **par leur nom** fonctionne dans `nextConfig`, car le plugin y est déjà enregistré ; importer son preset exigerait de le déclarer en dépendance directe. **L'arbitrage a tranché pour la liste explicite** : plus lisible, sans nouvelle dépendance, et chaque règle activée l'est parce qu'on a su dire ce qu'elle attrape.
 
@@ -103,11 +103,11 @@ Les `AGENTS.md` par workspace suivent la même logique, à l'échelle d'un dossi
 
 ### Automatisations
 
-- **`lint-staged`** ne lançait que Prettier ; il lance désormais aussi `eslint --fix` sur les `.ts` et `.tsx`, **une entrée par workspace** (`npm run lint --workspace=@etape/… -- --fix`). Le détour par npm n'est pas cosmétique : lint-staged exécute ses commandes depuis la racine, où ESLint ne trouve aucune configuration, puisque chaque app et chaque package a la sienne. Passer par le workspace place le répertoire de travail au bon endroit. **C'est le garde-fou qui compte** : il s'applique à tout le monde, à chaque commit.
+- **`lint-staged`** ne lançait que Prettier ; il lance désormais aussi `eslint --fix` sur les `.ts` et `.tsx`, **une entrée par workspace** (`pnpm --filter @etape/… run lint --fix`). Le détour par pnpm n'est pas cosmétique : lint-staged exécute ses commandes depuis la racine, où ESLint ne trouve aucune configuration, puisque chaque app et chaque package a la sienne. Passer par le workspace place le répertoire de travail au bon endroit. **C'est le garde-fou qui compte** : il s'applique à tout le monde, à chaque commit.
 - **Hook `PostToolUse`** (`.claude/settings.json`) : après chaque écriture d'un `.ts`/`.tsx` par l'agent, `.claude/hooks/eslint-fix.sh` corrige ce qui est corrigeable. Il ne remplace pas `lint-staged` ; il évite simplement de laisser des écarts derrière soi en cours de session. **L'arbitrage a décidé de le garder** — c'était le point le plus discutable de la PR, puisque `lint-staged` suffirait et couvre tout le monde. Les deux coexistent donc, avec des rôles distincts : le hook travaille pendant la session, `lint-staged` est le garde-fou du commit. Si le hook devient gênant, c'est lui qu'on retire, pas `lint-staged`.
-- **Permissions** : les commandes de vérification déjà utilisées en boucle (`npm run lint`, `typecheck`, `format:check`, `gh pr view`) sont autorisées d'avance, pour ne plus interrompre une session pour les valider une à une.
+- **Permissions** : les commandes de vérification déjà utilisées en boucle (`pnpm run lint`, `typecheck`, `format:check`, `gh pr view`) sont autorisées d'avance, pour ne plus interrompre une session pour les valider une à une.
 
-<details><summary><strong>Exemple — pourquoi <code>lint-staged</code> passe par npm, et pas directement par <code>eslint</code></strong></summary>
+<details><summary><strong>Exemple — pourquoi <code>lint-staged</code> passe par pnpm, et pas directement par <code>eslint</code></strong></summary>
 
 La version évidente **ne fonctionne pas** :
 
@@ -124,9 +124,9 @@ ESLint couldn't find an eslint.config.(js|mjs|cjs) file.
 La version qui fonctionne place le répertoire de travail dans le workspace :
 
 ```json
-"apps/simulateur/**/*.{ts,tsx}": "npm run lint --workspace=@etape/simulateur -- --fix",
-"apps/site/**/*.{ts,tsx}": "npm run lint --workspace=@etape/site -- --fix",
-"packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"
+"apps/simulateur/**/*.{ts,tsx}": "pnpm --filter @etape/simulateur run lint --fix",
+"apps/site/**/*.{ts,tsx}": "pnpm --filter @etape/site run lint --fix",
+"packages/ui/**/*.{ts,tsx}": "pnpm --filter @etape/ui run lint --fix"
 ```
 
 Une entrée par workspace — les neuf qui ont un script `lint` y sont désormais, `apps/api`, `apps/keycloak-theme`, les deux apps Vite et les deux packages API compris. Un workspace oublié ici est un workspace qui commite sans `eslint --fix`.
@@ -149,12 +149,12 @@ esac
 [ -f "$fichier" ] || exit 0
 
 cd "$(dirname "$fichier")" || exit 0
-npx --no-install eslint --fix "$fichier" >/dev/null 2>&1
+pnpm exec eslint --fix "$fichier" >/dev/null 2>&1
 
 exit 0
 ```
 
-Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour une erreur que `npm run lint` signalera de toute façon. Son seul rôle est d'éviter de laisser derrière soi des écarts que `--fix` sait régler.
+Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour une erreur que `pnpm run lint` signalera de toute façon. Son seul rôle est d'éviter de laisser derrière soi des écarts que `--fix` sait régler.
 
 </details>
 

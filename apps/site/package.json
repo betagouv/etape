@@ -14,15 +14,15 @@
     "figma:check": "figma connect publish --dry-run --exit-on-unreadable-files"
   },
   "dependencies": {
-    "@etape/ui": "*",
+    "@etape/ui": "workspace:*",
     "lucide-react": "^1.59.0",
     "next": "16.4.2",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@etape/eslint-config": "*",
-    "@etape/prettier-config": "*",
+    "@etape/eslint-config": "workspace:*",
+    "@etape/prettier-config": "workspace:*",
     "@figma/code-connect": "^1.4.9",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.4",

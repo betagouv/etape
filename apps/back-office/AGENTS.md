@@ -17,9 +17,9 @@ Vite 8 + React 19, TanStack Router (routes déclarées en code) et TanStack Quer
 
 ```bash
 cp .env.example .env
-npm run dev -- --filter=@etape/back-office
-npm run lint --workspace=@etape/back-office
-npm run typecheck --workspace=@etape/back-office
+pnpm run dev --filter=@etape/back-office
+pnpm --filter @etape/back-office run lint
+pnpm --filter @etape/back-office run typecheck
 ```
 
 Pas de script `test` pour l'instant.

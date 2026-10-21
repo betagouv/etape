@@ -31,12 +31,13 @@ mais un thème Keycloak, construit en JAR et servi par Keycloak — voir
 ### Prérequis
 
 - [Node.js](https://nodejs.org/) >= 24 (version épinglée dans `.nvmrc`)
-- npm 11.17.0 (`packageManager` du `package.json`)
+- pnpm 11.28.6 (`packageManager` du `package.json`) : `corepack enable pnpm`, ou
+  `npm install -g pnpm@11.28.6`
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Lancer le projet
@@ -45,20 +46,20 @@ npm install
 # Serveur de développement (toutes les apps via Turborepo)
 # → site : http://localhost:3000 · simulateur : http://localhost:3001
 # → front-office : http://localhost:5173 · back-office : http://localhost:5174
-npm run dev
+pnpm run dev
 
 # Générer l'export statique (SSG) de toutes les apps (dossier out/ de chaque app)
-npm run build
+pnpm run build
 
 # Linter
-npm run lint
+pnpm run lint
 ```
 
 Pour ne cibler qu'une seule application, utilise le filtre Turborepo :
 
 ```bash
-npm run dev -- --filter=@etape/site
-npm run build -- --filter=@etape/simulateur
+pnpm run dev --filter=@etape/site
+pnpm run build --filter=@etape/simulateur
 ```
 
 Le parcours de connexion demande en plus un Keycloak et une base PostgreSQL en

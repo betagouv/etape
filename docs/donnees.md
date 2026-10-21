@@ -180,8 +180,8 @@ contient pas les empreintes de mots de passe de l'IAM.
 
 ```bash
 # Depuis `apps/api`. Après modification de `schema.prisma` :
-npm run db:migrate    # génère la migration et l'applique en local
-npm run db:studio     # inspecter les données
+pnpm run db:migrate    # génère la migration et l'applique en local
+pnpm run db:studio     # inspecter les données
 ```
 
 En déploiement, `deploy/api-start.sh` lance `prisma migrate deploy` **dans le
@@ -200,7 +200,7 @@ au déploiement.
 
 **Le tag `latest` du CLI pointe sur une release candidate de la 8** alors que
 `@prisma/client` en est à la 7. Les versions sont donc figées au caractère près
-dans `package.json` — un `npm i prisma@latest` désaccorderait les deux.
+dans `package.json` — un `pnpm add prisma@latest` désaccorderait les deux.
 
 **Le client est généré en TypeScript**, sous `src/generated/`, et ses imports
 internes portent l'extension `.ts`. `tsconfig.json` les accepte et les réécrit en
