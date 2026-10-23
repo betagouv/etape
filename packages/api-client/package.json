@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@etape/api-contract": "*",
-    "@tanstack/react-query": "^5.104.3",
+    "@tanstack/react-query": "^5.104.5",
     "axios": "^1.20.0"
   },
   "devDependencies": {
