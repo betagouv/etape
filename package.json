@@ -9,6 +9,7 @@
   "prettier": "@etape/prettier-config",
   "scripts": {
     "dev": "turbo run dev",
+    "dev:stack": "node scripts/dev-stack.mjs",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "@etape/prettier-config": "*",
+    "@inquirer/checkbox": "^5.2.7",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",

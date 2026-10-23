@@ -470,6 +470,25 @@ npm run dev            # site, simulateur, front-office, back-office et API
 npm run test           # tests de l'API, du thème, d'ui et d'api-client (Vitest)
 ```
 
+`npm run dev:stack` fait tout cela en une commande :
+
+1. il demande quelles apps lancer, toutes cochées par défaut (`-- --all` saute la
+   question). Un front coché ajoute l'API ; sans l'API, ni Docker ni migrations ;
+2. il vérifie, avant tout lancement, les `.env` des apps retenues contre leurs
+   `.env.example`, l'égalité des secrets `etape-api` entre le `.env` racine et
+   `apps/api/.env`, les ports libres, Docker, la version de Node et l'installation
+   des dépendances. Chaque constat dit quoi faire ; un ✗ annule le lancement ;
+3. il lance `docker compose up -d`, les migrations déjà écrites (`db:deploy`), puis
+   les apps, et affiche leurs adresses quand elles répondent, avec celles de la
+   base et de la console Keycloak et leurs identifiants. Ce qui a été lancé sans
+   être coché dit pourquoi (« requise par… »). Entrée réaffiche les adresses.
+
+Le serveur de `@etape/keycloak-theme` n'est pas proposé : sans port fixé, il
+prendrait le 5173 du front-office. Pas de `docker compose up --wait` :
+`keycloak-providers` et `keycloak-init` s'arrêtent une fois leur travail fait, ce
+que `--wait` compte comme un échec. Pour créer une migration, `db:migrate` reste
+nécessaire.
+
 Après modification du thème, `npm run build -- --filter=@etape/keycloak-theme`
 puis `docker compose up -d keycloak-providers && docker compose restart keycloak` :
 c'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions, un
