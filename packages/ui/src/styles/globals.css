@@ -48,6 +48,7 @@
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
+  --surface-warm: #f4f2ed; /* extension ETAPE : bandeau des en-têtes du front-office (taupe-200) */
 
   /* Actions */
   --primary: #134e4a; /* base/primary (teal-900) */
@@ -100,6 +101,7 @@
   --violet-text: #4c1d95; /* violet-900 — 10:1 sur violet-50 */
 
   /* Contenu — extensions ETAPE */
+  --content-strong: #262626; /* neutral-800 */
   --content-secondary: #404040; /* neutral-700 */
   --content-accent: #134e4a; /* = primary (teal-900) */
   --content-accent-hover: #12423e; /* teal-950 */
@@ -141,6 +143,7 @@
   --card-foreground: #fafafa;
   --popover: #262626;
   --popover-foreground: #fafafa;
+  --surface-warm: #171717; /* neutral-900 */
 
   /* Actions */
   --primary: #e5e5e5; /* base/primary */
@@ -193,6 +196,7 @@
   --violet-text: #c4b5fd; /* violet-300 */
 
   /* Contenu */
+  --content-strong: #e5e5e5; /* neutral-200 */
   --content-secondary: #d4d4d4; /* neutral-300 */
   --content-accent: #e5e5e5; /* = primary */
   --content-accent-hover: #fafafa;
@@ -289,6 +293,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-surface-warm: var(--surface-warm);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -333,6 +338,7 @@
   --color-violet-muted: var(--violet-muted);
   --color-violet-text: var(--violet-text);
 
+  --color-content-strong: var(--content-strong);
   --color-content-secondary: var(--content-secondary);
   --color-content-accent: var(--content-accent);
   --color-content-accent-hover: var(--content-accent-hover);

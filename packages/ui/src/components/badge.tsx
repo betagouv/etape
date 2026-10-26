@@ -24,10 +24,13 @@ const badgeVariants = cva(
         success: "bg-success-muted text-success-text [a&]:hover:bg-success-muted/80",
         warning: "bg-warning-muted text-warning-text [a&]:hover:bg-warning-muted/80",
         violet: "bg-violet-muted text-violet-text [a&]:hover:bg-violet-muted/80",
+        inverse: "bg-background text-content-strong [a&]:hover:bg-background/90",
+        "warning-solid": "bg-warning text-warning-foreground [a&]:hover:bg-warning/90",
       },
       size: {
         default: "py-0.5 [&>svg]:size-3",
         lg: "py-1 [&>svg]:size-4",
+        xl: "min-h-8 gap-2 px-3 py-1 text-sm [&>svg]:size-4",
       },
     },
     defaultVariants: {

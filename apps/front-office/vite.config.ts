@@ -14,6 +14,7 @@ const SECURITY_HEADERS = {
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  resolve: { tsconfigPaths: true },
   preview: { headers: SECURITY_HEADERS },
   server: {
     headers: SECURITY_HEADERS,

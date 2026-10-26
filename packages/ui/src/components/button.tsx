@@ -42,6 +42,8 @@ const buttonVariants = cva(
         sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
         // `Size=sm` du kit (28px) : notre `sm` reste à 32px pour ne pas modifier l'existant.
         compact: "h-7 gap-1 rounded-md px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3.5",
+        // Le `Variant=Link` du kit n'a ni hauteur ni padding.
+        inline: "gap-1.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
