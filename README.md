@@ -31,8 +31,10 @@ mais un thème Keycloak, construit en JAR et servi par Keycloak — voir
 ### Prérequis
 
 - [Node.js](https://nodejs.org/) >= 24 (version épinglée dans `.nvmrc`)
-- pnpm 11.28.6 (`packageManager` du `package.json`) : `corepack enable pnpm`, ou
-  `npm install -g pnpm@11.28.6`
+- pnpm 11.28.6 (`packageManager` du `package.json`) : `npm install -g pnpm@11.28.6`,
+  comme en CI. Un pnpm 10 ou plus déjà installé convient aussi : dans le dépôt, il
+  passe de lui-même à la version de `packageManager`. `corepack enable pnpm` marche
+  encore sous Node 24, mais Node 25 ne livre plus corepack.
 
 ### Installation
 
