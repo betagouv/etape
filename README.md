@@ -43,7 +43,13 @@ pnpm install
 ### Lancer le projet
 
 ```bash
-# Serveur de développement (toutes les apps via Turborepo)
+# Tout l'environnement en une commande : choix des apps, vérification des .env
+# et des ports, pile Docker (bases, Keycloak), migrations, puis les apps.
+# Affiche leurs adresses une fois prêtes. `--all` lance tout sans demander.
+pnpm run dev:stack
+
+# Les apps seules (toutes via Turborepo), si la pile Docker tourne déjà ou
+# n'est pas nécessaire
 # → site : http://localhost:3000 · simulateur : http://localhost:3001
 # → front-office : http://localhost:5173 · back-office : http://localhost:5174
 pnpm run dev
@@ -63,7 +69,7 @@ pnpm run build --filter=@etape/simulateur
 ```
 
 Le parcours de connexion demande en plus un Keycloak et une base PostgreSQL en
-local, lancés par `docker compose up -d` — voir
+local, lancés par `docker compose up -d` (ou par `pnpm run dev:stack`) — voir
 [docs/authentification.md](docs/authentification.md) pour le parcours et
 [docs/donnees.md](docs/donnees.md) pour la base.
 
