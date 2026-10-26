@@ -7,9 +7,10 @@ import { NODE_ENV, type Env } from "../../config/env.js";
 import { FRONT } from "../front.js";
 import { MAX_RETURN_TO_LENGTH } from "../return-to.js";
 import { sealCookieValue } from "./cookie-cipher.js";
+import { SESSION_POLICY_BY_FRONT } from "./session-policy.js";
+import { FakeSessionRepository } from "./session.repository.fake.js";
+import type { SessionRepository } from "./session.repository.js";
 import { SessionService } from "./session.service.js";
-import type { SessionStore } from "./session.store.js";
-import type { AccountSession, NewSession } from "./session.types.js";
 
 // Le service est créé en production : noms préfixés.
 const PENDING_LOGIN_COOKIE = "__Host-Http-etape-front-office.txn";
@@ -17,23 +18,6 @@ const SESSION_COOKIE = "__Host-Http-etape-front-office.sid";
 const BACK_OFFICE_SESSION_COOKIE = "__Host-Http-etape-back-office.sid";
 
 const key = randomBytes(32);
-
-class FakeSessionStore implements SessionStore {
-  readonly sessions = new Map<string, NewSession>();
-
-  async createSession(id: string, session: NewSession): Promise<void> {
-    this.sessions.set(id, session);
-  }
-
-  async getSession(id: string): Promise<AccountSession | null> {
-    const session = this.sessions.get(id);
-    return session ? { ...session, sub: "sub" } : null;
-  }
-
-  async deleteSession(id: string): Promise<void> {
-    this.sessions.delete(id);
-  }
-}
 
 class FakeResponse {
   readonly cookies = new Map<string, { value: string; options: CookieOptions }>();
@@ -57,7 +41,7 @@ function createRequest(cookies: Record<string, string>): Request {
 }
 
 function createService(
-  store: SessionStore,
+  repository: SessionRepository,
   nodeEnv: Env["NODE_ENV"] = NODE_ENV.PRODUCTION,
 ): SessionService {
   const values: Partial<Env> = {
@@ -66,7 +50,7 @@ function createService(
   };
   const config = { get: (name: keyof Env) => values[name] } as unknown as ConfigService<Env, true>;
 
-  return new SessionService(store, config);
+  return new SessionService(repository, config);
 }
 
 const pendingLogin = {
@@ -77,12 +61,12 @@ const pendingLogin = {
 };
 
 describe("SessionService", () => {
-  let store: FakeSessionStore;
+  let repository: FakeSessionRepository;
   let service: SessionService;
 
   beforeEach(() => {
-    store = new FakeSessionStore();
-    service = createService(store);
+    repository = new FakeSessionRepository();
+    service = createService(repository);
   });
 
   afterEach(() => {
@@ -198,13 +182,13 @@ describe("SessionService", () => {
       const secondId = secondResponse.cookies.get(SESSION_COOKIE)!.value;
 
       expect(secondId).not.toBe(firstId);
-      expect(store.sessions.has(firstId)).toBe(false);
-      expect(store.sessions.has(secondId)).toBe(true);
+      expect(repository.sessions.has(firstId)).toBe(false);
+      expect(repository.sessions.has(secondId)).toBe(true);
     });
 
     it("efface le cookie de session avant de toucher au stockage", async () => {
       const response = new FakeResponse();
-      vi.spyOn(store, "getSession").mockRejectedValue(new Error("base injoignable"));
+      vi.spyOn(repository, "getSession").mockRejectedValue(new Error("base injoignable"));
 
       await expect(
         service.closeSession(
@@ -228,11 +212,11 @@ describe("SessionService", () => {
       );
 
       expect(closed?.idToken).toBe(newSession.idToken);
-      expect(store.sessions.has(id)).toBe(false);
+      expect(repository.sessions.has(id)).toBe(false);
     });
 
     it("ignore un identifiant de session qui n'est pas un UUID", async () => {
-      const getSession = vi.spyOn(store, "getSession");
+      const getSession = vi.spyOn(repository, "getSession");
 
       expect(
         await service.readSession(
@@ -269,7 +253,7 @@ describe("SessionService", () => {
       );
 
       expect(closed).toBeNull();
-      expect(store.sessions.has(id)).toBe(true);
+      expect(repository.sessions.has(id)).toBe(true);
     });
 
     it("nomme le cookie selon le front, que localhost partage entre les ports", async () => {
@@ -281,6 +265,117 @@ describe("SessionService", () => {
 
       expect(response.cookies.has(BACK_OFFICE_SESSION_COOKIE)).toBe(true);
       expect(response.cookies.has(SESSION_COOKIE)).toBe(false);
+    });
+
+    it("fixe les deux fins de session selon la règle du front", async () => {
+      vi.useFakeTimers({ now: 0 });
+
+      for (const front of Object.values(FRONT)) {
+        const response = new FakeResponse();
+        await service.openSession(createRequest({}), response as unknown as Response, {
+          ...newSession,
+          front,
+        });
+
+        const [cookie] = response.cookies.values();
+        const policy = SESSION_POLICY_BY_FRONT[front];
+        expect(repository.sessions.get(cookie!.value)).toMatchObject({
+          expiresAt: policy.maxDurationMs,
+          idleExpiresAt: policy.idleTimeoutMs,
+        });
+        // Le cookie vit jusqu'à la fin absolue, pas au-delà.
+        expect(cookie?.options.maxAge).toBe(policy.maxDurationMs);
+      }
+    });
+
+    it("repousse la fin d'inactivité, en écrivant au plus une fois par minute", async () => {
+      vi.useFakeTimers({ now: 0 });
+      const { idleTimeoutMs } = SESSION_POLICY_BY_FRONT[FRONT.FRONT_OFFICE];
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const request = createRequest({
+        [SESSION_COOKIE]: openResponse.cookies.get(SESSION_COOKIE)!.value,
+      });
+      const extendSession = vi.spyOn(repository, "extendSession");
+
+      vi.advanceTimersByTime(30 * 1000);
+      const early = await service.recordActivity(
+        (await service.readSession(request, FRONT.FRONT_OFFICE))!,
+      );
+      expect(extendSession).not.toHaveBeenCalled();
+      expect(early.idleExpiresAt).toBe(idleTimeoutMs);
+
+      vi.advanceTimersByTime(30 * 1000);
+      const due = await service.recordActivity(
+        (await service.readSession(request, FRONT.FRONT_OFFICE))!,
+      );
+      expect(due.idleExpiresAt).toBe(60 * 1000 + idleTimeoutMs);
+      expect((await service.readSession(request, FRONT.FRONT_OFFICE))?.idleExpiresAt).toBe(
+        due.idleExpiresAt,
+      );
+    });
+
+    it("ne repousse jamais la fin absolue", async () => {
+      vi.useFakeTimers({ now: 0 });
+      const { maxDurationMs } = SESSION_POLICY_BY_FRONT[FRONT.FRONT_OFFICE];
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const request = createRequest({
+        [SESSION_COOKIE]: openResponse.cookies.get(SESSION_COOKIE)!.value,
+      });
+
+      vi.advanceTimersByTime(5 * 60 * 1000);
+      const session = await service.recordActivity(
+        (await service.readSession(request, FRONT.FRONT_OFFICE))!,
+      );
+
+      expect(session.expiresAt).toBe(maxDurationMs);
+    });
+
+    it("refuse et supprime une session dont la fin d'inactivité est passée", async () => {
+      vi.useFakeTimers({ now: 0 });
+      const { idleTimeoutMs } = SESSION_POLICY_BY_FRONT[FRONT.FRONT_OFFICE];
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const id = openResponse.cookies.get(SESSION_COOKIE)!.value;
+      const request = createRequest({ [SESSION_COOKIE]: id });
+
+      vi.advanceTimersByTime(idleTimeoutMs - 1);
+      expect(await service.readSession(request, FRONT.FRONT_OFFICE)).not.toBeNull();
+
+      vi.advanceTimersByTime(1);
+      expect(await service.readSession(request, FRONT.FRONT_OFFICE)).toBeNull();
+      expect(repository.sessions.has(id)).toBe(false);
+    });
+
+    it("refuse et supprime une session à sa durée maximale, même active", async () => {
+      vi.useFakeTimers({ now: 0 });
+      const { idleTimeoutMs, maxDurationMs } = SESSION_POLICY_BY_FRONT[FRONT.FRONT_OFFICE];
+      const openResponse = new FakeResponse();
+      await service.openSession(createRequest({}), openResponse as unknown as Response, newSession);
+      const id = openResponse.cookies.get(SESSION_COOKIE)!.value;
+      // Une activité juste avant : la fin d'inactivité est encore loin.
+      await repository.extendSession(id, maxDurationMs + idleTimeoutMs);
+
+      vi.advanceTimersByTime(maxDurationMs);
+
+      expect(
+        await service.readSession(createRequest({ [SESSION_COOKIE]: id }), FRONT.FRONT_OFFICE),
+      ).toBeNull();
+      expect(repository.sessions.has(id)).toBe(false);
+    });
+
+    it("purge les sessions expirées à chaque connexion", async () => {
+      vi.useFakeTimers({ now: 1_000 });
+      const deleteExpiredSessions = vi.spyOn(repository, "deleteExpiredSessions");
+
+      await service.openSession(
+        createRequest({}),
+        new FakeResponse() as unknown as Response,
+        newSession,
+      );
+
+      expect(deleteExpiredSessions).toHaveBeenCalledWith(1_000);
     });
   });
 
@@ -337,7 +432,7 @@ describe("SessionService", () => {
     });
 
     it("garde en local des noms sans préfixe, sans Secure", async () => {
-      const localService = createService(store, NODE_ENV.DEVELOPMENT);
+      const localService = createService(repository, NODE_ENV.DEVELOPMENT);
       const response = new FakeResponse();
       await localService.openSession(
         createRequest({}),

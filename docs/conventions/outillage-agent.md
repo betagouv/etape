@@ -21,16 +21,17 @@ Les conventions du projet sont écrites dans `docs/conventions/`. Ce document di
 
 ## Où vit chaque convention
 
-| Convention       | Document              | Niveau 1 — bloquant                                                            | Niveau 2 — règle                  | Niveau 3 — procédure       |
-| ---------------- | --------------------- | ------------------------------------------------------------------------------ | --------------------------------- | -------------------------- |
-| Nommage FR/EN    | `nommage.md`          | —                                                                              | —                                 | Skill `convention-nommage` |
-| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax` | `.claude/rules/typescript.md`     | —                          |
-| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**         | `.claude/rules/accessibilite.md`  | —                          |
-| Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`   | `.claude/rules/react.md`          | Sous-agent `revue-front`   |
-| Design system    | `react.md` §4         | —                                                                              | `.claude/rules/design-system.md`  | Skill `composant-ui`       |
-| Stack front      | `stack-front.md`      | —                                                                              | `.claude/rules/react.md` (renvoi) | —                          |
-| Architecture API | `architecture-api.md` | —                                                                              | `.claude/rules/api.md`            | —                          |
-| Méthode de revue | —                     | —                                                                              | —                                 | Skill `review-pr`          |
+| Convention       | Document              | Niveau 1 — bloquant                                                            | Niveau 2 — règle                        | Niveau 3 — procédure       |
+| ---------------- | --------------------- | ------------------------------------------------------------------------------ | --------------------------------------- | -------------------------- |
+| Nommage FR/EN    | `nommage.md`          | —                                                                              | —                                       | Skill `convention-nommage` |
+| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax` | `.claude/rules/typescript.md`           | —                          |
+| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**         | `.claude/rules/accessibilite.md`        | —                          |
+| Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`   | `.claude/rules/react.md`                | Sous-agent `revue-front`   |
+| Design system    | `react.md` §4         | —                                                                              | `.claude/rules/design-system.md`        | Skill `composant-ui`       |
+| Stack front      | `stack-front.md`      | —                                                                              | `.claude/rules/react.md` (renvoi)       | —                          |
+| Architecture API | `architecture-api.md` | —                                                                              | `.claude/rules/api.md`                  | —                          |
+| Méthode de revue | —                     | —                                                                              | —                                       | Skill `review-pr`          |
+| Cartographie     | `../cartographie.md`  | `npm run check:workspace-map` (CI)                                             | `AGENTS.md` / `CLAUDE.md` par workspace | —                          |
 
 ## Ce que le lint impose déjà, et qu'on n'avait pas mesuré
 
@@ -91,6 +92,8 @@ Référence complète : `docs/conventions/react.md`, section 4.
 
 Une règle sans `paths` serait chargée à chaque session ; avec `paths`, elle ne l'est qu'à la lecture d'un fichier correspondant. C'est ce qui permet d'en avoir cinq sans alourdir chaque conversation.
 
+Les `AGENTS.md` par workspace suivent la même logique, à l'échelle d'un dossier : Claude Code charge le `CLAUDE.md` d'un workspace (réduit à `@AGENTS.md`) dès qu'il lit un de ses fichiers, et les autres agents lisent les `AGENTS.md` de façon hiérarchique. Ils disent à quoi sert le workspace, ce qui va ailleurs et quels pièges l'attendent ; ils renvoient aux conventions sans les recopier. Leur présence est vérifiée en CI par `scripts/check-workspace-map.mjs`, avec la [cartographie](../cartographie.md) qui en est la source.
+
 ### Skills et sous-agent
 
 - **`convention-nommage`** — vérifie un identifiant contre le glossaire. Existant.
@@ -126,7 +129,7 @@ La version qui fonctionne place le répertoire de travail dans le workspace :
 "packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"
 ```
 
-Une entrée par workspace. Les cinq y sont désormais, `apps/api` et `apps/keycloak-theme` compris — un workspace oublié ici est un workspace qui commite sans `eslint --fix`.
+Une entrée par workspace — les neuf qui ont un script `lint` y sont désormais, `apps/api`, `apps/keycloak-theme`, les deux apps Vite et les deux packages API compris. Un workspace oublié ici est un workspace qui commite sans `eslint --fix`.
 
 </details>
 
