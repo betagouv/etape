@@ -1,0 +1,40 @@
+package.json
+  s_590a0e2d496db2::t_9367cb46599b6e 8,34
+README.md
+  s_590a0e2d496db2::t_9367cb46599b6e 46-47,50-52
+  s_590a0e2d496db2::t_05cc488f607add 48-49,72
+scripts/dev-stack-checks.mjs
+  s_590a0e2d496db2::t_9367cb46599b6e 1,3-7,9-62,68,70,72,74-76,79-222
+  s_590a0e2d496db2::t_4a8d5edd2cba13 2,69,71,77-78
+  s_590a0e2d496db2::t_a4572a67cd08b4 63-67,73
+  s_590a0e2d496db2::t_6bbc55856b718f 8
+scripts/dev-stack.mjs
+  s_590a0e2d496db2::t_9367cb46599b6e 1,3-6,8-260,262-286
+  s_590a0e2d496db2::t_05cc488f607add 2,7,261
+docs/authentification.md
+  s_590a0e2d496db2::t_9367cb46599b6e 474,476-491
+  s_590a0e2d496db2::t_05cc488f607add 473,475
+pnpm-lock.yaml
+  s_590a0e2d496db2::t_db3c7f62301190 14-16,1195-1198,1208-1216,1235-1243,1347-1355,6672-6673,6683-6691,6711-6722,6812-6815
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e11e23c687fbfe1db1ff64d7c641448bf436ad50",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_590a0e2d496db2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "287be6f0-73ca-4dec-ac24-b9b36353dd6a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
