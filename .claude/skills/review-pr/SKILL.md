@@ -36,7 +36,7 @@ S'il y en a, la synthèse **commence par un tableau de suivi** : chaque constat 
 
 ### 3. Vérifications
 
-- `npm run lint`, `npm run typecheck`, `npm run format:check`. Une erreur d'outil se cite telle quelle ; elle ne se reformule pas en constat manuel.
+- `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`. Une erreur d'outil se cite telle quelle ; elle ne se reformule pas en constat manuel.
 - Relire le diff contre les règles que les outils ne vérifient pas :
   - **Nommage** : langue selon la couche, termes du glossaire.
   - **Typage** : littéraux en dur dans les conditions ou les appels, correspondances en ternaire ou `switch` au lieu d'un `Record`, `useState` non typé par l'union.

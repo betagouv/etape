@@ -28,28 +28,36 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: npm
+
+      # pnpm à la version du champ `packageManager`, installé par le npm du Node
+      # qu'on vient de poser. Pas de pnpm/action-setup, qui passe par le npm du
+      # Node embarqué par le runner, incomplet sur OPS01. Pas de cache : le
+      # runner est auto-hébergé, le store pnpm reste d'un job à l'autre. Le Node
+      # posé par setup-node l'est aussi : `corepack disable` retire un shim qu'un
+      # job précédent y aurait laissé, et sur lequel npm refuserait d'écrire.
+      - name: Setup pnpm
+        run: corepack disable pnpm && npm install -g "$(node -p "require('./package.json').packageManager")" && pnpm --version
 
       - name: Install (lockfile)
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Format
-        run: npm run format:check
+        run: pnpm run format:check
 
       - name: Cartographie des workspaces
-        run: npm run check:workspace-map
+        run: pnpm run check:workspace-map
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Tests
-        run: npm run test
+        run: pnpm run test
 
       - name: Build
-        run: npx turbo run build --filter='!@etape/keycloak-theme'
+        run: pnpm exec turbo run build --filter='!@etape/keycloak-theme'
 
       - name: Build du thème Keycloak, sans le JAR
-        run: npm run build:bundle --workspace @etape/keycloak-theme
+        run: pnpm --filter @etape/keycloak-theme run build:bundle

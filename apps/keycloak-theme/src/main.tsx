@@ -15,8 +15,8 @@ createRoot(document.getElementById("root")!).render(
     {!window.kcContext ? (
       <p style={{ fontFamily: "sans-serif", padding: "2rem" }}>
         Aucun contexte Keycloak. Lancer{" "}
-        <code>npm run storybook --workspace @etape/keycloak-theme</code> pour prévisualiser les
-        écrans dans un vrai Keycloak.
+        <code>pnpm --filter @etape/keycloak-theme run storybook</code> pour prévisualiser les écrans
+        dans un vrai Keycloak.
       </p>
     ) : (
       <KcPage kcContext={window.kcContext} />

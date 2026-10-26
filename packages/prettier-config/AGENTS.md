@@ -8,4 +8,4 @@ La configuration Prettier unique du dépôt (`index.js`, avec `prettier-plugin-t
 
 ## Vérifier
 
-`npm run format:check` à la racine, bloquant en CI ; `npm run format` pour corriger. Changer une option reformate tout le dépôt : à faire dans une PR dédiée.
+`pnpm run format:check` à la racine, bloquant en CI ; `pnpm run format` pour corriger. Changer une option reformate tout le dépôt : à faire dans une PR dédiée.

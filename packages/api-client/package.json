@@ -13,13 +13,14 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@etape/api-contract": "*",
+    "@etape/api-contract": "workspace:*",
     "@tanstack/react-query": "^5.104.3",
     "axios": "^1.20.0"
   },
   "devDependencies": {
-    "@etape/eslint-config": "*",
-    "@etape/prettier-config": "*",
+    "@etape/eslint-config": "workspace:*",
+    "@etape/prettier-config": "workspace:*",
+    "@types/node": "^24.13.6",
     "eslint": "^9",
     "typescript": "^5",
     "vitest": "^5.0.5"

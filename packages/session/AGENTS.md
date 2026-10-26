@@ -16,9 +16,9 @@ La gestion de session commune aux SPA (`apps/front-office`, `apps/back-office`) 
 Sources TypeScript sans build (`exports: "./src/index.ts"`).
 
 ```bash
-npm run lint --workspace=@etape/session
-npm run typecheck --workspace=@etape/session
-npm run test --workspace=@etape/session
+pnpm --filter @etape/session run lint
+pnpm --filter @etape/session run typecheck
+pnpm --filter @etape/session run test
 ```
 
 ## Où vivent les choses

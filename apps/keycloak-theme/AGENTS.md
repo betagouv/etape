@@ -16,10 +16,10 @@ Thème Keycloak d'ETAPE, écrit en React avec Keycloakify : écrans de connexion
 Keycloakify 11 sur Vite 8, React 19, Tailwind 4. Le JAR demande **Maven** ; la CI ne lance que `build:bundle` (sans JAR).
 
 ```bash
-npm run build -- --filter=@etape/keycloak-theme   # JAR dans dist_keycloak/
+pnpm run build --filter=@etape/keycloak-theme   # JAR dans dist_keycloak/
 docker compose up -d keycloak-providers && docker compose restart keycloak
-npm run test --workspace=@etape/keycloak-theme    # Vitest
-npm run storybook --workspace=@etape/keycloak-theme  # Keycloak jetable avec le realm du dépôt
+pnpm --filter @etape/keycloak-theme run test    # Vitest
+pnpm --filter @etape/keycloak-theme run storybook  # Keycloak jetable avec le realm du dépôt
 ```
 
 C'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions : un simple redémarrage de Keycloak servirait l'ancien.
@@ -40,4 +40,4 @@ C'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions : un s
 ## État et pièges
 
 - Pas de script `typecheck` : `tsc` ne tourne que dans `build:bundle`.
-- Pas de port fixé : `npm run dev` prend 5173, comme `apps/front-office`.
+- Pas de port fixé : `pnpm run dev` prend 5173, comme `apps/front-office`.

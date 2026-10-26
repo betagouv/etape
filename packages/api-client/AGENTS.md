@@ -16,8 +16,8 @@ La couche HTTP partagée des SPA (`apps/front-office`, `apps/back-office`). Elle
 Sources TypeScript sans build (`exports: "./src/index.ts"`), dépend d'axios et de `@tanstack/react-query`.
 
 ```bash
-npm run lint --workspace=@etape/api-client
-npm run typecheck --workspace=@etape/api-client
+pnpm --filter @etape/api-client run lint
+pnpm --filter @etape/api-client run typecheck
 ```
 
 ## Où vivent les choses

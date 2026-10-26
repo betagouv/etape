@@ -11,7 +11,7 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
-    "@etape/ui": "*",
+    "@etape/ui": "workspace:*",
     "@react-pdf/renderer": "^4.9.0",
     "lucide-react": "^1.59.0",
     "next": "16.4.2",
@@ -20,8 +20,8 @@
     "sonner": "^2.0.7"
   },
   "devDependencies": {
-    "@etape/eslint-config": "*",
-    "@etape/prettier-config": "*",
+    "@etape/eslint-config": "workspace:*",
+    "@etape/prettier-config": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.4",
     "@types/react": "^19",

@@ -1,11 +1,11 @@
 /**
- * Vérifications de `npm run dev:stack`, avant tout lancement. Chacune rend un
+ * Vérifications de `pnpm run dev:stack`, avant tout lancement. Chacune rend un
  * constat : une erreur arrête le lancement, un avertissement le laisse passer.
  * Chaque constat dit quoi faire : c'est l'intérêt de les faire ici plutôt que de
  * laisser les apps échouer plus loin, avec des messages moins parlants.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 /** `.env` racine : seuls ces secrets sont indispensables (voir `.env.example`). */
 const ROOT_REQUIRED_KEYS = [
@@ -60,17 +60,22 @@ function checkNodeVersion() {
       ];
 }
 
+/**
+ * pnpm recopie le verrou dans `node_modules/.pnpm/lock.yaml` à chaque installation.
+ * Le contenu, pas la date : pnpm écrit le verrou juste après sa copie, et un
+ * changement de branche le réécrit à l'identique.
+ */
 function checkDependencies() {
-  const installed = "node_modules/.package-lock.json";
+  const installed = "node_modules/.pnpm/lock.yaml";
   if (!existsSync(installed)) {
-    return [{ isBlocking: true, message: "dépendances non installées", hint: "`npm ci`" }];
+    return [{ isBlocking: true, message: "dépendances non installées", hint: "`pnpm install`" }];
   }
-  return statSync("package-lock.json").mtimeMs > statSync(installed).mtimeMs
+  return readFileSync("pnpm-lock.yaml", "utf8") !== readFileSync(installed, "utf8")
     ? [
         {
           isBlocking: false,
-          message: "package-lock.json a changé depuis la dernière installation",
-          hint: "`npm ci` pour réaligner node_modules",
+          message: "pnpm-lock.yaml a changé depuis la dernière installation",
+          hint: "`pnpm install` pour réaligner node_modules",
         },
       ]
     : [];
