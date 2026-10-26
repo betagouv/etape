@@ -1,0 +1,24 @@
+README.md
+  s_590a0e2d496db2::t_0d5fa04b873b63 34-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8e25c7f68ea9a1ed5c8dea5e2c1d6c7da80fffc8",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_590a0e2d496db2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "287be6f0-73ca-4dec-ac24-b9b36353dd6a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
