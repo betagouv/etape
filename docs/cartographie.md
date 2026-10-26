@@ -2,7 +2,7 @@
 
 Ce document dit **quel workspace sert à quoi, pour qui, et où faire quoi**. Il s'adresse aux humains comme aux agents : chaque workspace porte un `AGENTS.md` (importé par son `CLAUDE.md`) qui en reprend l'essentiel et renvoie ici.
 
-Tenu à jour par `npm run check:workspace-map`, vérifié en CI : un workspace absent de ce document, ou sans fichier d'agent, fait échouer la PR.
+Tenu à jour par `pnpm run check:workspace-map`, vérifié en CI : un workspace absent de ce document, ou sans fichier d'agent, fait échouer la PR.
 
 ## 1. Vue d'ensemble
 
@@ -81,7 +81,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | Un composant d'interface ou une variante                       | `packages/ui/src/components/` — chercher l'existant d'abord                                                                                              | skill `composant-ui`                                           |
 | Une couleur, un rayon, une typographie                         | `packages/ui/src/styles/globals.css` (tokens)                                                                                                            | `react.md` §4                                                  |
 | Une route métier, de bout en bout                              | 1. `packages/api-contract` (contrat zod) → 2. `apps/api/src/<module>/` (contrôleur, service, repository) → 3. FO ou BO (TanStack Query sur `api-client`) | `architecture-api.md`, skill `convention-nommage`              |
-| Une table, une colonne, une migration                          | `apps/api/prisma/schema.prisma`, puis `npm run db:migrate --workspace=@etape/api`                                                                        | **lire `nommage.md` en entier**, `docs/donnees.md`             |
+| Une table, une colonne, une migration                          | `apps/api/prisma/schema.prisma`, puis `pnpm --filter @etape/api run db:migrate`                                                                          | **lire `nommage.md` en entier**, `docs/donnees.md`             |
 | Le parcours de connexion, la session, le compte                | `apps/api/src/auth/`, `apps/api/src/account/`                                                                                                            | `docs/authentification.md`                                     |
 | La session dans FO et BO (garde, inactivité, session expirée)  | `packages/session/src/` ; la logique sans React (échéances, messages, 401) dans `packages/api-client/src/`                                               | `docs/authentification.md`                                     |
 | Un écran de connexion ou un e-mail (inscription, mot de passe) | `apps/keycloak-theme/src/login/pages/`, `apps/keycloak-theme/src/email/`                                                                                 | README du thème, section 5 ci-dessous                          |
@@ -114,18 +114,18 @@ Keycloak n'apparaît ni dans `apps/` ni dans `packages/` : c'est l'**image Docke
 | `apps/keycloak-theme` | Habille les écrans et les e-mails ; construit un JAR que Keycloak charge                                                         |
 | `keycloak/realms/`    | Configuration du realm `etape` : clients, URI de redirection, fournisseur d'identité, thèmes                                     |
 
-**En local**, `docker compose up -d` lance `app-db`, `keycloak-db`, `keycloak` (qui importe le realm), `keycloak-providers` (qui télécharge l'extension FranceConnect et recopie le JAR du thème) et `keycloak-init` (identifiants FranceConnect, SMTP, compte de test). Les apps Node, elles, tournent hors Docker avec `npm run dev`.
+**En local**, `docker compose up -d` lance `app-db`, `keycloak-db`, `keycloak` (qui importe le realm), `keycloak-providers` (qui télécharge l'extension FranceConnect et recopie le JAR du thème) et `keycloak-init` (identifiants FranceConnect, SMTP, compte de test). Les apps Node, elles, tournent hors Docker avec `pnpm run dev`.
 
 **Après une modification du thème** :
 
 ```bash
-npm run build -- --filter=@etape/keycloak-theme
+pnpm run build --filter=@etape/keycloak-theme
 docker compose up -d keycloak-providers && docker compose restart keycloak
 ```
 
 C'est `keycloak-providers` qui recopie le JAR : un simple redémarrage de Keycloak servirait l'ancien.
 
-**Après une modification du realm** (`keycloak/realms/etape-realm.json`) : l'import tourne en `IGNORE_EXISTING`, donc un redémarrage n'a **aucun effet** si le realm existe déjà. Il faut `docker compose down -v && docker compose up -d`, ce qui **efface aussi `app-db`** : rejouer ensuite `npm run db:migrate --workspace=@etape/api`. Ce fichier ne vaut que pour le développement local : ce qui varie d'un environnement à l'autre s'applique après l'import, par `kcadm` (`keycloak-init` en local, `deploy/keycloak-init.sh` ailleurs). Voir `keycloak/realms/README.md`.
+**Après une modification du realm** (`keycloak/realms/etape-realm.json`) : l'import tourne en `IGNORE_EXISTING`, donc un redémarrage n'a **aucun effet** si le realm existe déjà. Il faut `docker compose down -v && docker compose up -d`, ce qui **efface aussi `app-db`** : rejouer ensuite `pnpm --filter @etape/api run db:migrate`. Ce fichier ne vaut que pour le développement local : ce qui varie d'un environnement à l'autre s'applique après l'import, par `kcadm` (`keycloak-init` en local, `deploy/keycloak-init.sh` ailleurs). Voir `keycloak/realms/README.md`.
 
 **En production**, `docker-compose.prod.yml` place un proxy nginx `auth` devant Keycloak (seul le realm applicatif passe), et Keycloak tourne en build optimisé avec le JAR du thème et l'extension FranceConnect.
 
@@ -145,19 +145,19 @@ Pour aller plus loin : [`authentification.md`](./authentification.md) (parcours 
 
 ## 7. Ports et commandes
 
-| Service            | Adresse                   | Lancement                                     |
-| ------------------ | ------------------------- | --------------------------------------------- |
-| Site               | http://localhost:3000     | `npm run dev -- --filter=@etape/site`         |
-| Simulateur         | http://localhost:3001     | `npm run dev -- --filter=@etape/simulateur`   |
-| API                | http://localhost:3002/api | `npm run dev -- --filter=@etape/api`          |
-| Front-office       | http://localhost:5173     | `npm run dev -- --filter=@etape/front-office` |
-| Back-office        | http://localhost:5174     | `npm run dev -- --filter=@etape/back-office`  |
-| Keycloak (console) | http://localhost:8080     | `docker compose up -d` (`admin` / `admin`)    |
-| Base applicative   | localhost:5432            | `docker compose up -d` (`etape` / `etape`)    |
+| Service            | Adresse                   | Lancement                                   |
+| ------------------ | ------------------------- | ------------------------------------------- |
+| Site               | http://localhost:3000     | `pnpm run dev --filter=@etape/site`         |
+| Simulateur         | http://localhost:3001     | `pnpm run dev --filter=@etape/simulateur`   |
+| API                | http://localhost:3002/api | `pnpm run dev --filter=@etape/api`          |
+| Front-office       | http://localhost:5173     | `pnpm run dev --filter=@etape/front-office` |
+| Back-office        | http://localhost:5174     | `pnpm run dev --filter=@etape/back-office`  |
+| Keycloak (console) | http://localhost:8080     | `docker compose up -d` (`admin` / `admin`)  |
+| Base applicative   | localhost:5432            | `docker compose up -d` (`etape` / `etape`)  |
 
-> **Collision connue** : `apps/keycloak-theme` n'a pas de port fixé ; son `npm run dev` prend 5173, comme le front-office. Avec un `npm run dev` global, Vite décale alors les ports de FO et BO. Cibler les apps avec `--filter` évite la surprise.
+> **Collision connue** : `apps/keycloak-theme` n'a pas de port fixé ; son `pnpm run dev` prend 5173, comme le front-office. Avec un `pnpm run dev` global, Vite décale alors les ports de FO et BO. Cibler les apps avec `--filter` évite la surprise.
 
-Commandes communes, à la racine : `npm run lint`, `npm run typecheck`, `npm run test`, `npm run format:check`, `npm run check:workspace-map`.
+Commandes communes, à la racine : `pnpm run lint`, `pnpm run typecheck`, `pnpm run test`, `pnpm run format:check`, `pnpm run check:workspace-map`.
 
 ## 8. Tenir cette cartographie à jour
 

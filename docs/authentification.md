@@ -451,7 +451,7 @@ En local, le proxy de Vite doit donc garder `Host` intact (forme objet, sans
 ```bash
 # Le thème d'abord : `keycloak-providers` recopie le JAR qu'il produit. Sans
 # lui Keycloak démarre quand même, mais avec ses écrans par défaut.
-npm run build -- --filter=@etape/keycloak-theme
+pnpm run build --filter=@etape/keycloak-theme
 
 # Les `.env` — à la racine, et dans apps/api, apps/front-office et
 # apps/back-office — se récupèrent dans le coffre-fort de l'équipe. Les
@@ -464,15 +464,15 @@ npm run build -- --filter=@etape/keycloak-theme
 docker compose up -d
 
 # Crée les tables de la base applicative. À rejouer après chaque migration.
-npm run db:migrate --workspace=@etape/api
+pnpm --filter @etape/api run db:migrate
 
-npm run dev            # site, simulateur, front-office, back-office et API
-npm run test           # tests de l'API, du thème, d'ui et d'api-client (Vitest)
+pnpm run dev            # site, simulateur, front-office, back-office et API
+pnpm run test           # tests de l'API, du thème, d'ui et d'api-client (Vitest)
 ```
 
-`npm run dev:stack` fait tout cela en une commande :
+`pnpm run dev:stack` fait tout cela en une commande :
 
-1. il demande quelles apps lancer, toutes cochées par défaut (`-- --all` saute la
+1. il demande quelles apps lancer, toutes cochées par défaut (`--all` saute la
    question). Un front coché ajoute l'API ; sans l'API, ni Docker ni migrations ;
 2. il vérifie, avant tout lancement, les `.env` des apps retenues contre leurs
    `.env.example`, l'égalité des secrets `etape-api` entre le `.env` racine et
@@ -489,7 +489,7 @@ prendrait le 5173 du front-office. Pas de `docker compose up --wait` :
 que `--wait` compte comme un échec. Pour créer une migration, `db:migrate` reste
 nécessaire.
 
-Après modification du thème, `npm run build -- --filter=@etape/keycloak-theme`
+Après modification du thème, `pnpm run build --filter=@etape/keycloak-theme`
 puis `docker compose up -d keycloak-providers && docker compose restart keycloak` :
 c'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions, un
 simple redémarrage de Keycloak servirait l'ancien.

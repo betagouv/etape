@@ -19,7 +19,7 @@ Chaque décision est suivie de ses **principes** — des règles courtes, vérif
 | `@nestjs/config` + zod        | 12.0.1 / 4.1.13 | Schéma d'environnement validé au démarrage (`src/config/env.ts`)                                   |
 | helmet, cookie-parser         | —               | Session par cookie opaque : aucun jeton visible du navigateur                                      |
 | `@nestjs/throttler`           | 6.7.1           | Limitation de débit **déjà en place**, en garde globale (décision 8)                               |
-| Vitest                        | 5.0.1           | **Cinq fichiers de test** dans `auth/`, lancés par `npm run test`, bloquants en CI (décision 11)   |
+| Vitest                        | 5.0.1           | **Cinq fichiers de test** dans `auth/`, lancés par `pnpm run test`, bloquants en CI (décision 11)  |
 
 **Comment l'API tourne**, car plusieurs décisions en dépendent : un conteneur Docker parmi six, décrit par `docker-compose.prod.yml`, construit et démarré par l'hébergeur (Cegedim). Elle n'est pas exposée directement — nginx sert les exports statiques et relaie `/api/`. Elle applique ses migrations au démarrage, avant de servir.
 
@@ -751,7 +751,7 @@ La fenêtre T1 est courte, mais elle existe à chaque déploiement. Et surtout :
 
 ## Décision 11 — Tests
 
-**L'état actuel, vérifié sur `main`** : les tests de l'API **existent et sont déjà bloquants**. `apps/api` déclare Vitest 5.0.1 et un script `test`, cinq fichiers de test couvrent `auth/` (`identity-claims`, `identity-provider`, `return-to`, `cookie-cipher`, `session.service`), `turbo.json` porte une tâche `test`, et `.github/workflows/ci.yml` lance `npm run test` entre `typecheck` et `build`.
+**L'état actuel, vérifié sur `main`** : les tests de l'API **existent et sont déjà bloquants**. `apps/api` déclare Vitest 5.0.1 et un script `test`, cinq fichiers de test couvrent `auth/` (`identity-claims`, `identity-provider`, `return-to`, `cookie-cipher`, `session.service`), `turbo.json` porte une tâche `test`, et `.github/workflows/ci.yml` lance `pnpm run test` entre `typecheck` et `build`.
 
 La question que l'arbitrage renvoyait à une issue — « à quel moment les rendre bloquants en CI » — **est donc déjà tranchée par les faits, côté API** : ils le sont. Ce qui reste ouvert est ailleurs : **le front n'a aucun test** (voir [`stack-front.md`](./stack-front.md), décision 8), et aucun test d'intégration de repository ne tourne, faute de base PostgreSQL jetable en CI.
 

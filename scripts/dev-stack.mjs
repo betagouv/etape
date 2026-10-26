@@ -1,10 +1,10 @@
 /**
- * Lance l'environnement de développement en une commande (`npm run dev:stack`) :
+ * Lance l'environnement de développement en une commande (`pnpm run dev:stack`) :
  * choix des apps, vérifications, pile Docker (bases, Keycloak) et migrations si
  * l'API en est, puis les apps via Turborepo. Une fois prêtes, affiche leurs
  * adresses ; Entrée les réaffiche.
  *
- * `npm run dev:stack -- --all` saute le choix et lance tout, comme le font les
+ * `pnpm run dev:stack --all` saute le choix et lance tout, comme le font les
  * lancements hors terminal interactif.
  *
  * Pas de `docker compose up --wait` : `keycloak-providers` et `keycloak-init`
@@ -258,7 +258,7 @@ if (issues.some((issue) => issue.isBlocking)) {
 
 if (needsDocker) {
   await run("docker", ["compose", "up", "-d"]);
-  await run("npm", ["run", "db:deploy", `--workspace=${API_WORKSPACE}`]);
+  await run("pnpm", ["--filter", API_WORKSPACE, "run", "db:deploy"]);
 }
 
 // Le clavier reste à ce script, pour la touche Entrée : Turborepo, en mode

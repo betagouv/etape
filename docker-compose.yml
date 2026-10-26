@@ -106,7 +106,7 @@ services:
           echo "thème ETAPE installé."
         else
           echo "thème ETAPE non construit — Keycloak servira son thème par défaut."
-          echo "  npm run build -- --filter=@etape/keycloak-theme pour l'obtenir."
+          echo "  pnpm run build --filter=@etape/keycloak-theme pour l'obtenir."
         fi
 
   # Applique après import ce qu'un fichier de realm ne peut pas porter. Deux

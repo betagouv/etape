@@ -26,9 +26,9 @@ Simulateur d'éligibilité **public et anonyme** : un questionnaire déclaratif 
 Next 16 en export statique (`out/`), servi sous `/simulateur` (`basePath` tiré de `paths.mjs` à la racine). Port **3001** ; en dev, `/` redirige vers `/simulateur/`.
 
 ```bash
-npm run dev -- --filter=@etape/simulateur
-npm run lint --workspace=@etape/simulateur
-npm run typecheck --workspace=@etape/simulateur
+pnpm run dev --filter=@etape/simulateur
+pnpm --filter @etape/simulateur run lint
+pnpm --filter @etape/simulateur run typecheck
 ```
 
 Aucun test pour l'instant (Vitest prévu sur le domaine : `stack-front.md`, décision 8).

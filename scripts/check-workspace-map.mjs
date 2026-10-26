@@ -11,7 +11,7 @@
  * Sans ce contrôle, un workspace ajouté sans fichier d'agent ni ligne dans la
  * cartographie redevient invisible pour les agents, et personne ne s'en aperçoit.
  *
- * À lancer depuis la racine du monorepo : `npm run check:workspace-map`.
+ * À lancer depuis la racine du monorepo : `pnpm run check:workspace-map`.
  */
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";

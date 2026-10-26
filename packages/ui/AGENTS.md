@@ -18,8 +18,8 @@ Le design system unique d'ETAPE : composants shadcn/ui (sur Radix) et tokens Tai
 Sources TypeScript sans build, importées telles quelles par les apps : `@etape/ui/components/<nom>`, `@etape/ui/lib/<nom>`, `@etape/ui/globals.css`.
 
 ```bash
-npm run lint --workspace=@etape/ui
-npm run typecheck --workspace=@etape/ui
+pnpm --filter @etape/ui run lint
+pnpm --filter @etape/ui run typecheck
 ```
 
 Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
