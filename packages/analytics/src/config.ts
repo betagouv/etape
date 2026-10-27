@@ -10,13 +10,20 @@ export interface MatomoEnv {
   siteId: string | undefined;
 }
 
+/** Une boucle plutôt qu'une expression régulière, qui serait lente sur une longue suite de `/`. */
+function withoutTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") end -= 1;
+  return value.slice(0, end);
+}
+
 /**
  * Lit la configuration figée au build. Sans site ID, la mesure est désactivée et
- * aucun script n'est chargé : c'est le cas des previews, de `main.dev` et du dev
- * local, qui ne doivent jamais envoyer de visites dans les statistiques.
+ * aucun script n'est chargé : c'est le cas de `main.dev` et du dev local, qui
+ * n'envoient aucune visite dans les statistiques.
  */
 export function readMatomoConfig({ url, siteId }: MatomoEnv): MatomoConfig | null {
-  const trimmedUrl = url?.trim().replace(/\/+$/, "");
+  const trimmedUrl = url === undefined ? undefined : withoutTrailingSlashes(url.trim());
   const trimmedSiteId = siteId?.trim();
 
   if (!trimmedUrl || !trimmedSiteId) return null;

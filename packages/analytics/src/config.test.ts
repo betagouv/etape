@@ -5,7 +5,7 @@ import { readMatomoConfig } from "./config";
 const URL = "https://stats.beta.gouv.fr";
 
 describe("readMatomoConfig", () => {
-  it("désactive la mesure sans site ID, comme dans les previews", () => {
+  it("désactive la mesure sans site ID, comme en dev local", () => {
     expect(readMatomoConfig({ url: URL, siteId: undefined })).toBeNull();
     expect(readMatomoConfig({ url: URL, siteId: "  " })).toBeNull();
   });
@@ -19,5 +19,10 @@ describe("readMatomoConfig", () => {
       url: URL,
       siteId: "272",
     });
+    expect(readMatomoConfig({ url: `${URL}///`, siteId: "272" })?.url).toBe(URL);
+  });
+
+  it("désactive la mesure quand l'instance n'est faite que de slashs", () => {
+    expect(readMatomoConfig({ url: "///", siteId: "272" })).toBeNull();
   });
 });
