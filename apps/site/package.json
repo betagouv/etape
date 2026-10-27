@@ -14,6 +14,7 @@
     "figma:check": "figma connect publish --dry-run --exit-on-unreadable-files"
   },
   "dependencies": {
+    "@etape/analytics": "workspace:*",
     "@etape/ui": "workspace:*",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",

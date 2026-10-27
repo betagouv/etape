@@ -105,6 +105,9 @@ importers:
 
   apps/back-office:
     dependencies:
+      '@etape/analytics':
+        specifier: workspace:*
+        version: link:../../packages/analytics
       '@etape/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
@@ -175,6 +178,9 @@ importers:
 
   apps/front-office:
     dependencies:
+      '@etape/analytics':
+        specifier: workspace:*
+        version: link:../../packages/analytics
       '@etape/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
@@ -303,6 +309,9 @@ importers:
 
   apps/simulateur:
     dependencies:
+      '@etape/analytics':
+        specifier: workspace:*
+        version: link:../../packages/analytics
       '@etape/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -355,6 +364,9 @@ importers:
 
   apps/site:
     dependencies:
+      '@etape/analytics':
+        specifier: workspace:*
+        version: link:../../packages/analytics
       '@etape/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -401,6 +413,55 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
+
+  packages/analytics:
+    dependencies:
+      '@socialgouv/matomo-next':
+        specifier: ^1.14.2
+        version: 1.14.2(next@16.4.3(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@24.13.6)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
+    devDependencies:
+      '@etape/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@etape/prettier-config':
+        specifier: workspace:*
+        version: link:../prettier-config
+      '@tanstack/react-router':
+        specifier: ^1.170.46
+        version: 1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.2
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@types/react':
+        specifier: ^19.2.18
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.2.7
+        version: 19.3.0(@types/react@19.3.0)
+      eslint:
+        specifier: ^9
+        version: 9.39.5(jiti@2.7.0)(supports-color@7.2.0)
+      jsdom:
+        specifier: ^30.1.2
+        version: 30.1.3(@noble/hashes@1.8.0)
+      next:
+        specifier: 16.4.3
+        version: 16.4.3(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@24.13.6)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.5(@types/node@24.13.6)(jsdom@30.1.3(@noble/hashes@1.8.0))(vite@8.3.5(@types/node@24.13.6)(jiti@2.7.0)(yaml@2.9.1))
 
   packages/api-client:
     dependencies:
@@ -2637,6 +2698,13 @@ packages:
   '@sindresorhus/is@4.6.0':
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
     engines: {node: '>=10'}
+
+  '@socialgouv/matomo-next@1.14.2':
+    resolution: {integrity: sha512-K7blGIQdkV9+ihxxtR/ABxeMsTTet/MiIluPW7BMkBBmoTOhWKzIfxzjc1MrLvZHC5aInCLeuNdW8hRMi4jkog==}
+    engines: {node: '>=24.0.0', pnpm: '>=10.0.0'}
+    peerDependencies:
+      next: '>= 13.0.0'
+      react: '>= 18.0.0'
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -8262,6 +8330,11 @@ snapshots:
   '@rtsao/scc@1.1.0': {}
 
   '@sindresorhus/is@4.6.0': {}
+
+  '@socialgouv/matomo-next@1.14.2(next@16.4.3(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@24.13.6)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      next: 16.4.3(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@24.13.6)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react: 19.3.1
 
   '@standard-schema/spec@1.1.0': {}
 

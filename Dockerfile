@@ -24,6 +24,7 @@ COPY apps/simulateur/package.json apps/simulateur/
 COPY apps/front-office/package.json apps/front-office/
 COPY apps/back-office/package.json apps/back-office/
 COPY apps/keycloak-theme/package.json apps/keycloak-theme/
+COPY packages/analytics/package.json packages/analytics/
 COPY packages/api-contract/package.json packages/api-contract/
 COPY packages/api-client/package.json packages/api-client/
 COPY packages/eslint-config/package.json packages/eslint-config/
@@ -37,9 +38,17 @@ FROM deps AS build
 WORKDIR /app
 COPY . .
 
+# Mesure d'audience : le site ID change d'un environnement à l'autre, et les
+# bundles le figent. Vide, la mesure est désactivée et aucun script n'est chargé.
+ARG MATOMO_URL=https://stats.beta.gouv.fr
+ARG MATOMO_SITE_ID=
+
 # `/api` relatif : chaque front relaie lui-même `/api/` vers l'API, sur sa propre
 # origine. Vite fige la valeur dans le bundle.
-RUN VITE_API_BASE_URL=/api pnpm exec turbo run build \
+RUN VITE_API_BASE_URL=/api \
+    NEXT_PUBLIC_MATOMO_URL="$MATOMO_URL" NEXT_PUBLIC_MATOMO_SITE_ID="$MATOMO_SITE_ID" \
+    VITE_MATOMO_URL="$MATOMO_URL" VITE_MATOMO_SITE_ID="$MATOMO_SITE_ID" \
+    pnpm exec turbo run build \
       --filter=@etape/site --filter=@etape/simulateur \
       --filter=@etape/front-office --filter=@etape/back-office \
       --filter=@etape/api

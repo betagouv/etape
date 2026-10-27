@@ -1,0 +1,78 @@
+name: Harbor smoke test
+
+# Test de bout en bout du registre Harbor SANS Docker : les VM Cegedim
+# interdisent le chargement de modules noyau (constat du 18/09, demande de
+# correction envoyée), le démon Docker ne peut donc pas démarrer sur OPS01.
+# On utilise `crane` (go-containerregistry) : un binaire autonome qui
+# construit une image OCI minimale et la pousse/tire, sans démon ni module.
+# Ce test valide l'authentification et l'aller-retour avec Harbor ; il ne
+# valide PAS l'exécution de conteneurs, qui attend le correctif Cegedim.
+# Déclenchement manuel uniquement. Prérequis : secret HARBOR_ROBOT_PASSWORD.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harbor-smoke
+  cancel-in-progress: false
+
+env:
+  HARBOR_URL: fco.repo.cegedim.cloud
+  HARBOR_LOGIN: robot$betagouvetape
+  IMAGE: fco.repo.cegedim.cloud/etape/smoke-test
+
+jobs:
+  smoke:
+    name: Aller-retour Harbor (sans démon Docker)
+    runs-on: [self-hosted, cegedim]
+    steps:
+      - name: Installer crane si absent (binaire autonome)
+        run: |
+          if ! command -v crane >/dev/null 2>&1; then
+            mkdir -p "$HOME/.local/bin"
+            curl -sL "https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz" \
+              | tar -xz -C "$HOME/.local/bin" crane
+          fi
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Version de crane
+        run: crane version
+
+      - name: Harbor joignable depuis le runner
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://$HARBOR_URL/v2/")
+          echo "GET https://$HARBOR_URL/v2/ -> HTTP $code"
+          # 401 = joignable et authentification exigée (attendu) ; 200 = joignable.
+          [ "$code" = "401" ] || [ "$code" = "200" ] || { echo "::error::Harbor injoignable (HTTP $code) : flux sortant a verifier"; exit 1; }
+
+      - name: Authentification (compte robot)
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_ROBOT_PASSWORD }}
+        run: |
+          [ -n "$HARBOR_PASSWORD" ] || { echo "::error::Secret HARBOR_ROBOT_PASSWORD absent du depot"; exit 1; }
+          printf '%s' "$HARBOR_PASSWORD" | crane auth login "$HARBOR_URL" -u "$HARBOR_LOGIN" --password-stdin
+
+      - name: Construire et pousser une image minimale
+        run: |
+          d=$(mktemp -d)
+          echo "ETAPE Harbor smoke test - run ${{ github.run_number }} - $(date -u +%FT%TZ)" > "$d/hello.txt"
+          tar -cf "$d/layer.tar" -C "$d" hello.txt
+          # crane append : couche ajoutee a une base vide (scratch), poussee directement.
+          crane append --new_layer "$d/layer.tar" --new_tag "$IMAGE:run-${{ github.run_number }}"
+          rm -rf "$d"
+
+      - name: Re-tirer depuis Harbor et verifier le contenu
+        run: |
+          crane digest "$IMAGE:run-${{ github.run_number }}"
+          d=$(mktemp -d)
+          crane export "$IMAGE:run-${{ github.run_number }}" - | tar -x -C "$d" hello.txt
+          echo "Contenu relu depuis Harbor : $(cat "$d/hello.txt")"
+          rm -rf "$d"
+          echo "Aller-retour registre valide."
+
+      - name: Nettoyage (identifiants locaux)
+        if: always()
+        run: crane auth logout "$HARBOR_URL" 2>/dev/null || true

@@ -13,6 +13,7 @@ Monorepo Turborepo. **Quel workspace sert à quoi, pour qui, et où faire quoi :
 | `apps/api`                                           | API NestJS + Prisma + PostgreSQL : authentification, sessions, futur métier |
 | `apps/keycloak-theme`                                | Écrans de connexion et e-mails, JAR chargé par Keycloak (pas un serveur)    |
 | `packages/ui`                                        | Design system unique (shadcn/ui + tokens)                                   |
+| `packages/analytics`                                 | Mesure d'audience Matomo de toutes les apps (pages vues, clics, opt-out)    |
 | `packages/api-client`                                | Couche HTTP des SPA (axios, `ApiError`, `QueryClient`)                      |
 | `packages/api-contract`                              | Contrats de route zod partagés front/API — vide jusqu'au premier écran      |
 | `packages/eslint-config`, `packages/prettier-config` | Configuration partagée                                                      |

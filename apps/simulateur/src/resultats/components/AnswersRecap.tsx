@@ -1,5 +1,6 @@
 import { PencilIcon } from "lucide-react";
 
+import { ANALYTICS_EVENT, analyticsEventProps } from "@etape/analytics";
 import { Button } from "@etape/ui/components/button";
 import { Card, CardContent } from "@etape/ui/components/card";
 
@@ -40,6 +41,10 @@ export function AnswersRecap({ entries, onEdit }: AnswersRecapProps) {
                   size="icon-responsive-sm"
                   onClick={() => onEdit(entry.questionId)}
                   aria-label={`Modifier : ${entry.question}`}
+                  {...analyticsEventProps(
+                    ANALYTICS_EVENT.SIMULATEUR_MODIFIER_REPONSE,
+                    entry.questionId,
+                  )}
                 >
                   <PencilIcon aria-hidden="true" />
                 </Button>

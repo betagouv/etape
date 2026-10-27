@@ -1,10 +1,12 @@
 import Image from "next/image";
 
+import { ANALYTICS_EVENT, analyticsEventProps } from "@etape/analytics";
 import { Button } from "@etape/ui/components/button";
 import { Section } from "@etape/ui/components/section";
 
 import formationImage from "@/assets/formation-collective.jpg";
 import { didYouKnow } from "@/content/home";
+import { EMPLACEMENT_ACCES_SIMULATEUR } from "@/lib/analytics";
 import { SIMULATEUR_URL } from "@/lib/navigation";
 
 export function DidYouKnow() {
@@ -36,7 +38,15 @@ export function DidYouKnow() {
         </h2>
 
         <Button asChild variant="outline-primary" size="xl" className="w-full sm:w-auto">
-          <a href={SIMULATEUR_URL}>{didYouKnow.cta}</a>
+          <a
+            href={SIMULATEUR_URL}
+            {...analyticsEventProps(
+              ANALYTICS_EVENT.ACCES_SIMULATEUR,
+              EMPLACEMENT_ACCES_SIMULATEUR.LE_SAVIEZ_VOUS,
+            )}
+          >
+            {didYouKnow.cta}
+          </a>
         </Button>
       </div>
 
