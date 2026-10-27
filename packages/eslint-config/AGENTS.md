@@ -19,4 +19,4 @@ Les presets ESLint (flat config) du monorepo.
 
 ## Vérifier
 
-Une modification se mesure sur tout le dépôt, sans cache : `npx turbo run lint --force`.
+Une modification se mesure sur tout le dépôt, sans cache : `pnpm exec turbo run lint --force`.

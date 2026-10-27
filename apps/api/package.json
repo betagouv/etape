@@ -32,9 +32,9 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@etape/api-contract": "*",
-    "@etape/eslint-config": "*",
-    "@etape/prettier-config": "*",
+    "@etape/api-contract": "workspace:*",
+    "@etape/eslint-config": "workspace:*",
+    "@etape/prettier-config": "workspace:*",
     "@nestjs/cli": "^12.0.8",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.0",

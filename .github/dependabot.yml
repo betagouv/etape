@@ -1,14 +1,20 @@
 version: 2
 updates:
-  # Dépendances npm du monorepo. La racine suffit : Dependabot y voit les
+  # Dépendances du monorepo, installées par pnpm : l'écosystème `npm` de
+  # Dependabot couvre aussi pnpm. La racine suffit : Dependabot y voit les
   # workspaces et met à jour leurs package.json ET le lockfile unique. Lister
   # aussi /apps/* et /packages/* doublait chaque PR, sans le lockfile, donc
-  # vouées à échouer au `npm ci` (#29 à #44).
+  # vouées à échouer à l'installation en CI (#29 à #44).
   - package-ecosystem: npm
     directory: "/"
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # pnpm refuse une version publiée depuis moins d'un jour (`minimumReleaseAge`,
+    # actif par défaut) : sans ce délai, une PR proposant une version trop
+    # récente échouerait à l'installation en CI.
+    cooldown:
+      default-days: 1
     # Majeures bloquées tant que l'écosystème ne suit pas : retirer la ligne
     # correspondante quand la condition est levée.
     ignore:

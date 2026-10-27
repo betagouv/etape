@@ -11,7 +11,7 @@ import { NavLink } from "@/components/nav-link";
  * l'instance vers son composant principal et découvre ses propriétés
  * (variantes, texte) :
  *
- *   FIGMA_ACCESS_TOKEN=… npm run figma:create -w @etape/site -- \
+ *   FIGMA_ACCESS_TOKEN=… pnpm --filter @etape/site run figma:create \
  *     "https://www.figma.com/design/CjMnzScPtELfkwJpJYfl4n/SIMULATEUR-v2?node-id=3770-2379"
  *
  * Les propriétés Figma (`figma.string`, `figma.enum`…) sont volontairement

@@ -8,19 +8,19 @@ Depuis ce dossier (`apps/site`) :
 
 ```bash
 # Installer les dépendances (à lancer de préférence depuis la racine du monorepo)
-npm install
+pnpm install
 
 # Serveur de développement (http://localhost:3000)
-npm run dev
+pnpm run dev
 
 # Générer l'export statique (SSG) dans out/
-npm run build
+pnpm run build
 
 # Linter
-npm run lint
+pnpm run lint
 ```
 
-> Astuce : à la racine du monorepo, `npm run dev` et `npm run build` lancent ces commandes via Turborepo.
+> Astuce : à la racine du monorepo, `pnpm run dev` et `pnpm run build` lancent ces commandes via Turborepo.
 
 ## Figma Code Connect
 
@@ -32,19 +32,19 @@ La configuration vit dans `figma.config.json`. Vérifier que les associations so
 demande aucun accès distant :
 
 ```bash
-npm run figma:check
+pnpm run figma:check
 ```
 
 Publier vers Figma requiert un [jeton d'accès personnel](https://www.figma.com/developers/api#access-tokens)
 et un siège **mode Développement** sur le fichier :
 
 ```bash
-FIGMA_ACCESS_TOKEN=<jeton> npm run figma:publish
+FIGMA_ACCESS_TOKEN=<jeton> pnpm run figma:publish
 ```
 
 Pour (re)générer une association à partir d'une URL Figma — c'est la voie à privilégier, car elle
 résout l'instance vers son composant principal et découvre ses propriétés (variantes, textes) :
 
 ```bash
-FIGMA_ACCESS_TOKEN=<jeton> npm run figma:create -- "<url-du-nœud-figma>"
+FIGMA_ACCESS_TOKEN=<jeton> pnpm run figma:create "<url-du-nœud-figma>"
 ```

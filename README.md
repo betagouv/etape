@@ -31,12 +31,15 @@ mais un thème Keycloak, construit en JAR et servi par Keycloak — voir
 ### Prérequis
 
 - [Node.js](https://nodejs.org/) >= 24 (version épinglée dans `.nvmrc`)
-- npm 11.17.0 (`packageManager` du `package.json`)
+- pnpm 11.28.6 (`packageManager` du `package.json`) : `npm install -g pnpm@11.28.6`,
+  comme en CI. Un pnpm 10 ou plus déjà installé convient aussi : dans le dépôt, il
+  passe de lui-même à la version de `packageManager`. `corepack enable pnpm` marche
+  encore sous Node 24, mais Node 25 ne livre plus corepack.
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Lancer le projet
@@ -44,31 +47,31 @@ npm install
 ```bash
 # Tout l'environnement en une commande : choix des apps, vérification des .env
 # et des ports, pile Docker (bases, Keycloak), migrations, puis les apps.
-# Affiche leurs adresses une fois prêtes. `-- --all` lance tout sans demander.
-npm run dev:stack
+# Affiche leurs adresses une fois prêtes. `--all` lance tout sans demander.
+pnpm run dev:stack
 
 # Les apps seules (toutes via Turborepo), si la pile Docker tourne déjà ou
 # n'est pas nécessaire
 # → site : http://localhost:3000 · simulateur : http://localhost:3001
 # → front-office : http://localhost:5173 · back-office : http://localhost:5174
-npm run dev
+pnpm run dev
 
 # Générer l'export statique (SSG) de toutes les apps (dossier out/ de chaque app)
-npm run build
+pnpm run build
 
 # Linter
-npm run lint
+pnpm run lint
 ```
 
 Pour ne cibler qu'une seule application, utilise le filtre Turborepo :
 
 ```bash
-npm run dev -- --filter=@etape/site
-npm run build -- --filter=@etape/simulateur
+pnpm run dev --filter=@etape/site
+pnpm run build --filter=@etape/simulateur
 ```
 
 Le parcours de connexion demande en plus un Keycloak et une base PostgreSQL en
-local, lancés par `docker compose up -d` (ou par `npm run dev:stack`) — voir
+local, lancés par `docker compose up -d` (ou par `pnpm run dev:stack`) — voir
 [docs/authentification.md](docs/authentification.md) pour le parcours et
 [docs/donnees.md](docs/donnees.md) pour la base.
 
