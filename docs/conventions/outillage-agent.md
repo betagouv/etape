@@ -99,7 +99,7 @@ Les `AGENTS.md` par workspace suivent la même logique, à l'échelle d'un dossi
 - **`convention-nommage`** — vérifie un identifiant contre le glossaire. Existant.
 - **`review-pr`** — méthode de revue : suivi des constats précédents, niveaux, suggestions vérifiées, rien de posté sans validation. Existant.
 - **`composant-ui`** — procédure d'ajout ou d'extension d'un composant : chercher l'existant, récupérer la source officielle par le MCP `shadcn`, étendre par variante, brancher les tokens, vérifier le focus. Nouveau.
-- **`revue-front`** (sous-agent, lecture seule) — audite un diff contre `react.md` : logique dans les composants, props, `className` d'apparence, primitives réécrites. Appelé par `review-pr`. Nouveau.
+- **`revue-front`** (sous-agent, lecture seule) — audite un diff contre `react.md` : logique dans les composants, props, `className` d'apparence, primitives réécrites ; puis contre le skill `vercel-react-best-practices` : rendus inutiles, poids ajouté au bundle (mesuré par un build comparé à `main`). Appelé par `review-pr`. Nouveau.
 
 ### Automatisations
 
