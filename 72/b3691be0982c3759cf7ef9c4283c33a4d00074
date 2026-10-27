@@ -1,0 +1,31 @@
+docs/conventions/stack-front.md
+  s_62d91ce04b3f57::t_2c859a8b600828 410
+.github/workflows/preview.yml
+  s_62d91ce04b3f57::t_43e2cdc63279fd 70-72
+docs/deploiement.md
+  s_62d91ce04b3f57::t_2c859a8b600828 119-120
+.github/actions/deployer-statique/action.yml
+  s_62d91ce04b3f57::t_6a07b844220a3f 51-54
+  s_62d91ce04b3f57::t_9608d8d6efefec 21-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "72b3691be0982c3759cf7ef9c4283c33a4d00074",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_62d91ce04b3f57": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cc438866-2750-4f62-adb5-53bd26c277ff",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
