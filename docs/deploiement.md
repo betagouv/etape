@@ -99,8 +99,9 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 | `KEYCLOAK_TEST_USER_PASSWORD`         | non         | Crée `test@etape.local` avec ce mot de passe                      |
 | `SMTP_*`                              | non         | Envoi par Brevo ; sans lui, pas d'email du tout                   |
 | `KEYCLOAK_RECAPTCHA_*`                | non         | reCAPTCHA de l'inscription (voir ci-dessous)                      |
+| `MATOMO_SITE_ID`                      | non         | Site Matomo de l'environnement ; vide : aucune mesure d'audience  |
 
-Trois pièges tiennent au moment où ces valeurs sont lues :
+Quatre pièges tiennent au moment où ces valeurs sont lues :
 
 - `KEYCLOAK_ADMIN_PASSWORD` ne crée le compte qu'au **tout premier** démarrage.
   Le modifier ensuite n'a aucun effet — il faut passer par la console.
@@ -111,6 +112,11 @@ Trois pièges tiennent au moment où ces valeurs sont lues :
   `@`, `:` ou `/`, qui y changeraient de sens.
 - Les deux `…_KEYCLOAK_CLIENT_SECRET`, à l'inverse, sont réappliqués à chaque
   démarrage de Keycloak : ce sont les seuls qui se corrigent en redéployant.
+- `MATOMO_SITE_ID` est un **argument de build**, pas une variable d'exécution :
+  les bundles des fronts le figent. Le changer demande de reconstruire les
+  images, un simple redémarrage garde l'ancien. Chaque environnement a son site
+  sur `stats.beta.gouv.fr` (272 pour la recette, celui de la production à
+  demander sur `#incubateur-ops`) ; les previews n'en ont pas.
 
 `KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Aucun identifiant n'est versionné :
 le fichier de realm ne crée plus de compte, et `test@etape.local` n'existe que si

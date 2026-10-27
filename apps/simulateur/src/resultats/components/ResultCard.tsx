@@ -1,6 +1,7 @@
 import type { Ref } from "react";
 import { ExternalLinkIcon } from "lucide-react";
 
+import { ANALYTICS_EVENT, analyticsEventProps } from "@etape/analytics";
 import { Button } from "@etape/ui/components/button";
 import { Card, CardContent, CardDescription, CardFooter } from "@etape/ui/components/card";
 import { Separator } from "@etape/ui/components/separator";
@@ -15,7 +16,7 @@ interface ResultCardProps {
 }
 
 export function ResultCard({ resultat, headingRef }: ResultCardProps) {
-  const { nom, description, url, categorie, isPrioritaire } = resultat;
+  const { id, nom, description, url, categorie, isPrioritaire } = resultat;
 
   return (
     <Card variant={isPrioritaire ? "primary" : "outline"} asChild>
@@ -40,7 +41,12 @@ export function ResultCard({ resultat, headingRef }: ResultCardProps) {
 
         <CardFooter>
           <Button asChild variant="secondary" size="responsive-sm">
-            <a href={url} target="_blank" rel="noopener noreferrer">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              {...analyticsEventProps(ANALYTICS_EVENT.SIMULATEUR_OUVRIR_RESULTAT, id)}
+            >
               En savoir plus
               <span className="sr-only"> sur {nom} (nouvelle fenêtre)</span>
               <ExternalLinkIcon aria-hidden="true" />

@@ -24,6 +24,7 @@
     "apps/keycloak-theme/**/*.{ts,tsx}": "pnpm --filter @etape/keycloak-theme run lint --fix",
     "apps/simulateur/**/*.{ts,tsx}": "pnpm --filter @etape/simulateur run lint --fix",
     "apps/site/**/*.{ts,tsx}": "pnpm --filter @etape/site run lint --fix",
+    "packages/analytics/**/*.{ts,tsx}": "pnpm --filter @etape/analytics run lint --fix",
     "packages/api-client/**/*.ts": "pnpm --filter @etape/api-client run lint --fix",
     "packages/api-contract/**/*.ts": "pnpm --filter @etape/api-contract run lint --fix",
     "packages/session/**/*.{ts,tsx}": "pnpm --filter @etape/session run lint --fix",

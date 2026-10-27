@@ -6,6 +6,7 @@ import { ResultsScreen } from "@/resultats/components/ResultsScreen";
 
 import { useFlow } from "../hooks/useFlow";
 import { useFlowNavigation } from "../hooks/useFlowNavigation";
+import { useScreenViewTracking } from "../hooks/useScreenViewTracking";
 import type { AnswerValue } from "../domain/types";
 import { OutcomeScreen } from "./OutcomeScreen";
 import { QuestionCta } from "./QuestionCta";
@@ -58,6 +59,7 @@ export function FlowShell() {
   }
 
   const screenId = nav.isResults ? "resultats" : (nav.outcome?.id ?? questionId);
+  useScreenViewTracking(screenId, hydrated);
 
   useEffect(() => {
     if (!hasRenderedOnce.current) {

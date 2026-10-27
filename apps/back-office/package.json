@@ -12,6 +12,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@etape/analytics": "workspace:*",
     "@etape/api-client": "workspace:*",
     "@etape/session": "workspace:*",
     "@etape/ui": "workspace:*",
