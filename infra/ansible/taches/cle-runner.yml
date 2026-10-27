@@ -1,5 +1,5 @@
-# Autorise la clé du runner pour le compte deploy. Importé par front.yml et
-# back.yml (mêmes gestes sur toutes les machines cibles).
+# Autorise la clé du runner pour le compte deploy. Importé par front.yml,
+# front-recette.yml et back.yml (mêmes gestes sur toutes les machines cibles).
 
 - name: Clé publique du runner disponible sur la machine opérationnelle
   ansible.builtin.assert:

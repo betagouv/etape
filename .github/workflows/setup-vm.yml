@@ -20,6 +20,8 @@ on:
         options:
           - front
           - back
+          - front-recette
+          - back-recette
       mot_de_passe:
         description: "Mot de passe d'exécution"
         type: string
@@ -82,20 +84,51 @@ jobs:
           ssh-keyscan -H \
             debfcoetapfrt01.fco.cegedim.cloud \
             debfcoetapapp01.fco.cegedim.cloud \
+            rebfcoetapfrt01.fco.cegedim.cloud \
+            rebfcoetapapp01.fco.cegedim.cloud \
             2>/dev/null >> "$HOME/.ssh/known_hosts"
+
+      # Le nom du choix ne suffit plus à désigner le playbook : back-recette
+      # réutilise back.yml (même socle) en visant le groupe back_recette. La
+      # correspondance choix → (playbook, extra-vars) est écrite une fois ici ;
+      # un choix inconnu arrête le job plutôt que de lancer un playbook au hasard.
+      - name: Choisir le playbook et sa cible
+        id: cible
+        env:
+          MACHINE: ${{ inputs.machine }}
+        run: |
+          case "$MACHINE" in
+            front)         playbook=front.yml;         extra="" ;;
+            back)          playbook=back.yml;          extra="" ;;
+            front-recette) playbook=front-recette.yml; extra="" ;;
+            back-recette)  playbook=back.yml;          extra="cible=back_recette" ;;
+            *)
+              echo "::error::Machine inconnue : $MACHINE"
+              exit 1
+              ;;
+          esac
+          echo "playbook=$playbook" >> "$GITHUB_OUTPUT"
+          echo "extra=$extra" >> "$GITHUB_OUTPUT"
 
       - name: Appliquer le playbook
         env:
+          PLAYBOOK: ${{ steps.cible.outputs.playbook }}
+          EXTRA: ${{ steps.cible.outputs.extra }}
           # Lu par front.yml pour écrire le htpasswd de la basic auth des
           # previews (utilisateur « etape »). Obligatoire au premier passage
-          # sur le front ; au rejeu, un secret vide laisse le htpasswd en place.
+          # sur le front du dev ; au rejeu, un secret vide laisse le htpasswd en
+          # place. Ignoré en Recette (front-recette.yml n'a pas de basic auth).
           PREVIEW_BASIC_AUTH_PASSWORD: ${{ secrets.PREVIEW_BASIC_AUTH_PASSWORD }}
-          # Lus par back.yml pour authentifier la machine au registre Harbor ;
-          # mot de passe vide = tâche de login simplement sautée (cas du front).
+          # Lus par back.yml, dans les deux environnements, pour authentifier la
+          # machine au registre Harbor ; mot de passe vide = tâche de login
+          # simplement sautée. Les playbooks front ne les lisent pas.
           # Le login n'est pas secret : c'est une variable GitHub (onglet Variables).
           HARBOR_ROBOT_LOGIN: ${{ vars.HARBOR_ROBOT_LOGIN }}
           HARBOR_ROBOT_PASSWORD: ${{ secrets.HARBOR_ROBOT_PASSWORD }}
+        # `-e` n'est ajouté que si le choix en définit une (back-recette) : la
+        # ligne lancée pour front, back et front-recette reste celle d'avant.
         run: |
           ansible-playbook \
             -i infra/ansible/inventaire.ini \
-            "infra/ansible/${{ inputs.machine }}.yml"
+            "infra/ansible/$PLAYBOOK" \
+            ${EXTRA:+-e "$EXTRA"}
