@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@etape/analytics": "workspace:*",
     "@etape/api-client": "workspace:*",
     "@etape/session": "workspace:*",
     "@etape/ui": "workspace:*",

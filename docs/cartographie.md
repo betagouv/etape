@@ -19,6 +19,7 @@ flowchart LR
   subgraph packages["packages/"]
     ui["ui<br/>design system"]
     session["session<br/>session des SPA"]
+    analytics["analytics<br/>mesure d'audience"]
     client["api-client<br/>axios + TanStack Query"]
     contract["api-contract<br/>contrats zod (vide)"]
   end
@@ -31,6 +32,8 @@ flowchart LR
   theme["apps/keycloak-theme<br/>JAR Keycloakify"]
 
   site & simulateur & fo & bo & theme --> ui
+  site & simulateur & fo & bo --> analytics
+  analytics -- "stats.beta.gouv.fr" --> matomo(["Matomo betagouv"])
   fo & bo --> session
   session --> client & ui
   fo & bo --> client
@@ -59,6 +62,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | `packages/ui`              | Design system unique : shadcn/ui + tokens Tailwind                        | Toutes les apps React          | Sources TS, sans build                                     | —        | Mature                             |
 | `packages/api-client`      | Couche HTTP des SPA : `createHttpClient`, `ApiError`, `createQueryClient` | FO, BO                         | Sources TS, axios + TanStack Query                         | —        | Socle, aucun hook métier           |
 | `packages/session`         | Session commune des SPA : garde, inactivité, « Session expirée »          | FO, BO                         | Sources TS, TanStack Router + Query                        | —        | En place                           |
+| `packages/analytics`       | Mesure d'audience Matomo : pages vues, clics, refus de la mesure          | Toutes les apps React          | Sources TS, `@socialgouv/matomo-next` pour les apps Next   | —        | En place                           |
 | `packages/api-contract`    | Contrats de route partagés front/API (méthode, chemin, schémas zod)       | API, FO, BO (prévu)            | Sources TS, ne dépend que de zod                           | —        | **Squelette vide volontaire**      |
 | `packages/eslint-config`   | Presets ESLint `base`, `next`, `react-internal`                           | Tous les workspaces            | JS                                                         | —        | Stable                             |
 | `packages/prettier-config` | Configuration Prettier partagée                                           | Tout le dépôt                  | JS                                                         | —        | Stable                             |
@@ -87,6 +91,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | Un écran de connexion ou un e-mail (inscription, mot de passe) | `apps/keycloak-theme/src/login/pages/`, `apps/keycloak-theme/src/email/`                                                                                 | README du thème, section 5 ci-dessous                          |
 | Un client OIDC, une URI de redirection, FranceConnect          | `keycloak/realms/etape-realm.json`                                                                                                                       | `docs/authentification.md`                                     |
 | L'appel HTTP commun (401, erreurs, cookie)                     | `packages/api-client/src/http-client.ts`                                                                                                                 | `stack-front.md` décision 12                                   |
+| Mesurer un clic ou une page (Matomo)                           | `packages/analytics/src/events.ts` (catalogue), puis `analyticsEventProps` sur l'élément                                                                 | `stack-front.md` décision 10                                   |
 | Une règle de lint                                              | `packages/eslint-config/` (`base`, `next` ou `react-internal`, selon le workspace)                                                                       | `outillage-agent.md`                                           |
 | Le déploiement, les images, les VM                             | `Dockerfile`, `docker-compose.prod.yml`, `deploy/`, `infra/`, `.github/workflows/`                                                                       | `docs/deploiement.md`, `docs/previews.md`                      |
 | Relire une PR ou un diff                                       | —                                                                                                                                                        | skill `review-pr` (et sous-agent `revue-front` pour le `.tsx`) |

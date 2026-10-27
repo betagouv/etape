@@ -7,6 +7,7 @@ import { Prose } from "@etape/ui/components/prose";
 import { Section } from "@etape/ui/components/section";
 import { Separator } from "@etape/ui/components/separator";
 
+import { AudienceOptOut } from "@/components/audience-opt-out";
 import {
   MENTIONS_LEGALES,
   MENTIONS_LEGALES_DESCRIPTION,
@@ -66,6 +67,9 @@ function renderBlock(block: Block, key: number) {
         </Callout>
       );
     }
+
+    case "audience-opt-out":
+      return <AudienceOptOut key={key} />;
 
     case "subsection":
       return (

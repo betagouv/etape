@@ -1,3 +1,5 @@
+import { AUDIENCE_OPT_OUT_STATUS, type AudienceOptOutStatus } from "@etape/analytics";
+
 export type Inline = string | { readonly strong: string };
 
 const b = (text: string): Inline => ({ strong: text });
@@ -16,7 +18,9 @@ export type Block =
       readonly kind: "subsection";
       readonly title: string;
       readonly blocks: readonly Block[];
-    };
+    }
+  /** La case qui permet de refuser la mesure d'audience. */
+  | { readonly kind: "audience-opt-out" };
 
 export type LegalSection = {
   readonly id: string;
@@ -291,12 +295,19 @@ export const MENTIONS_LEGALES: readonly LegalSection[] = [
         kind: "paragraph",
         text: ["La plateforme utilise les cookies strictement nécessaires à son fonctionnement."],
       },
+      // Texte proposé, à faire valider par la PO : celui de la maquette annonçait
+      // un consentement que la mesure d'audience, exemptée, ne recueille pas.
       {
         kind: "paragraph",
         text: [
-          "Des cookies de mesure d'audience ou de personnalisation peuvent également être déposés, conformément à la réglementation en vigueur et, lorsque cela est requis, après recueil du consentement de l'utilisateur.",
+          "La plateforme utilise Matomo, un outil de mesure d'audience hébergé par beta.gouv.fr, pour établir des statistiques de fréquentation anonymes. Cet outil est configuré selon les recommandations de la CNIL et ne nécessite pas votre consentement : votre adresse IP est anonymisée, aucune donnée n'est utilisée à d'autres fins ni croisée avec d'autres traitements, les cookies ont une durée de vie de 13 mois maximum et les données sont conservées 25 mois maximum.",
         ],
       },
+      {
+        kind: "paragraph",
+        text: ["Vous pouvez vous opposer à cette mesure ci-dessous."],
+      },
+      { kind: "audience-opt-out" },
     ],
   },
   {
@@ -377,3 +388,19 @@ export const MENTIONS_LEGALES: readonly LegalSection[] = [
     ],
   },
 ];
+
+/** Les textes de la case d'opt-out de la section « Cookies ». */
+export const AUDIENCE_OPT_OUT_TEXT = {
+  label: "Ne pas mesurer ma visite",
+  loading: "Chargement de votre préférence de mesure d'audience…",
+  unavailable:
+    "La mesure d'audience est inactive dans votre navigateur : aucune statistique n'est recueillie sur votre visite.",
+} as const;
+
+/** Annoncé après une bascule de la case ; vide au repos (`accessibilite.md`, § 2). */
+export const AUDIENCE_OPT_OUT_ANNOUNCEMENTS: Record<AudienceOptOutStatus, string> = {
+  [AUDIENCE_OPT_OUT_STATUS.LOADING]: "",
+  [AUDIENCE_OPT_OUT_STATUS.UNAVAILABLE]: "",
+  [AUDIENCE_OPT_OUT_STATUS.TRACKED]: "Votre visite est de nouveau mesurée.",
+  [AUDIENCE_OPT_OUT_STATUS.OPTED_OUT]: "Votre visite n'est plus mesurée.",
+};

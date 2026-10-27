@@ -371,7 +371,7 @@ Aucune bibliothèque d'internationalisation. Les textes sont écrits en françai
 
 ## Décision 10 — Mesure d'audience : Matomo
 
-**Brique retenue par l'équipe.** Elle n'est pas encore installée : aucune dépendance, aucune variable d'environnement, aucun appel dans le code. La convention de nommage, elle, l'anticipait déjà — un event analytics s'écrit en `snake_case` et en français (`simulateur_resultat`).
+**Brique retenue par l'équipe, installée** dans `packages/analytics` (voir « L'installation » plus bas). La convention de nommage l'anticipait déjà — un event analytics s'écrit en `snake_case` et en français (`simulateur_resultat`).
 
 **Paquet** : `@socialgouv/matomo-next` (1.14.2, juillet 2026), maintenu par la fabrique numérique des ministères sociaux. Il injecte le script côté client et suit les changements de route : c'est ce qu'il faut pour un site **exporté statiquement**, où aucun code ne tourne côté serveur.
 
@@ -402,7 +402,17 @@ Ce choix règle trois choses d'un coup :
 
 **Ce qu'il reste à faire à l'installation** : demander un compte et un site à l'incubateur (canal `#incubateur-ops`), puis renseigner le `MATOMO_URL` et le `SITE_ID` obtenus. `@socialgouv/matomo-next` n'est pas remis en cause : il pointe vers l'instance qu'on lui donne.
 
-**Point à reprendre** : les mentions légales actuelles annoncent que des cookies de mesure d'audience « peuvent être déposés […] après recueil du consentement lorsque cela est requis » — l'inverse de ce qui est décidé ici. Ce texte vient de la maquette. Son alignement a été **explicitement différé** en arbitrage (« à voir dans un second temps »), mais il doit précéder la mise en production de la mesure d'audience : annoncer un consentement qu'on ne recueille pas est un écart, pas une approximation.
+**Point repris** : les mentions légales annonçaient que des cookies de mesure d'audience « peuvent être déposés […] après recueil du consentement lorsque cela est requis » — l'inverse de ce qui est décidé ici. Ce texte venait de la maquette. La section « Cookies » décrit désormais la mesure exemptée et porte la case d'opt-out ; **le texte reste à valider par la PO** avant la mise en production : annoncer un consentement qu'on ne recueille pas serait un écart, pas une approximation.
+
+### L'installation
+
+- **Un paquet, `packages/analytics`**, seul à parler à Matomo, avec un point d'entrée par pile. Les apps Next passent par `@socialgouv/matomo-next` (`@etape/analytics/next`). Les SPA Vite ne le peuvent pas — il importe `next/router` — et chargent le tracker elles-mêmes (`@etape/analytics/router`).
+- **Un site ID par environnement, figé au build** : argument `MATOMO_SITE_ID` de l'image (`docs/deploiement.md`). Vide, la mesure est désactivée et aucun script n'est chargé : c'est le cas des previews, de `main.dev` et du dev local.
+- **Tracker JS seul.** Le ticket fournissait aussi un conteneur Tag Manager : les deux ensemble comptent chaque page vue deux fois, et la configuration d'un conteneur échappe à la revue.
+- **Pages vues** : une par changement de chemin (`basePath` compris pour le simulateur) ; une par écran du questionnaire, mesurée par le simulateur lui-même puisque ses étapes passent par `history.pushState`. Dans les SPA, on mesure le **motif** de la route (`/dossiers/$dossierId`), jamais l'URL réelle ni le titre.
+- **Clics** : `enableLinkTracking` ne couvre que les liens sortants et les téléchargements. Un clic interne se mesure en marquant l'élément avec `analyticsEventProps` ; un seul écouteur délégué au document fait le reste, ce qui marche aussi dans un composant serveur. Les events vivent dans un catalogue (`packages/analytics/src/events.ts`) — la liste qu'exige le principe 3, à valider avec la PO.
+- **Opt-out** : une case sur la page des mentions légales (`optUserOut` / `forgetUserOptOut`), étape 2 du guide de configuration publié par la CNIL. Le refus est un cookie du domaine : il couvre le site et le simulateur, pas le front-office ni le back-office, sur leurs propres sous-domaines. L'étendre (`setCookieDomain`, ou une case dans chaque app) reste à faire.
+- **Côté instance**, hors du dépôt : vérifier le mode CNIL du site (« Vie privée > Conformité »), y déclarer les domaines des trois fronts, demander le site de production.
 
 ## Décision 11 — Suivi des erreurs : Sentry
 
@@ -478,7 +488,7 @@ Les douze questions que portait ce document, et ce que l'équipe a répondu.
 
 1. **L'instance Sentry** : SaaS en région européenne ou `sentry.incubateur.net` (décision 11) — **issue #64**, qui pose la question à betagouv. Ce choix commande la décision 7 de [`architecture-api.md`](./architecture-api.md), qui suppose Sentry Logs.
 2. **Le porteur de l'installation de TanStack Query**, et la PR sur laquelle elle se fait.
-3. **Les mentions légales et la politique de confidentialité**, à aligner avant la mise en production de la mesure d'audience.
+3. **Les mentions légales et la politique de confidentialité** : la section « Cookies » est réécrite et porte l'opt-out, mais le texte reste **à valider par la PO** avant la mise en production de la mesure d'audience ; la politique de confidentialité n'existe pas encore.
 4. **Le périmètre des règles `jsx-a11y`** : elles ne couvrent aujourd'hui que les deux apps Next, pas `packages/ui`, `apps/keycloak-theme`, ni — depuis la décision 12 — `apps/front-office` et `apps/back-office` (décision 7).
 
 Suites ouvertes par ailleurs : **#60** (purge planifiée), **#61** (repository d'`AccountService`), **#62** (premiers tests du front).
