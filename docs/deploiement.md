@@ -116,7 +116,8 @@ Quatre pièges tiennent au moment où ces valeurs sont lues :
   les bundles des fronts le figent. Le changer demande de reconstruire les
   images, un simple redémarrage garde l'ancien. Chaque environnement a son site
   sur `stats.beta.gouv.fr` (272 pour la recette, celui de la production à
-  demander sur `#incubateur-ops`) ; les previews n'en ont pas.
+  demander sur `#incubateur-ops`). Les previews de PR mesurent aussi dans le site de
+  recette (`.github/workflows/preview.yml`) ; `main.dev` ne mesure rien.
 
 `KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Aucun identifiant n'est versionné :
 le fichier de realm ne crée plus de compte, et `test@etape.local` n'existe que si
