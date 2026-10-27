@@ -1,0 +1,170 @@
+apps/back-office/package.json
+  s_62d91ce04b3f57::t_4831365d162b73 15
+apps/simulateur/src/resultats/components/AnswersRecap.tsx
+  s_62d91ce04b3f57::t_d4242a8472c029 3,44-47
+apps/front-office/src/lib/analytics.ts
+  s_62d91ce04b3f57::t_7de1667872266d 1-10
+packages/analytics/src/tracker.test.ts
+  s_62d91ce04b3f57::t_85c3d87d751f25 1-40,43-46,48-53,55-76
+  s_62d91ce04b3f57::t_53b433a9062694 41,47
+  s_62d91ce04b3f57::t_45b84e56f1a90d 42,54
+apps/front-office/src/vite-env.d.ts
+  s_62d91ce04b3f57::t_7de1667872266d 5-6
+apps/back-office/src/main.tsx
+  s_62d91ce04b3f57::t_7de1667872266d 1-2,8,18
+  s_62d91ce04b3f57::t_cd410c3b818371 19
+apps/site/next.config.ts
+  s_62d91ce04b3f57::t_71e309b9334d3e 15
+apps/simulateur/package.json
+  s_62d91ce04b3f57::t_71e309b9334d3e 14
+apps/simulateur/src/lib/analytics.ts
+  s_62d91ce04b3f57::t_d4242a8472c029 1-10
+apps/simulateur/next.config.ts
+  s_62d91ce04b3f57::t_71e309b9334d3e 19
+apps/simulateur/src/questionnaire/hooks/useScreenViewTracking.ts
+  s_62d91ce04b3f57::t_d4242a8472c029 1-16,18-20,22-27,29
+  s_62d91ce04b3f57::t_310d1fd2477681 17,21,28
+apps/back-office/src/lib/analytics.ts
+  s_62d91ce04b3f57::t_7de1667872266d 1-10
+packages/analytics/package.json
+  s_62d91ce04b3f57::t_ae58068ad8bc12 1-14,16-50
+  s_62d91ce04b3f57::t_93e308b45e5199 15
+packages/analytics/AGENTS.md
+  s_62d91ce04b3f57::t_14d88ffd5f0f75 18-23
+  s_62d91ce04b3f57::t_81a4c9362ed1e2 1-17,24-50
+packages/analytics/src/index.ts
+  s_62d91ce04b3f57::t_3ccf3fcae3d3cb 4-5,8
+  s_62d91ce04b3f57::t_dda23e9762a25d 7
+  s_62d91ce04b3f57::t_d4242a8472c029 6
+  s_62d91ce04b3f57::t_3c0e14499fb547 1-3
+apps/site/src/app/mentions-legales/page.tsx
+  s_62d91ce04b3f57::t_f5f7647fe93343 71-73
+  s_62d91ce04b3f57::t_3abbf461b8e152 10
+apps/simulateur/src/resultats/components/ResultCard.tsx
+  s_62d91ce04b3f57::t_d4242a8472c029 4,19,44-49
+apps/site/src/lib/analytics.ts
+  s_62d91ce04b3f57::t_3936a4a2b4decf 1-18
+apps/site/package.json
+  s_62d91ce04b3f57::t_71e309b9334d3e 17
+packages/analytics/src/config.ts
+  s_62d91ce04b3f57::t_3d080401937b6d 1-25
+deploy/.env.example
+  s_62d91ce04b3f57::t_867e9ad2fb820f 87-91
+packages/analytics/src/use-audience-opt-out.ts
+  s_62d91ce04b3f57::t_d8794e090e0f4b 1-2,4-11,18-78,80-84
+  s_62d91ce04b3f57::t_dcdad0074d2065 3
+  s_62d91ce04b3f57::t_2dba38e8092c61 12-17
+  s_62d91ce04b3f57::t_de8966e1572c32 79
+packages/analytics/tsconfig.json
+  s_62d91ce04b3f57::t_b84d2307c578af 1-18
+packages/analytics/src/opt-out-status.ts
+  s_62d91ce04b3f57::t_168b75018f01f6 1-13
+packages/analytics/src/config.test.ts
+  s_62d91ce04b3f57::t_591520c30e17eb 1-23
+docker-compose.prod.yml
+  s_62d91ce04b3f57::t_0421b794c322b0 31-34,57-60
+packages/analytics/src/click-tracking.test.ts
+  s_62d91ce04b3f57::t_434303efa88502 1-8,10-72
+  s_62d91ce04b3f57::t_45b84e56f1a90d 9
+apps/simulateur/src/questionnaire/components/HomeCta.tsx
+  s_62d91ce04b3f57::t_d4242a8472c029 7,33-35,45-50,57
+packages/analytics/vitest.config.ts
+  s_62d91ce04b3f57::t_b84d2307c578af 1-8
+packages/analytics/src/router.ts
+  s_62d91ce04b3f57::t_649001cbf9cb37 1-40
+apps/site/src/app/layout.tsx
+  s_62d91ce04b3f57::t_6671f2c524d317 3-4
+  s_62d91ce04b3f57::t_9635c2c387320c 11
+  s_62d91ce04b3f57::t_416f2ec0c43eb2 49
+apps/simulateur/src/app/layout.tsx
+  s_62d91ce04b3f57::t_d4242a8472c029 3-4,8-9,49-53
+packages/analytics/eslint.config.mjs
+  s_62d91ce04b3f57::t_b84d2307c578af 1-3
+apps/back-office/src/vite-env.d.ts
+  s_62d91ce04b3f57::t_7de1667872266d 5-6
+docs/deploiement.md
+  s_62d91ce04b3f57::t_4e57dd21e7d45d 102,104,115-119
+packages/analytics/src/router.test.ts
+  s_62d91ce04b3f57::t_fe1169f35db9fa 1-58,60-65
+  s_62d91ce04b3f57::t_53b433a9062694 59
+apps/site/src/content/mentions-legales.ts
+  s_62d91ce04b3f57::t_cdfbce7c7d4943 391-406
+  s_62d91ce04b3f57::t_5e7453fe544a3a 298-299,303,306-310
+  s_62d91ce04b3f57::t_3c20d0946f064c 1-2
+  s_62d91ce04b3f57::t_43be25d8411355 21-23
+packages/analytics/src/next.tsx
+  s_62d91ce04b3f57::t_4dd6cf2c21489a 40-41
+  s_62d91ce04b3f57::t_587a34e39248dc 1-39,42-52
+package.json
+  s_62d91ce04b3f57::t_14d88ffd5f0f75 27
+packages/analytics/src/tracker.ts
+  s_62d91ce04b3f57::t_1e2534cd056c4b 67-69,71-72
+  s_62d91ce04b3f57::t_64785ef3da0287 1-29,32-66,70,73-90
+  s_62d91ce04b3f57::t_58c76d899bd36c 30-31
+packages/analytics/src/events.ts
+  s_62d91ce04b3f57::t_66586f8ff0fb78 1-41
+apps/simulateur/src/resultats/components/DownloadPdfButton.tsx
+  s_62d91ce04b3f57::t_d4242a8472c029 3,13-14,26
+apps/back-office/.env.example
+  s_62d91ce04b3f57::t_7de1667872266d 7-12
+docs/cartographie.md
+  s_62d91ce04b3f57::t_14d88ffd5f0f75 22,35-36,65,94
+docs/conventions/stack-front.md
+  s_62d91ce04b3f57::t_f4124581e63a6d 374,405-415,491
+apps/front-office/.env.example
+  s_62d91ce04b3f57::t_7de1667872266d 7-12
+packages/analytics/src/use-audience-opt-out.test.ts
+  s_62d91ce04b3f57::t_ff7352cb35cfbb 1-3,6-76
+  s_62d91ce04b3f57::t_a9b6df08386adb 4-5
+apps/site/src/components/sections/final-cta.tsx
+  s_62d91ce04b3f57::t_05630967498278 1,7,22-30
+apps/front-office/package.json
+  s_62d91ce04b3f57::t_4831365d162b73 15
+AGENTS.md
+  s_62d91ce04b3f57::t_14d88ffd5f0f75 16
+apps/site/src/components/audience-opt-out.tsx
+  s_62d91ce04b3f57::t_01338ed410e931 1-53
+apps/simulateur/src/questionnaire/components/FlowShell.tsx
+  s_62d91ce04b3f57::t_d4242a8472c029 9,62
+apps/front-office/src/main.tsx
+  s_62d91ce04b3f57::t_7de1667872266d 1-2,8,18
+  s_62d91ce04b3f57::t_a36bdba8af47cb 19
+turbo.json
+  s_62d91ce04b3f57::t_a5077685340716 15-18,20-27
+packages/analytics/src/click-tracking.ts
+  s_62d91ce04b3f57::t_0b21404a675596 1-41
+packages/analytics/CLAUDE.md
+  s_62d91ce04b3f57::t_b84d2307c578af 1
+Dockerfile
+  s_62d91ce04b3f57::t_0421b794c322b0 27
+  s_62d91ce04b3f57::t_d20a466a742174 41-45,48-51
+apps/site/src/components/sections/audience.tsx
+  s_62d91ce04b3f57::t_1dcac9ef1c6bdf 3,9,39-47
+apps/site/src/components/sections/did-you-know.tsx
+  s_62d91ce04b3f57::t_6ce781124cd916 3,9,41-49
+apps/site/src/components/sections/hero.tsx
+  s_62d91ce04b3f57::t_d1a644595ceb8e 3,9,44-52
+pnpm-lock.yaml
+  s_62d91ce04b3f57::t_0f545773b1f918 108-110,181-183,312-314,367-369,417-465,2702-2708,8334-8338
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "31b5d498d4adcf760a91fd09fd8920ebd5b44b25",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_62d91ce04b3f57": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cc438866-2750-4f62-adb5-53bd26c277ff",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
