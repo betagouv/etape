@@ -18,6 +18,11 @@ inputs:
   racine:
     description: "Racine des environnements sur la VM"
     default: /srv/previews
+  matomo-site-id:
+    description: >-
+      Site Matomo (stats.beta.gouv.fr) figé dans les bundles. Vide : aucune
+      mesure d'audience, aucun script chargé.
+    default: ""
 
 runs:
   using: composite
@@ -43,6 +48,10 @@ runs:
 
     - name: Build
       shell: bash
+      # Next fige ces valeurs dans l'export statique : elles ne se lisent qu'ici.
+      env:
+        NEXT_PUBLIC_MATOMO_URL: https://stats.beta.gouv.fr
+        NEXT_PUBLIC_MATOMO_SITE_ID: ${{ inputs.matomo-site-id }}
       run: pnpm exec turbo run build --filter=@etape/site --filter=@etape/simulateur
 
     - name: Assemblage statique
