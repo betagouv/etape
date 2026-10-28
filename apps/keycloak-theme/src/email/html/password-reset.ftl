@@ -5,10 +5,10 @@
 </h1>
 <p style="margin:0;">${msg("etapeEmailPasswordResetIntro")}</p>
 <@layout.button href=link label=msg("etapeEmailPasswordResetCta") />
-<p style="margin:0; font-size:14px; line-height:20px; color:#737373;">
+<p style="margin:0; font-size:14px; line-height:20px; color:#525252;">
     ${msg("etapeEmailLinkExpires", linkExpirationFormatter(linkExpiration))}
 </p>
-<p style="margin:8px 0 0; font-size:14px; line-height:20px; color:#737373;">
+<p style="margin:8px 0 0; font-size:14px; line-height:20px; color:#525252;">
     ${msg("etapeEmailIgnoreReset")}
 </p>
 <@layout.fallbackLink href=link />

@@ -25,7 +25,7 @@ export function Topbar() {
               <CircleUserRoundIcon aria-hidden="true" />
               Mon profil
             </Button>
-            <Button asChild variant="ghost-primary" size="icon-sm-wide">
+            <Button asChild variant="ghost-primary" size="icon-compact">
               <a href={buildLogoutUrl(API_BASE_URL)} aria-label="Se déconnecter">
                 <LogOutIcon aria-hidden="true" />
               </a>
