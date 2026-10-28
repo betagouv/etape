@@ -274,6 +274,7 @@ else
 fi
 
 bash /opt/keycloak/bin/etape-altcha.sh
+REALM="$BACK_OFFICE_REALM" bash /opt/keycloak/bin/etape-altcha.sh
 
 $KCADM update "realms/$REALM" -s registrationAllowed=true
 echo "→ inscription : ouverte"

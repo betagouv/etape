@@ -295,11 +295,17 @@ Ce qu'il faut savoir avant d'y toucher :
 - **Sans l'extension, l'inscription répond 500** au lieu de s'ouvrir sans
   protection : les flows la référencent.
 
-Une base neuve reçoit les deux flows par le fichier de realm ; une base
-existante, par `deploy/keycloak-altcha.sh`, que lancent `keycloak-init.sh` en
-déploiement et le service `keycloak-init` en local. Sur une base existante, le
-script retire aussi reCAPTCHA : de la copie du flow d'inscription, où il serait
-resté exigé sans plus être affiché, et du flow natif, avec sa clé secrète.
+Les deux realms sont protégés. Le front-office reçoit les deux flows par son
+fichier de realm sur une base neuve, et par `deploy/keycloak-altcha.sh` sur une
+base existante. Le back-office, dont l'inscription reste fermée, les reçoit du
+même script : seul son « mot de passe oublié » s'en sert. `keycloak-init.sh` le
+lance pour les deux realms en déploiement, le service `keycloak-init` en local.
+
+Sur une base existante, le script retire aussi reCAPTCHA : de la copie du flow
+d'inscription, où il serait resté exigé sans plus être affiché, et du flow natif,
+avec sa clé secrète. Ce dernier retrait n'a lieu qu'une fois le realm basculé sur
+les flows ALTCHA : si un appel échoue avant, le flow natif garde reCAPTCHA exigé
+et l'inscription échoue fermée au lieu de s'ouvrir sans contrôle.
 
 ## Thème
 

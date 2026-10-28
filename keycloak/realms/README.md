@@ -7,7 +7,8 @@ le conteneur avec `--import-realm`) :
   FranceConnect, inscription, et les flows `etape-registration` et
   `etape-reset-credentials`, qui exigent ALTCHA ;
 - `etape-back-office-realm.json` — le back-office : client `etape-api`, ni
-  FranceConnect ni inscription libre.
+  FranceConnect ni inscription libre ; son « mot de passe oublié » exige ALTCHA,
+  par des flows que `keycloak-init` crée après l'import.
 
 Deux realms et non deux clients : la session de Keycloak est commune à tout un
 realm, et un compte du front-office se retrouverait connecté au back-office sans

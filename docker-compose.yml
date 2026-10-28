@@ -187,8 +187,10 @@ services:
           fi
         done
 
-        bash /opt/keycloak/bin/etape-altcha.sh \
-          || echo "altcha : flows non configurés — l'extension est-elle construite ?"
+        for realm in etape etape-back-office; do
+          REALM=$$realm bash /opt/keycloak/bin/etape-altcha.sh \
+            || echo "altcha : flows de $$realm non configurés — l'extension est-elle construite ?"
+        done
 
         if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then
           $$KCADM update identity-provider/instances/franceconnect -r etape \
