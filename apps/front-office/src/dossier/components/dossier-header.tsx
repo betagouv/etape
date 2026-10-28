@@ -9,12 +9,9 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeftIcon, CheckIcon, ClockIcon, FolderOpenIcon, type LucideIcon } from "lucide-react";
 
 import illustrationUrl from "@/assets/illustration-jumelles.svg";
-import {
-  computeProgressPercent,
-  formatVoletsLabel,
-  type DossierProgress,
-} from "../domain/progress";
+import { computeProgressPercent, formatVoletsLabel } from "../domain/progress";
 import { STATUT_DOSSIER, type StatutDossier } from "../domain/statut-dossier";
+import type { DossierProgress } from "../domain/types";
 
 interface StatutBadge {
   label: string;

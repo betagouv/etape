@@ -1,8 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-import { computeProgressPercent, formatUpdatedAt, formatVoletsLabel } from "./progress";
+import {
+  computeDossierProgress,
+  computeProgressPercent,
+  formatUpdatedAt,
+  formatVoletsLabel,
+} from "./progress";
 
 const NOW = new Date(2026, 9, 27, 16, 0);
+
+describe("computeDossierProgress", () => {
+  it("compte les volets complets et facultatifs, pas ceux à remplir, en cours ou à corriger", () => {
+    expect(
+      computeDossierProgress([
+        { requiredFieldCount: 5, filledFieldCount: 5, remainingFieldCount: 0, errorCount: 0 },
+        { requiredFieldCount: 0, filledFieldCount: 0, remainingFieldCount: 0, errorCount: 0 },
+        { requiredFieldCount: 5, filledFieldCount: 5, remainingFieldCount: 0, errorCount: 1 },
+        { requiredFieldCount: 5, filledFieldCount: 2, remainingFieldCount: 3, errorCount: 0 },
+        { requiredFieldCount: 4, filledFieldCount: 0, remainingFieldCount: 4, errorCount: 0 },
+      ]),
+    ).toEqual({ completed: 2, total: 5 });
+  });
+});
 
 describe("formatUpdatedAt", () => {
   it("donne l'heure seule pour un enregistrement du jour", () => {
