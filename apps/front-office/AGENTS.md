@@ -20,9 +20,10 @@ cp .env.example .env
 pnpm run dev --filter=@etape/front-office
 pnpm --filter @etape/front-office run lint
 pnpm --filter @etape/front-office run typecheck
+pnpm --filter @etape/front-office run test
 ```
 
-Pas de script `test` pour l'instant.
+Les tests Vitest couvrent les fonctions pures de `domain/`, sans DOM.
 
 ## Où vivent les choses
 

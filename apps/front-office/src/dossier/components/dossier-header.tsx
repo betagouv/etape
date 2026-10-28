@@ -9,6 +9,11 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeftIcon, CheckIcon, ClockIcon, FolderOpenIcon, type LucideIcon } from "lucide-react";
 
 import illustrationUrl from "@/assets/illustration-jumelles.svg";
+import {
+  computeProgressPercent,
+  formatSectionsLabel,
+  type DossierProgress,
+} from "../domain/progress";
 import { STATUT_DOSSIER, type StatutDossier } from "../domain/statut-dossier";
 
 interface StatutBadge {
@@ -25,27 +30,12 @@ const STATUT_BADGES: Record<StatutDossier, StatutBadge> = {
   },
 };
 
-const TIME_FORMAT = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
-const DAY_FORMAT = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit" });
-
-function formatUpdatedAt(updatedAt: Date, now: Date): string {
-  const time = TIME_FORMAT.format(updatedAt);
-  if (updatedAt.toDateString() === now.toDateString()) return `à ${time}`;
-  return `le ${DAY_FORMAT.format(updatedAt)} à ${time}`;
-}
-
-interface DossierProgress {
-  completed: number;
-  total: number;
-}
-
 export interface DossierHeaderProps {
   title: string;
   subtitle: string;
   numero: string;
   statut: StatutDossier;
-  /** `null` tant que rien n'a été enregistré : la mention est alors masquée. */
-  updatedAt: Date | null;
+  updatedAtLabel: string | null;
   progress: DossierProgress;
 }
 
@@ -55,13 +45,11 @@ export function DossierHeader({
   subtitle,
   numero,
   statut,
-  updatedAt,
+  updatedAtLabel,
   progress,
 }: DossierHeaderProps) {
   const progressLabelId = useId();
   const { label, variant, Icon } = STATUT_BADGES[statut];
-  const isPlural = progress.completed > 1;
-  const percent = progress.total === 0 ? 0 : (progress.completed / progress.total) * 100;
 
   return (
     <header className="bg-surface-warm">
@@ -88,10 +76,10 @@ export function DossierHeader({
             <FolderOpenIcon aria-hidden="true" />
             Dossier n°{numero}
           </Badge>
-          {updatedAt && (
+          {updatedAtLabel && (
             <p className="text-content-strong flex items-center gap-2 text-sm font-medium">
               <CheckIcon aria-hidden="true" className="size-4" />
-              Enregistré automatiquement {formatUpdatedAt(updatedAt, new Date())}
+              Enregistré automatiquement {updatedAtLabel}
             </p>
           )}
         </div>
@@ -99,15 +87,14 @@ export function DossierHeader({
           <div className="flex items-end justify-between gap-4">
             <p id={progressLabelId} className="text-muted-foreground text-sm font-medium">
               <span className="text-foreground">{progress.completed}</span>{" "}
-              {isPlural ? "sections" : "section"} sur {progress.total}{" "}
-              {isPlural ? "complétées" : "complétée"}
+              {formatSectionsLabel(progress)}
             </p>
             <Badge variant={variant} size="xl">
               <Icon aria-hidden="true" />
               {label}
             </Badge>
           </div>
-          <Progress value={percent} aria-labelledby={progressLabelId} />
+          <Progress value={computeProgressPercent(progress)} aria-labelledby={progressLabelId} />
         </div>
       </Container>
     </header>

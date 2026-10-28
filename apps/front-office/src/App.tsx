@@ -1,5 +1,6 @@
 import { Topbar } from "./components/topbar";
 import { DossierHeader, type DossierHeaderProps } from "./dossier/components/dossier-header";
+import { formatUpdatedAt } from "./dossier/domain/progress";
 import { STATUT_DOSSIER } from "./dossier/domain/statut-dossier";
 
 const updatedAt = new Date();
@@ -11,7 +12,7 @@ const DOSSIER_DEMO: DossierHeaderProps = {
   subtitle: "Projet de formation",
   numero: "123456",
   statut: STATUT_DOSSIER.BROUILLON,
-  updatedAt,
+  updatedAtLabel: formatUpdatedAt(updatedAt, new Date()),
   progress: { completed: 0, total: 5 },
 };
 
