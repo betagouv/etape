@@ -35,7 +35,7 @@
     "@etape/api-contract": "workspace:*",
     "@etape/eslint-config": "workspace:*",
     "@etape/prettier-config": "workspace:*",
-    "@nestjs/cli": "^12.0.8",
+    "@nestjs/cli": "^12.0.10",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.0",
     "@types/node": "^20",

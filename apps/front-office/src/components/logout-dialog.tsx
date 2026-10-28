@@ -22,7 +22,7 @@ export function LogoutDialog() {
         <Button
           type="button"
           variant="ghost-primary"
-          size="icon-compact"
+          size="icon-sm-wide"
           aria-label="Se déconnecter"
         >
           <LogOutIcon aria-hidden="true" />

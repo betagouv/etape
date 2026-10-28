@@ -40,9 +40,6 @@ const buttonVariants = cva(
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        // `Size=sm` du kit (28px) : notre `sm` reste à 32px pour ne pas modifier l'existant.
-        // Pas de `has-[>svg]` : le kit garde 10px de côté avec une icône.
-        compact: "h-7 gap-1 rounded-md px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3.5",
         // Le `Variant=Link` du kit n'a ni hauteur ni padding.
         inline: "gap-1.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
@@ -54,7 +51,9 @@ const buttonVariants = cva(
         icon: "size-9",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",
-        "icon-compact": "size-7",
+        // Déconnexion du front-office au pixel de la maquette (42 × 32, icône à 10px du
+        // bord) : bouton à libellé vide dans Figma. Provisoire, à revoir avec l'UI/UX.
+        "icon-sm-wide": "h-8 w-10.5 justify-start px-2.5",
         "icon-lg": "size-10",
       },
     },
