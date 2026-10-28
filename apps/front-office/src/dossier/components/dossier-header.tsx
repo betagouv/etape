@@ -90,7 +90,7 @@ export function DossierHeader({
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-4">
-            <p id={progressLabelId} className="text-muted-foreground text-sm font-medium">
+            <p id={progressLabelId} className="text-content-secondary text-body-sm font-medium">
               <span className="text-foreground">{progress.completed}</span>{" "}
               {formatSectionsLabel(progress)}
             </p>
