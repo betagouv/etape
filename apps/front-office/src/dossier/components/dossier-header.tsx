@@ -11,7 +11,7 @@ import { ArrowLeftIcon, CheckIcon, ClockIcon, FolderOpenIcon, type LucideIcon } 
 import illustrationUrl from "@/assets/illustration-jumelles.svg";
 import {
   computeProgressPercent,
-  formatSectionsLabel,
+  formatVoletsLabel,
   type DossierProgress,
 } from "../domain/progress";
 import { STATUT_DOSSIER, type StatutDossier } from "../domain/statut-dossier";
@@ -92,7 +92,7 @@ export function DossierHeader({
           <div className="flex items-end justify-between gap-4">
             <p id={progressLabelId} className="text-content-secondary text-body-sm font-medium">
               <span className="text-foreground">{progress.completed}</span>{" "}
-              {formatSectionsLabel(progress)}
+              {formatVoletsLabel(progress)}
             </p>
             <Badge variant={variant} size="xl">
               <Icon aria-hidden="true" />

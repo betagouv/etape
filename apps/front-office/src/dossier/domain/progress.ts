@@ -2,18 +2,18 @@ const TIME_FORMAT = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: 
 const DAY_FORMAT = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit" });
 const PLURAL_RULES = new Intl.PluralRules("fr-FR");
 
-interface SectionsForms {
-  section: string;
-  completee: string;
+interface VoletLabelForms {
+  noun: string;
+  participle: string;
 }
 
-const SECTIONS_FORMS: Partial<Record<Intl.LDMLPluralRule, SectionsForms>> &
-  Record<"other", SectionsForms> = {
-  one: { section: "section", completee: "complétée" },
-  other: { section: "sections", completee: "complétées" },
+const VOLET_LABELS: Partial<Record<Intl.LDMLPluralRule, VoletLabelForms>> &
+  Record<"other", VoletLabelForms> = {
+  one: { noun: "section", participle: "complétée" },
+  other: { noun: "sections", participle: "complétées" },
 };
 
-/** Avancement de la saisie d'un dossier, en sections. */
+/** Avancement de la saisie d'un dossier, en volets. */
 export interface DossierProgress {
   completed: number;
   total: number;
@@ -26,14 +26,13 @@ export function formatUpdatedAt(updatedAt: Date, now: Date): string {
   return `le ${DAY_FORMAT.format(updatedAt)} à ${time}`;
 }
 
-/** Suite du libellé d'avancement, après le nombre de sections complétées que la vue met en valeur. */
-export function formatSectionsLabel({ completed, total }: DossierProgress): string {
-  const { section, completee } =
-    SECTIONS_FORMS[PLURAL_RULES.select(completed)] ?? SECTIONS_FORMS.other;
-  return `${section} sur ${total} ${completee}`;
+/** Suite du libellé d'avancement, après le nombre de volets complétés que la vue met en valeur. */
+export function formatVoletsLabel({ completed, total }: DossierProgress): string {
+  const { noun, participle } = VOLET_LABELS[PLURAL_RULES.select(completed)] ?? VOLET_LABELS.other;
+  return `${noun} sur ${total} ${participle}`;
 }
 
-/** Part des sections complétées, de 0 à 100. */
+/** Part des volets complétés, de 0 à 100. */
 export function computeProgressPercent({ completed, total }: DossierProgress): number {
   return total === 0 ? 0 : (completed / total) * 100;
 }

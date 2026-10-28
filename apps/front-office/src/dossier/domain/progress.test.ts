@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { computeProgressPercent, formatSectionsLabel, formatUpdatedAt } from "./progress";
+import { computeProgressPercent, formatUpdatedAt, formatVoletsLabel } from "./progress";
 
 const NOW = new Date(2026, 9, 27, 16, 0);
 
@@ -22,25 +22,25 @@ describe("formatUpdatedAt", () => {
   });
 });
 
-describe("formatSectionsLabel", () => {
-  it("accorde au singulier pour zéro et une section", () => {
-    expect(formatSectionsLabel({ completed: 0, total: 5 })).toBe("section sur 5 complétée");
-    expect(formatSectionsLabel({ completed: 1, total: 5 })).toBe("section sur 5 complétée");
+describe("formatVoletsLabel", () => {
+  it("accorde le libellé au singulier pour zéro et un volet", () => {
+    expect(formatVoletsLabel({ completed: 0, total: 5 })).toBe("section sur 5 complétée");
+    expect(formatVoletsLabel({ completed: 1, total: 5 })).toBe("section sur 5 complétée");
   });
 
-  it("accorde au pluriel à partir de deux sections", () => {
-    expect(formatSectionsLabel({ completed: 2, total: 5 })).toBe("sections sur 5 complétées");
+  it("accorde le libellé au pluriel à partir de deux volets", () => {
+    expect(formatVoletsLabel({ completed: 2, total: 5 })).toBe("sections sur 5 complétées");
   });
 });
 
 describe("computeProgressPercent", () => {
-  it("rapporte les sections complétées au total", () => {
+  it("rapporte les volets complétés au total", () => {
     expect(computeProgressPercent({ completed: 0, total: 5 })).toBe(0);
     expect(computeProgressPercent({ completed: 2, total: 5 })).toBe(40);
     expect(computeProgressPercent({ completed: 5, total: 5 })).toBe(100);
   });
 
-  it("vaut 0 quand le dossier n'a aucune section", () => {
+  it("vaut 0 quand le dossier n'a aucun volet", () => {
     expect(computeProgressPercent({ completed: 0, total: 0 })).toBe(0);
   });
 });
