@@ -1,7 +1,7 @@
 import { AppErrorScreen } from "@etape/session";
 import { createRouter } from "@tanstack/react-router";
 
-import { API_BASE_URL, httpClient, queryClient } from "../lib/clients";
+import { API_BASE_URL, httpClient, queryClient } from "@/lib/clients";
 import { routeTree } from "./routes";
 
 export const router = createRouter({

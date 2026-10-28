@@ -33,7 +33,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding-top:24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:12px; line-height:16px; color:#737373;">
+                        <td style="padding-top:24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:12px; line-height:16px; color:#525252;">
                             ${msg("etapeEmailFooter")}
                         </td>
                     </tr>
@@ -71,10 +71,10 @@
   une impasse.
 -->
 <#macro fallbackLink href>
-<p style="margin:24px 0 0; font-size:12px; line-height:16px; color:#737373;">
+<p style="margin:24px 0 0; font-size:12px; line-height:16px; color:#525252;">
     ${msg("etapeEmailFallback")}<br />
     <#-- Gris et non teal : ces URL font dix lignes, les teinter en couleur
          d'action ferait passer le repli avant le bouton. -->
-    <a href="${href}" style="color:#737373; word-break:break-all;">${href}</a>
+    <a href="${href}" style="color:#525252; word-break:break-all;">${href}</a>
 </p>
 </#macro>

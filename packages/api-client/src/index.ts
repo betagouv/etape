@@ -38,6 +38,7 @@ export { HTTP_STATUS, type HttpStatus } from "./http-status";
 export { createQueryClient } from "./query-client";
 export {
   buildLoginUrl,
+  buildLogoutUrl,
   findSession,
   recordSessionActivity,
   SESSION_END_QUERY_KEY,
