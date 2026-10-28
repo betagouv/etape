@@ -273,56 +273,11 @@ else
   echo "→ franceconnect : aucun identifiant fourni, le fournisseur restera inutilisable"
 fi
 
-RECAPTCHA_EXECUTION=$($KCADM get authentication/flows/registration/executions -r "$REALM" \
-  --fields id,providerId,priority,authenticationConfig --format csv --noquotes \
-  | grep '^[^,]*,registration-recaptcha-action,' || true)
-RECAPTCHA_EXECUTION_ID=$(echo "$RECAPTCHA_EXECUTION" | cut -d, -f1)
-RECAPTCHA_PRIORITY=$(echo "$RECAPTCHA_EXECUTION" | cut -d, -f3)
-RECAPTCHA_CONFIG_ID=$(echo "$RECAPTCHA_EXECUTION" | cut -d, -f4)
+bash /opt/keycloak/bin/etape-altcha.sh
+REALM="$BACK_OFFICE_REALM" bash /opt/keycloak/bin/etape-altcha.sh
 
-if [ -z "$RECAPTCHA_EXECUTION_ID" ]; then
-  echo "✗ étape reCAPTCHA absente du flow registration du realm ${REALM}." >&2
-  exit 1
-fi
-
-if [ -n "${KEYCLOAK_RECAPTCHA_SITE_KEY:-}" ] && [ -n "${KEYCLOAK_RECAPTCHA_SECRET_KEY:-}" ]; then
-  RECAPTCHA_CONFIG="{
-    \"alias\": \"etape-recaptcha\",
-    \"config\": {
-      \"site.key\": \"${KEYCLOAK_RECAPTCHA_SITE_KEY}\",
-      \"secret.key\": \"${KEYCLOAK_RECAPTCHA_SECRET_KEY}\",
-      \"action\": \"register\",
-      \"useRecaptchaNet\": \"true\",
-      \"recaptcha.v3\": \"${KEYCLOAK_RECAPTCHA_V3:-false}\"
-    }
-  }"
-  if [ -z "$RECAPTCHA_CONFIG_ID" ]; then
-    echo "$RECAPTCHA_CONFIG" | $KCADM create "authentication/executions/$RECAPTCHA_EXECUTION_ID/config" -r "$REALM" -f -
-  else
-    echo "$RECAPTCHA_CONFIG" | $KCADM update "authentication/config/$RECAPTCHA_CONFIG_ID" -r "$REALM" -f -
-  fi
-
-  $KCADM update authentication/flows/registration/executions -r "$REALM" \
-    -b "{\"id\": \"${RECAPTCHA_EXECUTION_ID}\", \"requirement\": \"REQUIRED\", \"priority\": ${RECAPTCHA_PRIORITY}}"
-  $KCADM update "realms/$REALM" \
-    -s registrationAllowed=true \
-    -s "browserSecurityHeaders.contentSecurityPolicy=frame-src 'self' https://www.recaptcha.net; frame-ancestors 'self'; object-src 'none';"
-  echo "→ inscription : ouverte, reCAPTCHA exigé"
-else
-  $KCADM update authentication/flows/registration/executions -r "$REALM" \
-    -b "{\"id\": \"${RECAPTCHA_EXECUTION_ID}\", \"requirement\": \"DISABLED\", \"priority\": ${RECAPTCHA_PRIORITY}}"
-  $KCADM update "realms/$REALM" \
-    -s "browserSecurityHeaders.contentSecurityPolicy=frame-src 'self'; frame-ancestors 'self'; object-src 'none';"
-
-  if [ -n "${SMTP_HOST:-}" ]; then
-    $KCADM update "realms/$REALM" -s registrationAllowed=false
-    echo "⚠ inscription : fermée — SMTP configuré sans KEYCLOAK_RECAPTCHA_SITE_KEY"
-    echo "  ni KEYCLOAK_RECAPTCHA_SECRET_KEY."
-  else
-    $KCADM update "realms/$REALM" -s registrationAllowed=true
-    echo "→ inscription : ouverte, sans reCAPTCHA (aucun email envoyé sans SMTP)"
-  fi
-fi
+$KCADM update "realms/$REALM" -s registrationAllowed=true
+echo "→ inscription : ouverte"
 
 # Pas d'inscription au back-office : les comptes des instructeurs sont créés par
 # un administrateur. Réaffirmé ici pour qu'un réglage fait à la main ne survive
