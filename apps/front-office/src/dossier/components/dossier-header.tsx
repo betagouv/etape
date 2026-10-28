@@ -76,12 +76,17 @@ export function DossierHeader({
             <FolderOpenIcon aria-hidden="true" />
             Dossier n°{numero}
           </Badge>
-          {updatedAtLabel && (
-            <p className="text-content-strong flex items-center gap-2 text-sm font-medium">
-              <CheckIcon aria-hidden="true" className="size-4" />
-              Enregistré automatiquement {updatedAtLabel}
-            </p>
-          )}
+          <p
+            role="status"
+            className="text-content-strong text-body-sm flex items-center gap-2 font-medium"
+          >
+            {updatedAtLabel && (
+              <>
+                <CheckIcon aria-hidden="true" className="size-4" />
+                Enregistré automatiquement {updatedAtLabel}
+              </>
+            )}
+          </p>
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-4">
