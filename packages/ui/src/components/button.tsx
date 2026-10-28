@@ -51,9 +51,8 @@ const buttonVariants = cva(
         icon: "size-9",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",
-        // Déconnexion du front-office au pixel de la maquette (42 × 32, icône à 10px du
-        // bord) : bouton à libellé vide dans Figma. Provisoire, à revoir avec l'UI/UX.
-        "icon-sm-wide": "h-8 w-10.5 justify-start px-2.5",
+        // `Size=icon-sm` du kit (28px) : notre `icon-sm` reste à 32px pour ne pas modifier l'existant.
+        "icon-compact": "size-7",
         "icon-lg": "size-10",
       },
     },
