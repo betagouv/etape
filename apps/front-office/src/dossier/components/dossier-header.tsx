@@ -1,12 +1,11 @@
-import { useId } from "react";
+import { useId, type ComponentProps } from "react";
 
 import { HOME_PATH } from "@etape/session";
-import { Badge, type badgeVariants } from "@etape/ui/components/badge";
+import { Badge } from "@etape/ui/components/badge";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 import { Progress } from "@etape/ui/components/progress";
 import { Link } from "@tanstack/react-router";
-import type { VariantProps } from "class-variance-authority";
 import { ArrowLeftIcon, CheckIcon, ClockIcon, FolderOpenIcon, type LucideIcon } from "lucide-react";
 
 import illustrationUrl from "@/assets/illustration-jumelles.svg";
@@ -14,7 +13,7 @@ import { STATUT_DOSSIER, type StatutDossier } from "../domain/statut-dossier";
 
 interface StatutBadge {
   label: string;
-  variant: VariantProps<typeof badgeVariants>["variant"];
+  variant: NonNullable<ComponentProps<typeof Badge>["variant"]>;
   Icon: LucideIcon;
 }
 
