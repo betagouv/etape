@@ -43,18 +43,6 @@ if [ -n "$COPIED_RECAPTCHA_EXECUTION" ]; then
   $KCADM delete "authentication/executions/${COPIED_RECAPTCHA_EXECUTION%%,*}" -r "$REALM"
 fi
 
-BUILTIN_RECAPTCHA_EXECUTION=$($KCADM get authentication/flows/registration/executions -r "$REALM" \
-  --fields id,providerId,priority,authenticationConfig --format csv --noquotes \
-  | { grep -F ",${RECAPTCHA_PROVIDER}," || true; })
-if [ -n "$BUILTIN_RECAPTCHA_EXECUTION" ]; then
-  IFS=, read -r BUILTIN_RECAPTCHA_ID _ BUILTIN_RECAPTCHA_PRIORITY BUILTIN_RECAPTCHA_CONFIG <<< "$BUILTIN_RECAPTCHA_EXECUTION"
-  $KCADM update authentication/flows/registration/executions -r "$REALM" \
-    -b "{\"id\": \"${BUILTIN_RECAPTCHA_ID}\", \"requirement\": \"DISABLED\", \"priority\": ${BUILTIN_RECAPTCHA_PRIORITY}}"
-  if [ -n "$BUILTIN_RECAPTCHA_CONFIG" ]; then
-    $KCADM delete "authentication/config/${BUILTIN_RECAPTCHA_CONFIG}" -r "$REALM"
-  fi
-fi
-
 if [ -z "$(execution_of "$REGISTRATION_FLOW" "$REGISTRATION_PROVIDER")" ]; then
   $KCADM create "authentication/flows/$(urlencode "${REGISTRATION_FLOW} registration form")/executions/execution" \
     -r "$REALM" -s "provider=${REGISTRATION_PROVIDER}"
@@ -88,4 +76,16 @@ $KCADM update "realms/$REALM" \
   -s "registrationFlow=${REGISTRATION_FLOW}" \
   -s "resetCredentialsFlow=${RESET_CREDENTIALS_FLOW}" \
   -s "browserSecurityHeaders.contentSecurityPolicy=frame-src 'self'; frame-ancestors 'self'; object-src 'none';"
-echo "→ altcha : exigé à l'inscription et au « mot de passe oublié »"
+
+BUILTIN_RECAPTCHA_EXECUTION=$($KCADM get authentication/flows/registration/executions -r "$REALM" \
+  --fields id,providerId,priority,authenticationConfig --format csv --noquotes \
+  | { grep -F ",${RECAPTCHA_PROVIDER}," || true; })
+if [ -n "$BUILTIN_RECAPTCHA_EXECUTION" ]; then
+  IFS=, read -r BUILTIN_RECAPTCHA_ID _ BUILTIN_RECAPTCHA_PRIORITY BUILTIN_RECAPTCHA_CONFIG <<< "$BUILTIN_RECAPTCHA_EXECUTION"
+  $KCADM update authentication/flows/registration/executions -r "$REALM" \
+    -b "{\"id\": \"${BUILTIN_RECAPTCHA_ID}\", \"requirement\": \"DISABLED\", \"priority\": ${BUILTIN_RECAPTCHA_PRIORITY}}"
+  if [ -n "$BUILTIN_RECAPTCHA_CONFIG" ]; then
+    $KCADM delete "authentication/config/${BUILTIN_RECAPTCHA_CONFIG}" -r "$REALM"
+  fi
+fi
+echo "→ ${REALM} — altcha : exigé à l'inscription et au « mot de passe oublié »"
