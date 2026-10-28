@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@etape/ui/components/alert-dialog";
+import { BrandMark } from "@etape/ui/components/brand-mark";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 
@@ -27,10 +28,7 @@ export function Topbar() {
   return (
     <header className="border-divider bg-background shrink-0 border-b">
       <Container size="md" className="flex items-center justify-between gap-4 py-4">
-        <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-          <span className="font-heading text-heading-sm text-primary">etape.</span>
-          <span className="text-body text-foreground font-semibold">Simulateur d’éligibilité</span>
-        </p>
+        <BrandMark product="Simulateur d’éligibilité" className="min-w-0" />
         <ExitDialog />
       </Container>
     </header>

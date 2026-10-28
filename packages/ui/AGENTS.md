@@ -26,7 +26,7 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 
 ## Où vivent les choses
 
-- `src/components/` — un fichier par composant : accordion, back-to-top, badge, button, callout, card, checkbox, container, dialog, dropdown-menu, form, input, label, prose, radio-group, section, select, separator, skip-links, sonner, tabs, textarea, theme-provider.
+- `src/components/` — un fichier par composant : accordion, back-to-top, badge, brand-mark, button, callout, card, checkbox, container, dialog, dropdown-menu, form, input, label, prose, radio-group, section, select, separator, skip-links, sonner, tabs, textarea, theme-provider.
 - `src/styles/globals.css` — **les tokens** : la seule source de couleur du dépôt.
 - `src/lib/utils.ts` (`cn`), `src/lib/focus.ts`.
 - `components.json` — configuration shadcn.

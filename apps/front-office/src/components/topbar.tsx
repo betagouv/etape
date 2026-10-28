@@ -1,5 +1,6 @@
 import { buildLogoutUrl } from "@etape/api-client";
 import { HOME_PATH } from "@etape/session";
+import { BrandMark } from "@etape/ui/components/brand-mark";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 import { focusRing } from "@etape/ui/lib/focus";
@@ -14,9 +15,8 @@ export function Topbar() {
   return (
     <header className="border-divider bg-background border-b">
       <Container size="app" className="flex items-center justify-between gap-4 py-4">
-        <Link to={HOME_PATH} className={cn("flex items-baseline gap-2 rounded-sm", focusRing)}>
-          <span className="font-heading text-heading-sm text-primary">etape.</span>
-          <span className="text-body text-foreground font-semibold">Espace bénéficiaire</span>
+        <Link to={HOME_PATH} className={cn("rounded-sm", focusRing)}>
+          <BrandMark product="Espace bénéficiaire" />
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
