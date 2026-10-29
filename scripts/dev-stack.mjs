@@ -51,7 +51,6 @@ const BACK_OFFICE_WORKSPACE = "@etape/back-office";
 const MISDIRECTED_STATUS = 421;
 
 const isTunnel = process.argv.includes("--tunnel");
-const launchedAt = Date.now();
 
 /** Sections du tableau final. */
 const SECTION = {
@@ -469,6 +468,8 @@ async function openTunnels() {
 }
 
 const apps = await selectApps();
+// Après le choix des apps : la durée affichée est celle du démarrage, pas de la saisie.
+const launchedAt = Date.now();
 const needsDocker = apps.some((app) => app.workspace === API_WORKSPACE);
 
 const issues = runChecks({
@@ -491,6 +492,10 @@ if (isTunnel) {
   await run("turbo", ["run", "build", ...filters]);
 }
 const tunnel = isTunnel ? await openTunnels() : undefined;
+// Jusqu'au lancement de Turborepo, Ctrl+C tuerait le script sans émettre `exit` :
+// les realms garderaient l'URL d'un tunnel déjà fermé. On sort donc proprement.
+const exitOnInterrupt = () => process.exit(130);
+process.on("SIGINT", exitOnInterrupt);
 const stackEnv = { ...process.env, ...tunnel?.env };
 
 if (needsDocker) {
@@ -507,6 +512,7 @@ const turbo = spawn("turbo", ["run", isTunnel ? "start" : "dev", ...filters], {
 turbo.on("exit", (code) => process.exit(code ?? 0));
 // Ctrl+C atteint déjà Turborepo, du même groupe de processus : on le laisse
 // arrêter les apps et on sort avec lui.
+process.off("SIGINT", exitOnInterrupt);
 process.on("SIGINT", () => {});
 
 const services = tunnel ? listTunnelServices(tunnel.urls) : listServices(apps, needsDocker);

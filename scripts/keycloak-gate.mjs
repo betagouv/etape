@@ -56,9 +56,14 @@ export function isAllowedPath(target) {
 
 /** @param {http.IncomingMessage} request @param {http.ServerResponse} response */
 function forward(request, response) {
+  const { hostname, port } = new URL(KEYCLOAK_ORIGIN);
   const upstream = http.request(
-    new URL(request.url, KEYCLOAK_ORIGIN),
     {
+      // Destination fixée ici, jamais tirée de la requête : elle ne repose pas
+      // sur `isAllowedPath`, qui ne juge que le chemin.
+      hostname,
+      port,
+      path: request.url,
       method: request.method,
       headers: {
         ...request.headers,
