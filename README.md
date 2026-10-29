@@ -50,6 +50,10 @@ pnpm install
 # Affiche leurs adresses une fois prêtes. `--all` lance tout sans demander.
 pnpm run dev:stack
 
+# Session de test avec les PO : front-office, back-office et Keycloak sur des
+# URL publiques (cloudflared), à transmettre — voir docs/authentification.md
+pnpm run dev:tunnel
+
 # Les apps seules (toutes via Turborepo), si la pile Docker tourne déjà ou
 # n'est pas nécessaire
 # → site : http://localhost:3000 · simulateur : http://localhost:3001

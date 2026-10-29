@@ -56,6 +56,11 @@ jobs:
       - name: Tests
         run: pnpm run test
 
+      # Hors workspaces, donc hors de `turbo run test` : la garde de Keycloak du
+      # mode tunnel (`scripts/keycloak-gate.mjs`) en particulier.
+      - name: Tests des scripts
+        run: pnpm run test:scripts
+
       - name: Build
         run: pnpm exec turbo run build --filter='!@etape/keycloak-theme'
 
