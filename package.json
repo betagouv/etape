@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "dev:stack": "node scripts/dev-stack.mjs",
+    "dev:tunnel": "node scripts/dev-stack.mjs --tunnel",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
@@ -14,6 +15,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,css}\"",
     "check:workspace-map": "node scripts/check-workspace-map.mjs",
+    "test:scripts": "node --test \"scripts/*.test.mjs\"",
     "prepare": "husky || true"
   },
   "lint-staged": {

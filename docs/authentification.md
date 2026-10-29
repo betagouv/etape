@@ -537,9 +537,10 @@ pnpm run test           # tests de l'API, du thème, d'ui et d'api-client (Vites
    `apps/api/.env`, les ports libres, Docker, la version de Node et l'installation
    des dépendances. Chaque constat dit quoi faire ; un ✗ annule le lancement ;
 3. il lance `docker compose up -d`, les migrations déjà écrites (`db:deploy`), puis
-   les apps, et affiche leurs adresses quand elles répondent, avec celles de la
-   base et de la console Keycloak et leurs identifiants. Ce qui a été lancé sans
-   être coché dit pourquoi (« requise par… »). Entrée réaffiche les adresses.
+   les apps, et affiche quand elles répondent un tableau de leurs adresses, avec
+   celles de la base et de la console Keycloak et leurs identifiants ; ✗ marque
+   ce qui ne répond pas. Ce qui a été lancé sans être coché dit pourquoi
+   (« requise par… »). Entrée rafraîchit le tableau.
 
 Le serveur de `@etape/keycloak-theme` n'est pas proposé : sans port fixé, il
 prendrait le 5173 du front-office. Pas de `docker compose up --wait` :
@@ -575,6 +576,62 @@ pas, et Keycloak en tire un au sort à l'import. `keycloak-init` le remplace
 ensuite par celui du `.env` à la racine (`FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET`,
 `BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`), qui doit être le même que dans
 `apps/api/.env`. Les autres environnements reçoivent le leur par `kcadm`.
+
+### Session de test avec les PO : `pnpm run dev:tunnel`
+
+Pour faire tester la connexion sans environnement hébergé : le front-office, le
+back-office et Keycloak du poste du dev reçoivent chacun une URL publique
+(Cloudflare Quick Tunnels, sans compte), que le PO ouvre depuis son propre poste.
+Prérequis : `brew install cloudflared`, et le thème construit (sans lui, le PO
+voit les écrans par défaut de Keycloak).
+
+La commande fait les mêmes vérifications que `dev:stack`, puis :
+
+1. construit le front-office, le back-office et l'API — servis ensuite par
+   `start` (`vite preview`, `node dist/main.js`) : le serveur de dev de Vite, qui
+   sert des centaines de modules un à un, est trop lent à travers un tunnel ;
+2. démarre la garde de Keycloak (`scripts/keycloak-gate.mjs`, en loopback sur un
+   port libre tiré au lancement) et ouvre les trois tunnels ;
+3. rejoue `keycloak-init` avec ces URL : chaque realm ETAPE reçoit l'URL publique
+   de Keycloak (`frontendUrl`), et ses adresses de retour celles de son front.
+   Keycloak n'est pas recréé, et le realm `master` comme la console
+   d'administration restent sur `localhost` ;
+4. lance les apps avec les URL du tunnel (`FRONT_OFFICE_BASE_URL`, `KEYCLOAK_URL`,
+   etc.) à la place de celles de `apps/api/.env`, qui n'est pas modifié ;
+5. sonde chaque service **par son URL publique**, puis affiche un tableau en deux
+   sections, « Pour les PO » et « Pour toi », et copie dans le presse-papier le
+   message à leur transmettre — sans le mot de passe du compte de test, qui se
+   transmet à part. Entrée rafraîchit le tableau, `c` puis Entrée recopie le
+   message.
+
+Ctrl+C ferme les tunnels et rejoue `keycloak-init` sans leurs URL : les realms
+reviennent sur `localhost`.
+
+**Pourquoi une garde devant Keycloak.** Le tunnel rendrait joignable depuis
+Internet la console d'administration, qui répond à `admin` / `admin` en local, et
+le realm `master`, qui délivre les jetons d'administration. La garde applique les
+règles de `deploy/nginx-auth.conf` : tout est refusé par défaut (404), seuls
+passent `/realms/etape/`, `/realms/etape-back-office/` et `/resources/`, et les
+chemins ambigus (`..`, `%2e`, `%2f`, `;`, `//`) sont refusés plutôt que
+normalisés. Un refus s'affiche dans le terminal (⛔, avec l'heure) : un chemin
+légitime bloqué se voit tout de suite. `/favicon.ico` et `/robots.txt`, que les
+navigateurs demandent d'office, sont refusés sans être signalés. La console reste sur `http://localhost:8080`.
+
+**Limites.**
+
+- Les URL changent à chaque session ; le poste du dev doit rester allumé.
+- FranceConnect n'est pas testable : son URL de retour doit être déclarée chez
+  FranceConnect, ce qu'une URL tirée au sort ne permet pas. Il faudra un tunnel
+  nommé sur un domaine stable.
+- Les PO travaillent sur la base locale du dev : aucune donnée réelle.
+- Toutes les requêtes arrivent de `127.0.0.1` : la limitation de débit de l'API
+  met tous les PO dans le même compteur.
+
+**À vérifier en début de session**, depuis un téléphone en 4G (vraiment hors du
+réseau du dev) : connexion au front-office avec le thème ETAPE, connexion au
+back-office, isolation des deux (connecté à l'un, pas à l'autre), déconnexion,
+lien profond protégé suivi du retour sur la bonne page — et
+`curl -i https://<url-keycloak>/admin/`, qui doit répondre 404.
 
 ### Les emails, en local aussi
 

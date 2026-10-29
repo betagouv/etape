@@ -6,6 +6,10 @@
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import path from "node:path";
+
+import { CLOUDFLARED_CONFIG_FILES } from "./dev-tunnel.mjs";
 
 /** `.env` racine : seuls ces secrets sont indispensables (voir `.env.example`). */
 const ROOT_REQUIRED_KEYS = [
@@ -17,6 +21,9 @@ const ROOT_REQUIRED_KEYS = [
 const DOCKER_PORTS = [5432, 8080];
 
 const VAULT_HINT = "le `.env` à jour se récupère dans le coffre-fort de l'équipe";
+
+/** Copié par `keycloak-providers` ; absent, Keycloak sert son thème par défaut. */
+const KEYCLOAK_THEME_JAR = "apps/keycloak-theme/dist_keycloak/etape-keycloak-theme.jar";
 
 function readEnvFile(path) {
   const entries = new Map();
@@ -204,10 +211,44 @@ function checkPorts(ports) {
 }
 
 /**
- * @param {{ ports: number[], envDirs: string[], needsDocker: boolean }} scope
- * Les ports et les `.env` des apps retenues ; `needsDocker` quand l'API en est.
+ * Mode tunnel : `cloudflared` doit être installé, et ne pas trouver de
+ * configuration de tunnel nommé, en présence de laquelle il refuse d'ouvrir un
+ * Quick Tunnel. Le thème, lui, n'empêche rien, mais les PO verraient les écrans
+ * de Keycloak au lieu de ceux d'ETAPE.
  */
-export function runChecks({ ports, envDirs, needsDocker }) {
+function checkTunnel() {
+  if (!succeeds("cloudflared", ["--version"])) {
+    return [
+      {
+        isBlocking: true,
+        message: "cloudflared introuvable : les tunnels ne peuvent pas s'ouvrir",
+        hint: "`brew install cloudflared`",
+      },
+    ];
+  }
+  const issues = CLOUDFLARED_CONFIG_FILES.map((file) => path.join(homedir(), ".cloudflared", file))
+    .filter((file) => existsSync(file))
+    .map((file) => ({
+      isBlocking: true,
+      message: `${file} présent : cloudflared refuse alors d'ouvrir un Quick Tunnel`,
+      hint: "le renommer le temps de la session",
+    }));
+  if (!existsSync(KEYCLOAK_THEME_JAR)) {
+    issues.push({
+      isBlocking: false,
+      message: "thème Keycloak non construit : les PO verront les écrans par défaut de Keycloak",
+      hint: "`pnpm run build --filter=@etape/keycloak-theme` (Maven requis)",
+    });
+  }
+  return issues;
+}
+
+/**
+ * @param {{ ports: number[], envDirs: string[], needsDocker: boolean, needsTunnel?: boolean }} scope
+ * Les ports et les `.env` des apps retenues ; `needsDocker` quand l'API en est ;
+ * `needsTunnel` en mode `--tunnel`.
+ */
+export function runChecks({ ports, envDirs, needsDocker, needsTunnel = false }) {
   const dockerIssues = needsDocker ? checkDocker() : [];
   const isDockerUp = dockerIssues.length === 0;
   return [
@@ -217,6 +258,7 @@ export function runChecks({ ports, envDirs, needsDocker }) {
     ...(needsDocker ? checkRootEnv() : []),
     ...envDirs.flatMap(checkEnvAgainstExample),
     ...(needsDocker ? checkSecretsMatch() : []),
+    ...(needsTunnel ? checkTunnel() : []),
     ...checkPorts(needsDocker && isDockerUp ? [...DOCKER_PORTS, ...ports] : ports),
   ];
 }
