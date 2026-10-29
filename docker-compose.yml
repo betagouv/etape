@@ -82,6 +82,7 @@ services:
       # thème par défaut.
       - ./apps/keycloak-theme/dist_keycloak:/theme:ro
       - ./keycloak/extensions/altcha/target:/altcha:ro
+      - ./keycloak/extensions/reset-credentials/target:/reset-credentials:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -119,6 +120,15 @@ services:
           echo "  mvn -f keycloak/extensions/altcha/pom.xml package pour l'obtenir."
         fi
 
+        rm -f /providers/etape-keycloak-reset-credentials.jar
+        if [ -f /reset-credentials/etape-keycloak-reset-credentials.jar ]; then
+          cp /reset-credentials/etape-keycloak-reset-credentials.jar /providers/
+          echo "extension « mot de passe oublié » installée."
+        else
+          echo "extension « mot de passe oublié » non construite — « mot de passe oublié » en erreur."
+          echo "  mvn -f keycloak/extensions/reset-credentials/pom.xml package pour l'obtenir."
+        fi
+
   # Applique après import ce qu'un fichier de realm ne peut pas porter. Deux
   # raisons distinctes, et le développement seulement :
   #
@@ -151,6 +161,7 @@ services:
       KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
     volumes:
       - ./deploy/keycloak-altcha.sh:/opt/keycloak/bin/etape-altcha.sh:ro
+      - ./deploy/keycloak-reset-credentials.sh:/opt/keycloak/bin/etape-reset-credentials.sh:ro
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -190,6 +201,8 @@ services:
         for realm in etape etape-back-office; do
           REALM=$$realm bash /opt/keycloak/bin/etape-altcha.sh \
             || echo "altcha : flows de $$realm non configurés — l'extension est-elle construite ?"
+          REALM=$$realm bash /opt/keycloak/bin/etape-reset-credentials.sh \
+            || echo "mot de passe oublié : envoi du lien de $$realm non branché — l'extension est-elle construite ?"
         done
 
         if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then

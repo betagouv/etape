@@ -21,6 +21,7 @@ const LoginUpdatePassword = lazy(() => import("./pages/LoginUpdatePassword"));
 const LoginVerifyEmail = lazy(() => import("./pages/LoginVerifyEmail"));
 const LogoutConfirm = lazy(() => import("./pages/LogoutConfirm"));
 const Register = lazy(() => import("./pages/Register"));
+const ResetPasswordEmailSent = lazy(() => import("./pages/ResetPasswordEmailSent"));
 
 /**
  * Aiguillage des écrans.
@@ -57,7 +58,11 @@ export default function KcPage(props: { kcContext: KcContext }) {
               />
             );
           case "login-reset-password.ftl":
-            return <LoginResetPassword {...common} kcContext={kcContext} />;
+            return kcContext.etapeResetLinkSent === true ? (
+              <ResetPasswordEmailSent {...common} kcContext={kcContext} />
+            ) : (
+              <LoginResetPassword {...common} kcContext={kcContext} />
+            );
           case "login-update-password.ftl":
             return <LoginUpdatePassword {...common} kcContext={kcContext} />;
           case "login-verify-email.ftl":

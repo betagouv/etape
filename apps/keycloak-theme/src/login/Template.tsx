@@ -13,6 +13,7 @@ type Props = TemplateProps<KcContext, I18n> & {
   /** Phrase d'accroche sous le titre. Propre à ETAPE, donc absente des pages non dessinées. */
   subtitle?: ReactNode;
   accountSwitchNode?: ReactNode;
+  backLinkNode?: ReactNode;
 };
 
 /**
@@ -31,6 +32,7 @@ export default function Template(props: Props) {
     headerNode,
     subtitle,
     accountSwitchNode = null,
+    backLinkNode = null,
     socialProvidersNode = null,
     infoNode = null,
     documentTitle,
@@ -98,6 +100,7 @@ export default function Template(props: Props) {
           </div>
 
           <div className="flex flex-col gap-6">
+            {backLinkNode}
             <Logo />
 
             <header className="flex flex-col gap-3">

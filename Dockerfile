@@ -123,6 +123,12 @@ WORKDIR /src
 COPY keycloak/extensions/altcha/ ./
 RUN mvn -B -q package
 
+FROM alpine:3.22 AS reset-credentials-extension
+RUN apk add --no-cache maven
+WORKDIR /src
+COPY keycloak/extensions/reset-credentials/ ./
+RUN mvn -B -q package
+
 # `kc.sh build` ici plutôt qu'au démarrage : c'est ce qui autorise
 # `start --optimized`. Les options figées alors ne varient plus à l'exécution.
 FROM quay.io/keycloak/keycloak:26.7 AS keycloak
@@ -130,8 +136,10 @@ FROM quay.io/keycloak/keycloak:26.7 AS keycloak
 COPY --from=theme /app/apps/keycloak-theme/dist_keycloak/etape-keycloak-theme.jar /opt/keycloak/providers/
 COPY --from=franceconnect-extension /keycloak-franceconnect.jar /opt/keycloak/providers/
 COPY --from=altcha-extension /src/target/etape-keycloak-altcha.jar /opt/keycloak/providers/
+COPY --from=reset-credentials-extension /src/target/etape-keycloak-reset-credentials.jar /opt/keycloak/providers/
 COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
 COPY deploy/keycloak-altcha.sh /opt/keycloak/bin/etape-altcha.sh
+COPY deploy/keycloak-reset-credentials.sh /opt/keycloak/bin/etape-reset-credentials.sh
 COPY deploy/keycloak-start.sh /opt/keycloak/bin/etape-keycloak-start.sh
 
 # Importés au premier démarrage, un realm par front. Ils décrivent le poste de
