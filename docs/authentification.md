@@ -337,8 +337,14 @@ produit. Deux points méritent d'être connus :
 ## Mot de passe oublié
 
 Le parcours est celui de Keycloak — `reset-credentials` — habillé par le thème.
-Rien n'est réimplémenté : le lien reçu par email porte un jeton d'action signé,
-que Keycloak vérifie et consomme.
+Le lien reçu par email porte un jeton d'action signé, que Keycloak vérifie et
+consomme. Seul l'envoi est remplacé, par l'extension maison
+[`keycloak/extensions/reset-credentials`](../keycloak/extensions/reset-credentials/README.md) :
+Keycloak revenait à la page de connexion sans proposer de renvoi, là où les
+maquettes demandent un écran « Consultez votre boîte e-mail » avec un renvoi
+possible au bout de 2 minutes. Le renvoi révoque le lien précédent, et un compte
+FranceConnect sans mot de passe ne reçoit rien : son mot de passe est chez
+FranceConnect.
 
 Ce qu'il a fallu régler pour qu'il tienne debout :
 
@@ -373,10 +379,11 @@ la même source : Keycloakify recopie les traductions du thème dans le paquet d
 messages dont le serveur se sert. C'est aussi pourquoi ces deux libellés-là sont
 écrits sans apostrophe, `MessageFormat` la doublant d'un côté et pas de l'autre.
 
-**L'existence d'un compte n'est pas divulguée.** Keycloak affiche le même message
-que l'adresse soit connue ou non, et n'envoie rien dans le second cas ; le
-libellé repris dans le thème dit « si un compte existe pour cette adresse » et se
-garde d'en dire plus.
+**L'existence d'un compte n'est pas divulguée.** L'écran « e-mail envoyé » est
+le même que l'adresse soit connue ou non, compte à rebours compris, et rien
+n'est envoyé dans le second cas ; il dit « si un espace est associé à l'adresse
+saisie » et se garde d'en dire plus. Le compte est détaché de la session avant
+l'affichage : le contexte de la page trahirait sinon qu'il existe.
 
 ## La session dans front-office et back-office
 
@@ -507,9 +514,10 @@ En local, le proxy de Vite doit donc garder `Host` intact (forme objet, sans
 # lui Keycloak démarre quand même, mais avec ses écrans par défaut.
 pnpm run build --filter=@etape/keycloak-theme
 
-# L'extension ALTCHA ensuite, recopiée de même. Sans elle, l'inscription et le
+# Les extensions ensuite, recopiées de même. Sans elles, l'inscription et le
 # « mot de passe oublié » répondent 500.
 mvn -f keycloak/extensions/altcha/pom.xml package
+mvn -f keycloak/extensions/reset-credentials/pom.xml package
 
 # Les `.env` — à la racine, et dans apps/api, apps/front-office et
 # apps/back-office — se récupèrent dans le coffre-fort de l'équipe. Les
@@ -548,7 +556,7 @@ que `--wait` compte comme un échec. Pour créer une migration, `db:migrate` res
 nécessaire.
 
 Après modification du thème, `pnpm run build --filter=@etape/keycloak-theme`, ou
-de l'extension, `mvn -f keycloak/extensions/altcha/pom.xml package`, puis
+d'une extension, `mvn -f keycloak/extensions/<extension>/pom.xml package`, puis
 `docker compose up -d keycloak-providers && docker compose restart keycloak` :
 c'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions, un
 simple redémarrage de Keycloak servirait l'ancien.

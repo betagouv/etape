@@ -58,7 +58,8 @@ ne produit donc **aucun effet** — piège classique, qui se traduit par de long
 minutes à se demander pourquoi un réglage ne prend pas.
 
 Les flows ALTCHA font exception : `deploy/keycloak-altcha.sh`, lancé par
-`keycloak-init`, les crée aussi sur un realm existant.
+`keycloak-init`, les crée aussi sur un realm existant, et
+`deploy/keycloak-reset-credentials.sh` y branche ensuite l'envoi du lien ETAPE.
 
 Pour repartir du fichier, il faut détruire le volume :
 
