@@ -1,0 +1,26 @@
+scripts/keycloak-gate.mjs
+  s_bf3f706d72f9c6::t_52d40d5e6d4d1e 59,62-66
+scripts/dev-stack.mjs
+  s_bf3f706d72f9c6::t_52d40d5e6d4d1e 471-472,495-498,515
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1207cccb023b54916839189b9a6e9086a6373016",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_bf3f706d72f9c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d0c455d5-3871-4d93-8d65-0fac2c4f54ea",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
