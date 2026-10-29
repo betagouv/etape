@@ -13,13 +13,27 @@ export type KcContextExtension = {
   properties: Record<KcEnvName, string>;
 };
 
+/**
+ * « Créer mon espace », en haut à droite de chaque maquette : Keycloak pose ces
+ * deux champs sur toutes les pages, Keycloakify ne les type que sur la connexion.
+ */
+type RegistrationLink = {
+  realm: { registrationAllowed?: boolean };
+  url: { registrationUrl?: string };
+};
+
 export type KcContextExtensionPerPage = {
   "error.ftl": { url: { loginResetCredentialsUrl?: string } };
   "register.ftl": { altchaChallenge?: string; altchaUnavailable?: boolean };
-  "login-reset-password.ftl": {
+  "login-update-password.ftl": RegistrationLink & { username?: string };
+  "login-reset-password.ftl": RegistrationLink & {
     altchaChallenge?: string;
     altchaUnavailable?: boolean;
     login?: { username?: string };
+    etapeResetLinkSent?: boolean;
+    etapeResetLinkResent?: boolean;
+    etapeResetLinkLifespanMinutes?: number;
+    etapeResendDelaySeconds?: number;
   };
 };
 

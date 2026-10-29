@@ -3,8 +3,8 @@
 Thème Keycloak d'ETAPE — écrans de connexion et gabarits d'email, écrits en
 React avec [Keycloakify](https://keycloakify.dev).
 
-La connexion suit la section « 00. SIGN-IN » du Figma _FRONT-OFFICE_ (écrans 01
-à 06, ticket Notion 191) ; les autres écrans suivent encore les maquettes
+La connexion et le mot de passe oublié suivent la section « 00. SIGN-IN » du
+Figma _FRONT-OFFICE_ (écrans 01 à 06, ticket Notion 191 ; écrans 07 à 10, ticket 192) ; les autres écrans suivent encore les maquettes
 `login-proposition-2` du Figma _Dépôt de dossier_. Ils réutilisent les variables
 de `@etape/ui` — couleurs, rayons, échelle typographique — plutôt que de les
 recopier : ce qui bouge dans le design system se propage ici au prochain build.
@@ -16,7 +16,9 @@ recopier : ce qui bouge dans le design system se propage ici au prochain build.
 - à gauche, l'illustration aux jumelles sur fond `--surface-warm`, masquée sous
   `lg` ;
 - en haut à droite, l'emplacement `accountSwitchNode`, que chaque écran remplit
-  ou non (la connexion y met « Créer mon espace ») ;
+  ou non (la connexion et le mot de passe oublié y mettent « Créer mon espace ») ;
+- au-dessus du logo, l'emplacement `backLinkNode` (« Retour à la connexion » de
+  l'écran 07) ;
 - le logo Transitions Pro (`components/logo.tsx`) au-dessus du titre ;
 - en bas, le pied de page « Besoin d'aide ? » vers `support@etape.com`
   (`components/support-footer.tsx`).
@@ -45,15 +47,16 @@ parcours normal atteint rarement.
 
 ## Ce que contient le thème
 
-| Écran                                                | Fichier                                   |
-| ---------------------------------------------------- | ----------------------------------------- |
-| Connexion                                            | `src/login/pages/Login.tsx`               |
-| Inscription                                          | `src/login/pages/Register.tsx`            |
-| Mot de passe oublié                                  | `src/login/pages/LoginResetPassword.tsx`  |
-| Nouveau mot de passe                                 | `src/login/pages/LoginUpdatePassword.tsx` |
-| Vérification d'adresse                               | `src/login/pages/LoginVerifyEmail.tsx`    |
-| Liaison de comptes (2 écrans)                        | `src/login/pages/LoginIdpLink*.tsx`       |
-| Session expirée · erreur · information · déconnexion | `src/login/pages/`                        |
+| Écran                                                | Fichier                                      |
+| ---------------------------------------------------- | -------------------------------------------- |
+| Connexion                                            | `src/login/pages/Login.tsx`                  |
+| Inscription                                          | `src/login/pages/Register.tsx`               |
+| Mot de passe oublié                                  | `src/login/pages/LoginResetPassword.tsx`     |
+| E-mail de réinitialisation envoyé                    | `src/login/pages/ResetPasswordEmailSent.tsx` |
+| Nouveau mot de passe                                 | `src/login/pages/LoginUpdatePassword.tsx`    |
+| Vérification d'adresse                               | `src/login/pages/LoginVerifyEmail.tsx`       |
+| Liaison de comptes (2 écrans)                        | `src/login/pages/LoginIdpLink*.tsx`          |
+| Session expirée · erreur · information · déconnexion | `src/login/pages/`                           |
 
 Les écrans non listés — double authentification, WebAuthn, consentement —
 tombent sur `DefaultPage` de Keycloakify. Ils héritent du gabarit d'ETAPE, mais
@@ -93,6 +96,27 @@ les mêmes classes que le gabarit React (`.kc-split`, `.kc-illustration`,
 Une transition de vue entre documents a été tentée pour aller plus loin ; elle ne
 démarre pas de façon fiable dans ce contexte et a été retirée plutôt que laissée
 à moitié fonctionnelle.
+
+## Mot de passe oublié
+
+Keycloak n'a pas d'écran « Consultez votre boîte e-mail » : l'extension
+[`keycloak/extensions/reset-credentials`](../../keycloak/extensions/reset-credentials/README.md)
+rend `login-reset-password.ftl` avec l'attribut `etapeResetLinkSent`, et
+`KcPage.tsx` aiguille alors vers `ResetPasswordEmailSent.tsx` au lieu du
+formulaire de l'écran 07.
+
+- **Le compte à rebours** (`hooks/use-resend-countdown.ts`) part du délai que
+  donne le serveur (`etapeResendDelaySeconds`) et se cale sur l'heure de fin :
+  un onglet en arrière-plan ralentit les minuteries. Le serveur refuse de toute
+  façon un renvoi trop tôt ; le bouton reste focusable, en `aria-disabled`.
+- **Ce qui est annoncé** dans la région `role="status"` : le renvoi, une seconde
+  après le rechargement de la page (une région déjà remplie au chargement ne
+  serait pas lue), puis la fin du délai. Le décompte lui-même ne l'est pas : il
+  décrit le bouton (`aria-describedby`).
+- **L'écran 10 n'a qu'un champ** : `password-confirm`, qu'exige Keycloak, est
+  recopié en champ caché, et `logout-sessions` est envoyé d'office.
+- **Un lien déjà utilisé ou remplacé par un renvoi** arrive sur `error.ftl` avec
+  `expiredActionMessage`, que `Error.tsx` traite comme un lien expiré.
 
 ## Case « Je ne suis pas un robot »
 

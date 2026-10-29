@@ -47,6 +47,8 @@ const buttonVariants = cva(
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
         // Bouton des formulaires de connexion (Figma FRONT-OFFICE, « 00. SIGN-IN ») : 40px, libellé 16px.
         form: "h-10 rounded-lg px-6 text-base has-[>svg]:px-4",
+        // Bouton secondaire des mêmes écrans (« Renvoyer l'e-mail », écrans 08 et 09) : 36px, libellé 14px.
+        "form-sm": "h-9 rounded-lg px-2.5 has-[>svg]:px-2",
         responsive: "h-11 px-6 has-[>svg]:px-4 md:h-9 md:px-4 md:has-[>svg]:px-3",
         "responsive-sm": "h-11 gap-1.5 px-4 has-[>svg]:px-3 md:h-8 md:px-3 md:has-[>svg]:px-2.5",
         "icon-responsive-sm": "size-11 md:size-8",

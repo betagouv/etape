@@ -1,9 +1,8 @@
 import { Button } from "@etape/ui/components/button";
-import { Mail } from "lucide-react";
 
 import { AltchaField } from "../components/altcha/altcha-field";
 import { Field, FieldError, TextInput } from "../components/form";
-import { BackToLogin } from "../components/prose";
+import { BackLink, CreateAccountSwitch } from "../components/prose";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
@@ -33,53 +32,62 @@ export default function LoginResetPassword(
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("etapeResetPasswordTitle")}
-      subtitle={msg("etapeResetPasswordSubtitle")}
       displayMessage={!hasError && !hasAltchaError}
-    >
-      <form
-        id="kc-reset-password-form"
-        action={url.loginAction}
-        method="post"
-        className="flex flex-col gap-8"
-      >
-        <Field
-          id="username"
-          label={usernameLabel}
-          required
-          error={
-            hasError ? (
-              <FieldError id="input-error-username" message={messagesPerField.get("username")} />
-            ) : undefined
-          }
-        >
-          <TextInput
-            id="username"
-            name="username"
-            type="text"
-            icon={Mail}
-            autoFocus={!shouldFocusAltcha}
-            autoComplete="username"
-            aria-required
-            aria-describedby={hasError ? "input-error-username" : undefined}
-            defaultValue={auth.attemptedUsername ?? login?.username ?? ""}
-            invalid={hasError}
-          />
-        </Field>
-
-        <AltchaField
-          challenge={altchaChallenge}
-          isUnavailable={altchaUnavailable ?? false}
-          serverError={hasAltchaError ? messagesPerField.get("altcha") : undefined}
+      backLinkNode={<BackLink href={url.loginUrl} label={msg("etapeBackToLogin")} />}
+      accountSwitchNode={
+        <CreateAccountSwitch
+          isAllowed={realm.registrationAllowed}
+          href={url.registrationUrl}
           i18n={i18n}
         />
+      }
+    >
+      <div className="flex flex-col gap-6">
+        <p className="text-body text-accent-foreground">{msg("etapeResetPasswordSubtitle")}</p>
 
-        <div className="flex flex-col gap-4">
-          <Button type="submit" size="xl" className="w-full rounded-lg">
+        <form
+          id="kc-reset-password-form"
+          action={url.loginAction}
+          method="post"
+          className="flex flex-col gap-6"
+        >
+          <Field
+            id="username"
+            label={usernameLabel}
+            required
+            hint={msg("etapeResetPasswordFranceConnectHint")}
+            error={
+              hasError ? (
+                <FieldError id="input-error-username" message={messagesPerField.get("username")} />
+              ) : undefined
+            }
+          >
+            <TextInput
+              id="username"
+              name="username"
+              type="text"
+              inputMode={realm.registrationEmailAsUsername ? "email" : undefined}
+              autoFocus={!shouldFocusAltcha}
+              autoComplete="username"
+              aria-required
+              aria-describedby={hasError ? "input-error-username" : undefined}
+              defaultValue={auth.attemptedUsername ?? login?.username ?? ""}
+              invalid={hasError}
+            />
+          </Field>
+
+          <AltchaField
+            challenge={altchaChallenge}
+            isUnavailable={altchaUnavailable ?? false}
+            serverError={hasAltchaError ? messagesPerField.get("altcha") : undefined}
+            i18n={i18n}
+          />
+
+          <Button type="submit" size="form" className="w-full">
             {msg("etapeResetPasswordCta")}
           </Button>
-          <BackToLogin href={url.loginUrl} label={msg("backToLogin")} />
-        </div>
-      </form>
+        </form>
+      </div>
     </Template>
   );
 }

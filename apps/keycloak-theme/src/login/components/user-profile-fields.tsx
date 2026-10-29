@@ -1,5 +1,6 @@
+import { cn } from "@etape/ui/lib/utils";
 import type { FormAction, FormFieldState } from "keycloakify/login/lib/useUserProfileForm";
-import { Check, Circle, Mail, User } from "lucide-react";
+import { Check, Mail, User, X } from "lucide-react";
 import type { ChangeEvent, ComponentType, ReactNode } from "react";
 
 import type { I18n } from "../i18n";
@@ -234,16 +235,22 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
   const rules = getPasswordRules(value, minLength);
 
   return (
-    <div id={PASSWORD_RULES_ID} className="flex flex-col gap-1">
-      <p className="text-body-sm text-muted-foreground">{msgStr("etapePasswordRulesTitle")}</p>
-      <ul className="flex flex-col gap-1">
+    <div id={PASSWORD_RULES_ID} className="bg-secondary flex flex-col gap-2 rounded-md px-3 py-2">
+      <p className="text-body-sm text-foreground">{msgStr("etapePasswordRulesTitle")}</p>
+      <ul className="flex flex-wrap gap-2">
         {rules.map(({ messageKey, isSatisfied }) => (
-          <li key={messageKey} className="text-body-sm flex items-center gap-2">
-            {isSatisfied ? (
-              <Check aria-hidden className="text-success size-4 shrink-0" />
-            ) : (
-              <Circle aria-hidden className="text-muted-foreground size-4 shrink-0" />
-            )}
+          <li key={messageKey} className="text-body-sm flex min-w-44 items-center gap-1.5">
+            <span
+              aria-hidden
+              className={cn(
+                "flex shrink-0 rounded-full p-1",
+                isSatisfied
+                  ? "bg-success-border text-success"
+                  : "bg-secondary-selected text-muted-foreground",
+              )}
+            >
+              {isSatisfied ? <Check className="size-2.5" /> : <X className="size-2.5" />}
+            </span>
             <span className={isSatisfied ? "text-success" : "text-muted-foreground"}>
               {msgStr(messageKey)}
             </span>
