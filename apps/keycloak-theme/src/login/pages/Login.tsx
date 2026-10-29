@@ -1,12 +1,15 @@
 import { Button } from "@etape/ui/components/button";
-import { Mail } from "lucide-react";
-import { useState } from "react";
 
-import { CheckboxField, Field, FieldError, PasswordInput, TextInput } from "../components/form";
+import { Alert, MESSAGE_TYPE } from "../components/alert";
+import { Field, FieldError, PasswordInput, TextInput } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
-import { AccountSwitch } from "../components/prose";
+import { HeaderAccountSwitch } from "../components/prose";
+import { LOGIN_FIELD, useLoginForm } from "../hooks/use-login-form";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
+
+const EMAIL_FORMAT_ERROR_ID = "input-error-username";
+const CREDENTIALS_ERROR_ID = "input-error";
 
 export default function Login(props: EtapePageProps<Extract<KcContext, { pageId: "login.ftl" }>>) {
   const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
@@ -24,7 +27,14 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
 
   const { msg, msgStr } = i18n;
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isUsernameHidden = usernameHidden ?? false;
+  const isEmailIdentifier = realm.loginWithEmailAllowed && realm.registrationEmailAsUsername;
+
+  const form = useLoginForm({
+    initialUsername: login.username ?? "",
+    isUsernameHidden,
+    shouldCheckEmailFormat: isEmailIdentifier,
+  });
 
   /*
    * Keycloak ne dit jamais lequel des deux champs est en cause — répondre
@@ -41,6 +51,12 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
       ? msg("usernameOrEmail")
       : msg("email");
 
+  const usernameDescribedBy = form.hasEmailFormatError
+    ? EMAIL_FORMAT_ERROR_ID
+    : hasCredentialsError
+      ? CREDENTIALS_ERROR_ID
+      : undefined;
+
   return (
     <Template
       kcContext={kcContext}
@@ -48,8 +64,16 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("etapeLoginTitle")}
-      subtitle={msg("etapeLoginSubtitle")}
       displayMessage={!hasCredentialsError}
+      accountSwitchNode={
+        isRegistrationAllowed && (
+          <HeaderAccountSwitch
+            question={msg("etapeNoAccount")}
+            href={url.registrationUrl}
+            label={msg("etapeCreateAccount")}
+          />
+        )
+      }
       socialProvidersNode={
         <SocialProviders
           providers={social?.providers}
@@ -63,117 +87,93 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
           id="kc-form-login"
           action={url.loginAction}
           method="post"
-          onSubmit={(event) => {
-            if (isSubmitting) {
-              event.preventDefault();
-              return;
-            }
-            setIsSubmitting(true);
-          }}
-          className="flex flex-col gap-8"
+          noValidate
+          onSubmit={form.submit}
+          className="flex flex-col gap-6"
         >
-          <div className="flex flex-col gap-4">
-            {!usernameHidden && (
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
+              {!isUsernameHidden && (
+                <Field
+                  id="username"
+                  label={usernameLabel}
+                  required
+                  error={
+                    form.hasEmailFormatError ? (
+                      <FieldError
+                        id={EMAIL_FORMAT_ERROR_ID}
+                        message={msgStr("etapeEmailFormatInvalid")}
+                      />
+                    ) : undefined
+                  }
+                >
+                  <TextInput
+                    id="username"
+                    name={LOGIN_FIELD.USERNAME}
+                    type="text"
+                    inputMode={isEmailIdentifier ? "email" : undefined}
+                    autoFocus
+                    autoComplete="username"
+                    aria-required
+                    aria-describedby={usernameDescribedBy}
+                    value={form.username}
+                    onChange={(event) => form.changeUsername(event.target.value)}
+                    onBlur={form.checkEmailFormat}
+                    invalid={form.hasEmailFormatError}
+                  />
+                </Field>
+              )}
+
               <Field
-                id="username"
-                label={usernameLabel}
+                id="password"
+                label={msg("password")}
                 required
-                error={
-                  hasCredentialsError && (
-                    <FieldError
-                      id="input-error"
-                      message={messagesPerField.getFirstError("username", "password")}
-                    />
+                labelAction={
+                  realm.resetPasswordAllowed && (
+                    <a
+                      href={url.loginResetCredentialsUrl}
+                      className="text-body-sm text-foreground font-normal hover:underline"
+                    >
+                      {msg("doForgotPassword")}
+                    </a>
                   )
                 }
               >
-                <TextInput
-                  id="username"
-                  name="username"
-                  type="text"
-                  icon={Mail}
-                  autoFocus
-                  autoComplete="username"
+                <PasswordInput
+                  id="password"
+                  name={LOGIN_FIELD.PASSWORD}
+                  i18n={i18n}
+                  autoComplete="current-password"
                   aria-required
-                  aria-describedby={hasCredentialsError ? "input-error" : undefined}
-                  defaultValue={login.username ?? ""}
-                  invalid={hasCredentialsError}
+                  aria-describedby={hasCredentialsError ? CREDENTIALS_ERROR_ID : undefined}
+                  value={form.password}
+                  onChange={(event) => form.changePassword(event.target.value)}
                 />
               </Field>
-            )}
+            </div>
 
-            <Field
-              id="password"
-              label={msg("password")}
-              required
-              error={
-                usernameHidden &&
-                hasCredentialsError && (
-                  <FieldError
-                    id="input-error"
-                    message={messagesPerField.getFirstError("username", "password")}
-                  />
-                )
-              }
-            >
-              <PasswordInput
-                id="password"
-                name="password"
-                i18n={i18n}
-                autoComplete="current-password"
-                aria-required
-                aria-describedby={hasCredentialsError ? "input-error" : undefined}
-                invalid={hasCredentialsError}
-              />
-            </Field>
-
-            {(realm.rememberMe || realm.resetPasswordAllowed) && (
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                {realm.rememberMe && !usernameHidden ? (
-                  <CheckboxField
-                    id="rememberMe"
-                    name="rememberMe"
-                    defaultChecked={Boolean(login.rememberMe)}
-                    label={msg("rememberMe")}
-                  />
-                ) : (
-                  <span />
-                )}
-                {realm.resetPasswordAllowed && (
-                  <a
-                    href={url.loginResetCredentialsUrl}
-                    className="text-label-lg text-content-accent hover:text-content-accent-hover font-semibold hover:underline"
-                  >
-                    {msg("doForgotPassword")}
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <input type="hidden" name="credentialId" value={auth.selectedCredential} readOnly />
-
-            <Button
-              type="submit"
-              id="kc-login"
-              name="login"
-              size="xl"
-              aria-disabled={isSubmitting}
-              aria-busy={isSubmitting}
-              className="w-full rounded-lg aria-busy:cursor-progress"
-            >
-              {msg("doLogIn")}
-            </Button>
-
-            {isRegistrationAllowed && (
-              <AccountSwitch
-                question={msg("etapeNoAccount")}
-                href={url.registrationUrl}
-                label={msg("etapeCreateAccount")}
+            {hasCredentialsError && (
+              <Alert
+                id={CREDENTIALS_ERROR_ID}
+                type={MESSAGE_TYPE.ERROR}
+                summary={messagesPerField.getFirstError("username", "password")}
               />
             )}
           </div>
+
+          <input type="hidden" name="credentialId" value={auth.selectedCredential} readOnly />
+
+          <Button
+            type="submit"
+            id="kc-login"
+            name="login"
+            size="form"
+            aria-disabled={!form.isSubmittable || form.isSubmitting}
+            aria-busy={form.isSubmitting}
+            className="w-full aria-busy:cursor-progress"
+          >
+            {msg("doLogIn")}
+          </Button>
         </form>
       )}
     </Template>

@@ -3,10 +3,23 @@
 Thème Keycloak d'ETAPE — écrans de connexion et gabarits d'email, écrits en
 React avec [Keycloakify](https://keycloakify.dev).
 
-Les écrans suivent les maquettes `login-proposition-2` du Figma _Dépôt de
-dossier_. Ils réutilisent les variables de `@etape/ui` — couleurs, rayons,
-échelle typographique — plutôt que de les recopier : ce qui bouge dans le design
-system se propage ici au prochain build.
+La connexion suit la section « 00. SIGN-IN » du Figma _FRONT-OFFICE_ (écrans 01
+à 06, ticket Notion 191) ; les autres écrans suivent encore les maquettes
+`login-proposition-2` du Figma _Dépôt de dossier_. Ils réutilisent les variables
+de `@etape/ui` — couleurs, rayons, échelle typographique — plutôt que de les
+recopier : ce qui bouge dans le design system se propage ici au prochain build.
+
+## Cadre commun
+
+`src/login/Template.tsx` porte ce que tous les écrans partagent :
+
+- à gauche, l'illustration aux jumelles sur fond `--surface-warm`, masquée sous
+  `lg` ;
+- en haut à droite, l'emplacement `accountSwitchNode`, que chaque écran remplit
+  ou non (la connexion y met « Créer mon espace ») ;
+- le logo Transitions Pro (`components/logo.tsx`) au-dessus du titre ;
+- en bas, le pied de page « Besoin d'aide ? » vers `support@etape.com`
+  (`components/support-footer.tsx`).
 
 ## Installer et lancer
 
@@ -55,8 +68,8 @@ d'ETAPE, porté par `html/template.ftl`.
 
 ## Connexion et inscription sont deux pages, et c'est imposé
 
-Le pied de formulaire porte un lien — « Pas encore de compte ? Créer un compte
-usager » — et non un onglet. Ce n'est pas un choix esthétique.
+La connexion porte un lien en haut à droite — « Vous n'avez pas encore d'espace ?
+Créer mon espace » — et non un onglet. Ce n'est pas un choix esthétique.
 
 Keycloak ne suit qu'une étape courante par session d'authentification et
 régénère son `session_code` à chaque changement. Échanger les formulaires côté

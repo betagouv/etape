@@ -1,7 +1,7 @@
 import { cn } from "@etape/ui/lib/utils";
 import { kcSanitize } from "keycloakify/lib/kcSanitize";
 import { useIsPasswordRevealed } from "keycloakify/tools/useIsPasswordRevealed";
-import { Eye, EyeOff, Lock } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 
 import type { I18n } from "../i18n";
@@ -18,19 +18,27 @@ export function Field(props: {
   id: string;
   label: ReactNode;
   required?: boolean;
+  labelAction?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
-  const { id, label, required = false, hint, error, className, children } = props;
+  const { id, label, required = false, labelAction, hint, error, className, children } = props;
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <label htmlFor={id} className="text-body-sm text-foreground font-semibold">
-        {label}
-        {required && <span aria-hidden>*</span>}
-      </label>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <label htmlFor={id} className="text-body-sm text-foreground font-medium">
+          {label}
+          {required && (
+            <span aria-hidden className="text-destructive ms-0.5">
+              *
+            </span>
+          )}
+        </label>
+        {labelAction}
+      </div>
       {children}
       {hint !== undefined && <p className="text-body-sm text-muted-foreground">{hint}</p>}
       <div role="status">{error}</div>
@@ -56,7 +64,7 @@ function InputShell(props: {
     <div
       data-invalid={invalid || undefined}
       className={cn(
-        "border-border bg-background flex min-h-11 w-full items-center gap-2 rounded-sm border px-3 transition-[color,box-shadow]",
+        "border-input bg-background flex min-h-11 w-full items-center gap-1.5 rounded-lg border px-4 transition-[color,box-shadow]",
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
         "data-invalid:border-destructive data-invalid:ring-destructive/20 data-invalid:ring-[3px]",
       )}
@@ -69,7 +77,7 @@ function InputShell(props: {
 }
 
 const inputClassName =
-  "text-body-sm placeholder:text-muted-foreground w-full min-w-0 bg-transparent outline-none disabled:cursor-not-allowed disabled:opacity-50";
+  "text-body-sm placeholder:text-muted-foreground min-h-0 w-full min-w-0 rounded-none border-0 bg-transparent p-0 outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
 export function TextInput({
   icon,
@@ -89,10 +97,6 @@ export function TextInput({
  *
  * `useIsPasswordRevealed` bascule l'attribut `type` de l'`input` directement
  * dans le DOM — d'où l'`id` obligatoire, qui sert de point d'ancrage.
- *
- * Les maquettes figent l'icône « œil barré ». Ici elle suit l'état : œil pour
- * révéler, œil barré pour masquer, ce qui est la convention et évite qu'elle
- * contredise son propre `aria-label`.
  */
 export function PasswordInput({
   id,
@@ -108,7 +112,6 @@ export function PasswordInput({
 
   return (
     <InputShell
-      icon={Lock}
       invalid={invalid}
       trailing={
         <button
@@ -119,9 +122,9 @@ export function PasswordInput({
           className="text-muted-foreground hover:text-foreground focus-visible:outline-ring shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {isPasswordRevealed ? (
-            <EyeOff aria-hidden className="size-4" />
-          ) : (
             <Eye aria-hidden className="size-4" />
+          ) : (
+            <EyeOff aria-hidden className="size-4" />
           )}
         </button>
       }
@@ -147,7 +150,7 @@ export function FieldError(props: { id: string; message: string }) {
   return (
     <span
       id={props.id}
-      className="text-body-sm text-destructive-text"
+      className="text-body-sm text-muted-foreground"
       dangerouslySetInnerHTML={{ __html: kcSanitize(props.message) }}
     />
   );

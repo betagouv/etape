@@ -89,25 +89,27 @@
 
   .kc-illustration {
     display: none;
-    flex-shrink: 0;
-    background-image: url("../assets/login-illustration.jpg");
+    flex: 1 1 0%;
+    border-radius: calc(var(--radius) + 8px);
+    background-color: var(--surface-warm);
+    background-image: url("../assets/illustration-jumelles.svg");
     background-position: center;
-    background-size: cover;
+    background-repeat: no-repeat;
+    background-size: 230px 191px;
   }
 
   .kc-panel {
+    display: flex;
     flex: 1 1 0%;
   }
 
   @media (width >= 64rem) {
-    .kc-illustration {
-      display: block;
-      width: 44%;
-      max-width: 640px;
+    .kc-split {
+      padding: 20px;
     }
 
-    .kc-panel {
-      border-left: 1px solid var(--border);
+    .kc-illustration {
+      display: block;
     }
   }
 }
