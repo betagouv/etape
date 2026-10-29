@@ -88,15 +88,14 @@ const sectionSubtextVariants = cva("text-muted-foreground", {
 
 /**
  * En-tête de section. Le chapô est un `<p>` et jamais un titre : il n'ouvre pas
- * de niveau dans le plan du document. Avec `isTitleFocusable`, le titre peut
- * recevoir le focus par script (`titleRef`), sans entrer dans l'ordre de tabulation.
+ * de niveau dans le plan du document. Avec `titleRef`, le titre peut recevoir
+ * le focus par script, sans entrer dans l'ordre de tabulation.
  */
 function SectionHeader({
   caption,
   title,
   titleId,
   titleRef,
-  isTitleFocusable = false,
   subtext,
   align = "center",
   variant,
@@ -108,10 +107,11 @@ function SectionHeader({
     title: React.ReactNode;
     titleId: string;
     titleRef?: React.Ref<HTMLHeadingElement>;
-    isTitleFocusable?: boolean;
     subtext?: React.ReactNode;
     align?: "center" | "start";
   }) {
+  const isTitleFocusable = titleRef !== undefined;
+
   return (
     <div
       data-slot="section-header"

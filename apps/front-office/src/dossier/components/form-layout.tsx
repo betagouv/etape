@@ -36,7 +36,6 @@ export function FormLayout({ volets, position, headingRef, children }: FormLayou
             title={current.title}
             titleId={titleId}
             titleRef={headingRef}
-            isTitleFocusable
             subtext={current.description}
           />
           {children}
