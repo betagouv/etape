@@ -118,6 +118,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                     aria-describedby={usernameDescribedBy}
                     value={form.username}
                     onChange={(event) => form.changeUsername(event.target.value)}
+                    onAnimationStart={form.detectAutofill(LOGIN_FIELD.USERNAME)}
                     onBlur={form.checkEmailFormat}
                     invalid={form.hasEmailFormatError}
                   />
@@ -148,6 +149,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                   aria-describedby={hasCredentialsError ? CREDENTIALS_ERROR_ID : undefined}
                   value={form.password}
                   onChange={(event) => form.changePassword(event.target.value)}
+                  onAnimationStart={form.detectAutofill(LOGIN_FIELD.PASSWORD)}
                 />
               </Field>
             </div>

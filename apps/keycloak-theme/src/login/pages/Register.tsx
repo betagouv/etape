@@ -6,6 +6,7 @@ import { AltchaField } from "../components/altcha/altcha-field";
 import { CheckboxField, FieldError } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
 import { AccountSwitch } from "../components/prose";
+import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
 import { PasswordRules, UserProfileFields } from "../components/user-profile-fields";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
@@ -88,6 +89,7 @@ export default function Register(props: RegisterProps) {
         id="kc-register-form"
         action={url.registrationAction}
         method="post"
+        onSubmit={() => rememberSubmittedForm(SUBMITTED_FORM.REGISTRATION)}
         className="flex flex-col gap-8"
       >
         <UserProfileFields
