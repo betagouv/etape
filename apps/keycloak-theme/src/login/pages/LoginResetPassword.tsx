@@ -3,8 +3,11 @@ import { Button } from "@etape/ui/components/button";
 import { AltchaField } from "../components/altcha/altcha-field";
 import { Field, FieldError, TextInput } from "../components/form";
 import { BackLink, CreateAccountSwitch } from "../components/prose";
+import { RESET_PASSWORD_FIELD, useResetPasswordForm } from "../hooks/use-reset-password-form";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
+
+const USERNAME_ERROR_ID = "input-error-username";
 
 export default function LoginResetPassword(
   props: EtapePageProps<Extract<KcContext, { pageId: "login-reset-password.ftl" }>>,
@@ -13,9 +16,15 @@ export default function LoginResetPassword(
 
   const { url, realm, auth, login, messagesPerField, altchaChallenge, altchaUnavailable } =
     kcContext;
-  const { msg } = i18n;
+  const { msg, msgStr } = i18n;
+
+  const form = useResetPasswordForm({
+    initialUsername: auth.attemptedUsername ?? login?.username ?? "",
+    shouldCheckEmailFormat: realm.loginWithEmailAllowed && realm.registrationEmailAsUsername,
+  });
 
   const hasError = messagesPerField.existsError("username");
+  const hasUsernameError = form.hasEmailFormatError || hasError;
   const hasAltchaError = messagesPerField.existsError("altcha");
   const shouldFocusAltcha = hasAltchaError && altchaChallenge !== undefined;
 
@@ -49,6 +58,7 @@ export default function LoginResetPassword(
           id="kc-reset-password-form"
           action={url.loginAction}
           method="post"
+          onSubmit={form.submit}
           className="flex flex-col gap-6"
         >
           <Field
@@ -57,22 +67,26 @@ export default function LoginResetPassword(
             required
             hint={msg("etapeResetPasswordFranceConnectHint")}
             error={
-              hasError ? (
-                <FieldError id="input-error-username" message={messagesPerField.get("username")} />
+              form.hasEmailFormatError ? (
+                <FieldError id={USERNAME_ERROR_ID} message={msgStr("etapeEmailFormatInvalid")} />
+              ) : hasError ? (
+                <FieldError id={USERNAME_ERROR_ID} message={messagesPerField.get("username")} />
               ) : undefined
             }
           >
             <TextInput
               id="username"
-              name="username"
+              name={RESET_PASSWORD_FIELD.USERNAME}
               type="text"
               inputMode={realm.registrationEmailAsUsername ? "email" : undefined}
               autoFocus={!shouldFocusAltcha}
               autoComplete="username"
               aria-required
-              aria-describedby={hasError ? "input-error-username" : undefined}
-              defaultValue={auth.attemptedUsername ?? login?.username ?? ""}
-              invalid={hasError}
+              aria-describedby={hasUsernameError ? USERNAME_ERROR_ID : undefined}
+              value={form.username}
+              onChange={(event) => form.changeUsername(event.target.value)}
+              onBlur={form.checkEmailFormat}
+              invalid={hasUsernameError}
             />
           </Field>
 

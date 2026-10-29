@@ -1,7 +1,7 @@
 import { Button } from "@etape/ui/components/button";
 
-import { MESSAGE_TYPE } from "../components/alert";
-import { Field, FieldError, PasswordInput } from "../components/form";
+import { Alert, MESSAGE_TYPE } from "../components/alert";
+import { Field, PasswordInput } from "../components/form";
 import { CreateAccountSwitch } from "../components/prose";
 import { PASSWORD_RULES_ID, PasswordRules } from "../components/user-profile-fields";
 import { useUpdatePasswordForm } from "../hooks/use-update-password-form";
@@ -16,7 +16,8 @@ const PASSWORD_ERROR_ID = "input-error-password";
  * Un seul champ : Keycloak exige quand même `password-confirm`, recopié en champ
  * caché. Les autres sessions sont fermées d'office, la maquette ne proposant
  * plus de case pour le choisir, ni l'avertissement « Vous devez changer votre
- * mot de passe », qui redit le titre.
+ * mot de passe », qui redit le titre. Un refus s'affiche sous le champ, comme
+ * sur la connexion.
  */
 export default function LoginUpdatePassword(
   props: EtapePageProps<Extract<KcContext, { pageId: "login-update-password.ftl" }>>,
@@ -28,8 +29,14 @@ export default function LoginUpdatePassword(
 
   const form = useUpdatePasswordForm();
 
-  const hasError = messagesPerField.existsError("password", "password-confirm");
-  const isActionWarning = message?.type === MESSAGE_TYPE.WARNING;
+  const hasFieldError = messagesPerField.existsError("password", "password-confirm");
+  const errorSummary = hasFieldError
+    ? messagesPerField.getFirstError("password", "password-confirm")
+    : message?.type === MESSAGE_TYPE.ERROR
+      ? message.summary
+      : undefined;
+  const isMessageShownInPlace =
+    message?.type === MESSAGE_TYPE.ERROR || message?.type === MESSAGE_TYPE.WARNING;
 
   return (
     <Template
@@ -38,7 +45,7 @@ export default function LoginUpdatePassword(
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("etapeUpdatePasswordTitle")}
-      displayMessage={!hasError && !isActionWarning}
+      displayMessage={!hasFieldError && !isMessageShownInPlace}
       accountSwitchNode={
         <CreateAccountSwitch
           isAllowed={realm.registrationAllowed}
@@ -62,37 +69,32 @@ export default function LoginUpdatePassword(
           </p>
         )}
 
-        <Field
-          id="password-new"
-          label={msg("passwordNew")}
-          required
-          error={
-            hasError ? (
-              <FieldError
-                id={PASSWORD_ERROR_ID}
-                message={messagesPerField.getFirstError("password", "password-confirm")}
-              />
-            ) : undefined
-          }
-        >
-          <PasswordInput
-            id="password-new"
-            name="password-new"
-            i18n={i18n}
-            autoFocus
-            autoComplete="new-password"
-            aria-required
-            aria-describedby={
-              hasError ? `${PASSWORD_ERROR_ID} ${PASSWORD_RULES_ID}` : PASSWORD_RULES_ID
-            }
-            invalid={hasError}
-            value={form.password}
-            onChange={(event) => form.changePassword(event.target.value)}
-          />
-          <div hidden={form.password === ""}>
-            <PasswordRules value={form.password} i18n={i18n} />
-          </div>
-        </Field>
+        <div className="flex flex-col gap-5">
+          <Field id="password-new" label={msg("passwordNew")} required>
+            <PasswordInput
+              id="password-new"
+              name="password-new"
+              i18n={i18n}
+              autoFocus
+              autoComplete="new-password"
+              aria-required
+              aria-describedby={
+                errorSummary !== undefined
+                  ? `${PASSWORD_ERROR_ID} ${PASSWORD_RULES_ID}`
+                  : PASSWORD_RULES_ID
+              }
+              invalid={hasFieldError}
+              value={form.password}
+              onChange={(event) => form.changePassword(event.target.value)}
+            />
+            <div hidden={form.password === ""}>
+              <PasswordRules value={form.password} i18n={i18n} />
+            </div>
+          </Field>
+          {errorSummary !== undefined && (
+            <Alert id={PASSWORD_ERROR_ID} type={MESSAGE_TYPE.ERROR} summary={errorSummary} />
+          )}
+        </div>
 
         <input type="hidden" name="password-confirm" value={form.password} readOnly />
         <input type="hidden" name="logout-sessions" value="on" readOnly />

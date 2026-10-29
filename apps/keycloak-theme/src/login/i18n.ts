@@ -19,7 +19,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
     fr: {
       /*
        * Trois libellés de Keycloak repris pour coller aux maquettes : « Courriel »
-       * → « Adresse email », « Se souvenir de moi » → « Rester connecté », et
+       * → « Adresse e-mail », « Se souvenir de moi » → « Rester connecté », et
        * « Connexion » → « Se connecter » pour que le bouton porte un verbe là où
        * l'onglet porte un nom.
        */
@@ -32,13 +32,13 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       invalidUserMessage: "Adresse e-mail ou mot de passe incorrect",
       emailVerifiedMessage: "Votre espace est activé. Vous pouvez vous connecter.",
       doRegister: "Créer mon compte",
-      emailVerifyTitle: "Confirmez votre adresse email",
+      emailVerifyTitle: "Confirmez votre adresse e-mail",
 
-      missingUsernameMessage: "Veuillez renseigner votre adresse email.",
-      invalidEmailMessage: "Adresse email invalide : il y manque un « @ ».",
-      missingEmailMessage: "Veuillez renseigner votre adresse email.",
-      emailExistsMessage: "Un compte existe déjà avec cette adresse email.",
-      usernameExistsMessage: "Un compte existe déjà avec cette adresse email.",
+      missingUsernameMessage: "Veuillez renseigner votre adresse e-mail.",
+      invalidEmailMessage: "Adresse e-mail invalide : il y manque un « @ ».",
+      missingEmailMessage: "Veuillez renseigner votre adresse e-mail.",
+      emailExistsMessage: "Un compte existe déjà avec cette adresse e-mail.",
+      usernameExistsMessage: "Un compte existe déjà avec cette adresse e-mail.",
       backToApplication: "Se connecter à ETAPE",
       emailSentMessage:
         "Si un compte existe pour cette adresse, un lien de réinitialisation vient de partir. Pensez à regarder vos indésirables.",
@@ -61,7 +61,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeCreateAccount: "Créer mon espace",
       etapeAlreadyAccount: "Déjà un compte ?",
       etapeOrCredentials: "OU",
-      etapeOrRegisterEmail: "ou inscrivez-vous par email",
+      etapeOrRegisterEmail: "ou inscrivez-vous par e-mail",
 
       // Libellés du bouton FranceConnect. Imposés au mot près par le kit
       // d'implémentation : ne pas reformuler.

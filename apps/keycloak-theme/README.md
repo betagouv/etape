@@ -114,7 +114,12 @@ formulaire de l'écran 07.
   serait pas lue), puis la fin du délai. Le décompte lui-même ne l'est pas : il
   décrit le bouton (`aria-describedby`).
 - **L'écran 10 n'a qu'un champ** : `password-confirm`, qu'exige Keycloak, est
-  recopié en champ caché, et `logout-sessions` est envoyé d'office.
+  recopié en champ caché, et `logout-sessions` est envoyé d'office. Un refus du
+  serveur (historique, politique) s'affiche sous le champ, comme les erreurs de
+  la connexion.
+- **L'écran 07 contrôle le format de l'adresse**, comme la connexion : sans
+  « @ », la personne arriverait sur « Consultez votre boîte e-mail » sans
+  qu'aucun e-mail ne parte.
 - **Un lien déjà utilisé ou remplacé par un renvoi** arrive sur `error.ftl` avec
   `expiredActionMessage`, que `Error.tsx` traite comme un lien expiré.
 

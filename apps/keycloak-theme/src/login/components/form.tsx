@@ -27,21 +27,25 @@ export function Field(props: {
   const { id, label, required = false, labelAction, hint, error, className, children } = props;
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <label htmlFor={id} className="text-body-sm text-foreground font-medium">
-          {label}
-          {required && (
-            <span aria-hidden className="text-destructive ms-0.5">
-              *
-            </span>
-          )}
-        </label>
-        {labelAction}
+    <div className={cn("flex flex-col", className)}>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <label htmlFor={id} className="text-body-sm text-foreground font-medium">
+            {label}
+            {required && (
+              <span aria-hidden className="text-destructive ms-0.5">
+                *
+              </span>
+            )}
+          </label>
+          {labelAction}
+        </div>
+        {children}
+        {hint !== undefined && <p className="text-body-sm text-muted-foreground">{hint}</p>}
       </div>
-      {children}
-      {hint !== undefined && <p className="text-body-sm text-muted-foreground">{hint}</p>}
-      <div role="status">{error}</div>
+      <div role="status" className="[&:not(:empty)]:mt-2">
+        {error}
+      </div>
     </div>
   );
 }
