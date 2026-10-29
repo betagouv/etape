@@ -42,6 +42,21 @@ export function AccountSwitch(props: { question: ReactNode; href: string; label:
   );
 }
 
+export function HeaderAccountSwitch(props: {
+  question: ReactNode;
+  href: string;
+  label: ReactNode;
+}) {
+  return (
+    <p className="text-body-sm text-accent-foreground flex flex-wrap items-center justify-end gap-1.5">
+      {props.question}
+      <a href={props.href} className="text-primary font-medium hover:underline">
+        {props.label}
+      </a>
+    </p>
+  );
+}
+
 /** Lien de retour vers l'écran de connexion, commun aux écrans secondaires. */
 export function BackToLogin(props: { href: string; label: ReactNode }) {
   return (

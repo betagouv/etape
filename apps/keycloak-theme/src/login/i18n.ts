@@ -18,14 +18,17 @@ const { useI18n, ofTypeI18n } = i18nBuilder
   .withCustomTranslations({
     fr: {
       /*
-       * Trois libellés de Keycloak repris pour coller aux maquettes : « Courriel »
-       * → « Adresse email », « Se souvenir de moi » → « Rester connecté », et
-       * « Connexion » → « Se connecter » pour que le bouton porte un verbe là où
-       * l'onglet porte un nom.
+       * Deux libellés de Keycloak repris pour coller aux maquettes : « Courriel »
+       * → « Adresse email », et « Connexion » → « Se connecter » pour que le
+       * bouton porte un verbe là où l'onglet porte un nom.
        */
-      email: "Adresse email",
-      rememberMe: "Rester connecté",
+      email: "Adresse e-mail",
       doLogIn: "Se connecter",
+      doForgotPassword: "Mot de passe oublié",
+      showPassword: "Afficher le mot de passe",
+      hidePassword: "Masquer le mot de passe",
+      invalidUserMessage: "Adresse e-mail ou mot de passe incorrect",
+      emailVerifiedMessage: "Votre espace est activé. Vous pouvez vous connecter.",
       doRegister: "Créer mon compte",
       emailVerifyTitle: "Confirmez votre adresse email",
 
@@ -42,17 +45,18 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       expiredActionTokenSessionExistsMessage:
         "Ce lien de réinitialisation a expiré. Un lien reste valable 15 minutes et ne peut servir que pour une seule demande.",
 
-      etapeLoginTitle: "Une nouvelle étape pour votre avenir.",
-      etapeLoginSubtitle: "Connectez-vous pour continuer votre démarche de transition.",
+      etapeLoginTitle: "Se connecter à votre espace personnel",
+      etapeEmailFormatInvalid: "Adresse e-mail incorrecte",
+      etapeSupportHelp: "Besoin d'aide ? Écrivez au support :",
       etapeRegisterTitle: "Créer votre compte personnel",
       etapeRegisterSubtitle:
         "Suivez en temps réel l'avancement de votre projet de transition professionnelle.",
-      etapeNoAccount: "Pas encore de compte ?",
+      etapeNoAccount: "Vous n'avez pas encore d'espace ?",
       etapeRegisterTerms:
         "En créant votre compte, vous acceptez les conditions générales d'utilisation.",
-      etapeCreateAccount: "Créer un compte usager",
+      etapeCreateAccount: "Créer mon espace",
       etapeAlreadyAccount: "Déjà un compte ?",
-      etapeOrCredentials: "ou renseignez vos identifiants",
+      etapeOrCredentials: "OU",
       etapeOrRegisterEmail: "ou inscrivez-vous par email",
 
       // Libellés du bouton FranceConnect. Imposés au mot près par le kit
@@ -80,6 +84,9 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeUpdatePasswordSubtitle: "Choisissez un mot de passe d'au moins 12 caractères.",
       etapeUpdatePasswordCta: "Enregistrer le mot de passe",
       etapeVerifyEmailSubtitle: "Plus qu'une étape avant d'accéder à votre espace.",
+      etapeAccountNotActivated: "Votre espace n'est pas encore activé.",
+      etapeAccountNotActivatedHint: "Consultez l'e-mail envoyé à {0}.",
+      etapeResendActivationEmail: "Renvoyer l'e-mail d'activation",
       etapePageExpiredSubtitle: "Votre session de connexion a expiré.",
       etapePageExpiredRestart: "Recommencer la connexion",
       etapePageExpiredContinue: "Poursuivre là où j'en étais",
@@ -100,8 +107,12 @@ const { useI18n, ofTypeI18n } = i18nBuilder
     },
     en: {
       email: "Email address",
-      rememberMe: "Stay signed in",
       doLogIn: "Sign in",
+      doForgotPassword: "Forgot password",
+      showPassword: "Show password",
+      hidePassword: "Hide password",
+      invalidUserMessage: "Incorrect email address or password",
+      emailVerifiedMessage: "Your space is activated. You can now sign in.",
       doRegister: "Create my account",
       emailVerifyTitle: "Confirm your email address",
 
@@ -118,15 +129,16 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       expiredActionTokenSessionExistsMessage:
         "This reset link has expired. A link stays valid for 15 minutes and can only be used once.",
 
-      etapeLoginTitle: "A new step towards your future.",
-      etapeLoginSubtitle: "Sign in to continue your career transition.",
+      etapeLoginTitle: "Sign in to your personal space",
+      etapeEmailFormatInvalid: "Incorrect email address",
+      etapeSupportHelp: "Need help? Email support:",
       etapeRegisterTitle: "Create your personal account",
       etapeRegisterSubtitle: "Follow your career transition project in real time.",
-      etapeNoAccount: "No account yet?",
+      etapeNoAccount: "Don't have a space yet?",
       etapeRegisterTerms: "By creating your account, you accept the terms of use.",
-      etapeCreateAccount: "Create an account",
+      etapeCreateAccount: "Create my space",
       etapeAlreadyAccount: "Already have an account?",
-      etapeOrCredentials: "or enter your credentials",
+      etapeOrCredentials: "OR",
       etapeOrRegisterEmail: "or sign up by email",
 
       etapeFranceConnectSignInWith: "S'identifier avec",
@@ -149,6 +161,9 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeUpdatePasswordSubtitle: "Choose a password of at least 12 characters.",
       etapeUpdatePasswordCta: "Save the password",
       etapeVerifyEmailSubtitle: "One last step before accessing your account.",
+      etapeAccountNotActivated: "Your space is not activated yet.",
+      etapeAccountNotActivatedHint: "Check the email sent to {0}.",
+      etapeResendActivationEmail: "Resend the activation email",
       etapePageExpiredSubtitle: "Your sign-in session has expired.",
       etapePageExpiredRestart: "Start over",
       etapePageExpiredContinue: "Continue where I left off",

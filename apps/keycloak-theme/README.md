@@ -3,10 +3,23 @@
 Thème Keycloak d'ETAPE — écrans de connexion et gabarits d'email, écrits en
 React avec [Keycloakify](https://keycloakify.dev).
 
-Les écrans suivent les maquettes `login-proposition-2` du Figma _Dépôt de
-dossier_. Ils réutilisent les variables de `@etape/ui` — couleurs, rayons,
-échelle typographique — plutôt que de les recopier : ce qui bouge dans le design
-system se propage ici au prochain build.
+La connexion suit la section « 00. SIGN-IN » du Figma _FRONT-OFFICE_ (écrans 01
+à 06, ticket Notion 191) ; les autres écrans suivent encore les maquettes
+`login-proposition-2` du Figma _Dépôt de dossier_. Ils réutilisent les variables
+de `@etape/ui` — couleurs, rayons, échelle typographique — plutôt que de les
+recopier : ce qui bouge dans le design system se propage ici au prochain build.
+
+## Cadre commun
+
+`src/login/Template.tsx` porte ce que tous les écrans partagent :
+
+- à gauche, l'illustration aux jumelles sur fond `--surface-warm`, masquée sous
+  `lg` ;
+- en haut à droite, l'emplacement `accountSwitchNode`, que chaque écran remplit
+  ou non (la connexion y met « Créer mon espace ») ;
+- le logo Transitions Pro (`components/logo.tsx`) au-dessus du titre ;
+- en bas, le pied de page « Besoin d'aide ? » vers `support@etape.com`
+  (`components/support-footer.tsx`).
 
 ## Installer et lancer
 
@@ -55,8 +68,8 @@ d'ETAPE, porté par `html/template.ftl`.
 
 ## Connexion et inscription sont deux pages, et c'est imposé
 
-Le pied de formulaire porte un lien — « Pas encore de compte ? Créer un compte
-usager » — et non un onglet. Ce n'est pas un choix esthétique.
+La connexion porte un lien en haut à droite — « Vous n'avez pas encore d'espace ?
+Créer mon espace » — et non un onglet. Ce n'est pas un choix esthétique.
 
 Keycloak ne suit qu'une étape courante par session d'authentification et
 régénère son `session_code` à chaque changement. Échanger les formulaires côté
@@ -80,6 +93,43 @@ les mêmes classes que le gabarit React (`.kc-split`, `.kc-illustration`,
 Une transition de vue entre documents a été tentée pour aller plus loin ; elle ne
 démarre pas de façon fiable dans ce contexte et a été retirée plutôt que laissée
 à moitié fonctionnelle.
+
+## Vérification d'adresse : deux écrans pour une seule page
+
+Keycloak affiche `login-verify-email.ftl` dans deux cas : juste après une
+inscription, et quand un compte pas encore activé se connecte. Rien dans le
+contexte transmis au thème ne permet de les distinguer — la note
+`NEW_USER_REGISTERED` reste dans la session d'authentification, l'URL est la
+même `required-action?execution=VERIFY_EMAIL`.
+
+Le thème retient donc, dans le `sessionStorage` de l'onglet, le dernier
+formulaire envoyé (`src/login/components/submitted-form.ts`) :
+
+- **connexion** → écran 05 de la maquette : « Votre espace n'est pas encore
+  activé », alerte rouge, bouton de renvoi ;
+- **inscription, ou rien de retenu** (stockage refusé, arrivée par
+  FranceConnect) → « Confirmez votre adresse », l'écran neutre d'avant la
+  maquette, qui convient aux deux cas.
+
+L'écran de connexion efface la marque à son affichage : un essai raté suivi
+d'une arrivée par FranceConnect ne garde pas « connexion ».
+
+## Remplissage automatique de Chrome
+
+« Se connecter » reste grisé tant que les deux champs sont vides. Quand Chrome
+remplit le mot de passe au chargement, il n'expose la valeur au code qu'après un
+geste de la personne, et sans événement de saisie : le bouton resterait grisé
+devant des champs visiblement remplis.
+
+Le seul signal est la pseudo-classe `:-webkit-autofill`. `src/styles/theme.css`
+y attache une animation sans effet visible (`etape-autofill`), dont
+`useLoginForm` écoute le début pour tenir le champ pour rempli. La saisie dans
+ce champ reprend ensuite la main. L'envoi, lui, n'a jamais dépendu de ce signal :
+il relit `FormData`, que Chrome remplit dès le clic.
+
+Vérifié dans Chrome par le protocole DevTools (`Autofill.trigger`) sur le champ
+e-mail ; le préremplissage d'un mot de passe enregistré ne se simule pas et n'a
+pas été testé.
 
 ## Case « Je ne suis pas un robot »
 

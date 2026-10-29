@@ -16,7 +16,7 @@
   "resetPasswordAllowed": true,
   "registrationFlow": "etape-registration",
   "resetCredentialsFlow": "etape-reset-credentials",
-  "rememberMe": true,
+  "rememberMe": false,
   "verifyEmail": false,
   "bruteForceProtected": true,
   "permanentLockout": false,

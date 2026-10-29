@@ -116,7 +116,7 @@ export function Separator(props: { label: string }) {
   return (
     <div className="flex items-center gap-4">
       <span aria-hidden className="bg-divider h-px flex-1" />
-      <span className="text-body-sm text-muted-foreground">{props.label}</span>
+      <span className="text-body-sm text-foreground">{props.label}</span>
       <span aria-hidden className="bg-divider h-px flex-1" />
     </div>
   );
