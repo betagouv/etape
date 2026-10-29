@@ -23,7 +23,7 @@ const homeRoute = createRoute({
   component: () => <PlaceholderScreen title="Mes dossiers" />,
 });
 
-const profilRoute = createRoute({
+const accountRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: "profil",
   component: () => <PlaceholderScreen title="Mon profil" />,
@@ -72,7 +72,7 @@ const voletRoute = createRoute({
 export const routeTree = sessionRootRoute.addChildren([
   appLayoutRoute.addChildren([
     homeRoute,
-    profilRoute,
+    accountRoute,
     nouveauDossierRoute,
     typeProjetRoute,
     dossierRoute.addChildren([dossierIndexRoute, voletRoute]),
