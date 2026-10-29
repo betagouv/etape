@@ -35,7 +35,11 @@ existe… » et oublie l'adresse saisie. L'extension, elle :
   `etapeResetLinkLifespanMinutes`, `etapeResendDelaySeconds` et
   `etapeResetLinkResent` ;
 - **renvoie le lien** sur le champ `resend`, deux minutes au moins après la
-  demande précédente, et **révoque le lien précédent** (`revokedTokens`) ;
+  demande précédente ;
+- **révoque le lien précédent du compte** à chaque nouvel envoi, même demandé
+  depuis un autre onglet ou après « Modifier l'adresse e-mail » : la clé du
+  dernier lien est gardée par compte (`singleUseObjects`), le temps de sa
+  validité, et l'ancienne passe dans `revokedTokens` ;
 - **ramène à la saisie de l'adresse** sur le champ `edit-email`, adresse
   préremplie ;
 - **n'envoie rien** à une adresse inconnue, à un compte désactivé ou sans

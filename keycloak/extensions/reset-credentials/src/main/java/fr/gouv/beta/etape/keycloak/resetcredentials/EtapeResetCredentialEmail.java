@@ -3,6 +3,7 @@ package fr.gouv.beta.etape.keycloak.resetcredentials;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.jboss.logging.Logger;
@@ -40,7 +41,8 @@ public class EtapeResetCredentialEmail extends ResetCredentialEmail {
     private static final String REQUESTED_USERNAME_NOTE = "etape-reset-requested-username";
     private static final String REQUESTED_USER_NOTE = "etape-reset-requested-user";
     private static final String REQUESTED_AT_NOTE = "etape-reset-requested-at";
-    private static final String LINK_KEY_NOTE = "etape-reset-link-key";
+    private static final String LAST_LINK_KEY_PREFIX = "etape-reset-last-link:";
+    private static final String LINK_KEY_FIELD = "link-key";
     private static final String THROTTLE_KEY_PREFIX = "etape-reset-throttle:";
     private static final String FEDERATED_WITHOUT_PASSWORD = "federated_user_without_password";
     private static final long CLOCK_SKEW_SECONDS = 60;
@@ -100,7 +102,7 @@ public class EtapeResetCredentialEmail extends ResetCredentialEmail {
 
     @Override
     public String getHelpText() {
-        return "Send the reset email, then show the email sent page, with a throttled resend that revokes the previous link.";
+        return "Send the reset email, then show the email sent page, with a throttled resend. Each new link revokes the previous one.";
     }
 
     @Override
@@ -116,7 +118,6 @@ public class EtapeResetCredentialEmail extends ResetCredentialEmail {
         if (user == null || !user.isEnabled() || !canReceiveLink(context, user) || !acquireThrottle(context, user)) {
             return;
         }
-        revokePreviousLink(context.getSession(), authSession);
         sendLink(context, user);
     }
 
@@ -146,17 +147,17 @@ public class EtapeResetCredentialEmail extends ResetCredentialEmail {
         return isAcquired;
     }
 
-    private static void revokePreviousLink(KeycloakSession session, AuthenticationSessionModel authSession) {
-        String previousKey = authSession.getAuthNote(LINK_KEY_NOTE);
-        DefaultActionTokenKey key = DefaultActionTokenKey.from(previousKey);
-        if (key == null) {
-            return;
+    private static void replaceLastLink(KeycloakSession session, UserModel user, String linkKey, int lifespan) {
+        String lastLinkKey = LAST_LINK_KEY_PREFIX + user.getId();
+        Map<String, String> previous = session.singleUseObjects().remove(lastLinkKey);
+        DefaultActionTokenKey previousKey = DefaultActionTokenKey.from(previous == null ? null : previous.get(LINK_KEY_FIELD));
+        if (previousKey != null) {
+            long remainingLifespan = previousKey.getExp() - Time.currentTime();
+            if (remainingLifespan > 0) {
+                session.revokedTokens().put(previous.get(LINK_KEY_FIELD), remainingLifespan + CLOCK_SKEW_SECONDS);
+            }
         }
-        long lifespan = key.getExp() - Time.currentTime();
-        if (lifespan > 0) {
-            session.revokedTokens().put(previousKey, lifespan + CLOCK_SKEW_SECONDS);
-        }
-        authSession.removeAuthNote(LINK_KEY_NOTE);
+        session.singleUseObjects().put(lastLinkKey, lifespan, Map.of(LINK_KEY_FIELD, linkKey));
     }
 
     private static void sendLink(AuthenticationFlowContext context, UserModel user) {
@@ -176,7 +177,7 @@ public class EtapeResetCredentialEmail extends ResetCredentialEmail {
                     .setUser(user)
                     .setAuthenticationSession(authSession)
                     .sendPasswordReset(link, TimeUnit.SECONDS.toMinutes(lifespan));
-            authSession.setAuthNote(LINK_KEY_NOTE, token.serializeKey());
+            replaceLastLink(context.getSession(), user, token.serializeKey(), lifespan);
             sendEvent(context, user).detail(Details.CODE_ID, authSession.getParentSession().getId()).success();
         } catch (EmailException e) {
             sendEvent(context, user).detail(Details.REASON, e.getMessage()).error(Errors.EMAIL_SEND_FAILED);

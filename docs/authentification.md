@@ -342,7 +342,8 @@ consomme. Seul l'envoi est remplacé, par l'extension maison
 [`keycloak/extensions/reset-credentials`](../keycloak/extensions/reset-credentials/README.md) :
 Keycloak revenait à la page de connexion sans proposer de renvoi, là où les
 maquettes demandent un écran « Consultez votre boîte e-mail » avec un renvoi
-possible au bout de 2 minutes. Le renvoi révoque le lien précédent, et un compte
+possible au bout de 2 minutes. Chaque nouvel envoi révoque le lien précédent du
+compte, d'où qu'il ait été demandé, et un compte
 FranceConnect sans mot de passe ne reçoit rien : son mot de passe est chez
 FranceConnect.
 
