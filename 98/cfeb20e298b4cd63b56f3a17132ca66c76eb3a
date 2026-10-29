@@ -1,0 +1,154 @@
+docker-compose.yml
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 89,118-126,163-164,213-215
+  s_bf3f706d72f9c6::t_1b1a46687a8a50 216-217
+apps/keycloak-theme/src/login/hooks/use-altcha-widget.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-70
+apps/keycloak-theme/src/login/i18n.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 68-79,140-148
+apps/front-office/src/navigation/routes.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 4
+apps/front-office/vite.config.ts
+  s_bf3f706d72f9c6::t_70545e17353f81 25
+keycloak/extensions/altcha/src/main/java/fr/gouv/beta/etape/keycloak/altcha/AltchaResetCredentialChooseUser.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-74
+apps/keycloak-theme/src/login/components/altcha/altcha-widget.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-46
+apps/front-office/src/navigation/router.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 4
+keycloak/extensions/altcha/pom.xml
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-127
+apps/front-office/src/dossier/domain/progress.test.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-46
+apps/keycloak-theme/README.md
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 84-107
+  s_bf3f706d72f9c6::t_c1086f22648a79 83
+keycloak/realms/README.md
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 7-8,10-11,60-61
+  s_bf3f706d72f9c6::t_846547c478b2fd 62
+keycloak/extensions/altcha/src/main/java/fr/gouv/beta/etape/keycloak/altcha/AltchaSettings.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-52
+apps/keycloak-theme/src/styles/theme.css
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 165-188
+apps/keycloak-theme/src/login/components/altcha/altcha-field.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-49
+.dockerignore
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 20
+apps/front-office/src/App.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-17,21-26
+apps/keycloak-theme/src/email/html/email-verification.ftl
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 8,11
+packages/api-client/src/index.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 41
+apps/front-office/tsconfig.app.json
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 20-23
+apps/keycloak-theme/src/login/components/altcha/widget-state.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-47
+apps/keycloak-theme/src/login/pages/Register.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 3,5,22-23,27-28,124-129,132-134
+apps/front-office/src/dossier/domain/progress.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-38
+apps/front-office/src/assets/illustration-jumelles.svg
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-20
+packages/api-client/src/session.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 18,58-61
+  s_bf3f706d72f9c6::t_7ac1148486a1e6 62
+docs/authentification.md
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 256-309,510-513,551-553
+packages/ui/src/components/badge.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 27-32,37
+packages/ui/src/styles/globals.css
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 47,56-57,100,142,152,195,292,337
+apps/front-office/package.json
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 12-13,19,25,41-42
+keycloak/extensions/altcha/src/test/java/fr/gouv/beta/etape/keycloak/altcha/AltchaChallengesTest.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-88
+packages/ui/src/components/button.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 43-44,54-55
+apps/front-office/src/assets/logo-transitions-pro.svg
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-38
+keycloak/extensions/altcha/README.md
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-75
+apps/keycloak-theme/src/email/html/template.ftl
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 36,74,78
+apps/keycloak-theme/package.json
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 19
+keycloak/extensions/altcha/src/main/java/fr/gouv/beta/etape/keycloak/altcha/AltchaSecrets.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-44
+keycloak/extensions/altcha/src/main/java/fr/gouv/beta/etape/keycloak/altcha/AltchaChallenges.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-73
+packages/ui/src/components/container.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 26,40-41
+docs/conventions/glossaire.md
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 15,17
+keycloak/extensions/altcha/src/test/java/fr/gouv/beta/etape/keycloak/altcha/AltchaSecretsTest.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-36
+apps/front-office/src/index.css
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 3,5,8
+deploy/keycloak-altcha.sh
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-91
+keycloak/extensions/altcha/src/main/resources/META-INF/services/org.keycloak.authentication.AuthenticatorFactory
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1
+.gitignore
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 19-21
+Dockerfile
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 120-125,132,134
+apps/keycloak-theme/src/email/html/password-reset.ftl
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 8,11
+keycloak/extensions/altcha/src/main/resources/META-INF/services/org.keycloak.authentication.FormActionFactory
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1
+apps/keycloak-theme/src/login/pages/LoginResetPassword.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 4,15-16,20-21,37,60,64,69-74
+  s_bf3f706d72f9c6::t_6494f257e2de49 75
+docs/deploiement.md
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 189-192
+apps/front-office/src/dossier/components/dossier-header.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-107
+apps/keycloak-theme/src/login/KcContext.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 18-23
+deploy/keycloak-init.sh
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 276-277,279-280
+apps/front-office/AGENTS.md
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 23,26
+keycloak/extensions/altcha/src/main/java/fr/gouv/beta/etape/keycloak/altcha/AltchaRegistrationFormAction.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-134
+apps/front-office/src/components/topbar.tsx
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-38
+apps/keycloak-theme/src/login/components/altcha/checkbox.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-19
+apps/simulateur/src/resultats/pdf/pdf-styles.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 20
+keycloak/extensions/altcha/src/test/java/fr/gouv/beta/etape/keycloak/altcha/AltchaSettingsTest.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-57
+apps/front-office/src/dossier/domain/statut-dossier.ts
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-9
+keycloak/realms/etape-realm.json
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 17-18,93-190
+  s_bf3f706d72f9c6::t_fb54df55f5c1b3 191
+keycloak/extensions/altcha/src/main/java/fr/gouv/beta/etape/keycloak/altcha/AltchaGuard.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-63
+keycloak/extensions/altcha/src/main/java/fr/gouv/beta/etape/keycloak/altcha/AltchaOutcome.java
+  s_bf3f706d72f9c6::t_f8a31a3a3a6117 1-17
+pnpm-lock.yaml
+  s_bf3f706d72f9c6::t_d4a276373f8315 187-189,205-207,251-253,266-268,3241-3243,4300-4302,8877-8880,10095-10096
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "98cfeb20e298b4cd63b56f3a17132ca66c76eb3a",
+  "prompts": {},
+  "humans": {
+    "h_99d85a1b622bfd": {
+      "author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_bf3f706d72f9c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d0c455d5-3871-4d93-8d65-0fac2c4f54ea",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
