@@ -17,7 +17,7 @@ import { PDF_FONT_FAMILY, PDF_HEADING_FONT_FAMILY } from "./fonts";
 const COLORS = {
   foreground: "#0a0a0a", // --foreground
   secondary: "#404040", // --content-secondary
-  muted: "#737373", // --muted-foreground
+  muted: "#525252", // --muted-foreground
   primary: "#134e4a", // --primary / --content-accent
   primaryForeground: "#fafafa", // --primary-foreground
   border: "#d3e2e0", // --border

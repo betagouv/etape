@@ -22,6 +22,7 @@ const TUNNEL_HOSTS = process.env.ETAPE_TUNNEL_HOSTS?.split(",").filter(Boolean) 
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  resolve: { tsconfigPaths: true },
   // Le tunnel vise ce port précis : décalé, il aboutirait dans le vide.
   preview: { headers: SECURITY_HEADERS, allowedHosts: TUNNEL_HOSTS, strictPort: true },
   server: {

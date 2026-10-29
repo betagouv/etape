@@ -86,6 +86,7 @@ services:
       # Absente sur un dépôt fraîchement cloné : Keycloak démarre alors avec son
       # thème par défaut.
       - ./apps/keycloak-theme/dist_keycloak:/theme:ro
+      - ./keycloak/extensions/altcha/target:/altcha:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -112,6 +113,15 @@ services:
         else
           echo "thème ETAPE non construit — Keycloak servira son thème par défaut."
           echo "  pnpm run build --filter=@etape/keycloak-theme pour l'obtenir."
+        fi
+
+        rm -f /providers/etape-keycloak-altcha.jar
+        if [ -f /altcha/etape-keycloak-altcha.jar ]; then
+          cp /altcha/etape-keycloak-altcha.jar /providers/
+          echo "extension ALTCHA installée."
+        else
+          echo "extension ALTCHA non construite — inscription et « mot de passe oublié » en erreur."
+          echo "  mvn -f keycloak/extensions/altcha/pom.xml package pour l'obtenir."
         fi
 
   # Applique après import ce qu'un fichier de realm ne peut pas porter. Deux
@@ -150,6 +160,8 @@ services:
       BACK_OFFICE_BASE_URL: ${BACK_OFFICE_BASE_URL:-http://localhost:5174}
       # URL publique de Keycloak pendant `pnpm run dev:tunnel`, vide sinon.
       KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL:-}
+    volumes:
+      - ./deploy/keycloak-altcha.sh:/opt/keycloak/bin/etape-altcha.sh:ro
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -196,6 +208,11 @@ services:
           else
             echo "$$realm — URL publique : aucune, adresse de la requête."
           fi
+        done
+
+        for realm in etape etape-back-office; do
+          REALM=$$realm bash /opt/keycloak/bin/etape-altcha.sh \
+            || echo "altcha : flows de $$realm non configurés — l'extension est-elle construite ?"
         done
 
         if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then

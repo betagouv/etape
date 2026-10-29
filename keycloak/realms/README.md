@@ -4,9 +4,11 @@ Un realm par front, importés au démarrage de Keycloak (`docker compose up` lan
 le conteneur avec `--import-realm`) :
 
 - `etape-realm.json` — le front-office : client `etape-api`, identity provider
-  FranceConnect, inscription ;
+  FranceConnect, inscription, et les flows `etape-registration` et
+  `etape-reset-credentials`, qui exigent ALTCHA ;
 - `etape-back-office-realm.json` — le back-office : client `etape-api`, ni
-  FranceConnect ni inscription libre.
+  FranceConnect ni inscription libre ; son « mot de passe oublié » exige ALTCHA,
+  par des flows que `keycloak-init` crée après l'import.
 
 Deux realms et non deux clients : la session de Keycloak est commune à tout un
 realm, et un compte du front-office se retrouverait connecté au back-office sans
@@ -54,6 +56,9 @@ fichier est ignoré en silence. Seul ce que `keycloak-init` réapplique (secrets
 et adresses des clients) suit sans effort. Un `docker compose restart` après modification
 ne produit donc **aucun effet** — piège classique, qui se traduit par de longues
 minutes à se demander pourquoi un réglage ne prend pas.
+
+Les flows ALTCHA font exception : `deploy/keycloak-altcha.sh`, lancé par
+`keycloak-init`, les crée aussi sur un realm existant.
 
 Pour repartir du fichier, il faut détruire le volume :
 

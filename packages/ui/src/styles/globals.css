@@ -18,10 +18,6 @@
  * 800 #115e59 · 900 #134e4a · 950 #12423e.
  *
  * Écarts au kit, chacun marqué « écart » sur sa ligne :
- * - `--muted` : le kit donne neutral-100 #f5f5f5, sur lequel son
- *   `muted-foreground` #737373 ne fait que 4,35:1, sous les 4,5:1 d'un texte
- *   courant (légendes des cartes, témoignages, récapitulatif). Remplacé par
- *   neutral-50 #fafafa : 4,54:1.
  * - `--secondary` : le kit donne teal-50 #f9faf9, qui ne se distingue pas du
  *   blanc — sections, tags, pastilles et survols disparaissaient. Remplacé
  *   par teal-100 #eef4f2.
@@ -48,6 +44,7 @@
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
+  --surface-warm: #f4f2ed; /* extension ETAPE : bandeau des en-têtes du front-office (taupe-200) */
 
   /* Actions */
   --primary: #134e4a; /* base/primary (teal-900) */
@@ -56,8 +53,8 @@
   --secondary-foreground: #134e4a; /* base/secondary-foreground (teal-900) */
   --secondary-selected: #d3e2e0; /* extension ETAPE (teal-200) */
   --primary-subtle: #115e59; /* extension ETAPE : relief posé sur primary (teal-800) */
-  --muted: #fafafa; /* écart : kit neutral-100 #f5f5f5 (neutral-50) */
-  --muted-foreground: #737373; /* base/muted-foreground (neutral-500) */
+  --muted: #f5f5f5; /* base/muted (neutral-100) */
+  --muted-foreground: #525252; /* base/muted-foreground (neutral-600) */
   --accent: #f5f5f5; /* base/accent (neutral-100) */
   --accent-foreground: #171717; /* base/accent-foreground */
   --destructive: #dc2626; /* base/destructive (red-600) */
@@ -100,6 +97,7 @@
   --violet-text: #4c1d95; /* violet-900 — 10:1 sur violet-50 */
 
   /* Contenu — extensions ETAPE */
+  --content-strong: #262626; /* neutral-800 */
   --content-secondary: #404040; /* neutral-700 */
   --content-accent: #134e4a; /* = primary (teal-900) */
   --content-accent-hover: #12423e; /* teal-950 */
@@ -141,6 +139,7 @@
   --card-foreground: #fafafa;
   --popover: #262626;
   --popover-foreground: #fafafa;
+  --surface-warm: #171717; /* neutral-900 */
 
   /* Actions */
   --primary: #e5e5e5; /* base/primary */
@@ -150,7 +149,7 @@
   --secondary-selected: #404040; /* extension ETAPE (neutral-700) */
   --primary-subtle: #d4d4d4; /* neutral-300, relief posé sur primary */
   --muted: #262626; /* base/muted */
-  --muted-foreground: #a3a3a3; /* base/muted-foreground */
+  --muted-foreground: #8f8f8f; /* base/muted-foreground (neutral-400) */
   --accent: #404040; /* base/accent */
   --accent-foreground: #fafafa;
   --destructive: #f87171; /* base/destructive (red-400) */
@@ -193,6 +192,7 @@
   --violet-text: #c4b5fd; /* violet-300 */
 
   /* Contenu */
+  --content-strong: #e5e5e5; /* neutral-200 */
   --content-secondary: #d4d4d4; /* neutral-300 */
   --content-accent: #e5e5e5; /* = primary */
   --content-accent-hover: #fafafa;
@@ -289,6 +289,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-surface-warm: var(--surface-warm);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -333,6 +334,7 @@
   --color-violet-muted: var(--violet-muted);
   --color-violet-text: var(--violet-text);
 
+  --color-content-strong: var(--content-strong);
   --color-content-secondary: var(--content-secondary);
   --color-content-accent: var(--content-accent);
   --color-content-accent-hover: var(--content-accent-hover);

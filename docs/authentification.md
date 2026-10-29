@@ -253,6 +253,60 @@ sauter l'étape de vérification.
   affiche pendant la saisie. Modifier l'un sans l'autre annonce une règle que le
   serveur n'applique pas, ou fait échouer un formulaire qui paraît complet.
 
+### Protection contre les robots : ALTCHA
+
+L'inscription et le « mot de passe oublié » exigent une case « Je ne suis pas un
+robot » [ALTCHA](https://altcha.org) : le navigateur résout une preuve de
+travail, Keycloak la vérifie. Aucune énigme à résoudre, aucun cookie, aucun
+service tiers. Il remplace reCAPTCHA, que la CNIL soumet au consentement et dont
+les défis en images posent problème d'accessibilité. CaptchEtat (habilitation
+PISTE, énigme visuelle ou sonore) et Friendly Captcha (payant) ont été écartés.
+
+C'est l'extension maison [`keycloak/extensions/altcha`](../keycloak/extensions/altcha/README.md)
+qui porte les deux étapes :
+
+| Flow                      | Étape                                                                    | Remplace                        |
+| ------------------------- | ------------------------------------------------------------------------ | ------------------------------- |
+| `etape-registration`      | `etape-altcha-registration`, dernière action du formulaire d'inscription | —                               |
+| `etape-reset-credentials` | `etape-altcha-reset-credentials`                                         | `reset-credentials-choose-user` |
+
+Ce qu'il faut savoir avant d'y toucher :
+
+- **Rien à configurer.** Les défis sont signés avec un secret dérivé de la clé
+  HMAC du realm (HS512), que Keycloak génère, conserve et fait tourner ; le
+  défi porte l'identifiant de la clé qui l'a signé. Il vit le temps de la page
+  de connexion (`accessCodeLifespanLogin`, 10 minutes) et chaque solution ne
+  sert qu'une fois (`SingleUseObjectProvider`).
+- **Un échec masque les autres erreurs** du formulaire d'inscription, comme le
+  faisait reCAPTCHA : sans solution valide, « un compte existe déjà avec cette
+  adresse » ne s'affiche jamais, et un robot ne peut pas sonder les adresses
+  inscrites.
+- **Un échec au « mot de passe oublié » ne compte pas contre le compte visé.**
+  L'étape renvoie le formulaire sans noter l'adresse saisie comme tentative :
+  sans cela, la détection de force brute compterait l'échec contre ce compte,
+  et un robot pourrait verrouiller celui d'un tiers.
+- **FranceConnect n'est pas concerné** : la première connexion passe par
+  `first broker login`, pas par l'inscription.
+- **Un réglage invalide est ignoré** : les valeurs par défaut s'appliquent et
+  Keycloak l'écrit dans ses journaux. Keycloak ne permet pas de valider la
+  configuration d'une étape au moment où on la saisit.
+- **Si le défi ne peut pas être créé**, la page affiche « Le contrôle de sécurité
+  est momentanément indisponible » à la place de la case ; l'envoi reste refusé.
+- **Sans l'extension, l'inscription répond 500** au lieu de s'ouvrir sans
+  protection : les flows la référencent.
+
+Les deux realms sont protégés. Le front-office reçoit les deux flows par son
+fichier de realm sur une base neuve, et par `deploy/keycloak-altcha.sh` sur une
+base existante. Le back-office, dont l'inscription reste fermée, les reçoit du
+même script : seul son « mot de passe oublié » s'en sert. `keycloak-init.sh` le
+lance pour les deux realms en déploiement, le service `keycloak-init` en local.
+
+Sur une base existante, le script retire aussi reCAPTCHA : de la copie du flow
+d'inscription, où il serait resté exigé sans plus être affiché, et du flow natif,
+avec sa clé secrète. Ce dernier retrait n'a lieu qu'une fois le realm basculé sur
+les flows ALTCHA : si un appel échoue avant, le flow natif garde reCAPTCHA exigé
+et l'inscription échoue fermée au lieu de s'ouvrir sans contrôle.
+
 ## Thème
 
 Les écrans de connexion ne sont pas soumis au DSFR, mais le thème Keycloak par
@@ -453,6 +507,10 @@ En local, le proxy de Vite doit donc garder `Host` intact (forme objet, sans
 # lui Keycloak démarre quand même, mais avec ses écrans par défaut.
 pnpm run build --filter=@etape/keycloak-theme
 
+# L'extension ALTCHA ensuite, recopiée de même. Sans elle, l'inscription et le
+# « mot de passe oublié » répondent 500.
+mvn -f keycloak/extensions/altcha/pom.xml package
+
 # Les `.env` — à la racine, et dans apps/api, apps/front-office et
 # apps/back-office — se récupèrent dans le coffre-fort de l'équipe. Les
 # `.env.example` versionnés n'en donnent que la liste des variables, sans valeur.
@@ -490,8 +548,9 @@ prendrait le 5173 du front-office. Pas de `docker compose up --wait` :
 que `--wait` compte comme un échec. Pour créer une migration, `db:migrate` reste
 nécessaire.
 
-Après modification du thème, `pnpm run build --filter=@etape/keycloak-theme`
-puis `docker compose up -d keycloak-providers && docker compose restart keycloak` :
+Après modification du thème, `pnpm run build --filter=@etape/keycloak-theme`, ou
+de l'extension, `mvn -f keycloak/extensions/altcha/pom.xml package`, puis
+`docker compose up -d keycloak-providers && docker compose restart keycloak` :
 c'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions, un
 simple redémarrage de Keycloak servirait l'ancien.
 

@@ -15,6 +15,7 @@ export const SESSION_QUERY_KEY = ["session"] as const;
 export const SESSION_END_QUERY_KEY = ["session-end"] as const;
 
 const LOGIN_PATH = "/auth/login";
+const LOGOUT_PATH = "/auth/logout";
 
 /**
  * Délai des appels de session. Sans lui, une API qui ne répond pas laisserait
@@ -53,4 +54,9 @@ export async function recordSessionActivity(httpClient: AxiosInstance): Promise<
  */
 export function buildLoginUrl(apiBaseUrl: string, returnTo: string): string {
   return `${apiBaseUrl}${LOGIN_PATH}?returnTo=${encodeURIComponent(returnTo)}`;
+}
+
+/** Navigation pleine page : l'API ferme la session puis la propage à Keycloak. */
+export function buildLogoutUrl(apiBaseUrl: string): string {
+  return `${apiBaseUrl}${LOGOUT_PATH}`;
 }
