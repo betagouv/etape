@@ -1,14 +1,13 @@
-import { buildLogoutUrl } from "@etape/api-client";
 import { HOME_PATH } from "@etape/session";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { CircleUserRoundIcon, LogOutIcon } from "lucide-react";
+import { CircleUserRoundIcon } from "lucide-react";
 
 import logoUrl from "@/assets/logo-transitions-pro.svg";
-import { API_BASE_URL } from "@/lib/clients";
+import { LogoutDialog } from "./logout-dialog";
 
 /** Barre commune aux écrans de l'espace bénéficiaire. */
 export function Topbar() {
@@ -25,11 +24,7 @@ export function Topbar() {
               <CircleUserRoundIcon aria-hidden="true" />
               Mon profil
             </Button>
-            <Button asChild variant="ghost-primary" size="icon-compact">
-              <a href={buildLogoutUrl(API_BASE_URL)} aria-label="Se déconnecter">
-                <LogOutIcon aria-hidden="true" />
-              </a>
-            </Button>
+            <LogoutDialog />
           </div>
         </div>
       </Container>

@@ -8,3 +8,7 @@
  */
 export const focusRing =
   "focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2";
+
+/** `focusRing` posé par un conteneur sur les liens de son texte (description d'alerte). */
+export const descendantLinksFocusRing =
+  "[&_a]:focus-visible:outline-ring [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-2";
