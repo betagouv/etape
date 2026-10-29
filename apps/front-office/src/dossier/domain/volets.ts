@@ -1,5 +1,29 @@
-import type { VoletDefinition, VoletPosition } from "./types";
+import type { VoletProgress } from "./statut-volet";
 import { VOLET_ID, type VoletId } from "./volet-id";
+
+/** Encart d'information en tête du volet ; `contactEmail` s'affiche en lien à la fin de la description. */
+export interface VoletNoticeContent {
+  title: string;
+  description: string;
+  contactEmail?: string;
+}
+
+export interface VoletDefinition {
+  id: VoletId;
+  label: string;
+  title: string;
+  description?: string;
+  notice?: VoletNoticeContent;
+}
+
+export interface Volet extends VoletDefinition, VoletProgress {}
+
+export interface VoletPosition {
+  index: number;
+  current: VoletDefinition;
+  previous: VoletDefinition | undefined;
+  next: VoletDefinition | undefined;
+}
 
 const VOLET_IDS: readonly string[] = Object.values(VOLET_ID);
 

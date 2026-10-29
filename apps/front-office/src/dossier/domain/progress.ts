@@ -1,9 +1,11 @@
 import { selectPlural, type PluralForms } from "@/lib/plural";
-import { isVoletCompleted } from "./statut-volet";
-import type { DossierProgress, VoletProgress } from "./types";
+import { isVoletCompleted, type VoletProgress } from "./statut-volet";
 
-const TIME_FORMAT = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
-const DAY_FORMAT = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit" });
+/** Avancement de la saisie d'un dossier, en volets. */
+export interface DossierProgress {
+  completed: number;
+  total: number;
+}
 
 interface VoletLabelForms {
   noun: string;
@@ -20,13 +22,6 @@ export function computeDossierProgress(volets: VoletProgress[]): DossierProgress
     completed: volets.filter(isVoletCompleted).length,
     total: volets.length,
   };
-}
-
-/** Moment du dernier enregistrement : l'heure seule le jour même, sinon la date et l'heure. */
-export function formatUpdatedAt(updatedAt: Date, now: Date): string {
-  const time = TIME_FORMAT.format(updatedAt);
-  if (updatedAt.toDateString() === now.toDateString()) return `à ${time}`;
-  return `le ${DAY_FORMAT.format(updatedAt)} à ${time}`;
 }
 
 /** Suite du libellé d'avancement, après le nombre de volets complétés que la vue met en valeur. */

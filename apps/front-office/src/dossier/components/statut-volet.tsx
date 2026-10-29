@@ -3,8 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@etape/ui/lib/utils";
 import { CheckIcon, CircleAlertIcon } from "lucide-react";
 
-import { STATUT_VOLET, type StatutVolet } from "../domain/statut-volet";
-import type { StatutVoletLine } from "../domain/types";
+import { STATUT_VOLET, type StatutVolet, type StatutVoletLine } from "../domain/statut-volet";
 
 interface StatutVoletUi {
   icon: ReactNode;

@@ -1,8 +1,11 @@
 import type { DossierHeaderProps } from "./components/dossier-header";
-import { computeDossierProgress, formatUpdatedAt } from "./domain/progress";
+import { computeDossierProgress } from "./domain/progress";
 import { STATUT_DOSSIER } from "./domain/statut-dossier";
-import type { Volet, VoletError, VoletProgress } from "./domain/types";
+import type { VoletProgress } from "./domain/statut-volet";
+import { formatUpdatedAt } from "./domain/updated-at";
+import type { VoletError } from "./domain/volet-errors";
 import { VOLET_ID, type VoletId } from "./domain/volet-id";
+import type { Volet } from "./domain/volets";
 import { VOLETS_DOSSIER } from "./domain/volets-dossier";
 
 // Données de la maquette, en attendant celles de l'API.

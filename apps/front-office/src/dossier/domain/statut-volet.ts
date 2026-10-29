@@ -1,6 +1,6 @@
 import { selectPlural, type PluralForms } from "@/lib/plural";
-import type { StatutVoletLine, VoletProgress } from "./types";
 
+/** Règles de chaque statut : `docs/conventions/glossaire.md`, « Statut d'un volet » — les modifier ensemble. */
 export const STATUT_VOLET = {
   A_REMPLIR: "A_REMPLIR",
   EN_COURS: "EN_COURS",
@@ -10,6 +10,20 @@ export const STATUT_VOLET = {
 } as const;
 
 export type StatutVolet = (typeof STATUT_VOLET)[keyof typeof STATUT_VOLET];
+
+/** `requiredFieldCount` et `remainingFieldCount` ne comptent que les champs obligatoires ; `filledFieldCount` les compte tous. */
+export interface VoletProgress {
+  requiredFieldCount: number;
+  filledFieldCount: number;
+  remainingFieldCount: number;
+  errorCount: number;
+}
+
+/** Une ligne du statut, avec le statut dont elle prend le libellé et la couleur. */
+export interface StatutVoletLine {
+  statut: StatutVolet;
+  label: string;
+}
 
 const REMAINING_FIELD_LABELS: PluralForms<string> = {
   one: "champ restant",

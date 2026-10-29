@@ -2,7 +2,7 @@ import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 
 import { getStatutVolet, listStatutVoletLines } from "../domain/statut-volet";
-import type { Volet } from "../domain/types";
+import type { Volet } from "../domain/volets";
 import { StatutVoletIcon, StatutVoletLabel } from "./statut-volet";
 import { VoletLink } from "./volet-link";
 

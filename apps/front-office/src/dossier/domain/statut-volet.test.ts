@@ -5,8 +5,8 @@ import {
   isVoletCompleted,
   listStatutVoletLines,
   STATUT_VOLET,
+  type VoletProgress,
 } from "./statut-volet";
-import type { VoletProgress } from "./types";
 
 const A_REMPLIR: VoletProgress = {
   requiredFieldCount: 5,

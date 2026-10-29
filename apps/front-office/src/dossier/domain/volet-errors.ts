@@ -1,5 +1,10 @@
 import { selectPlural, type PluralForms } from "@/lib/plural";
 
+export interface VoletError {
+  fieldId: string;
+  message: string;
+}
+
 const ERROR_NOUNS: PluralForms<string> = {
   one: "erreur",
   other: "erreurs",

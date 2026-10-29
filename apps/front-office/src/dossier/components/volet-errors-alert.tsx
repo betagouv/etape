@@ -1,8 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@etape/ui/components/alert";
 import { CircleAlertIcon } from "lucide-react";
 
-import type { VoletError } from "../domain/types";
-import { formatVoletErrorsTitle } from "../domain/volet-errors";
+import { formatVoletErrorsTitle, type VoletError } from "../domain/volet-errors";
 
 export interface VoletErrorsAlertProps {
   errors: VoletError[];

@@ -1,4 +1,4 @@
-import type { VoletDefinition, VoletNoticeContent } from "./types";
+import type { VoletDefinition, VoletNoticeContent } from "./volets";
 import { VOLET_ID } from "./volet-id";
 
 const SUPPORT_EMAIL = "support@etapes.com";

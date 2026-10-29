@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@etape/ui/components/alert";
 import { InfoIcon } from "lucide-react";
 
-import type { VoletNoticeContent } from "../domain/types";
+import type { VoletNoticeContent } from "../domain/volets";
 
 export interface VoletNoticeProps {
   notice?: VoletNoticeContent;
