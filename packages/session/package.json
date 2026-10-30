@@ -18,7 +18,7 @@
     "@etape/ui": "workspace:*",
     "@tanstack/react-query": "^5.105.0",
     "@tanstack/react-router": "^1.170.46",
-    "axios": "^1.20.0"
+    "axios": "^1.21.0"
   },
   "peerDependencies": {
     "react": "^19.3.0",

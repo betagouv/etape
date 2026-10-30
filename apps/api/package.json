@@ -16,10 +16,10 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@nestjs/common": "^12.1.2",
+    "@nestjs/common": "^12.3.2",
     "@nestjs/config": "^12.0.1",
-    "@nestjs/core": "^12.1.2",
-    "@nestjs/platform-express": "^12.1.2",
+    "@nestjs/core": "^12.3.2",
+    "@nestjs/platform-express": "^12.3.2",
     "@nestjs/throttler": "^6.7.1",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
@@ -35,7 +35,7 @@
     "@etape/api-contract": "workspace:*",
     "@etape/eslint-config": "workspace:*",
     "@etape/prettier-config": "workspace:*",
-    "@nestjs/cli": "^12.0.10",
+    "@nestjs/cli": "^12.0.11",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.0",
     "@types/node": "^20",
