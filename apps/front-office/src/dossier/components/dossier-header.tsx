@@ -5,6 +5,7 @@ import { Badge } from "@etape/ui/components/badge";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 import { Progress } from "@etape/ui/components/progress";
+import { Tag } from "@etape/ui/components/tag";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftIcon, CheckIcon, ClockIcon, FolderOpenIcon, type LucideIcon } from "lucide-react";
 
@@ -16,16 +17,16 @@ import {
 } from "../domain/progress";
 import { STATUT_DOSSIER, type StatutDossier } from "../domain/statut-dossier";
 
-interface StatutBadge {
+interface StatutTag {
   label: string;
-  variant: NonNullable<ComponentProps<typeof Badge>["variant"]>;
+  status: NonNullable<ComponentProps<typeof Tag>["status"]>;
   Icon: LucideIcon;
 }
 
-const STATUT_BADGES: Record<StatutDossier, StatutBadge> = {
+const STATUT_TAGS: Record<StatutDossier, StatutTag> = {
   [STATUT_DOSSIER.BROUILLON]: {
     label: "Saisie en cours",
-    variant: "warning-solid",
+    status: "warning",
     Icon: ClockIcon,
   },
 };
@@ -49,7 +50,7 @@ export function DossierHeader({
   progress,
 }: DossierHeaderProps) {
   const progressLabelId = useId();
-  const { label, variant, Icon } = STATUT_BADGES[statut];
+  const { label, status, Icon } = STATUT_TAGS[statut];
 
   return (
     <header className="bg-surface-warm">
@@ -94,10 +95,10 @@ export function DossierHeader({
               <span className="text-foreground">{progress.completed}</span>{" "}
               {formatVoletsLabel(progress)}
             </p>
-            <Badge variant={variant} size="xl">
+            <Tag status={status} importance="emphasized">
               <Icon aria-hidden="true" />
               {label}
-            </Badge>
+            </Tag>
           </div>
           <Progress value={computeProgressPercent(progress)} aria-labelledby={progressLabelId} />
         </div>
