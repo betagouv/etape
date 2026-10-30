@@ -20,7 +20,7 @@ const COLORS = {
   muted: "#525252", // --muted-foreground
   primary: "#134e4a", // --primary
   primaryForeground: "#fafafa", // --primary-foreground
-  border: "#d3e2e0", // --border
+  border: "#92b5b2", // --border
   white: "#ffffff",
   bannerSubtitle: "#eef4f2", // --secondary
 };

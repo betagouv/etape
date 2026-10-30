@@ -61,9 +61,9 @@
   --destructive-foreground: #ffffff; /* écart : kit #fef2f2 */
 
   /* Bordures & focus */
-  --border: #d3e2e0; /* base/border (teal-200) */
+  --border: #92b5b2; /* base/border (teal-400) */
   --border-strong: #2b6f6b; /* extension ETAPE : bord marqué (teal-700) */
-  --divider: #d3e2e0; /* extension ETAPE (= border) */
+  --divider: #d3e2e0; /* extension ETAPE (teal-200) */
   --input: #8f8f8f; /* base/input (neutral-400) — 3,23:1 sur blanc */
   --ring: #2b6f6b; /* base/ring (teal-700) */
 
@@ -114,7 +114,7 @@
   --sidebar-accent: #f5f5f5;
   --sidebar-accent-foreground: #171717;
   --sidebar-border: #e5e5e5;
-  --sidebar-ring: #a3a3a3;
+  --sidebar-ring: #8f8f8f; /* base/sidebar-ring (neutral-400) */
 }
 
 /*
@@ -334,6 +334,8 @@
   --radius-lg: var(--radius); /* 10px — radius/lg */
   --radius-xl: calc(var(--radius) + 4px); /* 14px — radius/xl */
   --radius-2xl: calc(var(--radius) + 8px); /* 18px — radius/2xl */
+  --radius-3xl: calc(var(--radius) + 12px); /* 22px — radius/3xl */
+  --radius-4xl: calc(var(--radius) + 16px); /* 26px — radius/4xl */
   --radius-full: 9999px;
 
   /* Typographie */
@@ -351,6 +353,8 @@
    * police du système.
    */
   --font-heading: var(--font-bricolage, var(--font-geist, ui-sans-serif, system-ui, sans-serif));
+  /* Geist Mono (`font/font-mono` du kit), chargée par aucune app pour l'instant. */
+  --font-mono: var(--font-geist-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
 
   /* Styles de texte Figma — responsive par construction (cf. bloc ci-dessus) */
   --text-heading-xl: var(--type-heading-xl);
