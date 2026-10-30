@@ -2,6 +2,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot } from "radix-ui";
 
+import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 
 /*
@@ -10,7 +11,7 @@ import { cn } from "@etape/ui/lib/utils";
  * consomme ; d'où 6 + 4 variantes au lieu de 24 combinaisons.
  */
 const tagVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center overflow-hidden rounded-full border border-transparent font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-4",
+  "inline-flex w-fit shrink-0 items-center justify-center overflow-hidden rounded-full border border-transparent font-medium whitespace-nowrap transition-[color,box-shadow] [&>svg]:pointer-events-none [&>svg]:size-4",
   {
     variants: {
       status: {
@@ -63,7 +64,7 @@ function Tag({
       data-status={status}
       data-importance={importance}
       data-size={size}
-      className={cn(tagVariants({ status, importance, size }), className)}
+      className={cn(focusRing, tagVariants({ status, importance, size }), className)}
       {...props}
     />
   );

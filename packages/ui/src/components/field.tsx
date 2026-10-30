@@ -54,7 +54,9 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-const fieldVariants = cva("group/field flex w-full gap-3 data-[invalid=true]:text-destructive", {
+// Pas de `data-[invalid=true]:text-destructive` de la source shadcn : dans le kit, un
+// champ invalide garde son libellé noir ; seule la bordure du contrôle passe en rouge.
+const fieldVariants = cva("group/field flex w-full gap-3", {
   variants: {
     orientation: {
       vertical: ["flex-col [&>*]:w-full [&>.sr-only]:w-auto"],
@@ -105,10 +107,9 @@ function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>)
   return (
     <Label
       data-slot="field-label"
+      // Sans la carte de choix de la source shadcn : c'est le rôle de `ChoiceCard`.
       className={cn(
         "group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",
-        "has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border [&>*]:data-[slot=field]:p-4",
-        "has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/5 dark:has-data-[state=checked]:bg-primary/10",
         className,
       )}
       {...props}
@@ -175,9 +176,10 @@ function FieldSeparator({
 }
 
 /*
- * Sans `role="alert"`, contrairement à la source shadcn : l'erreur est lue avec
- * le champ, que `aria-describedby` relie à elle et que react-hook-form focalise
- * à la soumission. Une alerte par champ ferait parler le lecteur d'écran en rafale.
+ * En gris et sans `role="alert"`, contrairement à la source shadcn, comme le
+ * message d'un champ invalide du kit. L'annonce passe par le résumé d'erreurs de
+ * l'écran (`VoletErrorsAlert` au front-office), focalisé à la soumission ; chaque
+ * champ relie ensuite son message par `aria-describedby`.
  */
 function FieldError({
   className,
@@ -205,7 +207,7 @@ function FieldError({
   return (
     <div
       data-slot="field-error"
-      className={cn("text-destructive text-sm font-normal", className)}
+      className={cn("text-muted-foreground text-sm font-normal", className)}
       {...props}
     >
       {content}

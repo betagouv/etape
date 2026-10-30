@@ -9,22 +9,26 @@ import { Input } from "@etape/ui/components/input";
 
 afterEach(cleanup);
 
-const schema = z.object({ nom: z.string().min(1, "Indiquez votre nom.") });
+const DESCRIPTION = "Les 13 premiers chiffres de votre carte Vitale.";
+const ERROR = "Ce numéro n'est pas valide.";
 
-function NomForm() {
+const schema = z.object({ numeroSecuriteSociale: z.string().regex(/^\d{13}$/, ERROR) });
+
+function NumeroForm() {
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { nom: "" },
+    defaultValues: { numeroSecuriteSociale: "" },
+    shouldFocusError: false,
   });
 
   return (
     <form noValidate onSubmit={form.handleSubmit(() => undefined)}>
       <FormField
-        name="nom"
+        name="numeroSecuriteSociale"
         control={form.control}
-        label="Nom"
-        description="Tel qu'il figure sur votre pièce d'identité."
-        render={(props) => <Input {...props} />}
+        label="Numéro de sécurité sociale"
+        description={DESCRIPTION}
+        render={({ field, attributes }) => <Input {...field} {...attributes} />}
       />
       <button type="submit">Valider</button>
     </form>
@@ -38,25 +42,23 @@ async function submit() {
 }
 
 describe("FormField", () => {
-  it("relie le libellé et la description au champ", () => {
-    render(<NomForm />);
+  it("donne au champ son name pour id et le relie à sa description", () => {
+    render(<NumeroForm />);
 
-    const input = screen.getByRole("textbox", { name: "Nom" });
+    const input = screen.getByRole("textbox", { name: "Numéro de sécurité sociale" });
+    expect(input.id).toBe("numeroSecuriteSociale");
     expect(input.getAttribute("aria-invalid")).toBe("false");
-    expect(input.getAttribute("aria-describedby")).toBe(
-      screen.getByText("Tel qu'il figure sur votre pièce d'identité.").id,
-    );
+    expect(input.getAttribute("aria-describedby")).toBe(screen.getByText(DESCRIPTION).id);
   });
 
-  it("relie l'erreur au champ et le focalise à la soumission", async () => {
-    render(<NomForm />);
+  it("remplace la description par l'erreur et l'y relie", async () => {
+    render(<NumeroForm />);
 
     await submit();
 
-    const input = screen.getByRole("textbox", { name: "Nom" });
-    const error = screen.getByText("Indiquez votre nom.");
+    const input = screen.getByRole("textbox", { name: "Numéro de sécurité sociale" });
     expect(input.getAttribute("aria-invalid")).toBe("true");
-    expect(input.getAttribute("aria-describedby")?.split(" ")).toContain(error.id);
-    expect(document.activeElement).toBe(input);
+    expect(input.getAttribute("aria-describedby")).toBe(screen.getByText(ERROR).id);
+    expect(screen.queryByText(DESCRIPTION)).toBeNull();
   });
 });

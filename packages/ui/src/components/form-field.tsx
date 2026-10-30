@@ -11,13 +11,18 @@ import {
 
 import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/components/field";
 
-interface FormFieldControlProps<
-  TFieldValues extends FieldValues,
-  TName extends FieldPath<TFieldValues>,
-> extends ControllerRenderProps<TFieldValues, TName> {
+interface FormFieldAttributes {
   id: string;
   "aria-invalid": boolean;
   "aria-describedby": string | undefined;
+}
+
+interface FormFieldRenderProps<
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+> {
+  field: ControllerRenderProps<TFieldValues, TName>;
+  attributes: FormFieldAttributes;
 }
 
 interface FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> {
@@ -25,50 +30,58 @@ interface FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPa
   control: Control<TFieldValues>;
   label: React.ReactNode;
   description?: React.ReactNode;
-  orientation?: React.ComponentProps<typeof Field>["orientation"];
-  render: (props: FormFieldControlProps<TFieldValues, TName>) => React.ReactNode;
+  render: (props: FormFieldRenderProps<TFieldValues, TName>) => React.ReactNode;
 }
 
 /**
- * Champ react-hook-form mis en forme par `Field`. Relie seul le libellé, la
- * description et l'erreur au contrôle (`id`, `aria-invalid`, `aria-describedby`) :
- * `render` n'a qu'à étaler les props reçues sur le contrôle.
+ * Champ react-hook-form mis en forme par `Field`. Relie le libellé, la description
+ * et l'erreur au contrôle par `attributes` ; l'erreur remplace la description, comme
+ * dans le kit. L'`id` du contrôle est son `name`, pour que le résumé d'erreurs de
+ * l'écran puisse y mener par un lien.
+ *
+ * - Contrôle natif : `render={({ field, attributes }) => <Input {...field} {...attributes} />}`.
+ * - Contrôle Radix : brancher la valeur à la main, les attributs sur l'élément focalisable :
+ *   `<Select value={field.value} onValueChange={field.onChange}>` puis
+ *   `<SelectTrigger ref={field.ref} {...attributes}>`.
+ * - Groupe de choix (radios, cases) : pas de `FormField`, dont le `<label>` ne peut
+ *   nommer un groupe ; passer par `FieldSet` et `FieldLegend`.
+ *
+ * Le focus des erreurs revient à l'écran : `useForm({ shouldFocusError: false })`, puis
+ * focus sur son résumé d'erreurs à la soumission.
  */
 function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
   name,
   control,
   label,
   description,
-  orientation,
   render,
 }: FormFieldProps<TFieldValues, TName>) {
-  const id = React.useId();
-  const descriptionId = `${id}-description`;
-  const errorId = `${id}-error`;
+  const descriptionId = `${name}-description`;
+  const errorId = `${name}-error`;
 
   return (
     <Controller
       name={name}
       control={control}
       render={({ field, fieldState }) => {
-        const describedBy = [
-          description ? descriptionId : undefined,
-          fieldState.invalid ? errorId : undefined,
-        ]
-          .filter(Boolean)
-          .join(" ");
+        const describedBy = fieldState.invalid ? errorId : description ? descriptionId : undefined;
 
         return (
-          <Field data-invalid={fieldState.invalid} orientation={orientation}>
-            <FieldLabel htmlFor={id}>{label}</FieldLabel>
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={name}>{label}</FieldLabel>
             {render({
-              ...field,
-              id,
-              "aria-invalid": fieldState.invalid,
-              "aria-describedby": describedBy || undefined,
+              field,
+              attributes: {
+                id: name,
+                "aria-invalid": fieldState.invalid,
+                "aria-describedby": describedBy,
+              },
             })}
-            {description && <FieldDescription id={descriptionId}>{description}</FieldDescription>}
-            {fieldState.invalid && <FieldError id={errorId} errors={[fieldState.error]} />}
+            {fieldState.invalid ? (
+              <FieldError id={errorId} errors={[fieldState.error]} />
+            ) : (
+              description && <FieldDescription id={descriptionId}>{description}</FieldDescription>
+            )}
           </Field>
         );
       }}
@@ -77,4 +90,4 @@ function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFi
 }
 
 export { FormField };
-export type { FormFieldControlProps, FormFieldProps };
+export type { FormFieldAttributes, FormFieldProps, FormFieldRenderProps };
