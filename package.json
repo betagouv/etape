@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@etape/prettier-config": "workspace:*",
-    "@inquirer/checkbox": "^5.2.7",
+    "@inquirer/checkbox": "^5.2.8",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
