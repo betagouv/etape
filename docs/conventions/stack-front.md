@@ -102,13 +102,15 @@ const schema = z.object({
 
 Deux approches cohabitent donc dans le dépôt, assumées, avec un critère écrit pour savoir laquelle s'applique.
 
-**react-hook-form + zod, via `form.tsx`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API.
+**react-hook-form + zod, via `FormField`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API.
+
+> **Mise à jour du 30 octobre 2026 (#106)** : `form.tsx` est remplacé par `Field`, le composant du kit Figma, que shadcn associe désormais à react-hook-form, et par l'enveloppe `FormField` (`packages/ui/src/components/form-field.tsx`). Elle génère `id`, `aria-invalid` et `aria-describedby`, comme le faisait `form.tsx`. Le choix de react-hook-form et de zod ne change pas.
 
 **Le simulateur garde son moteur déclaratif.** Ce n'est pas un formulaire : une question par écran, une navigation dérivée de l'URL, des réponses persistées entre les sessions, des règles de cohérence entre questions. react-hook-form gère l'état d'un formulaire monté — il n'a rien à apporter ici, et ferait perdre le caractère déclaratif des questions.
 
 **Pourquoi react-hook-form plutôt que TanStack Form** : le composant `Form` de shadcn/ui, sur lequel repose déjà notre bibliothèque, est écrit pour react-hook-form. Choisir TanStack Form (1.33.5, projet actif et sérieux) voudrait dire réécrire ce câblage nous-mêmes, pour un gain que nous ne savons pas nommer aujourd'hui.
 
-**Ce qui reste à notre charge dans les deux cas** : react-hook-form ne fournit ni style ni ARIA, et `form.tsx` ne déplace pas le focus vers le premier champ en erreur — ce que le simulateur, lui, fait déjà (`QuestionScreen`, `focusFirstInvalid`).
+**Ce qui reste à notre charge dans les deux cas** : react-hook-form ne fournit ni style ni ARIA ; `FormField` les apporte. Le focus sur le premier champ en erreur vient de react-hook-form (`shouldFocusError`), à condition que `render` transmette `ref` au contrôle, ce que fait l'étalement des props (`form-field.test.tsx`). Le simulateur, lui, le fait à la main (`QuestionScreen`, `focusFirstInvalid`).
 
 ## Décision 2 — Validation de schéma : zod
 

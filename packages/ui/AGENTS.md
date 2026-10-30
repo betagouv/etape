@@ -26,7 +26,7 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 
 ## Où vivent les choses
 
-- `src/components/` — un fichier par composant : accordion, back-to-top, badge, button, callout, card, checkbox, container, dialog, dropdown-menu, form, input, label, prose, radio-group, section, select, separator, skip-links, sonner, tabs, textarea, theme-provider.
+- `src/components/` — un fichier par composant : accordion, back-to-top, badge, button, callout, card, checkbox, container, dialog, dropdown-menu, field, form-field, input, label, prose, radio-group, section, select, separator, skip-links, sonner, tabs, textarea, theme-provider.
 - `src/styles/globals.css` — **les tokens** : la seule source de couleur du dépôt.
 - `src/lib/utils.ts` (`cn`), `src/lib/focus.ts`.
 - `components.json` — configuration shadcn.
@@ -41,4 +41,4 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 ## Pièges
 
 - `package.json` exporte `./hooks/*`, mais le dossier `src/hooks/` n'existe pas.
-- `dialog`, `dropdown-menu`, `form`, `tabs` et `textarea` existent mais aucune app ne les importe encore : les réutiliser plutôt que d'en écrire d'autres.
+- `dialog`, `dropdown-menu`, `field`, `form-field`, `tabs` et `textarea` existent mais aucune app ne les importe encore : les réutiliser plutôt que d'en écrire d'autres. Un formulaire react-hook-form passe par `FormField`, qui relie libellé, description et erreur au champ.
