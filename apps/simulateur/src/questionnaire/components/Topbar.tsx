@@ -41,7 +41,7 @@ function ExitDialog() {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button type="button" variant="secondary" size="sm">
+        <Button type="button" variant="secondary">
           Quitter
         </Button>
       </AlertDialogTrigger>
@@ -61,8 +61,8 @@ function ExitDialog() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel size="sm">Annuler</AlertDialogCancel>
-          <AlertDialogAction variant="destructive-subdued" size="sm" asChild>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction variant="destructive-subdued" asChild>
             <Link href={EXIT_HREF}>Quitter</Link>
           </AlertDialogAction>
         </AlertDialogFooter>

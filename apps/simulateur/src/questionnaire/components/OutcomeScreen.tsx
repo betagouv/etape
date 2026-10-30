@@ -73,7 +73,7 @@ export function OutcomeScreen({
                   ))}
                 </dl>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={onBack}>
+              <Button type="button" variant="outline" onClick={onBack}>
                 <PencilLine aria-hidden="true" />
                 Modifier ma réponse
               </Button>

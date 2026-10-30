@@ -41,7 +41,7 @@ export function FormLayout({ volets, position, headingRef, children }: FormLayou
           {children}
           <div className="flex justify-end border-t pt-5">
             {previous && (
-              <Button asChild variant="secondary" size="md" className="mr-auto">
+              <Button asChild variant="secondary" size="lg" className="mr-auto">
                 <VoletLink voletId={previous.id}>
                   <ArrowLeftIcon aria-hidden="true" />
                   Étape précédente
@@ -49,7 +49,7 @@ export function FormLayout({ volets, position, headingRef, children }: FormLayou
               </Button>
             )}
             {next && (
-              <Button asChild size="md">
+              <Button asChild size="lg">
                 <VoletLink voletId={next.id}>
                   Étape suivante
                   <ArrowRightIcon aria-hidden="true" />

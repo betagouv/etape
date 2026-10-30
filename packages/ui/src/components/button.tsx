@@ -36,25 +36,22 @@ const buttonVariants = cva(
           "bg-destructive/10 text-destructive-text hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        // Tailles du kit : 10px de côté, avec ou sans icône.
+        default: "h-8 gap-1.5 rounded-lg px-2.5",
         xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
+        sm: "h-7 gap-1 rounded-md px-2.5 text-xs",
         // Le `Variant=Link` du kit n'a ni hauteur ni padding.
         inline: "gap-1.5",
-        // `Size=lg` du kit (36px) : notre `lg` reste à 40px pour ne pas modifier l'existant.
-        md: "h-9 gap-1.5 rounded-lg px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        lg: "h-9 gap-1.5 rounded-lg px-2.5",
         // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
         responsive: "h-11 px-6 has-[>svg]:px-4 md:h-9 md:px-4 md:has-[>svg]:px-3",
         "responsive-sm": "h-11 gap-1.5 px-4 has-[>svg]:px-3 md:h-8 md:px-3 md:has-[>svg]:px-2.5",
         "icon-responsive-sm": "size-11 md:size-8",
-        icon: "size-9",
+        icon: "size-8 rounded-lg",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        // `Size=icon-sm` du kit (28px) : notre `icon-sm` reste à 32px pour ne pas modifier l'existant.
-        "icon-compact": "size-7",
-        "icon-lg": "size-10",
+        "icon-sm": "size-7",
+        "icon-lg": "size-9 rounded-lg",
       },
     },
     defaultVariants: {
