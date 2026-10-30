@@ -67,18 +67,11 @@ function ChoiceCardTitle({ className, ...props }: React.ComponentProps<"span">) 
   );
 }
 
-/**
- * Écart au kit : `muted-foreground` ne fait que 4,3:1 sur le fond d'une carte
- * sélectionnée. La description y passe en `content-secondary`.
- */
 function ChoiceCardDescription({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="choice-card-description"
-      className={cn(
-        "text-muted-foreground group-data-selected/choice-card:text-content-secondary text-sm",
-        className,
-      )}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   );
