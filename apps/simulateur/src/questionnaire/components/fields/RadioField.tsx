@@ -56,7 +56,7 @@ export function RadioField({
     return (
       <div className="flex w-full flex-col gap-3">
         {field.label && (
-          <span id={fieldLabelId} className="text-body-sm text-foreground leading-none font-medium">
+          <span id={fieldLabelId} className="text-foreground text-sm leading-none font-medium">
             {field.label}
           </span>
         )}

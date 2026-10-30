@@ -12,7 +12,7 @@ export function Prose(props: { className?: string; children: ReactNode }) {
   return (
     <div
       className={cn(
-        "text-body text-content-secondary flex flex-col gap-4",
+        "text-content-secondary flex flex-col gap-4 text-base",
         "[&_a]:text-content-accent [&_a]:font-semibold [&_a:hover]:underline",
         props.className,
       )}

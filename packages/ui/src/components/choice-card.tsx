@@ -61,7 +61,7 @@ function ChoiceCardTitle({ className, ...props }: React.ComponentProps<"span">) 
   return (
     <span
       data-slot="choice-card-title"
-      className={cn("text-body text-foreground font-medium", className)}
+      className={cn("text-foreground text-base font-medium", className)}
       {...props}
     />
   );
@@ -76,7 +76,7 @@ function ChoiceCardDescription({ className, ...props }: React.ComponentProps<"sp
     <span
       data-slot="choice-card-description"
       className={cn(
-        "text-body-sm text-muted-foreground group-data-selected/choice-card:text-content-secondary",
+        "text-muted-foreground group-data-selected/choice-card:text-content-secondary text-sm",
         className,
       )}
       {...props}

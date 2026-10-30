@@ -78,7 +78,7 @@ export function DossierHeader({
           </Badge>
           <p
             role="status"
-            className="text-content-strong text-body-sm flex items-center gap-2 font-medium"
+            className="text-content-strong flex items-center gap-2 text-sm font-medium"
           >
             {updatedAtLabel && (
               <>
@@ -90,7 +90,7 @@ export function DossierHeader({
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-4">
-            <p id={progressLabelId} className="text-muted-foreground text-body-sm font-medium">
+            <p id={progressLabelId} className="text-muted-foreground text-sm font-medium">
               <span className="text-foreground">{progress.completed}</span>{" "}
               {formatVoletsLabel(progress)}
             </p>

@@ -47,7 +47,7 @@ export function Alert(props: { type: MessageType; summary: string }) {
     >
       <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />
       <span
-        className="text-body-sm"
+        className="text-sm"
         dangerouslySetInnerHTML={{
           __html: kcSanitize(summary),
         }}

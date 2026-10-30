@@ -14,7 +14,7 @@ function Prose({
     <Comp
       data-slot="prose"
       className={cn(
-        "text-body text-foreground",
+        "text-foreground text-base",
 
         "[&_h2]:font-heading [&_h2]:text-heading-sm [&_h2]:text-foreground [&_h2]:text-balance",
         "[&_h3]:text-body-lg [&_h3]:text-foreground [&_h3]:font-bold [&_h3]:text-balance",
