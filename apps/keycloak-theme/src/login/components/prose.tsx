@@ -13,7 +13,7 @@ export function Prose(props: { className?: string; children: ReactNode }) {
     <div
       className={cn(
         "text-content-secondary flex flex-col gap-4 text-base",
-        "[&_a]:text-content-accent [&_a]:font-semibold [&_a:hover]:underline",
+        "[&_a]:text-primary [&_a]:font-semibold [&_a:hover]:underline",
         props.className,
       )}
     >
@@ -34,7 +34,7 @@ export function AccountSwitch(props: { question: ReactNode; href: string; label:
       {props.question}
       <a
         href={props.href}
-        className="text-label-lg text-content-accent hover:text-content-accent-hover font-semibold hover:underline"
+        className="text-label-lg text-primary hover:text-content-accent-hover font-semibold hover:underline"
       >
         {props.label}
       </a>
@@ -47,7 +47,7 @@ export function BackToLogin(props: { href: string; label: ReactNode }) {
   return (
     <a
       href={props.href}
-      className="text-label-lg text-content-accent hover:text-content-accent-hover text-center font-semibold hover:underline"
+      className="text-label-lg text-primary hover:text-content-accent-hover text-center font-semibold hover:underline"
     >
       {props.label}
     </a>

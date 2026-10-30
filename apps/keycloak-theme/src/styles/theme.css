@@ -154,7 +154,7 @@
   }
 
   .kc-fallback :where(a) {
-    color: var(--content-accent);
+    color: var(--primary);
     font-weight: 600;
   }
 

@@ -18,7 +18,7 @@ const COLORS = {
   foreground: "#0a0a0a", // --foreground
   secondary: "#404040", // --content-secondary
   muted: "#525252", // --muted-foreground
-  primary: "#134e4a", // --primary / --content-accent
+  primary: "#134e4a", // --primary
   primaryForeground: "#fafafa", // --primary-foreground
   border: "#d3e2e0", // --border
   white: "#ffffff",
