@@ -24,6 +24,7 @@ import { NationaliteInput } from "./components/nationalite-input";
 import { RequiredMark } from "./components/required-mark";
 import { SectionCounter } from "./components/section-counter";
 import { countFilled } from "./domain/count-filled";
+import { formatNir } from "./domain/format-nir";
 import { formatTelephone } from "./domain/format-telephone";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
@@ -208,7 +209,13 @@ export function InformationsForm({
                 </>
               }
               description="Les 13 premiers chiffres qui figurent sur votre carte Vitale"
-              render={({ field, attributes }) => <Input {...field} {...attributes} />}
+              render={({ field, attributes }) => (
+                <Input
+                  {...field}
+                  {...attributes}
+                  onChange={(e) => field.onChange(formatNir(e.target.value))}
+                />
+              )}
             />
 
             <FormField

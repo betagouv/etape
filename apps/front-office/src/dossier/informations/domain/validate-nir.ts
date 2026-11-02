@@ -7,10 +7,14 @@
  * CCC : commune INSEE
  * NNN : numéro d'ordre
  */
-export const NIR_PATTERN = /^[12]\d{2}(0[1-9]|[1-9]\d)(0[1-9]|[1-9]\d|2[AaBb])\d{6}$/;
+export const NIR_PATTERN = /^[12] \d{2} (0[1-9]|[1-9]\d) (0[1-9]|[1-9]\d|2[AaBb]) \d{3} \d{3}$/;
+
+function stripSpaces(value: string): string {
+  return value.replace(/\s/g, "");
+}
 
 function nirToNumber(nir: string): number {
-  const upper = nir.toUpperCase();
+  const upper = stripSpaces(nir).toUpperCase();
   if (upper.includes("2A")) return Number(upper.replace("2A", "19"));
   if (upper.includes("2B")) return Number(upper.replace("2B", "18"));
   return Number(upper);

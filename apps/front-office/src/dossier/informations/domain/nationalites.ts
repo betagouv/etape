@@ -213,5 +213,5 @@ export function findNationaliteByLabel(label: string): Nationalite | undefined {
 }
 
 export function flagUrl(code: string): string {
-  return new URL(`../../../node_modules/circle-flags/flags/${code}.svg`, import.meta.url).href;
+  return new URL(`../../../../node_modules/circle-flags/flags/${code}.svg`, import.meta.url).href;
 }
