@@ -22,3 +22,15 @@ export const informationsSchema = z.object({
 });
 
 export type InformationsFormData = z.infer<typeof informationsSchema>;
+
+export type InformationsFieldName = keyof InformationsFormData;
+
+export const SECTION_IDENTITE_FIELDS: readonly InformationsFieldName[] = [
+  "civilite",
+  "dateNaissance",
+  "nationalite",
+  "numeroSecuriteSociale",
+  "cle",
+];
+
+export const SECTION_CONTACT_FIELDS: readonly InformationsFieldName[] = ["telephone"];

@@ -1,8 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
-import { CalendarDaysIcon, PhoneIcon } from "lucide-react";
+import { useEffect } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { CalendarDaysIcon, InfoIcon, MailIcon, PhoneIcon, SearchIcon } from "lucide-react";
 
-import { FieldError, FieldLegend, FieldSet } from "@etape/ui/components/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@etape/ui/components/field";
 import { FormField } from "@etape/ui/components/form-field";
 import { Input } from "@etape/ui/components/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
@@ -17,15 +25,21 @@ import {
 } from "@etape/ui/components/select";
 import { Separator } from "@etape/ui/components/separator";
 
+import { selectPlural, type PluralForms } from "@/lib/plural";
+
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
+import type { VoletProgress } from "../domain/statut-volet";
 import type { VoletError } from "../domain/volet-errors";
 import type { VoletNoticeContent } from "../domain/volets";
 import {
   CIVILITE,
   CIVILITE_LABEL,
+  SECTION_CONTACT_FIELDS,
+  SECTION_IDENTITE_FIELDS,
   informationsSchema,
   type Civilite,
+  type InformationsFieldName,
   type InformationsFormData,
 } from "./schema";
 
@@ -34,22 +48,74 @@ export interface NationaliteOption {
   label: string;
 }
 
+export interface InformationsPreRemplies {
+  nom: string;
+  prenom: string;
+  email: string;
+  adresse: string;
+}
+
 export interface InformationsFormProps {
   formId: string;
   nationalites: NationaliteOption[];
+  preRemplies: InformationsPreRemplies;
+  supportEmail: string;
   notice?: VoletNoticeContent;
   onSubmitValid: (data: InformationsFormData) => void;
+  onProgressChange?: (progress: VoletProgress) => void;
+}
+
+const ALL_REQUIRED_FIELDS: readonly InformationsFieldName[] = [
+  ...SECTION_IDENTITE_FIELDS,
+  ...SECTION_CONTACT_FIELDS,
+];
+
+function countFilled(
+  values: Partial<InformationsFormData>,
+  fields: readonly InformationsFieldName[],
+): number {
+  return fields.filter((name) => {
+    const v = values[name];
+    return typeof v === "string" && v.length > 0;
+  }).length;
 }
 
 function RequiredMark() {
   return <span className="text-destructive">*</span>;
 }
 
+const REMAINING_FIELD_LABELS: PluralForms<string> = {
+  one: "champ restant",
+  other: "champs restants",
+};
+
+function SectionCounter({ remaining }: { remaining: number }) {
+  if (remaining === 0) return null;
+  return (
+    <span className="text-primary flex items-center gap-1 text-xs font-medium">
+      <InfoIcon aria-hidden="true" className="size-4" />
+      {remaining} {selectPlural(remaining, REMAINING_FIELD_LABELS)}
+    </span>
+  );
+}
+
+function DescriptionSupport({ email }: { email: string }) {
+  return (
+    <FieldDescription>
+      Repris de votre inscription. Pour le modifier, écrivez au support&nbsp;:{" "}
+      <a href={`mailto:${email}`}>{email}</a>
+    </FieldDescription>
+  );
+}
+
 export function InformationsForm({
   formId,
   nationalites,
+  preRemplies,
+  supportEmail,
   notice,
   onSubmitValid,
+  onProgressChange,
 }: InformationsFormProps) {
   const form = useForm<InformationsFormData>({
     resolver: zodResolver(informationsSchema),
@@ -65,6 +131,21 @@ export function InformationsForm({
   });
 
   const { isSubmitted, errors } = form.formState;
+  const values = useWatch({ control: form.control });
+
+  const identiteFilled = countFilled(values, SECTION_IDENTITE_FIELDS);
+  const contactFilled = countFilled(values, SECTION_CONTACT_FIELDS);
+  const totalFilled = identiteFilled + contactFilled;
+  const errorCount = isSubmitted ? Object.keys(errors).length : 0;
+
+  useEffect(() => {
+    onProgressChange?.({
+      requiredFieldCount: ALL_REQUIRED_FIELDS.length,
+      filledFieldCount: totalFilled,
+      remainingFieldCount: ALL_REQUIRED_FIELDS.length - totalFilled,
+      errorCount,
+    });
+  }, [totalFilled, errorCount, onProgressChange]);
 
   const voletErrors: VoletError[] = isSubmitted
     ? Object.entries(errors).map(([fieldId, error]) => ({
@@ -86,7 +167,10 @@ export function InformationsForm({
       >
         {/* Identité */}
         <div className="flex flex-col gap-5">
-          <h3 className="text-lg font-semibold">Identité</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Identité</h3>
+            <SectionCounter remaining={SECTION_IDENTITE_FIELDS.length - identiteFilled} />
+          </div>
 
           <FieldSet>
             <FieldLegend variant="label">
@@ -117,6 +201,18 @@ export function InformationsForm({
           </FieldSet>
 
           <div className="grid gap-5 sm:grid-cols-2">
+            <Field data-disabled>
+              <FieldLabel>Nom</FieldLabel>
+              <Input value={preRemplies.nom} disabled />
+              <DescriptionSupport email={supportEmail} />
+            </Field>
+
+            <Field data-disabled>
+              <FieldLabel>Prénom</FieldLabel>
+              <Input value={preRemplies.prenom} disabled />
+              <DescriptionSupport email={supportEmail} />
+            </Field>
+
             <FormField
               name="dateNaissance"
               control={form.control}
@@ -186,13 +282,46 @@ export function InformationsForm({
           </div>
         </div>
 
+        {/* Adresse de résidence */}
+        <div className="flex flex-col gap-5">
+          <h3 className="text-lg font-semibold">Adresse de résidence</h3>
+
+          <Field data-disabled>
+            <FieldLabel>Adresse</FieldLabel>
+            <InputGroup>
+              <InputGroupAddon>
+                <SearchIcon aria-hidden="true" />
+              </InputGroupAddon>
+              <InputGroupInput value={preRemplies.adresse} disabled />
+            </InputGroup>
+            <FieldDescription>
+              Cette adresse provient de votre profil.{" "}
+              <a href="/profil">Modifier mon adresse dans mon profil</a>
+            </FieldDescription>
+          </Field>
+        </div>
+
         <Separator />
 
         {/* Contact */}
         <div className="flex flex-col gap-5">
-          <h3 className="text-lg font-semibold">Contact</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Contact</h3>
+            <SectionCounter remaining={SECTION_CONTACT_FIELDS.length - contactFilled} />
+          </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
+            <Field data-disabled>
+              <FieldLabel>Adresse email</FieldLabel>
+              <InputGroup>
+                <InputGroupAddon>
+                  <MailIcon aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput value={preRemplies.email} disabled />
+              </InputGroup>
+              <DescriptionSupport email={supportEmail} />
+            </Field>
+
             <FormField
               name="telephone"
               control={form.control}
