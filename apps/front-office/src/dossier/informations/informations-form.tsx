@@ -73,6 +73,7 @@ export function InformationsForm({
 }: InformationsFormProps) {
   const form = useForm<InformationsFormData>({
     resolver: zodResolver(informationsSchema),
+    mode: "onBlur",
     defaultValues: {
       civilite: "" as Civilite,
       dateNaissance: "",
@@ -84,13 +85,13 @@ export function InformationsForm({
     shouldFocusError: false,
   });
 
-  const { isSubmitted, errors } = form.formState;
+  const { errors } = form.formState;
   const values = useWatch({ control: form.control });
 
   const identiteFilled = countFilled(values, SECTION_IDENTITE_FIELDS);
   const contactFilled = countFilled(values, SECTION_CONTACT_FIELDS);
   const totalFilled = identiteFilled + contactFilled;
-  const errorCount = isSubmitted ? Object.keys(errors).length : 0;
+  const errorCount = Object.keys(errors).length;
 
   const onProgressChangeRef = useRef(onProgressChange);
   useEffect(() => {
@@ -106,12 +107,10 @@ export function InformationsForm({
     });
   }, [totalFilled, errorCount]);
 
-  const voletErrors: VoletError[] = isSubmitted
-    ? Object.entries(errors).map(([fieldId, error]) => ({
-        fieldId,
-        message: error?.message ?? "",
-      }))
-    : [];
+  const voletErrors: VoletError[] = Object.entries(errors).map(([fieldId, error]) => ({
+    fieldId,
+    message: error?.message ?? "",
+  }));
 
   return (
     <>
