@@ -2,19 +2,20 @@ import { useRef, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 
 import { Field, FieldError, FieldLabel } from "@etape/ui/components/field";
-import { Button } from "@etape/ui/components/button";
 import {
   Combobox,
   ComboboxEmpty,
+  ComboboxGroup,
   ComboboxInput,
   ComboboxList,
   ComboboxOption,
 } from "@etape/ui/components/combobox";
+import { InputGroup, InputGroupAddon, InputGroupTrigger } from "@etape/ui/components/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 
 import { findNationaliteByLabel, flagUrl } from "../domain/nationalites";
 import { useNationaliteSearch } from "../hooks/use-nationalite-search";
-import { RequiredMark } from "./required-mark";
+import { NationaliteLabel } from "./nationalite-label";
 
 const FIELD_ID = "nationalite";
 const LABEL_ID = `${FIELD_ID}-label`;
@@ -52,8 +53,8 @@ export function NationaliteInput({
 
   return (
     <Field data-invalid={isInvalid}>
-      <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID}>
-        Nationalité <RequiredMark />
+      <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID} required>
+        Nationalité
       </FieldLabel>
       <Popover
         open={isOpen}
@@ -62,43 +63,39 @@ export function NationaliteInput({
           if (!open) search.reset();
         }}
       >
-        <PopoverTrigger asChild>
-          <Button
-            id={FIELD_ID}
-            ref={fieldRef}
-            variant="outline"
-            // Nommé par le libellé seul, un bouton n'annonce pas la nationalité choisie : on y ajoute sa valeur.
-            aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
-            aria-invalid={isInvalid || undefined}
-            aria-describedby={isInvalid ? ERROR_ID : undefined}
-            className="w-full justify-between font-normal"
-          >
-            {selectedNationalite ? (
-              <span id={VALUE_ID} className="flex items-center gap-2">
-                <img
-                  src={flagUrl(selectedNationalite.code)}
-                  alt=""
-                  className="size-4 shrink-0 rounded-full"
-                />
-                {value}
-              </span>
-            ) : (
-              <span id={VALUE_ID} className="text-muted-foreground">
-                Sélectionner
-              </span>
-            )}
-            <ChevronDownIcon aria-hidden="true" className="text-muted-foreground size-4" />
-          </Button>
-        </PopoverTrigger>
+        <InputGroup>
+          {selectedNationalite && (
+            <InputGroupAddon>
+              <img src={flagUrl(selectedNationalite.code)} alt="" className="size-4" />
+            </InputGroupAddon>
+          )}
+          <PopoverTrigger asChild>
+            <InputGroupTrigger
+              id={FIELD_ID}
+              ref={fieldRef}
+              // Nommé par le libellé seul, un bouton n'annonce pas la nationalité choisie : on y ajoute sa valeur.
+              aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
+              aria-invalid={isInvalid || undefined}
+              aria-describedby={isInvalid ? ERROR_ID : undefined}
+              data-placeholder={value ? undefined : ""}
+            >
+              <span id={VALUE_ID}>{value || "Sélectionner"}</span>
+            </InputGroupTrigger>
+          </PopoverTrigger>
+          <InputGroupAddon align="inline-end">
+            <ChevronDownIcon aria-hidden="true" />
+          </InputGroupAddon>
+        </InputGroup>
         <PopoverContent
+          variant="list"
           align="start"
-          className="w-[var(--radix-popover-trigger-width)] p-0"
+          className="w-[var(--radix-popover-trigger-width)]"
           onOpenAutoFocus={(e) => {
             e.preventDefault();
             inputRef.current?.focus();
           }}
         >
-          <Combobox className="border-0">
+          <Combobox variant="inset">
             <ComboboxInput
               ref={inputRef}
               value={search.searchText}
@@ -117,51 +114,31 @@ export function NationaliteInput({
               onMouseDown={(e) => e.preventDefault()}
             >
               {search.suggestion && (
-                <>
-                  <li role="presentation" className="text-muted-foreground px-2 py-1 text-xs">
-                    Suggestion
-                  </li>
+                <ComboboxGroup label="Suggestion">
                   <ComboboxOption
                     id={search.optionId(search.suggestion.label)}
                     selected={search.suggestion.label === value}
                     active={search.activeValue === search.suggestion.label}
                     onClick={() => search.select(search.suggestion!.label)}
                   >
-                    <span className="flex items-center gap-2">
-                      <img
-                        src={flagUrl(search.suggestion.code)}
-                        alt=""
-                        className="size-4 shrink-0 rounded-full"
-                      />
-                      {search.suggestion.label}
-                    </span>
+                    <NationaliteLabel nationalite={search.suggestion} />
                   </ComboboxOption>
-                </>
+                </ComboboxGroup>
               )}
               {search.nationalites.length > 0 && (
-                <>
-                  <li role="presentation" className="text-muted-foreground px-2 py-1 text-xs">
-                    Nationalités
-                  </li>
-                  {search.nationalites.map((n) => (
+                <ComboboxGroup label="Nationalités">
+                  {search.nationalites.map((nationalite) => (
                     <ComboboxOption
-                      key={n.label}
-                      id={search.optionId(n.label)}
-                      selected={n.label === value}
-                      active={n.label === search.activeValue}
-                      onClick={() => search.select(n.label)}
+                      key={nationalite.label}
+                      id={search.optionId(nationalite.label)}
+                      selected={nationalite.label === value}
+                      active={nationalite.label === search.activeValue}
+                      onClick={() => search.select(nationalite.label)}
                     >
-                      <span className="flex items-center gap-2">
-                        <img
-                          src={flagUrl(n.code)}
-                          alt=""
-                          className="size-4 shrink-0 rounded-full"
-                        />
-                        {n.label}
-                      </span>
+                      <NationaliteLabel nationalite={nationalite} />
                     </ComboboxOption>
                   ))}
-                </>
+                </ComboboxGroup>
               )}
               {!search.suggestion && search.nationalites.length === 0 && (
                 <ComboboxEmpty>{NO_MATCH_NATIONALITE}</ComboboxEmpty>
@@ -170,7 +147,7 @@ export function NationaliteInput({
           </Combobox>
         </PopoverContent>
       </Popover>
-      {error && <FieldError id={ERROR_ID} errors={[error]} />}
+      {isInvalid && <FieldError id={ERROR_ID} errors={[error]} />}
     </Field>
   );
 }

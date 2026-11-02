@@ -1,6 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import { Link } from "@tanstack/react-router";
 import { MailIcon, PhoneIcon, SearchIcon } from "lucide-react";
 
 import {
@@ -12,33 +12,33 @@ import {
   FieldSet,
 } from "@etape/ui/components/field";
 import { FormField } from "@etape/ui/components/form-field";
+import {
+  FormSection,
+  FormSectionHeader,
+  FormSectionTitle,
+} from "@etape/ui/components/form-section";
 import { Input } from "@etape/ui/components/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { Separator } from "@etape/ui/components/separator";
 
+import { PROFIL_PATH } from "@/navigation/paths";
 import { DateNaissanceInput } from "./components/date-naissance-input";
 import { DescriptionSupport } from "./components/description-support";
 import { NationaliteInput } from "./components/nationalite-input";
-import { RequiredMark } from "./components/required-mark";
 import { SectionCounter } from "./components/section-counter";
-import { countFilled } from "./domain/count-filled";
+import { formatCle } from "./domain/format-cle";
 import { formatNir } from "./domain/format-nir";
 import { formatTelephone } from "./domain/format-telephone";
+import type { UseInformationsFormResult } from "./hooks/use-informations-form";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
-import type { VoletProgress } from "../domain/statut-volet";
-import type { VoletError } from "../domain/volet-errors";
 import type { VoletNoticeContent } from "../domain/volets";
 import {
   CIVILITE,
   CIVILITE_LABEL,
-  SECTION_CONTACT_FIELDS,
-  SECTION_IDENTITE_FIELDS,
-  informationsSchema,
-  type Civilite,
-  type InformationsFieldName,
+  INFORMATIONS_SECTION,
   type InformationsFormData,
 } from "./schema";
 
@@ -51,46 +51,27 @@ export interface InformationsPreRemplies {
 
 export interface InformationsFormProps {
   formId: string;
+  informations: UseInformationsFormResult;
   preRemplies: InformationsPreRemplies;
   supportEmail: string;
   notice?: VoletNoticeContent;
   onSubmitValid: (data: InformationsFormData) => void;
-  onProgressChange?: (progress: VoletProgress) => void;
 }
 
 // Le résumé d'erreurs mène à `#civilite` : l'id est porté par le groupe, pas par un bouton radio.
 const CIVILITE_FIELD_ID = "civilite";
 const CIVILITE_ERROR_ID = `${CIVILITE_FIELD_ID}-error`;
 
-const ALL_REQUIRED_FIELDS: readonly InformationsFieldName[] = [
-  ...SECTION_IDENTITE_FIELDS,
-  ...SECTION_CONTACT_FIELDS,
-];
-
 export function InformationsForm({
   formId,
+  informations,
   preRemplies,
   supportEmail,
   notice,
   onSubmitValid,
-  onProgressChange,
 }: InformationsFormProps) {
-  const form = useForm<InformationsFormData>({
-    resolver: zodResolver(informationsSchema),
-    mode: "onBlur",
-    defaultValues: {
-      civilite: "" as Civilite,
-      dateNaissance: "",
-      nationalite: "",
-      numeroSecuriteSociale: "",
-      cle: "",
-      telephone: "",
-    },
-    shouldFocusError: false,
-  });
-
-  const { errors, submitCount } = form.formState;
-  const values = useWatch({ control: form.control });
+  const { form, sections, voletErrors } = informations;
+  const { submitCount } = form.formState;
   const errorsAlertRef = useRef<HTMLDivElement>(null);
 
   // `FieldError` n'a pas de rôle d'alerte : c'est le résumé, focalisé à chaque soumission
@@ -98,30 +79,6 @@ export function InformationsForm({
   useEffect(() => {
     if (submitCount > 0) errorsAlertRef.current?.focus();
   }, [submitCount]);
-
-  const identiteFilled = countFilled(values, SECTION_IDENTITE_FIELDS);
-  const contactFilled = countFilled(values, SECTION_CONTACT_FIELDS);
-  const totalFilled = identiteFilled + contactFilled;
-  const errorCount = Object.keys(errors).length;
-
-  const onProgressChangeRef = useRef(onProgressChange);
-  useEffect(() => {
-    onProgressChangeRef.current = onProgressChange;
-  });
-
-  useEffect(() => {
-    onProgressChangeRef.current?.({
-      requiredFieldCount: ALL_REQUIRED_FIELDS.length,
-      filledFieldCount: totalFilled,
-      remainingFieldCount: ALL_REQUIRED_FIELDS.length - totalFilled,
-      errorCount,
-    });
-  }, [totalFilled, errorCount]);
-
-  const voletErrors: VoletError[] = Object.entries(errors).map(([fieldId, error]) => ({
-    fieldId,
-    message: error?.message ?? "",
-  }));
 
   return (
     <>
@@ -134,16 +91,15 @@ export function InformationsForm({
         onSubmit={form.handleSubmit(onSubmitValid)}
         className="flex flex-col gap-6"
       >
-        {/* Identité */}
-        <div className="flex flex-col gap-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Identité</h3>
-            <SectionCounter remaining={SECTION_IDENTITE_FIELDS.length - identiteFilled} />
-          </div>
+        <FormSection>
+          <FormSectionHeader>
+            <FormSectionTitle>Identité</FormSectionTitle>
+            <SectionCounter progress={sections[INFORMATIONS_SECTION.IDENTITE]} />
+          </FormSectionHeader>
 
           <FieldSet>
-            <FieldLegend variant="label">
-              Civilité <RequiredMark />
+            <FieldLegend variant="label" required>
+              Civilité
             </FieldLegend>
             <Controller
               name="civilite"
@@ -224,11 +180,8 @@ export function InformationsForm({
             <FormField
               name="numeroSecuriteSociale"
               control={form.control}
-              label={
-                <>
-                  Numéro de sécurité sociale <RequiredMark />
-                </>
-              }
+              label="Numéro de sécurité sociale"
+              required
               description="Les 13 premiers chiffres qui figurent sur votre carte Vitale"
               render={({ field, attributes }) => (
                 <Input
@@ -242,20 +195,25 @@ export function InformationsForm({
             <FormField
               name="cle"
               control={form.control}
-              label={
-                <>
-                  Clé <RequiredMark />
-                </>
-              }
+              label="Clé"
+              required
               description="Les 2 derniers chiffres qui figurent sur votre carte Vitale"
-              render={({ field, attributes }) => <Input {...field} {...attributes} />}
+              render={({ field, attributes }) => (
+                <Input
+                  {...field}
+                  {...attributes}
+                  inputMode="numeric"
+                  onChange={(e) => field.onChange(formatCle(e.target.value))}
+                />
+              )}
             />
           </div>
-        </div>
+        </FormSection>
 
-        {/* Adresse de résidence */}
-        <div className="flex flex-col gap-5">
-          <h3 className="text-lg font-semibold">Adresse de résidence</h3>
+        <FormSection>
+          <FormSectionHeader>
+            <FormSectionTitle>Adresse de résidence</FormSectionTitle>
+          </FormSectionHeader>
 
           <Field data-disabled>
             <FieldLabel>Adresse</FieldLabel>
@@ -267,19 +225,18 @@ export function InformationsForm({
             </InputGroup>
             <FieldDescription>
               Cette adresse provient de votre profil.{" "}
-              <a href="/profil">Modifier mon adresse dans mon profil</a>
+              <Link to={PROFIL_PATH}>Modifier mon adresse dans mon profil</Link>
             </FieldDescription>
           </Field>
-        </div>
+        </FormSection>
 
         <Separator />
 
-        {/* Contact */}
-        <div className="flex flex-col gap-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Contact</h3>
-            <SectionCounter remaining={SECTION_CONTACT_FIELDS.length - contactFilled} />
-          </div>
+        <FormSection>
+          <FormSectionHeader>
+            <FormSectionTitle>Contact</FormSectionTitle>
+            <SectionCounter progress={sections[INFORMATIONS_SECTION.CONTACT]} />
+          </FormSectionHeader>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Field data-disabled>
@@ -296,11 +253,8 @@ export function InformationsForm({
             <FormField
               name="telephone"
               control={form.control}
-              label={
-                <>
-                  Téléphone <RequiredMark />
-                </>
-              }
+              label="Téléphone"
+              required
               render={({ field, attributes }) => (
                 <InputGroup>
                   <InputGroupAddon>
@@ -316,7 +270,7 @@ export function InformationsForm({
               )}
             />
           </div>
-        </div>
+        </FormSection>
       </form>
     </>
   );

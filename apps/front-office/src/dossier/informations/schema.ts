@@ -63,12 +63,24 @@ export type InformationsFormData = z.infer<typeof informationsSchema>;
 
 export type InformationsFieldName = keyof InformationsFormData;
 
-export const SECTION_IDENTITE_FIELDS: readonly InformationsFieldName[] = [
-  "civilite",
-  "dateNaissance",
-  "nationalite",
-  "numeroSecuriteSociale",
-  "cle",
-];
+export const INFORMATIONS_SECTION = {
+  IDENTITE: "identite",
+  CONTACT: "contact",
+} as const;
 
-export const SECTION_CONTACT_FIELDS: readonly InformationsFieldName[] = ["telephone"];
+export type InformationsSection = (typeof INFORMATIONS_SECTION)[keyof typeof INFORMATIONS_SECTION];
+
+/** Champs obligatoires de chaque section ; les champs préremplis n'y figurent pas. */
+export const INFORMATIONS_SECTION_FIELDS: Record<
+  InformationsSection,
+  readonly InformationsFieldName[]
+> = {
+  [INFORMATIONS_SECTION.IDENTITE]: [
+    "civilite",
+    "dateNaissance",
+    "nationalite",
+    "numeroSecuriteSociale",
+    "cle",
+  ],
+  [INFORMATIONS_SECTION.CONTACT]: ["telephone"],
+};

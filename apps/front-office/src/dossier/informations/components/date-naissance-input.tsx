@@ -2,9 +2,9 @@ import { useState } from "react";
 import { fr } from "date-fns/locale/fr";
 import { CalendarDaysIcon } from "lucide-react";
 
-import { Field, FieldError, FieldLabel } from "@etape/ui/components/field";
-import { Button } from "@etape/ui/components/button";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/components/field";
 import { Calendar } from "@etape/ui/components/calendar";
+import { InputGroup, InputGroupAddon, InputGroupTrigger } from "@etape/ui/components/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 
 import {
@@ -12,11 +12,11 @@ import {
   formatDateNaissance,
   parseDateNaissance,
 } from "../domain/date-naissance";
-import { RequiredMark } from "./required-mark";
 
 const FIELD_ID = "dateNaissance";
 const LABEL_ID = `${FIELD_ID}-label`;
 const VALUE_ID = `${FIELD_ID}-value`;
+const DESCRIPTION_ID = `${FIELD_ID}-description`;
 const ERROR_ID = `${FIELD_ID}-error`;
 const DATE_NAISSANCE_BOUNDS = computeDateNaissanceBounds(new Date());
 const DEFAULT_MONTH = new Date(1990, 0);
@@ -41,27 +41,28 @@ export function DateNaissanceInput({
 
   return (
     <Field data-invalid={isInvalid}>
-      <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID}>
-        Date de naissance <RequiredMark />
+      <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID} required>
+        Date de naissance
       </FieldLabel>
       <Popover open={isOpen} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            id={FIELD_ID}
-            ref={fieldRef}
-            variant="outline"
-            // Nommé par le libellé seul, un bouton n'annonce pas la date choisie : on y ajoute sa valeur.
-            aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
-            aria-invalid={isInvalid || undefined}
-            aria-describedby={isInvalid ? ERROR_ID : undefined}
-            className="w-full justify-between font-normal"
-          >
-            <span id={VALUE_ID} className={value ? undefined : "text-muted-foreground"}>
-              {value || "JJ/MM/AAAA"}
-            </span>
-            <CalendarDaysIcon aria-hidden="true" className="text-muted-foreground size-4" />
-          </Button>
-        </PopoverTrigger>
+        <InputGroup>
+          <PopoverTrigger asChild>
+            <InputGroupTrigger
+              id={FIELD_ID}
+              ref={fieldRef}
+              // Nommé par le libellé seul, un bouton n'annonce pas la date choisie : on y ajoute sa valeur.
+              aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
+              aria-invalid={isInvalid || undefined}
+              aria-describedby={isInvalid ? ERROR_ID : DESCRIPTION_ID}
+              data-placeholder={value ? undefined : ""}
+            >
+              <span id={VALUE_ID}>{value || "JJ/MM/AAAA"}</span>
+            </InputGroupTrigger>
+          </PopoverTrigger>
+          <InputGroupAddon align="inline-end">
+            <CalendarDaysIcon aria-hidden="true" />
+          </InputGroupAddon>
+        </InputGroup>
         <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
           <Calendar
             className="w-full"
@@ -85,7 +86,11 @@ export function DateNaissanceInput({
           />
         </PopoverContent>
       </Popover>
-      {error && <FieldError id={ERROR_ID} errors={[error]} />}
+      {isInvalid ? (
+        <FieldError id={ERROR_ID} errors={[error]} />
+      ) : (
+        <FieldDescription id={DESCRIPTION_ID}>Format : JJ/MM/AAAA</FieldDescription>
+      )}
     </Field>
   );
 }

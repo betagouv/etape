@@ -29,6 +29,7 @@ interface FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPa
   name: TName;
   control: Control<TFieldValues>;
   label: React.ReactNode;
+  required?: boolean;
   description?: React.ReactNode;
   render: (props: FormFieldRenderProps<TFieldValues, TName>) => React.ReactNode;
 }
@@ -53,6 +54,7 @@ function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFi
   name,
   control,
   label,
+  required = false,
   description,
   render,
 }: FormFieldProps<TFieldValues, TName>) {
@@ -68,7 +70,9 @@ function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFi
 
         return (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={name}>{label}</FieldLabel>
+            <FieldLabel htmlFor={name} required={required}>
+              {label}
+            </FieldLabel>
             {render({
               field,
               attributes: {

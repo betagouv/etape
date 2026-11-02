@@ -25,12 +25,12 @@ export interface StatutVoletLine {
   label: string;
 }
 
-const REMAINING_FIELD_LABELS: PluralForms<string> = {
+export const REMAINING_FIELD_LABELS: PluralForms<string> = {
   one: "champ restant",
   other: "champs restants",
 };
 
-const ERROR_LABELS: PluralForms<string> = {
+export const ERROR_LABELS: PluralForms<string> = {
   one: "erreur à corriger",
   other: "erreurs à corriger",
 };

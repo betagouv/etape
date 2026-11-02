@@ -24,12 +24,15 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
 function FieldLegend({
   className,
   variant = "legend",
+  required = false,
+  children,
   ...props
-}: React.ComponentProps<"legend"> & { variant?: "legend" | "label" }) {
+}: React.ComponentProps<"legend"> & { variant?: "legend" | "label"; required?: boolean }) {
   return (
     <legend
       data-slot="field-legend"
       data-variant={variant}
+      data-required={required || undefined}
       className={cn(
         "mb-3 font-medium",
         "data-[variant=legend]:text-base",
@@ -37,7 +40,9 @@ function FieldLegend({
         className,
       )}
       {...props}
-    />
+    >
+      {required ? <FieldRequiredContent>{children}</FieldRequiredContent> : children}
+    </legend>
   );
 }
 
@@ -103,17 +108,44 @@ function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>) {
+/**
+ * Marque « obligatoire » du kit (`Field`, propriété `Required`) : étoile `destructive` à
+ * 2 px du libellé. Elle est visuelle seulement, les lecteurs d'écran entendent la mention
+ * en clair (RGAA 11.10).
+ */
+function FieldRequiredContent({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <span className="inline-flex gap-0.5">
+        {children}
+        <span aria-hidden="true" className="text-destructive">
+          *
+        </span>
+      </span>
+      <span className="sr-only"> (obligatoire)</span>
+    </>
+  );
+}
+
+function FieldLabel({
+  className,
+  required = false,
+  children,
+  ...props
+}: React.ComponentProps<typeof Label> & { required?: boolean }) {
   return (
     <Label
       data-slot="field-label"
+      data-required={required || undefined}
       // Sans la carte de choix de la source shadcn : c'est le rôle de `ChoiceCard`.
       className={cn(
         "group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",
         className,
       )}
       {...props}
-    />
+    >
+      {required ? <FieldRequiredContent>{children}</FieldRequiredContent> : children}
+    </Label>
   );
 }
 
