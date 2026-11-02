@@ -1,6 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
+import { format, parse } from "date-fns";
+import { fr } from "date-fns/locale/fr";
 import { CalendarDaysIcon, InfoIcon, MailIcon, PhoneIcon, SearchIcon } from "lucide-react";
 
 import {
@@ -12,8 +14,11 @@ import {
   FieldSet,
 } from "@etape/ui/components/field";
 import { FormField } from "@etape/ui/components/form-field";
+import { Button } from "@etape/ui/components/button";
+import { Calendar } from "@etape/ui/components/calendar";
 import { Input } from "@etape/ui/components/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import {
@@ -99,6 +104,84 @@ function SectionCounter({ remaining }: { remaining: number }) {
   );
 }
 
+const REFERENCE_DATE = new Date(0);
+const AGE_MAXIMUM_CALENDAR = 70;
+const START_MONTH = new Date(new Date().getFullYear() - AGE_MAXIMUM_CALENDAR, 0);
+const DEFAULT_MONTH = new Date(1990, 0);
+
+function parseDateNaissance(value: string): Date | undefined {
+  if (!value) return undefined;
+  const parsed = parse(value, "dd/MM/yyyy", REFERENCE_DATE);
+  return isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+interface DateNaissanceInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  fieldRef: React.Ref<HTMLButtonElement>;
+  isInvalid: boolean;
+  error?: { message?: string };
+}
+
+function DateNaissanceInput({
+  value,
+  onChange,
+  fieldRef,
+  isInvalid,
+  error,
+}: DateNaissanceInputProps) {
+  const [isOpen, setOpen] = useState(false);
+  const selectedDate = useMemo(() => parseDateNaissance(value), [value]);
+  const endMonth = useMemo(() => {
+    const today = new Date();
+    return new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  }, []);
+
+  return (
+    <Field>
+      <FieldLabel htmlFor="dateNaissance">
+        Date de naissance <RequiredMark />
+      </FieldLabel>
+      <Popover open={isOpen} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            id="dateNaissance"
+            ref={fieldRef}
+            variant="outline"
+            aria-invalid={isInvalid || undefined}
+            className="w-full justify-between font-normal"
+          >
+            {value || <span className="text-muted-foreground">JJ/MM/AAAA</span>}
+            <CalendarDaysIcon aria-hidden="true" className="text-muted-foreground size-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+          <Calendar
+            className="w-full"
+            mode="single"
+            captionLayout="dropdown"
+            locale={fr}
+            formatters={{
+              formatMonthDropdown: (date) => date.toLocaleString("fr-FR", { month: "long" }),
+            }}
+            selected={selectedDate}
+            defaultMonth={selectedDate ?? DEFAULT_MONTH}
+            startMonth={START_MONTH}
+            endMonth={endMonth}
+            onSelect={(date) => {
+              if (date) {
+                onChange(format(date, "dd/MM/yyyy"));
+              }
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+      {error && <FieldError errors={[error]} />}
+    </Field>
+  );
+}
+
 function DescriptionSupport({ email }: { email: string }) {
   return (
     <FieldDescription>
@@ -138,14 +221,19 @@ export function InformationsForm({
   const totalFilled = identiteFilled + contactFilled;
   const errorCount = isSubmitted ? Object.keys(errors).length : 0;
 
+  const onProgressChangeRef = useRef(onProgressChange);
   useEffect(() => {
-    onProgressChange?.({
+    onProgressChangeRef.current = onProgressChange;
+  });
+
+  useEffect(() => {
+    onProgressChangeRef.current?.({
       requiredFieldCount: ALL_REQUIRED_FIELDS.length,
       filledFieldCount: totalFilled,
       remainingFieldCount: ALL_REQUIRED_FIELDS.length - totalFilled,
       errorCount,
     });
-  }, [totalFilled, errorCount, onProgressChange]);
+  }, [totalFilled, errorCount]);
 
   const voletErrors: VoletError[] = isSubmitted
     ? Object.entries(errors).map(([fieldId, error]) => ({
@@ -213,22 +301,17 @@ export function InformationsForm({
               <DescriptionSupport email={supportEmail} />
             </Field>
 
-            <FormField
+            <Controller
               name="dateNaissance"
               control={form.control}
-              label={
-                <>
-                  Date de naissance <RequiredMark />
-                </>
-              }
-              description="Format : JJ/MM/AAAA"
-              render={({ field, attributes }) => (
-                <InputGroup>
-                  <InputGroupInput {...field} {...attributes} placeholder="" />
-                  <InputGroupAddon align="inline-end">
-                    <CalendarDaysIcon aria-hidden="true" />
-                  </InputGroupAddon>
-                </InputGroup>
+              render={({ field, fieldState }) => (
+                <DateNaissanceInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  fieldRef={field.ref}
+                  isInvalid={fieldState.invalid}
+                  error={fieldState.error}
+                />
               )}
             />
 
