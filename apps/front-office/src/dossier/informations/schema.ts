@@ -53,7 +53,8 @@ const baseInformationsSchema = z.object({
   telephone: z
     .string()
     .min(1, "Veuillez saisir un numéro de téléphone.")
-    .regex(/^\d{2}( \d{2}){4}$/, "Le numéro doit comporter 10 chiffres."),
+    .regex(/^\d{2}( \d{2}){4}$/, "Le numéro doit comporter 10 chiffres.")
+    .regex(/^0[1-79]/, "Le numéro doit être un téléphone français (fixe ou mobile)."),
 });
 
 export const informationsSchema = baseInformationsSchema.superRefine((data, ctx) => {
