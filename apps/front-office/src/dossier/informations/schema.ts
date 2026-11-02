@@ -43,7 +43,10 @@ export const informationsSchema = z.object({
   nationalite: z.string().min(1, "Veuillez choisir une nationalité."),
   numeroSecuriteSociale: z.string().regex(/^\d{13}$/, "Le numéro doit comporter 13 chiffres."),
   cle: z.string().regex(/^\d{2}$/, "La clé doit comporter 2 chiffres."),
-  telephone: z.string().min(1, "Veuillez saisir un numéro de téléphone."),
+  telephone: z
+    .string()
+    .min(1, "Veuillez saisir un numéro de téléphone.")
+    .regex(/^\d{2}( \d{2}){4}$/, "Le numéro doit comporter 10 chiffres."),
 });
 
 export type InformationsFormData = z.infer<typeof informationsSchema>;

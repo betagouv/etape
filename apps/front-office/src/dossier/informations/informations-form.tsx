@@ -23,6 +23,8 @@ import { DescriptionSupport } from "./components/description-support";
 import { NationaliteInput } from "./components/nationalite-input";
 import { RequiredMark } from "./components/required-mark";
 import { SectionCounter } from "./components/section-counter";
+import { countFilled } from "./count-filled";
+import { formatTelephone } from "./format-telephone";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
 import type { VoletProgress } from "../domain/statut-volet";
@@ -59,16 +61,6 @@ const ALL_REQUIRED_FIELDS: readonly InformationsFieldName[] = [
   ...SECTION_IDENTITE_FIELDS,
   ...SECTION_CONTACT_FIELDS,
 ];
-
-function countFilled(
-  values: Partial<InformationsFormData>,
-  fields: readonly InformationsFieldName[],
-): number {
-  return fields.filter((name) => {
-    const v = values[name];
-    return typeof v === "string" && v.length > 0;
-  }).length;
-}
 
 export function InformationsForm({
   formId,
@@ -286,7 +278,12 @@ export function InformationsForm({
                   <InputGroupAddon>
                     <PhoneIcon aria-hidden="true" />
                   </InputGroupAddon>
-                  <InputGroupInput {...field} {...attributes} type="tel" />
+                  <InputGroupInput
+                    {...field}
+                    {...attributes}
+                    type="tel"
+                    onChange={(e) => field.onChange(formatTelephone(e.target.value))}
+                  />
                 </InputGroup>
               )}
             />
