@@ -58,6 +58,10 @@ export interface InformationsFormProps {
   onProgressChange?: (progress: VoletProgress) => void;
 }
 
+// Le résumé d'erreurs mène à `#civilite` : l'id est porté par le groupe, pas par un bouton radio.
+const CIVILITE_FIELD_ID = "civilite";
+const CIVILITE_ERROR_ID = `${CIVILITE_FIELD_ID}-error`;
+
 const ALL_REQUIRED_FIELDS: readonly InformationsFieldName[] = [
   ...SECTION_IDENTITE_FIELDS,
   ...SECTION_CONTACT_FIELDS,
@@ -85,8 +89,15 @@ export function InformationsForm({
     shouldFocusError: false,
   });
 
-  const { errors } = form.formState;
+  const { errors, submitCount } = form.formState;
   const values = useWatch({ control: form.control });
+  const errorsAlertRef = useRef<HTMLDivElement>(null);
+
+  // `FieldError` n'a pas de rôle d'alerte : c'est le résumé, focalisé à chaque soumission
+  // invalide, qui annonce les erreurs (`shouldFocusError` est désactivé pour cela).
+  useEffect(() => {
+    if (submitCount > 0) errorsAlertRef.current?.focus();
+  }, [submitCount]);
 
   const identiteFilled = countFilled(values, SECTION_IDENTITE_FIELDS);
   const contactFilled = countFilled(values, SECTION_CONTACT_FIELDS);
@@ -114,7 +125,7 @@ export function InformationsForm({
 
   return (
     <>
-      <VoletErrorsAlert errors={voletErrors} />
+      <VoletErrorsAlert ref={errorsAlertRef} errors={voletErrors} />
       <VoletNotice notice={notice} />
 
       <form
@@ -140,19 +151,30 @@ export function InformationsForm({
               render={({ field, fieldState }) => (
                 <>
                   <RadioGroup
+                    id={CIVILITE_FIELD_ID}
                     value={field.value}
                     onValueChange={field.onChange}
                     className="flex gap-5"
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={fieldState.invalid ? CIVILITE_ERROR_ID : undefined}
                   >
-                    {Object.values(CIVILITE).map((value) => (
+                    {Object.values(CIVILITE).map((value, index) => (
                       <div key={value} className="flex items-center gap-2">
-                        <RadioGroupItem value={value} id={`civilite-${value}`} ref={field.ref} />
-                        <Label htmlFor={`civilite-${value}`}>{CIVILITE_LABEL[value]}</Label>
+                        <RadioGroupItem
+                          value={value}
+                          id={`${CIVILITE_FIELD_ID}-${value}`}
+                          // Un seul élément peut porter le ref du champ : le premier bouton radio.
+                          ref={index === 0 ? field.ref : undefined}
+                        />
+                        <Label htmlFor={`${CIVILITE_FIELD_ID}-${value}`}>
+                          {CIVILITE_LABEL[value]}
+                        </Label>
                       </div>
                     ))}
                   </RadioGroup>
-                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.error && (
+                    <FieldError id={CIVILITE_ERROR_ID} errors={[fieldState.error]} />
+                  )}
                 </>
               )}
             />

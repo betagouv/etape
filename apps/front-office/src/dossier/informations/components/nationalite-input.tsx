@@ -16,6 +16,11 @@ import { findNationaliteByLabel, flagUrl } from "../domain/nationalites";
 import { useNationaliteSearch } from "../hooks/use-nationalite-search";
 import { RequiredMark } from "./required-mark";
 
+const FIELD_ID = "nationalite";
+const LABEL_ID = `${FIELD_ID}-label`;
+const VALUE_ID = `${FIELD_ID}-value`;
+const ERROR_ID = `${FIELD_ID}-error`;
+const LIST_ID = `${FIELD_ID}-list`;
 const NO_MATCH_NATIONALITE = "Aucune nationalité ne correspond.";
 
 export interface NationaliteInputProps {
@@ -35,11 +40,10 @@ export function NationaliteInput({
 }: NationaliteInputProps) {
   const [isOpen, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const listId = "nationalite-list";
   const selectedNationalite = value ? findNationaliteByLabel(value) : undefined;
 
   const search = useNationaliteSearch({
-    idPrefix: "nationalite",
+    idPrefix: FIELD_ID,
     onSelect: (val) => {
       onChange(val);
       setOpen(false);
@@ -47,8 +51,8 @@ export function NationaliteInput({
   });
 
   return (
-    <Field>
-      <FieldLabel htmlFor="nationalite">
+    <Field data-invalid={isInvalid}>
+      <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID}>
         Nationalité <RequiredMark />
       </FieldLabel>
       <Popover
@@ -60,14 +64,17 @@ export function NationaliteInput({
       >
         <PopoverTrigger asChild>
           <Button
-            id="nationalite"
+            id={FIELD_ID}
             ref={fieldRef}
             variant="outline"
+            // Nommé par le libellé seul, un bouton n'annonce pas la nationalité choisie : on y ajoute sa valeur.
+            aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
             aria-invalid={isInvalid || undefined}
+            aria-describedby={isInvalid ? ERROR_ID : undefined}
             className="w-full justify-between font-normal"
           >
             {selectedNationalite ? (
-              <span className="flex items-center gap-2">
+              <span id={VALUE_ID} className="flex items-center gap-2">
                 <img
                   src={flagUrl(selectedNationalite.code)}
                   alt=""
@@ -76,7 +83,9 @@ export function NationaliteInput({
                 {value}
               </span>
             ) : (
-              <span className="text-muted-foreground">Sélectionner</span>
+              <span id={VALUE_ID} className="text-muted-foreground">
+                Sélectionner
+              </span>
             )}
             <ChevronDownIcon aria-hidden="true" className="text-muted-foreground size-4" />
           </Button>
@@ -95,7 +104,7 @@ export function NationaliteInput({
               value={search.searchText}
               placeholder="Rechercher…"
               aria-expanded={true}
-              aria-controls={listId}
+              aria-controls={LIST_ID}
               aria-activedescendant={
                 search.activeValue ? search.optionId(search.activeValue) : undefined
               }
@@ -103,7 +112,7 @@ export function NationaliteInput({
               {...search.inputHandlers}
             />
             <ComboboxList
-              id={listId}
+              id={LIST_ID}
               aria-label="Nationalités"
               onMouseDown={(e) => e.preventDefault()}
             >
@@ -161,7 +170,7 @@ export function NationaliteInput({
           </Combobox>
         </PopoverContent>
       </Popover>
-      {error && <FieldError errors={[error]} />}
+      {error && <FieldError id={ERROR_ID} errors={[error]} />}
     </Field>
   );
 }

@@ -1,26 +1,16 @@
-import { parse } from "date-fns";
 import { z } from "zod";
 
+import { computeDateNaissanceBounds, parseDateNaissance } from "./domain/date-naissance";
 import { isCleNirValid, NIR_PATTERN } from "./domain/validate-nir";
 
-const AGE_MINIMUM = 18;
-const AGE_MAXIMUM = 70;
-const REFERENCE_DATE = new Date(0);
-
 function isAgeSuffisant(value: string): boolean {
-  const date = parse(value, "dd/MM/yyyy", REFERENCE_DATE);
-  if (isNaN(date.getTime())) return false;
-  const today = new Date();
-  const limite = new Date(today.getFullYear() - AGE_MINIMUM, today.getMonth(), today.getDate());
-  return date <= limite;
+  const date = parseDateNaissance(value);
+  return date !== undefined && date <= computeDateNaissanceBounds(new Date()).max;
 }
 
 function isAgeMaximumRespected(value: string): boolean {
-  const date = parse(value, "dd/MM/yyyy", REFERENCE_DATE);
-  if (isNaN(date.getTime())) return false;
-  const today = new Date();
-  const limite = new Date(today.getFullYear() - AGE_MAXIMUM, today.getMonth(), today.getDate());
-  return date >= limite;
+  const date = parseDateNaissance(value);
+  return date !== undefined && date >= computeDateNaissanceBounds(new Date()).min;
 }
 
 export const CIVILITE = {
@@ -38,7 +28,7 @@ export const CIVILITE_LABEL: Record<Civilite, string> = {
 const CLE_PATTERN = /^\d{2}$/;
 
 const baseInformationsSchema = z.object({
-  civilite: z.enum(["madame", "monsieur"]),
+  civilite: z.enum(CIVILITE, "Veuillez indiquer votre civilité."),
   dateNaissance: z
     .string()
     .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Le format attendu est JJ/MM/AAAA.")

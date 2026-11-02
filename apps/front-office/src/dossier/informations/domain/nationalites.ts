@@ -212,6 +212,16 @@ export function findNationaliteByLabel(label: string): Nationalite | undefined {
   return NATIONALITE_BY_LABEL.get(label);
 }
 
+/*
+ * Un glob `?url&no-inline` : chaque drapeau reste un fichier chargé à la demande. Un `new URL`
+ * à segment dynamique les faisait tous inliner en data URI dans le bundle initial (+400 Ko).
+ */
+const FLAG_URLS = import.meta.glob<string>("/node_modules/circle-flags/flags/*.svg", {
+  query: "?url&no-inline",
+  import: "default",
+  eager: true,
+});
+
 export function flagUrl(code: string): string {
-  return new URL(`../../../../node_modules/circle-flags/flags/${code}.svg`, import.meta.url).href;
+  return FLAG_URLS[`/node_modules/circle-flags/flags/${code}.svg`] ?? "";
 }
