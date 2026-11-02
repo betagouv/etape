@@ -1,6 +1,8 @@
 import { parse } from "date-fns";
 import { z } from "zod";
 
+import { isCleNirValid, NIR_PATTERN } from "./domain/validate-nir";
+
 const AGE_MINIMUM = 18;
 const AGE_MAXIMUM = 70;
 const REFERENCE_DATE = new Date(0);
@@ -33,7 +35,9 @@ export const CIVILITE_LABEL: Record<Civilite, string> = {
   [CIVILITE.MONSIEUR]: "Monsieur",
 };
 
-export const informationsSchema = z.object({
+const CLE_PATTERN = /^\d{2}$/;
+
+const baseInformationsSchema = z.object({
   civilite: z.enum(["madame", "monsieur"]),
   dateNaissance: z
     .string()
@@ -41,12 +45,27 @@ export const informationsSchema = z.object({
     .refine(isAgeSuffisant, "Vous devez avoir au moins 18 ans.")
     .refine(isAgeMaximumRespected, "Vous devez avoir moins de 70 ans."),
   nationalite: z.string().min(1, "Veuillez choisir une nationalité."),
-  numeroSecuriteSociale: z.string().regex(/^\d{13}$/, "Le numéro doit comporter 13 chiffres."),
-  cle: z.string().regex(/^\d{2}$/, "La clé doit comporter 2 chiffres."),
+  numeroSecuriteSociale: z
+    .string()
+    .min(1, "Veuillez saisir votre numéro de sécurité sociale.")
+    .regex(NIR_PATTERN, "Le numéro de sécurité sociale n'est pas valide."),
+  cle: z.string().regex(CLE_PATTERN, "La clé doit comporter 2 chiffres."),
   telephone: z
     .string()
     .min(1, "Veuillez saisir un numéro de téléphone.")
     .regex(/^\d{2}( \d{2}){4}$/, "Le numéro doit comporter 10 chiffres."),
+});
+
+export const informationsSchema = baseInformationsSchema.superRefine((data, ctx) => {
+  if (NIR_PATTERN.test(data.numeroSecuriteSociale) && CLE_PATTERN.test(data.cle)) {
+    if (!isCleNirValid(data.numeroSecuriteSociale, data.cle)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "La clé ne correspond pas au numéro de sécurité sociale.",
+        path: ["cle"],
+      });
+    }
+  }
 });
 
 export type InformationsFormData = z.infer<typeof informationsSchema>;

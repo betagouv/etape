@@ -12,8 +12,8 @@ import {
 } from "@etape/ui/components/combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 
+import { findNationaliteByLabel, flagUrl } from "../domain/nationalites";
 import { useNationaliteSearch } from "../hooks/use-nationalite-search";
-import { findNationaliteByLabel, flagUrl } from "../nationalites";
 import { RequiredMark } from "./required-mark";
 
 const NO_MATCH_NATIONALITE = "Aucune nationalité ne correspond.";

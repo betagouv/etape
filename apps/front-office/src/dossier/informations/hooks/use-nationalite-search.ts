@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 
-import { findNationalites, SUGGESTION_NATIONALITE, type Nationalite } from "../nationalites";
+import { findNationalites, SUGGESTION_NATIONALITE, type Nationalite } from "../domain/nationalites";
 
 interface UseNationaliteSearchOptions {
   idPrefix: string;

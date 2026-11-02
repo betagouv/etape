@@ -1,4 +1,4 @@
-import type { InformationsFieldName, InformationsFormData } from "./schema";
+import type { InformationsFieldName, InformationsFormData } from "../schema";
 
 export function countFilled(
   values: Partial<InformationsFormData>,
