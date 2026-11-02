@@ -1,16 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { format, parse } from "date-fns";
-import { fr } from "date-fns/locale/fr";
-import {
-  CalendarDaysIcon,
-  ChevronDownIcon,
-  InfoIcon,
-  MailIcon,
-  PhoneIcon,
-  SearchIcon,
-} from "lucide-react";
+import { MailIcon, PhoneIcon, SearchIcon } from "lucide-react";
 
 import {
   Field,
@@ -21,26 +12,17 @@ import {
   FieldSet,
 } from "@etape/ui/components/field";
 import { FormField } from "@etape/ui/components/form-field";
-import { Button } from "@etape/ui/components/button";
-import { Calendar } from "@etape/ui/components/calendar";
-import {
-  Combobox,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxList,
-  ComboboxOption,
-} from "@etape/ui/components/combobox";
 import { Input } from "@etape/ui/components/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
-import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { Separator } from "@etape/ui/components/separator";
 
-import { selectPlural, type PluralForms } from "@/lib/plural";
-
-import { useNationaliteSearch } from "./hooks/use-nationalite-search";
-import { findNationaliteByLabel, flagUrl } from "./nationalites";
+import { DateNaissanceInput } from "./components/date-naissance-input";
+import { DescriptionSupport } from "./components/description-support";
+import { NationaliteInput } from "./components/nationalite-input";
+import { RequiredMark } from "./components/required-mark";
+import { SectionCounter } from "./components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
 import type { VoletProgress } from "../domain/statut-volet";
@@ -86,256 +68,6 @@ function countFilled(
     const v = values[name];
     return typeof v === "string" && v.length > 0;
   }).length;
-}
-
-function RequiredMark() {
-  return <span className="text-destructive">*</span>;
-}
-
-const REMAINING_FIELD_LABELS: PluralForms<string> = {
-  one: "champ restant",
-  other: "champs restants",
-};
-
-function SectionCounter({ remaining }: { remaining: number }) {
-  if (remaining === 0) return null;
-  return (
-    <span className="text-primary flex items-center gap-1 text-xs font-medium">
-      <InfoIcon aria-hidden="true" className="size-4" />
-      {remaining} {selectPlural(remaining, REMAINING_FIELD_LABELS)}
-    </span>
-  );
-}
-
-const REFERENCE_DATE = new Date(0);
-const AGE_MAXIMUM_CALENDAR = 70;
-const START_MONTH = new Date(new Date().getFullYear() - AGE_MAXIMUM_CALENDAR, 0);
-const DEFAULT_MONTH = new Date(1990, 0);
-
-function parseDateNaissance(value: string): Date | undefined {
-  if (!value) return undefined;
-  const parsed = parse(value, "dd/MM/yyyy", REFERENCE_DATE);
-  return isNaN(parsed.getTime()) ? undefined : parsed;
-}
-
-interface DateNaissanceInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  fieldRef: React.Ref<HTMLButtonElement>;
-  isInvalid: boolean;
-  error?: { message?: string };
-}
-
-function DateNaissanceInput({
-  value,
-  onChange,
-  fieldRef,
-  isInvalid,
-  error,
-}: DateNaissanceInputProps) {
-  const [isOpen, setOpen] = useState(false);
-  const selectedDate = useMemo(() => parseDateNaissance(value), [value]);
-  const endMonth = useMemo(() => {
-    const today = new Date();
-    return new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-  }, []);
-
-  return (
-    <Field>
-      <FieldLabel htmlFor="dateNaissance">
-        Date de naissance <RequiredMark />
-      </FieldLabel>
-      <Popover open={isOpen} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            id="dateNaissance"
-            ref={fieldRef}
-            variant="outline"
-            aria-invalid={isInvalid || undefined}
-            className="w-full justify-between font-normal"
-          >
-            {value || <span className="text-muted-foreground">JJ/MM/AAAA</span>}
-            <CalendarDaysIcon aria-hidden="true" className="text-muted-foreground size-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
-          <Calendar
-            className="w-full"
-            mode="single"
-            captionLayout="dropdown"
-            locale={fr}
-            formatters={{
-              formatMonthDropdown: (date) => date.toLocaleString("fr-FR", { month: "long" }),
-            }}
-            selected={selectedDate}
-            defaultMonth={selectedDate ?? DEFAULT_MONTH}
-            startMonth={START_MONTH}
-            endMonth={endMonth}
-            onSelect={(date) => {
-              if (date) {
-                onChange(format(date, "dd/MM/yyyy"));
-              }
-              setOpen(false);
-            }}
-          />
-        </PopoverContent>
-      </Popover>
-      {error && <FieldError errors={[error]} />}
-    </Field>
-  );
-}
-
-const NO_MATCH_NATIONALITE = "Aucune nationalité ne correspond.";
-
-interface NationaliteInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  fieldRef: React.Ref<HTMLButtonElement>;
-  isInvalid: boolean;
-  error?: { message?: string };
-}
-
-function NationaliteInput({ value, onChange, fieldRef, isInvalid, error }: NationaliteInputProps) {
-  const [isOpen, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listId = "nationalite-list";
-  const selectedNationalite = value ? findNationaliteByLabel(value) : undefined;
-
-  const search = useNationaliteSearch({
-    idPrefix: "nationalite",
-    onSelect: (val) => {
-      onChange(val);
-      setOpen(false);
-    },
-  });
-
-  return (
-    <Field>
-      <FieldLabel htmlFor="nationalite">
-        Nationalité <RequiredMark />
-      </FieldLabel>
-      <Popover
-        open={isOpen}
-        onOpenChange={(open) => {
-          setOpen(open);
-          if (!open) search.reset();
-        }}
-      >
-        <PopoverTrigger asChild>
-          <Button
-            id="nationalite"
-            ref={fieldRef}
-            variant="outline"
-            aria-invalid={isInvalid || undefined}
-            className="w-full justify-between font-normal"
-          >
-            {selectedNationalite ? (
-              <span className="flex items-center gap-2">
-                <img
-                  src={flagUrl(selectedNationalite.code)}
-                  alt=""
-                  className="size-4 shrink-0 rounded-full"
-                />
-                {value}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">Sélectionner</span>
-            )}
-            <ChevronDownIcon aria-hidden="true" className="text-muted-foreground size-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          align="start"
-          className="w-[var(--radix-popover-trigger-width)] p-0"
-          onOpenAutoFocus={(e) => {
-            e.preventDefault();
-            inputRef.current?.focus();
-          }}
-        >
-          <Combobox className="border-0">
-            <ComboboxInput
-              ref={inputRef}
-              value={search.searchText}
-              placeholder="Rechercher…"
-              aria-expanded={true}
-              aria-controls={listId}
-              aria-activedescendant={
-                search.activeValue ? search.optionId(search.activeValue) : undefined
-              }
-              aria-label="Rechercher une nationalité"
-              {...search.inputHandlers}
-            />
-            <ComboboxList
-              id={listId}
-              aria-label="Nationalités"
-              onMouseDown={(e) => e.preventDefault()}
-            >
-              {search.suggestion && (
-                <>
-                  <li role="presentation" className="text-muted-foreground px-2 py-1 text-xs">
-                    Suggestion
-                  </li>
-                  <ComboboxOption
-                    id={search.optionId(search.suggestion.label)}
-                    selected={search.suggestion.label === value}
-                    active={search.activeValue === search.suggestion.label}
-                    onClick={() => search.select(search.suggestion!.label)}
-                  >
-                    <span className="flex items-center gap-2">
-                      <img
-                        src={flagUrl(search.suggestion.code)}
-                        alt=""
-                        className="size-4 shrink-0 rounded-full"
-                      />
-                      {search.suggestion.label}
-                    </span>
-                  </ComboboxOption>
-                </>
-              )}
-              {search.nationalites.length > 0 && (
-                <>
-                  <li role="presentation" className="text-muted-foreground px-2 py-1 text-xs">
-                    Nationalités
-                  </li>
-                  {search.nationalites.map((n) => (
-                    <ComboboxOption
-                      key={n.label}
-                      id={search.optionId(n.label)}
-                      selected={n.label === value}
-                      active={n.label === search.activeValue}
-                      onClick={() => search.select(n.label)}
-                    >
-                      <span className="flex items-center gap-2">
-                        <img
-                          src={flagUrl(n.code)}
-                          alt=""
-                          className="size-4 shrink-0 rounded-full"
-                        />
-                        {n.label}
-                      </span>
-                    </ComboboxOption>
-                  ))}
-                </>
-              )}
-              {!search.suggestion && search.nationalites.length === 0 && (
-                <ComboboxEmpty>{NO_MATCH_NATIONALITE}</ComboboxEmpty>
-              )}
-            </ComboboxList>
-          </Combobox>
-        </PopoverContent>
-      </Popover>
-      {error && <FieldError errors={[error]} />}
-    </Field>
-  );
-}
-
-function DescriptionSupport({ email }: { email: string }) {
-  return (
-    <FieldDescription>
-      Repris de votre inscription. Pour le modifier, écrivez au support&nbsp;:{" "}
-      <a href={`mailto:${email}`}>{email}</a>
-    </FieldDescription>
-  );
 }
 
 export function InformationsForm({
