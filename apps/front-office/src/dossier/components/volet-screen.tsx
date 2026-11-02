@@ -42,7 +42,6 @@ export function VoletScreen() {
       {isInformations ? (
         <InformationsForm
           formId={VOLET_ID.INFORMATIONS}
-          nationalites={[]}
           preRemplies={{ nom: "", prenom: "", email: "", adresse: "" }}
           supportEmail={SUPPORT_EMAIL}
           notice={position.current.notice}

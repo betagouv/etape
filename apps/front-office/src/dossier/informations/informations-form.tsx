@@ -3,7 +3,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { format, parse } from "date-fns";
 import { fr } from "date-fns/locale/fr";
-import { CalendarDaysIcon, InfoIcon, MailIcon, PhoneIcon, SearchIcon } from "lucide-react";
+import {
+  CalendarDaysIcon,
+  ChevronDownIcon,
+  InfoIcon,
+  MailIcon,
+  PhoneIcon,
+  SearchIcon,
+} from "lucide-react";
 
 import {
   Field,
@@ -16,22 +23,24 @@ import {
 import { FormField } from "@etape/ui/components/form-field";
 import { Button } from "@etape/ui/components/button";
 import { Calendar } from "@etape/ui/components/calendar";
+import {
+  Combobox,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxList,
+  ComboboxOption,
+} from "@etape/ui/components/combobox";
 import { Input } from "@etape/ui/components/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@etape/ui/components/select";
 import { Separator } from "@etape/ui/components/separator";
 
 import { selectPlural, type PluralForms } from "@/lib/plural";
 
+import { useNationaliteSearch } from "./hooks/use-nationalite-search";
+import { findNationaliteByLabel, flagUrl } from "./nationalites";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
 import type { VoletProgress } from "../domain/statut-volet";
@@ -48,11 +57,6 @@ import {
   type InformationsFormData,
 } from "./schema";
 
-export interface NationaliteOption {
-  value: string;
-  label: string;
-}
-
 export interface InformationsPreRemplies {
   nom: string;
   prenom: string;
@@ -62,7 +66,6 @@ export interface InformationsPreRemplies {
 
 export interface InformationsFormProps {
   formId: string;
-  nationalites: NationaliteOption[];
   preRemplies: InformationsPreRemplies;
   supportEmail: string;
   notice?: VoletNoticeContent;
@@ -182,6 +185,150 @@ function DateNaissanceInput({
   );
 }
 
+const NO_MATCH_NATIONALITE = "Aucune nationalité ne correspond.";
+
+interface NationaliteInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  fieldRef: React.Ref<HTMLButtonElement>;
+  isInvalid: boolean;
+  error?: { message?: string };
+}
+
+function NationaliteInput({ value, onChange, fieldRef, isInvalid, error }: NationaliteInputProps) {
+  const [isOpen, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listId = "nationalite-list";
+  const selectedNationalite = value ? findNationaliteByLabel(value) : undefined;
+
+  const search = useNationaliteSearch({
+    idPrefix: "nationalite",
+    onSelect: (val) => {
+      onChange(val);
+      setOpen(false);
+    },
+  });
+
+  return (
+    <Field>
+      <FieldLabel htmlFor="nationalite">
+        Nationalité <RequiredMark />
+      </FieldLabel>
+      <Popover
+        open={isOpen}
+        onOpenChange={(open) => {
+          setOpen(open);
+          if (!open) search.reset();
+        }}
+      >
+        <PopoverTrigger asChild>
+          <Button
+            id="nationalite"
+            ref={fieldRef}
+            variant="outline"
+            aria-invalid={isInvalid || undefined}
+            className="w-full justify-between font-normal"
+          >
+            {selectedNationalite ? (
+              <span className="flex items-center gap-2">
+                <img
+                  src={flagUrl(selectedNationalite.code)}
+                  alt=""
+                  className="size-4 shrink-0 rounded-full"
+                />
+                {value}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">Sélectionner</span>
+            )}
+            <ChevronDownIcon aria-hidden="true" className="text-muted-foreground size-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="w-[var(--radix-popover-trigger-width)] p-0"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            inputRef.current?.focus();
+          }}
+        >
+          <Combobox className="border-0">
+            <ComboboxInput
+              ref={inputRef}
+              value={search.searchText}
+              placeholder="Rechercher…"
+              aria-expanded={true}
+              aria-controls={listId}
+              aria-activedescendant={
+                search.activeValue ? search.optionId(search.activeValue) : undefined
+              }
+              aria-label="Rechercher une nationalité"
+              {...search.inputHandlers}
+            />
+            <ComboboxList
+              id={listId}
+              aria-label="Nationalités"
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              {search.suggestion && (
+                <>
+                  <li role="presentation" className="text-muted-foreground px-2 py-1 text-xs">
+                    Suggestion
+                  </li>
+                  <ComboboxOption
+                    id={search.optionId(search.suggestion.label)}
+                    selected={search.suggestion.label === value}
+                    active={search.activeValue === search.suggestion.label}
+                    onClick={() => search.select(search.suggestion!.label)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <img
+                        src={flagUrl(search.suggestion.code)}
+                        alt=""
+                        className="size-4 shrink-0 rounded-full"
+                      />
+                      {search.suggestion.label}
+                    </span>
+                  </ComboboxOption>
+                </>
+              )}
+              {search.nationalites.length > 0 && (
+                <>
+                  <li role="presentation" className="text-muted-foreground px-2 py-1 text-xs">
+                    Nationalités
+                  </li>
+                  {search.nationalites.map((n) => (
+                    <ComboboxOption
+                      key={n.label}
+                      id={search.optionId(n.label)}
+                      selected={n.label === value}
+                      active={n.label === search.activeValue}
+                      onClick={() => search.select(n.label)}
+                    >
+                      <span className="flex items-center gap-2">
+                        <img
+                          src={flagUrl(n.code)}
+                          alt=""
+                          className="size-4 shrink-0 rounded-full"
+                        />
+                        {n.label}
+                      </span>
+                    </ComboboxOption>
+                  ))}
+                </>
+              )}
+              {!search.suggestion && search.nationalites.length === 0 && (
+                <ComboboxEmpty>{NO_MATCH_NATIONALITE}</ComboboxEmpty>
+              )}
+            </ComboboxList>
+          </Combobox>
+        </PopoverContent>
+      </Popover>
+      {error && <FieldError errors={[error]} />}
+    </Field>
+  );
+}
+
 function DescriptionSupport({ email }: { email: string }) {
   return (
     <FieldDescription>
@@ -193,7 +340,6 @@ function DescriptionSupport({ email }: { email: string }) {
 
 export function InformationsForm({
   formId,
-  nationalites,
   preRemplies,
   supportEmail,
   notice,
@@ -315,27 +461,17 @@ export function InformationsForm({
               )}
             />
 
-            <FormField
+            <Controller
               name="nationalite"
               control={form.control}
-              label={
-                <>
-                  Nationalité <RequiredMark />
-                </>
-              }
-              render={({ field, attributes }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger ref={field.ref} {...attributes} className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {nationalites.map((n) => (
-                      <SelectItem key={n.value} value={n.value}>
-                        {n.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              render={({ field, fieldState }) => (
+                <NationaliteInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  fieldRef={field.ref}
+                  isInvalid={fieldState.invalid}
+                  error={fieldState.error}
+                />
               )}
             />
 
