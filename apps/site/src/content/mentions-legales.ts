@@ -392,10 +392,20 @@ export const MENTIONS_LEGALES: readonly LegalSection[] = [
 /** Les textes de la case d'opt-out de la section « Cookies ». */
 export const AUDIENCE_OPT_OUT_TEXT = {
   label: "Ne pas mesurer ma visite",
-  loading: "Chargement de votre préférence de mesure d'audience…",
-  unavailable:
-    "La mesure d'audience est inactive dans votre navigateur : aucune statistique n'est recueillie sur votre visite.",
 } as const;
+
+/**
+ * Affiché à la place de la case tant qu'elle n'est pas disponible ; vide une fois
+ * la case montée. Le texte d'indisponibilité reste prudent : un script lent,
+ * tenu pour bloqué après 10 s, peut encore arriver et mesurer la visite.
+ */
+export const AUDIENCE_OPT_OUT_STATUS_TEXT: Record<AudienceOptOutStatus, string> = {
+  [AUDIENCE_OPT_OUT_STATUS.LOADING]: "Chargement de votre préférence de mesure d'audience…",
+  [AUDIENCE_OPT_OUT_STATUS.UNAVAILABLE]:
+    "La mesure d'audience ne semble pas active dans votre navigateur (bloqueur de publicités, par exemple) : tant qu'elle ne l'est pas, aucune statistique n'est recueillie sur votre visite.",
+  [AUDIENCE_OPT_OUT_STATUS.TRACKED]: "",
+  [AUDIENCE_OPT_OUT_STATUS.OPTED_OUT]: "",
+};
 
 /** Annoncé après une bascule de la case ; vide au repos (`accessibilite.md`, § 2). */
 export const AUDIENCE_OPT_OUT_ANNOUNCEMENTS: Record<AudienceOptOutStatus, string> = {

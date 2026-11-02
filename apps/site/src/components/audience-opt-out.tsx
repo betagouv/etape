@@ -7,7 +7,11 @@ import { Checkbox } from "@etape/ui/components/checkbox";
 import { Label } from "@etape/ui/components/label";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
-import { AUDIENCE_OPT_OUT_ANNOUNCEMENTS, AUDIENCE_OPT_OUT_TEXT } from "@/content/mentions-legales";
+import {
+  AUDIENCE_OPT_OUT_ANNOUNCEMENTS,
+  AUDIENCE_OPT_OUT_STATUS_TEXT,
+  AUDIENCE_OPT_OUT_TEXT,
+} from "@/content/mentions-legales";
 import { MATOMO_CONFIG } from "@/lib/analytics";
 
 /**
@@ -17,12 +21,9 @@ import { MATOMO_CONFIG } from "@/lib/analytics";
  */
 export function AudienceOptOut() {
   const checkboxId = useId();
-  const { status, setOptedOut } = useAudienceOptOut(MATOMO_CONFIG !== null);
+  const { status, isReady, setOptedOut } = useAudienceOptOut(MATOMO_CONFIG !== null);
   // N'annoncer que ce que la personne vient de faire, pas l'état lu au chargement.
   const [hasToggled, setHasToggled] = useState(false);
-
-  const isReady =
-    status === AUDIENCE_OPT_OUT_STATUS.TRACKED || status === AUDIENCE_OPT_OUT_STATUS.OPTED_OUT;
 
   function handleCheckedChange(checked: boolean | "indeterminate"): void {
     setHasToggled(true);
@@ -41,11 +42,7 @@ export function AudienceOptOut() {
           <Label htmlFor={checkboxId}>{AUDIENCE_OPT_OUT_TEXT.label}</Label>
         </div>
       ) : (
-        <p>
-          {status === AUDIENCE_OPT_OUT_STATUS.LOADING
-            ? AUDIENCE_OPT_OUT_TEXT.loading
-            : AUDIENCE_OPT_OUT_TEXT.unavailable}
-        </p>
+        <p>{AUDIENCE_OPT_OUT_STATUS_TEXT[status]}</p>
       )}
       <StatusRegion message={hasToggled ? AUDIENCE_OPT_OUT_ANNOUNCEMENTS[status] : ""} />
     </div>
