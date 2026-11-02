@@ -15,11 +15,12 @@ export interface FormLayoutProps {
   volets: Volet[];
   position: VoletPosition;
   headingRef: Ref<HTMLHeadingElement>;
+  formId?: string;
   children?: ReactNode;
 }
 
 /** Cadre d'un volet du dossier, posé à cheval sur le bas de `DossierHeader`. */
-export function FormLayout({ volets, position, headingRef, children }: FormLayoutProps) {
+export function FormLayout({ volets, position, headingRef, formId, children }: FormLayoutProps) {
   const titleId = useId();
   const { index, current, previous, next } = position;
 
@@ -48,14 +49,20 @@ export function FormLayout({ volets, position, headingRef, children }: FormLayou
                 </VoletLink>
               </Button>
             )}
-            {next && (
-              <Button asChild size="lg">
-                <VoletLink voletId={next.id}>
+            {next &&
+              (formId ? (
+                <Button type="submit" form={formId} size="lg">
                   Étape suivante
                   <ArrowRightIcon aria-hidden="true" />
-                </VoletLink>
-              </Button>
-            )}
+                </Button>
+              ) : (
+                <Button asChild size="lg">
+                  <VoletLink voletId={next.id}>
+                    Étape suivante
+                    <ArrowRightIcon aria-hidden="true" />
+                  </VoletLink>
+                </Button>
+              ))}
           </div>
         </div>
       </Card>

@@ -1,7 +1,7 @@
 import type { VoletDefinition, VoletNoticeContent } from "./volets";
 import { VOLET_ID } from "./volet-id";
 
-const SUPPORT_EMAIL = "support@etapes.com";
+export const SUPPORT_EMAIL = "support@etapes.com";
 
 const RELECTURE_CEP_NOTICE: VoletNoticeContent = {
   title: "Relecture par votre conseiller CEP",
