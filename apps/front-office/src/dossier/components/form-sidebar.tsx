@@ -3,11 +3,11 @@ import { useId } from "react";
 import { sectionCaptionVariants } from "@etape/ui/components/section";
 import { Separator } from "@etape/ui/components/separator";
 
-import type { Volet } from "../domain/volets";
+import type { VoletDefinition } from "../domain/volets";
 import { FormSidebarItem } from "./form-sidebar-item";
 
 export interface FormSidebarProps {
-  volets: Volet[];
+  volets: VoletDefinition[];
 }
 
 /** Volets du dossier et leur avancement. */

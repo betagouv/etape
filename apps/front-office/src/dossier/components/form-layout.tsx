@@ -7,12 +7,12 @@ import { SectionHeader } from "@etape/ui/components/section";
 import { Separator } from "@etape/ui/components/separator";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
-import type { Volet, VoletPosition } from "../domain/volets";
+import type { VoletDefinition, VoletPosition } from "../domain/volets";
 import { FormSidebar } from "./form-sidebar";
 import { VoletLink } from "./volet-link";
 
 export interface FormLayoutProps {
-  volets: Volet[];
+  volets: VoletDefinition[];
   position: VoletPosition;
   headingRef: Ref<HTMLHeadingElement>;
   formId?: string;

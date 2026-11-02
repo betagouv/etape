@@ -29,23 +29,28 @@ import {
   type InformationsFormData,
 } from "./schema";
 
+export interface NationaliteOption {
+  value: string;
+  label: string;
+}
+
 export interface InformationsFormProps {
   formId: string;
+  nationalites: NationaliteOption[];
   notice?: VoletNoticeContent;
   onSubmitValid: (data: InformationsFormData) => void;
 }
-
-const NATIONALITES = [
-  { value: "francaise", label: "Française" },
-  { value: "ue", label: "Ressortissant UE" },
-  { value: "hors-ue", label: "Hors UE" },
-] as const;
 
 function RequiredMark() {
   return <span className="text-destructive">*</span>;
 }
 
-export function InformationsForm({ formId, notice, onSubmitValid }: InformationsFormProps) {
+export function InformationsForm({
+  formId,
+  nationalites,
+  notice,
+  onSubmitValid,
+}: InformationsFormProps) {
   const form = useForm<InformationsFormData>({
     resolver: zodResolver(informationsSchema),
     defaultValues: {
@@ -145,7 +150,7 @@ export function InformationsForm({ formId, notice, onSubmitValid }: Informations
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {NATIONALITES.map((n) => (
+                    {nationalites.map((n) => (
                       <SelectItem key={n.value} value={n.value}>
                         {n.label}
                       </SelectItem>
