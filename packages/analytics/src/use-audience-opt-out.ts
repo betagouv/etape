@@ -38,7 +38,9 @@ function toStatus(isOptedOut: boolean): AudienceOptOutStatus {
 
 export interface UseAudienceOptOutResult {
   status: AudienceOptOutStatus;
-  /** Sans effet tant que le statut n'est ni `tracked` ni `optedOut`. */
+  /** Le choix enregistré est connu (`tracked` ou `optedOut`) : la case peut s'afficher. */
+  isReady: boolean;
+  /** Sans effet tant que `isReady` est faux. */
   setOptedOut: (isOptedOut: boolean) => void;
 }
 
@@ -71,14 +73,15 @@ export function useAudienceOptOut(isEnabled: boolean): UseAudienceOptOutResult {
     };
   }, [isEnabled]);
 
+  const isReady =
+    status === AUDIENCE_OPT_OUT_STATUS.TRACKED || status === AUDIENCE_OPT_OUT_STATUS.OPTED_OUT;
+
   function setOptedOut(isOptedOut: boolean): void {
-    const isReady =
-      status === AUDIENCE_OPT_OUT_STATUS.TRACKED || status === AUDIENCE_OPT_OUT_STATUS.OPTED_OUT;
     if (!isReady) return;
 
     enqueue([isOptedOut ? OPT_OUT_COMMAND.OPT_OUT : OPT_OUT_COMMAND.FORGET]);
     readOptOut((value) => setStatus(toStatus(value)));
   }
 
-  return { status, setOptedOut };
+  return { status, isReady, setOptedOut };
 }

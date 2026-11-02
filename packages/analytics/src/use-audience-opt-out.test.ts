@@ -38,10 +38,12 @@ describe("useAudienceOptOut", () => {
   it("attend le tracker, puis lit le choix qu'il a enregistré", () => {
     const { result } = renderHook(() => useAudienceOptOut(true));
     expect(result.current.status).toBe(AUDIENCE_OPT_OUT_STATUS.LOADING);
+    expect(result.current.isReady).toBe(false);
 
     act(() => loadFakeTracker(true));
 
     expect(result.current.status).toBe(AUDIENCE_OPT_OUT_STATUS.OPTED_OUT);
+    expect(result.current.isReady).toBe(true);
   });
 
   it("pose puis retire le refus", () => {

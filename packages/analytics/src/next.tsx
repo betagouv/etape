@@ -2,12 +2,14 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { trackAppRouter } from "@socialgouv/matomo-next";
 
 import { startClickTracking } from "./click-tracking";
 import type { MatomoConfig } from "./config";
 import type { AnalyticsApp } from "./events";
-import { disableNonExemptFeatures, toTrackedPath } from "./tracker";
+import { createPathViewTracker, loadTracker, toTrackedPath } from "./tracker";
+
+/** Au niveau du module : survit au double montage de StrictMode et aux changements de page. */
+const trackPathView = createPathViewTracker();
 
 export interface MatomoAnalyticsProps {
   /** `null` : mesure désactivée, rien n'est chargé. */
@@ -29,24 +31,19 @@ export interface MatomoAnalyticsProps {
 export function MatomoAnalytics({ config, app, basePath = "" }: MatomoAnalyticsProps) {
   const pathname = usePathname();
 
+  // Avant l'effet des pages vues : les effets s'exécutent dans l'ordre de
+  // déclaration, et la file doit exister avant la première page vue.
   useEffect(() => {
     if (!config) return;
-
-    trackAppRouter({
-      url: config.url,
-      siteId: config.siteId,
-      // Le proxy de `matomo-next` demande un serveur Next : l'export statique n'en a pas.
-      useProxy: false,
-      // Absolue : Matomo résout une URL relative sur le seul nom d'hôte, sans le port.
-      pathname: `${window.location.origin}${toTrackedPath(basePath, pathname)}`,
-      onInitialization: disableNonExemptFeatures,
-    });
-  }, [config, basePath, pathname]);
-
-  useEffect(() => {
-    if (!config) return;
+    loadTracker(config);
     return startClickTracking(app);
   }, [config, app]);
+
+  useEffect(() => {
+    if (!config) return;
+    // Absolue : Matomo résout une URL relative sur le seul nom d'hôte, sans le port.
+    trackPathView(`${window.location.origin}${toTrackedPath(basePath, pathname)}`);
+  }, [config, basePath, pathname]);
 
   return null;
 }

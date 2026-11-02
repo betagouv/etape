@@ -15,9 +15,6 @@
     "./opt-out": "./src/use-audience-opt-out.ts",
     "./router": "./src/router.ts"
   },
-  "dependencies": {
-    "@socialgouv/matomo-next": "^1.14.2"
-  },
   "peerDependencies": {
     "@tanstack/react-router": "^1.170.46",
     "next": "^16.4.3",

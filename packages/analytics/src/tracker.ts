@@ -43,8 +43,9 @@ export function disableNonExemptFeatures(): void {
 let isTrackerLoaded = false;
 
 /**
- * Charge le tracker dans une SPA. Les apps Next passent par `@socialgouv/matomo-next`,
- * réservé à Next (`./next.tsx`).
+ * Charge le tracker, une seule fois par page chargée. Pas de paquet tiers :
+ * `@socialgouv/matomo-next`, essayé d'abord, embarquait `next/router` et des
+ * modules inutilisés (proxy, A/B tests) dans chaque page, mesure désactivée comprise.
  */
 export function loadTracker({ url, siteId }: MatomoConfig): void {
   if (isTrackerLoaded) return;
@@ -87,4 +88,34 @@ export function trackEvent(app: AnalyticsApp, event: AnalyticsEvent, label?: str
 export function toTrackedPath(basePath: string, pathname: string): string {
   const path = `${basePath}${pathname}`;
   return path.endsWith("/") ? path : `${path}/`;
+}
+
+/**
+ * Compte une page vue par changement d'URL dans une app Next, URL passée absolue
+ * et sans paramètres. Une URL identique à la précédente est ignorée : le double
+ * montage de StrictMode ne compte pas deux pages.
+ *
+ * La première page vue garde l'URL réelle, paramètres compris : ceux de campagne
+ * (`mtm_*`, `utm_*`) et l'écran `?q=` d'un simulateur rechargé. Les suivantes
+ * posent l'URL donnée, avec la précédente pour référent. Tout part un tick plus
+ * tard, quand Next a posé le titre de la nouvelle page.
+ */
+export function createPathViewTracker(): (url: string) => void {
+  let previousUrl: string | undefined;
+
+  return function trackPathView(url: string): void {
+    if (url === previousUrl) return;
+
+    const referrerUrl = previousUrl;
+    previousUrl = url;
+
+    window.setTimeout(() => {
+      if (referrerUrl !== undefined) {
+        push(["setReferrerUrl", referrerUrl]);
+        push(["setCustomUrl", url]);
+      }
+      push(["setDocumentTitle", document.title]);
+      push(["trackPageView"]);
+    }, 0);
+  };
 }

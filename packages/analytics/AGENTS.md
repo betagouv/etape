@@ -18,7 +18,7 @@ Sources TypeScript sans build. Quatre points d'entrée, pour que chaque app n'im
 | Import                     | Contenu                                                               | Pour                                    |
 | -------------------------- | --------------------------------------------------------------------- | --------------------------------------- |
 | `@etape/analytics`         | config, catalogue d'events, `analyticsEventProps`, états de l'opt-out | toutes, composants serveur compris      |
-| `@etape/analytics/next`    | `MatomoAnalytics`, via `@socialgouv/matomo-next`                      | `apps/site`, `apps/simulateur`          |
+| `@etape/analytics/next`    | `MatomoAnalytics`, branché sur `usePathname()`                        | `apps/site`, `apps/simulateur`          |
 | `@etape/analytics/router`  | `startRouterTracking`, pour TanStack Router                           | `apps/front-office`, `apps/back-office` |
 | `@etape/analytics/opt-out` | `useAudienceOptOut`                                                   | un composant client                     |
 
@@ -32,7 +32,7 @@ pnpm --filter @etape/analytics run test
 
 - `src/events.ts` — `ANALYTICS_EVENT`, le catalogue : chaque event y est listé avec la question à laquelle il répond. Un nouvel event s'ajoute ici, puis se marque dans l'app avec `analyticsEventProps`.
 - `src/click-tracking.ts` — un écouteur de clic délégué au document mesure tout élément marqué `data-analytics-event`. Marche dans un composant serveur, garde la vue pure.
-- `src/tracker.ts` — la file `_paq` : `trackEvent`, `trackPageView`, `loadTracker` (SPA), `disableNonExemptFeatures`.
+- `src/tracker.ts` — la file `_paq` : `loadTracker`, `trackEvent`, `trackPageView`, `createPathViewTracker` (pages vues des apps Next), `disableNonExemptFeatures`.
 - `src/next.tsx` — `MatomoAnalytics` : une page vue par changement de chemin, `basePath` compris.
 - `src/router.ts` — `startRouterTracking` : une page vue par changement de chemin, sur le **motif** de la route.
 - `src/use-audience-opt-out.ts` — lit et bascule le refus (`optUserOut` / `forgetUserOptOut`).
@@ -45,6 +45,7 @@ pnpm --filter @etape/analytics run test
 
 - **Aucune donnée personnelle** dans une URL, un titre, un event ou son libellé : c'est une condition de l'exemption. D'où le motif de route dans les SPA (`/dossiers/$dossierId`), jamais l'URL réelle.
 - **Sans site ID, rien n'est chargé** : `push` ignore une commande quand la file `_paq` n'existe pas. Ne pas créer la file ailleurs que dans `enqueue`.
-- **`@socialgouv/matomo-next` importe `next/router`** : il ne doit jamais atteindre `src/index.ts`, `src/router.ts` ni un bundle Vite.
+- **Pas de paquet d'intégration Matomo** : le tracker se charge à la main (`loadTracker`), pour les apps Next comme pour les SPA. `@socialgouv/matomo-next`, essayé d'abord, est publié en CommonJS et embarquait `next/router`, son proxy serveur et ses A/B tests dans chaque page du site et du simulateur (+27 Ko gzip, mesure désactivée comprise), pour une trentaine de lignes de logique utile.
+- **`./next` importe `next/navigation`** : il ne doit jamais atteindre `src/index.ts`, `src/router.ts` ni un bundle Vite.
 - **Le point d'entrée racine ne contient aucun hook** : il est importé par des composants serveur (`layout.tsx`, contenus du site), où Next refuse `useState`.
 - **Les paramètres d'URL ne font pas de page vue** dans les apps Next : les étapes du simulateur se mesurent dans `useScreenViewTracking`.
