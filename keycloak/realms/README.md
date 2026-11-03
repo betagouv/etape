@@ -60,6 +60,9 @@ minutes à se demander pourquoi un réglage ne prend pas.
 Les flows ALTCHA font exception : `deploy/keycloak-altcha.sh`, lancé par
 `keycloak-init`, les crée aussi sur un realm existant, et
 `deploy/keycloak-reset-credentials.sh` y branche ensuite l'envoi du lien ETAPE.
+`deploy/keycloak-registration.sh` déclare l'adresse dans le profil du realm
+`etape` et y exige les conditions générales : le profil n'est décrit que dans ce
+script, pas dans `etape-realm.json`.
 
 Pour repartir du fichier, il faut détruire le volume :
 
