@@ -47,7 +47,8 @@ RUN node scripts/assemble-static.mjs /srv/static
 
 # `pnpm deploy` sort l'API du monorepo : son `package.json` et ses seules
 # dépendances de production, d'après le verrou, dans un dossier autonome.
-FROM deps AS api-deps
+# Depuis `build` : il y copie le `dist/` compilé de `packages/api-contract`.
+FROM build AS api-deps
 WORKDIR /app
 RUN pnpm --filter @etape/api deploy --prod /srv/api
 

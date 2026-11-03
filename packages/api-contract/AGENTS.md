@@ -13,9 +13,10 @@ La seule chose que le front et l'API partagent : le **contrat de chaque route** 
 
 ## Lancer et vérifier
 
-Sources TypeScript sans build, **ne dépend que de zod** : ni NestJS, ni React, ni axios.
+**Ne dépend que de zod** : ni NestJS, ni React, ni axios. Compilé par `tsc` dans `dist/`, que Node lit (condition d'export `node` : l'API, les tests) ; TypeScript et Vite lisent `src/`. Turbo le construit avant `dev` et `test`.
 
 ```bash
+pnpm --filter @etape/api-contract run build
 pnpm --filter @etape/api-contract run lint
 pnpm --filter @etape/api-contract run typecheck
 ```

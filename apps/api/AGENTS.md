@@ -47,5 +47,5 @@ Aucun module métier n'existe encore : le découpage cible est dans `architectur
 ## État et pièges
 
 - Pas encore en place : filtre d'exceptions global, journaux pino et `correlationId`, Sentry, pipe de validation (choix resté ouvert). Ne pas supposer que l'en-tête `x-request-id` ou le corps `ApiErrorBody` attendus par `packages/api-client` sont déjà produits.
-- `packages/api-contract` n'est encore importé nulle part : la première route métier l'amorce.
+- `packages/api-contract` est lu compilé (`dist/`) : sans `pnpm --filter @etape/api-contract run build`, l'API ne démarre pas hors de turbo.
 - `typecheck` et `test` lancent `prisma generate` : un `src/generated/` absent n'est pas une erreur.

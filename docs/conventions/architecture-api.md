@@ -421,7 +421,7 @@ on conflict (keycloak_sub) do update set
 
 **Décidé** : un paquet partagé, `packages/api-contract`, qui ne dépend que de zod. Se tranche avec la décision 5 de [`stack-front.md`](./stack-front.md), validée en même temps.
 
-**Amorcé le 28 septembre 2026** (voir décision 12 de [`stack-front.md`](./stack-front.md)) : la structure (`RouteDefinition`, `buildRoutePath`) existe. **Première route le 5 octobre 2026** : `getSession` (`GET /auth/session`), fonctionnelle, sans écran. L'API n'en importe que des types — le paquet est publié en TypeScript source, que Node n'exécute pas depuis `node_modules` — ; valider une entrée avec un schéma du contrat demandera de le compiler. **Reste à attribuer** : le porteur.
+**Amorcé le 28 septembre 2026** (voir décision 12 de [`stack-front.md`](./stack-front.md)) : la structure (`RouteDefinition`, `buildRoutePath`) existe. **Première route le 5 octobre 2026** : `getSession` (`GET /auth/session`), fonctionnelle, sans écran. **Compilé depuis le 3 novembre 2026** : Node refuse le TypeScript situé dans `node_modules`, où `pnpm deploy` copie le contrat. Le paquet est donc compilé (`dist/`) : Node le lit par la condition d'export `node`, TypeScript et Vite lisent les sources. **Reste à attribuer** : le porteur.
 
 ### Les principes
 

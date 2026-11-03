@@ -29,6 +29,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@etape/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@nestjs/common':
         specifier: ^12.1.2
         version: 12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
@@ -72,9 +75,6 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
     devDependencies:
-      '@etape/api-contract':
-        specifier: workspace:*
-        version: link:../../packages/api-contract
       '@etape/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
