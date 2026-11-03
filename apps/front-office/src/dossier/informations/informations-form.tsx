@@ -138,14 +138,14 @@ export function InformationsForm({
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Field data-disabled>
-              <FieldLabel>Nom</FieldLabel>
-              <Input value={preRemplies.nom} disabled />
+              <FieldLabel htmlFor="nom">Nom</FieldLabel>
+              <Input id="nom" value={preRemplies.nom} disabled />
               <DescriptionSupport email={supportEmail} />
             </Field>
 
             <Field data-disabled>
-              <FieldLabel>Prénom</FieldLabel>
-              <Input value={preRemplies.prenom} disabled />
+              <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
+              <Input id="prenom" value={preRemplies.prenom} disabled />
               <DescriptionSupport email={supportEmail} />
             </Field>
 
@@ -216,12 +216,12 @@ export function InformationsForm({
           </FormSectionHeader>
 
           <Field data-disabled>
-            <FieldLabel>Adresse</FieldLabel>
+            <FieldLabel htmlFor="adresse">Adresse</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
                 <SearchIcon aria-hidden="true" />
               </InputGroupAddon>
-              <InputGroupInput value={preRemplies.adresse} disabled />
+              <InputGroupInput id="adresse" value={preRemplies.adresse} disabled />
             </InputGroup>
             <FieldDescription>
               Cette adresse provient de votre profil.{" "}
@@ -240,12 +240,12 @@ export function InformationsForm({
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Field data-disabled>
-              <FieldLabel>Adresse email</FieldLabel>
+              <FieldLabel htmlFor="email">Adresse email</FieldLabel>
               <InputGroup>
                 <InputGroupAddon>
                   <MailIcon aria-hidden="true" />
                 </InputGroupAddon>
-                <InputGroupInput value={preRemplies.email} disabled />
+                <InputGroupInput id="email" value={preRemplies.email} disabled />
               </InputGroup>
               <DescriptionSupport email={supportEmail} />
             </Field>

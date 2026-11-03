@@ -60,7 +60,6 @@ function ComboboxInput({ className, ...props }: React.ComponentProps<"input">) {
           <SearchIcon />
         </InputGroupAddon>
         <InputGroupInput
-          data-slot="combobox-input"
           role="combobox"
           aria-autocomplete="list"
           autoComplete="off"
