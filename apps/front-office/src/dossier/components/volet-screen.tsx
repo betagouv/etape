@@ -8,6 +8,7 @@ import { SUPPORT_EMAIL, VOLETS_DOSSIER } from "../domain/volets-dossier";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useVoletHeadingFocus } from "../hooks/use-volet-heading-focus";
 import { InformationsForm } from "../informations/informations-form";
+import { SituationProfessionnelleForm } from "../situation-professionnelle/situation-professionnelle-form";
 import { FormLayout } from "./form-layout";
 import { VoletNotice } from "./volet-notice";
 
@@ -17,11 +18,23 @@ export function VoletScreen() {
   const navigate = useNavigate();
   const headingRef = useVoletHeadingFocus(voletId);
   const position = findVoletPosition(VOLETS_DOSSIER, voletId);
-  const { informations, voletProgress } = useDossierVolets();
+  const { informations, situationProfessionnelle, voletProgress } = useDossierVolets();
 
   if (!position) return <NotFoundScreen />;
 
   const isInformations = voletId === VOLET_ID.INFORMATIONS;
+  const isSituationProfessionnelle = voletId === VOLET_ID.SITUATION_PROFESSIONNELLE;
+  const hasForm = isInformations || isSituationProfessionnelle;
+
+  function goToNextVolet(): void {
+    if (position?.next) {
+      navigate({
+        from: VOLET_PATH,
+        to: VOLET_PATH,
+        params: { dossierId, voletId: position.next.id },
+      });
+    }
+  }
 
   return (
     <FormLayout
@@ -29,7 +42,7 @@ export function VoletScreen() {
       voletProgress={voletProgress}
       position={position}
       headingRef={headingRef}
-      formId={isInformations ? VOLET_ID.INFORMATIONS : undefined}
+      formId={hasForm ? voletId : undefined}
     >
       {isInformations ? (
         <InformationsForm
@@ -38,15 +51,13 @@ export function VoletScreen() {
           preRemplies={{ nom: "", prenom: "", email: "", adresse: "" }}
           supportEmail={SUPPORT_EMAIL}
           notice={position.current.notice}
-          onSubmitValid={() => {
-            if (position.next) {
-              navigate({
-                from: VOLET_PATH,
-                to: VOLET_PATH,
-                params: { dossierId, voletId: position.next.id },
-              });
-            }
-          }}
+          onSubmitValid={goToNextVolet}
+        />
+      ) : isSituationProfessionnelle ? (
+        <SituationProfessionnelleForm
+          formId={VOLET_ID.SITUATION_PROFESSIONNELLE}
+          situationProfessionnelle={situationProfessionnelle}
+          onSubmitValid={goToNextVolet}
         />
       ) : (
         <VoletNotice notice={position.current.notice} />

@@ -3,9 +3,11 @@ import { createContext } from "react";
 import type { VoletProgress } from "./domain/statut-volet";
 import type { VoletId } from "./domain/volet-id";
 import type { UseInformationsFormResult } from "./informations/hooks/use-informations-form";
+import type { UseSituationProfessionnelleFormResult } from "./situation-professionnelle/hooks/use-situation-professionnelle-form";
 
 export interface DossierVolets {
   informations: UseInformationsFormResult;
+  situationProfessionnelle: UseSituationProfessionnelleFormResult;
   voletProgress: Partial<Record<VoletId, VoletProgress>>;
 }
 

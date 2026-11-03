@@ -178,6 +178,9 @@ importers:
       '@etape/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@etape/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@etape/session':
         specifier: workspace:*
         version: link:../../packages/session
