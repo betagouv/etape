@@ -18,13 +18,11 @@ const { useI18n, ofTypeI18n } = i18nBuilder
   .withCustomTranslations({
     fr: {
       /*
-       * Trois libellés de Keycloak repris pour coller aux maquettes : « Courriel »
-       * → « Adresse e-mail », « Se souvenir de moi » → « Rester connecté », et
-       * « Connexion » → « Se connecter » pour que le bouton porte un verbe là où
-       * l'onglet porte un nom.
+       * Deux libellés de Keycloak repris pour coller aux maquettes : « Courriel »
+       * → « Adresse e-mail », et « Connexion » → « Se connecter » pour que le
+       * bouton porte un verbe là où l'onglet porte un nom.
        */
       email: "Adresse e-mail",
-      rememberMe: "Rester connecté",
       doLogIn: "Se connecter",
       doForgotPassword: "Mot de passe oublié",
       showPassword: "Afficher le mot de passe",
@@ -108,6 +106,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeUpdatePasswordTitle: "Choisir un nouveau mot de passe",
       etapeUpdatePasswordAccount: "Adresse concernée :",
       etapeUpdatePasswordCta: "Enregistrer le mot de passe",
+      etapeVerifyEmailSubtitle: "Plus qu'une étape avant d'accéder à votre espace.",
       etapeAccountNotActivated: "Votre espace n'est pas encore activé.",
       etapeAccountNotActivatedHint: "Consultez l'e-mail envoyé à {0}.",
       etapeResendActivationEmail: "Renvoyer l'e-mail d'activation",
@@ -131,7 +130,6 @@ const { useI18n, ofTypeI18n } = i18nBuilder
     },
     en: {
       email: "Email address",
-      rememberMe: "Stay signed in",
       doLogIn: "Sign in",
       doForgotPassword: "Forgot password",
       showPassword: "Show password",
@@ -207,6 +205,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeUpdatePasswordTitle: "Choose a new password",
       etapeUpdatePasswordAccount: "Account:",
       etapeUpdatePasswordCta: "Save the password",
+      etapeVerifyEmailSubtitle: "One last step before accessing your account.",
       etapeAccountNotActivated: "Your space is not activated yet.",
       etapeAccountNotActivatedHint: "Check the email sent to {0}.",
       etapeResendActivationEmail: "Resend the activation email",

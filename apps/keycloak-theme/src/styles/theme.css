@@ -188,3 +188,17 @@ altcha-widget {
   font-family: var(--font-sans);
   font-size: var(--text-body-sm);
 }
+
+/* ------------------------------------------------------------------ */
+/* Préremplissage                                                      */
+/* ------------------------------------------------------------------ */
+
+@keyframes etape-autofill {
+  from {
+    opacity: 1;
+  }
+}
+
+input:-webkit-autofill {
+  animation-name: etape-autofill;
+}
