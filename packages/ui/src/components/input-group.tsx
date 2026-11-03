@@ -113,13 +113,15 @@ function InputGroupTrigger({ className, ...props }: React.ComponentProps<"button
   return (
     <button
       type="button"
-      data-slot="input-group-control"
       className={cn(
         "data-[placeholder]:text-muted-foreground flex h-full min-w-0 flex-1 items-center gap-2 bg-transparent px-2.5 text-left text-sm outline-none group-data-[size=lg]/input-group:px-4 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
         "[&>span]:truncate",
         className,
       )}
       {...props}
+      // Après les props : un `PopoverTrigger asChild` pose son propre `data-slot`, et le cadre
+      // (anneau de focus, clic sur le complément) ne reconnaît le contrôle que par celui-ci.
+      data-slot="input-group-control"
     />
   );
 }
