@@ -1,7 +1,7 @@
 import { cn } from "@etape/ui/lib/utils";
 import type { FormAction, FormFieldState } from "keycloakify/login/lib/useUserProfileForm";
-import { Check, Mail, User, X } from "lucide-react";
-import type { ChangeEvent, ComponentType, ReactNode } from "react";
+import { Check, X } from "lucide-react";
+import type { ChangeEvent, ReactNode } from "react";
 
 import type { I18n } from "../i18n";
 import { Field, FieldError, PasswordInput, TextInput } from "./form";
@@ -23,11 +23,8 @@ const RULE_WIDTH: Record<PasswordRuleMessageKey, string> = {
   [PASSWORD_RULE_MESSAGE_KEY.SPECIAL]: "",
 };
 
-type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-
-const USER_PROFILE_ATTRIBUTE = {
+export const USER_PROFILE_ATTRIBUTE = {
   EMAIL: "email",
-  USERNAME: "username",
   FIRST_NAME: "firstName",
   LAST_NAME: "lastName",
   LOCALE: "locale",
@@ -35,142 +32,16 @@ const USER_PROFILE_ATTRIBUTE = {
   PASSWORD_CONFIRM: "password-confirm",
 } as const;
 
-const ICON_BY_ATTRIBUTE_NAME: Record<string, IconComponent> = {
-  [USER_PROFILE_ATTRIBUTE.EMAIL]: Mail,
-  [USER_PROFILE_ATTRIBUTE.USERNAME]: User,
-  [USER_PROFILE_ATTRIBUTE.FIRST_NAME]: User,
-  [USER_PROFILE_ATTRIBUTE.LAST_NAME]: User,
-};
-
-/** Les deux champs que les maquettes placent côte à côte, et en premier. */
-const SIDE_BY_SIDE: readonly string[] = [
-  USER_PROFILE_ATTRIBUTE.FIRST_NAME,
-  USER_PROFILE_ATTRIBUTE.LAST_NAME,
-];
-
-/**
- * Attributs techniques, soumis mais jamais montrés.
- *
- * `locale` apparaît dans le profil dès que l'internationalisation est activée.
- * Le proposer en champ de formulaire n'a pas de sens : la langue se choisit dans
- * l'en-tête, et avec une seule langue supportée le champ n'offre aucun choix.
- */
-const HIDDEN: readonly string[] = [USER_PROFILE_ATTRIBUTE.LOCALE];
-
-/**
- * Rend le formulaire décrit par le *user profile* de Keycloak.
- *
- * Les champs d'inscription ne sont pas écrits en dur : Keycloak les déclare
- * (nom, ordre, obligation, validateurs), et l'écran s'y conforme. Ajouter un
- * attribut dans la console le fait apparaître ici sans toucher au thème.
- *
- * Limite assumée : les attributs *multivalués* ne sont pas gérés — le profil du
- * realm n'en contient aucun. En ajouter un demanderait d'étendre ce composant,
- * sans quoi seule la première valeur serait éditable.
- */
-export function UserProfileFields(props: {
-  formFieldStates: FormFieldState[];
-  dispatchFormAction: (action: FormAction) => void;
-  i18n: I18n;
-  passwordAddon?: (value: string) => ReactNode;
-  shouldConfirmPassword?: boolean;
-}) {
-  const {
-    formFieldStates,
-    dispatchFormAction,
-    i18n,
-    passwordAddon,
-    shouldConfirmPassword = true,
-  } = props;
-
-  const isHiddenField = (name: string) =>
-    HIDDEN.includes(name) ||
-    (name === USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM && !shouldConfirmPassword);
-
-  const hidden = formFieldStates.filter((field) => isHiddenField(field.attribute.name));
-
-  /*
-   * Keycloak ordonne le profil avec l'identifiant en premier — ici l'email —
-   * puis le reste. Les maquettes commencent par l'identité. On remonte donc
-   * prénom et nom, sans toucher à l'ordre relatif des autres champs, pour qu'un
-   * attribut ajouté plus tard dans la console apparaisse à sa place.
-   */
-  const visible = [
-    ...formFieldStates.filter((field) => SIDE_BY_SIDE.includes(field.attribute.name)),
-    ...formFieldStates.filter(
-      (field) =>
-        !SIDE_BY_SIDE.includes(field.attribute.name) && !isHiddenField(field.attribute.name),
-    ),
-  ];
-
-  const rendered: ReactNode[] = [];
-
-  for (let index = 0; index < visible.length; index++) {
-    const fieldState = visible[index]!;
-    const next = visible[index + 1];
-
-    const isPair =
-      SIDE_BY_SIDE.includes(fieldState.attribute.name) &&
-      next !== undefined &&
-      SIDE_BY_SIDE.includes(next.attribute.name);
-
-    if (isPair) {
-      rendered.push(
-        <div key={fieldState.attribute.name} className="grid gap-4 sm:grid-cols-2">
-          <UserProfileField
-            fieldState={fieldState}
-            dispatchFormAction={dispatchFormAction}
-            i18n={i18n}
-          />
-          <UserProfileField fieldState={next} dispatchFormAction={dispatchFormAction} i18n={i18n} />
-        </div>,
-      );
-      index++;
-      continue;
-    }
-
-    rendered.push(
-      <UserProfileField
-        key={fieldState.attribute.name}
-        fieldState={fieldState}
-        dispatchFormAction={dispatchFormAction}
-        i18n={i18n}
-        addon={
-          fieldState.attribute.name === USER_PROFILE_ATTRIBUTE.PASSWORD &&
-          passwordAddon !== undefined
-            ? passwordAddon(
-                typeof fieldState.valueOrValues === "string" ? fieldState.valueOrValues : "",
-              )
-            : undefined
-        }
-      />,
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      {rendered}
-      {hidden.map((field) => (
-        <input
-          key={field.attribute.name}
-          type="hidden"
-          name={field.attribute.name}
-          value={typeof field.valueOrValues === "string" ? field.valueOrValues : ""}
-          readOnly
-        />
-      ))}
-    </div>
-  );
-}
-
-function UserProfileField(props: {
+export function UserProfileField(props: {
   fieldState: FormFieldState;
   dispatchFormAction: (action: FormAction) => void;
   i18n: I18n;
+  hint?: ReactNode;
   addon?: ReactNode;
-  className?: string;
+  autoFocus?: boolean;
+  onFocus?: () => void;
 }) {
-  const { fieldState, dispatchFormAction, i18n, addon, className } = props;
+  const { fieldState, dispatchFormAction, i18n, hint, addon, autoFocus, onFocus } = props;
   const { attribute, displayableErrors, valueOrValues } = fieldState;
   const { advancedMsg, advancedMsgStr } = i18n;
 
@@ -198,12 +69,13 @@ function UserProfileField(props: {
         : advancedMsgStr(attribute.annotations.inputTypePlaceholder),
     onChange: (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value),
     onBlur,
+    onFocus,
+    autoFocus,
     invalid: isInvalid,
     "aria-required": attribute.required,
-    // Rattache le message d'erreur au champ : `aria-invalid` signale qu'il y a
-    // une erreur, `aria-describedby` est ce qui en fait lire l'énoncé.
     "aria-describedby": joinIds(
       isInvalid ? `input-error-${attribute.name}` : undefined,
+      hint !== undefined ? `${attribute.name}-hint` : undefined,
       addon !== undefined ? PASSWORD_RULES_ID : undefined,
     ),
   };
@@ -211,14 +83,9 @@ function UserProfileField(props: {
   return (
     <Field
       id={attribute.name}
-      className={className}
       label={advancedMsg(attribute.displayName ?? attribute.name)}
       required={attribute.required}
-      hint={
-        attribute.annotations.inputHelperTextAfter === undefined
-          ? undefined
-          : advancedMsg(attribute.annotations.inputHelperTextAfter)
-      }
+      hint={hint}
       error={
         isInvalid ? (
           <FieldError
@@ -233,8 +100,8 @@ function UserProfileField(props: {
       ) : (
         <TextInput
           {...commonProps}
-          type={attribute.name === USER_PROFILE_ATTRIBUTE.EMAIL ? "email" : "text"}
-          icon={ICON_BY_ATTRIBUTE_NAME[attribute.name]}
+          type="text"
+          inputMode={attribute.name === USER_PROFILE_ATTRIBUTE.EMAIL ? "email" : undefined}
         />
       )}
       {addon}
@@ -262,13 +129,13 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
               className={cn(
                 "flex shrink-0 rounded-full p-1",
                 isSatisfied
-                  ? "bg-success-border text-success"
+                  ? "bg-success text-success-foreground"
                   : "bg-secondary-selected text-muted-foreground",
               )}
             >
               {isSatisfied ? <Check className="size-2.5" /> : <X className="size-2.5" />}
             </span>
-            <span className={isSatisfied ? "text-success" : "text-muted-foreground"}>
+            <span className={isSatisfied ? "text-foreground" : "text-muted-foreground"}>
               {msgStr(messageKey)}
             </span>
             <span className="sr-only">

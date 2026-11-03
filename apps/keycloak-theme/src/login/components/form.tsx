@@ -41,7 +41,11 @@ export function Field(props: {
           {labelAction}
         </div>
         {children}
-        {hint !== undefined && <p className="text-body-sm text-muted-foreground">{hint}</p>}
+        {hint !== undefined && (
+          <p id={`${id}-hint`} className="text-body-sm text-muted-foreground">
+            {hint}
+          </p>
+        )}
       </div>
       <div role="status" className="[&:not(:empty)]:mt-2">
         {error}
@@ -86,11 +90,12 @@ const inputClassName =
 export function TextInput({
   icon,
   invalid,
+  trailing,
   className,
   ...props
-}: ComponentProps<"input"> & { icon?: IconComponent; invalid?: boolean }) {
+}: ComponentProps<"input"> & { icon?: IconComponent; invalid?: boolean; trailing?: ReactNode }) {
   return (
-    <InputShell icon={icon} invalid={invalid}>
+    <InputShell icon={icon} invalid={invalid} trailing={trailing}>
       <input {...props} aria-invalid={invalid} className={cn(inputClassName, className)} />
     </InputShell>
   );
@@ -165,7 +170,7 @@ export function CheckboxField(props: ComponentProps<"input"> & { id: string; lab
   const { id, label, className, ...inputProps } = props;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-start gap-2">
       <input
         {...inputProps}
         id={id}
@@ -175,7 +180,7 @@ export function CheckboxField(props: ComponentProps<"input"> & { id: string; lab
           className,
         )}
       />
-      <label htmlFor={id} className="text-body-sm text-foreground cursor-pointer font-semibold">
+      <label htmlFor={id} className="text-body-sm text-foreground cursor-pointer">
         {label}
       </label>
     </div>
