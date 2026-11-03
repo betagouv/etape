@@ -10,6 +10,16 @@ export {
   type SessionResponse,
 } from "./auth/auth.schemas.js";
 export { buildRoutePath } from "./build-route-path.js";
+export { searchEtablissements } from "./etablissement/etablissement.routes.js";
+export {
+  ETABLISSEMENT_SEARCH_MIN_LENGTH,
+  EtablissementSchema,
+  SearchEtablissementsQuerySchema,
+  SearchEtablissementsResponseSchema,
+  type Etablissement,
+  type SearchEtablissementsQuery,
+  type SearchEtablissementsResponse,
+} from "./etablissement/etablissement.schemas.js";
 export {
   HTTP_METHODS,
   type HttpMethod,

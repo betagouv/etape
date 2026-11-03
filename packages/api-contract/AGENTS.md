@@ -32,4 +32,4 @@ pnpm --filter @etape/api-contract run typecheck
 
 ## État
 
-**Squelette vide volontaire** : aucune route, aucun consommateur. La première route s'écrit avec le premier vrai écran qui appelle l'API, pas avant. Ne pas ajouter de contrat « pour préparer ».
+Routes : `auth/` (session) et `etablissement/` (recherche Sirene du volet « Ma situation professionnelle »). Un contrat s'écrit avec l'écran qui appelle la route, pas avant : ne pas en ajouter « pour préparer ».

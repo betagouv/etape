@@ -14,7 +14,7 @@ Monorepo Turborepo. **Quel workspace sert à quoi, pour qui, et où faire quoi :
 | `apps/keycloak-theme`                                | Écrans de connexion et e-mails, JAR chargé par Keycloak (pas un serveur)    |
 | `packages/ui`                                        | Design system unique (shadcn/ui + tokens)                                   |
 | `packages/api-client`                                | Couche HTTP des SPA (axios, `ApiError`, `QueryClient`)                      |
-| `packages/api-contract`                              | Contrats de route zod partagés front/API — vide jusqu'au premier écran      |
+| `packages/api-contract`                              | Contrats de route zod partagés front/API                                    |
 | `packages/eslint-config`, `packages/prettier-config` | Configuration partagée                                                      |
 
 L'authentification passe par **Keycloak, lancé par Docker avec sa propre base** (`docker compose up -d`), distincte de la base applicative de `apps/api` : voir `docs/cartographie.md`, section 5.
