@@ -35,7 +35,10 @@ pnpm --filter @etape/api run typecheck
 - `src/account/` — `AccountService`.
 - `prisma/schema.prisma` — modèles `Account` et `Session` ; `prisma/migrations/`. Le client est généré dans `src/generated/prisma` (ignoré par le lint).
 
-Aucun module métier n'existe encore : le découpage cible est dans `architecture-api.md`, « Découpage des dossiers ».
+- `src/etablissement/` — `GET /api/etablissement`, recherche dans le répertoire Sirene de l'Insee (clé `INSEE_API_KEY`), libellés NAF rév. 2 dans `libelles-naf.ts`.
+- `src/common/validation.pipe.ts` — pipe global : une entrée déclarée par `{ schema }` est validée par le schéma du contrat.
+
+Le découpage cible des modules métier est dans `architecture-api.md`, « Découpage des dossiers ».
 
 ## Conventions
 
@@ -46,6 +49,6 @@ Aucun module métier n'existe encore : le découpage cible est dans `architectur
 
 ## État et pièges
 
-- Pas encore en place : filtre d'exceptions global, journaux pino et `correlationId`, Sentry, pipe de validation (choix resté ouvert). Ne pas supposer que l'en-tête `x-request-id` ou le corps `ApiErrorBody` attendus par `packages/api-client` sont déjà produits.
+- Pas encore en place : filtre d'exceptions global, journaux pino et `correlationId`, Sentry. Ne pas supposer que l'en-tête `x-request-id` ou le corps `ApiErrorBody` attendus par `packages/api-client` sont déjà produits.
 - `packages/api-contract` est lu compilé (`dist/`) : sans `pnpm --filter @etape/api-contract run build`, l'API ne démarre pas hors de turbo.
 - `typecheck` et `test` lancent `prisma generate` : un `src/generated/` absent n'est pas une erreur.

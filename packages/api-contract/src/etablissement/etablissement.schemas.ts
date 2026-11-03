@@ -15,7 +15,8 @@ export const EtablissementSchema = z.object({
   denomination: z.string(),
   enseigne: z.string().nullable(),
   adresse: z.string(),
-  secteurActivite: z.string(),
+  /** `null` sans code d'activité ou hors NAF rév. 2 (ancienne nomenclature). */
+  secteurActivite: z.string().nullable(),
 });
 
 export type Etablissement = z.infer<typeof EtablissementSchema>;
