@@ -25,7 +25,7 @@ export const CIVILITE_LABEL: Record<Civilite, string> = {
   [CIVILITE.MONSIEUR]: "Monsieur",
 };
 
-const CLE_PATTERN = /^\d{2}$/;
+const CLE_NIR_PATTERN = /^\d{2}$/;
 
 const baseInformationsSchema = z.object({
   civilite: z.enum(CIVILITE, "Veuillez indiquer votre civilité."),
@@ -35,11 +35,11 @@ const baseInformationsSchema = z.object({
     .refine(isAgeSuffisant, "Vous devez avoir au moins 18 ans.")
     .refine(isAgeMaximumRespected, "Vous devez avoir moins de 70 ans."),
   nationalite: z.string().min(1, "Veuillez choisir une nationalité."),
-  numeroSecuriteSociale: z
+  nir: z
     .string()
     .min(1, "Veuillez saisir votre numéro de sécurité sociale.")
     .regex(NIR_PATTERN, "Le numéro de sécurité sociale n'est pas valide."),
-  cle: z.string().regex(CLE_PATTERN, "La clé doit comporter 2 chiffres."),
+  cleNir: z.string().regex(CLE_NIR_PATTERN, "La clé doit comporter 2 chiffres."),
   telephone: z
     .string()
     .min(1, "Veuillez saisir un numéro de téléphone.")
@@ -48,12 +48,12 @@ const baseInformationsSchema = z.object({
 });
 
 export const informationsSchema = baseInformationsSchema.superRefine((data, ctx) => {
-  if (NIR_PATTERN.test(data.numeroSecuriteSociale) && CLE_PATTERN.test(data.cle)) {
-    if (!isCleNirValid(data.numeroSecuriteSociale, data.cle)) {
+  if (NIR_PATTERN.test(data.nir) && CLE_NIR_PATTERN.test(data.cleNir)) {
+    if (!isCleNirValid(data.nir, data.cleNir)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "La clé ne correspond pas au numéro de sécurité sociale.",
-        path: ["cle"],
+        path: ["cleNir"],
       });
     }
   }
@@ -75,12 +75,6 @@ export const INFORMATIONS_SECTION_FIELDS: Record<
   InformationsSection,
   readonly InformationsFieldName[]
 > = {
-  [INFORMATIONS_SECTION.IDENTITE]: [
-    "civilite",
-    "dateNaissance",
-    "nationalite",
-    "numeroSecuriteSociale",
-    "cle",
-  ],
+  [INFORMATIONS_SECTION.IDENTITE]: ["civilite", "dateNaissance", "nationalite", "nir", "cleNir"],
   [INFORMATIONS_SECTION.CONTACT]: ["telephone"],
 };

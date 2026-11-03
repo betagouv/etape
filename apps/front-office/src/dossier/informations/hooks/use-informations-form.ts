@@ -38,8 +38,8 @@ export function useInformationsForm(): UseInformationsFormResult {
       civilite: "" as Civilite,
       dateNaissance: "",
       nationalite: "",
-      numeroSecuriteSociale: "",
-      cle: "",
+      nir: "",
+      cleNir: "",
       telephone: "",
     },
     // Le focus revient au résumé d'erreurs de l'écran, pas au premier champ fautif.

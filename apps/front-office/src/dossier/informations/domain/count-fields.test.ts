@@ -17,7 +17,10 @@ describe("countFilled", () => {
 describe("countInvalid", () => {
   it("compte les erreurs des champs demandés", () => {
     expect(
-      countInvalid({ cle: { message: "x" }, telephone: { message: "y" } }, ["cle", "civilite"]),
+      countInvalid({ cleNir: { message: "x" }, telephone: { message: "y" } }, [
+        "cleNir",
+        "civilite",
+      ]),
     ).toBe(1);
   });
 });

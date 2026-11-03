@@ -28,7 +28,7 @@ import { DateNaissanceInput } from "./components/date-naissance-input";
 import { DescriptionSupport } from "./components/description-support";
 import { NationaliteInput } from "./components/nationalite-input";
 import { SectionCounter } from "./components/section-counter";
-import { formatCle } from "./domain/format-cle";
+import { formatCleNir } from "./domain/format-cle-nir";
 import { formatNir } from "./domain/format-nir";
 import { formatTelephone } from "./domain/format-telephone";
 import type { UseInformationsFormResult } from "./hooks/use-informations-form";
@@ -178,7 +178,7 @@ export function InformationsForm({
             />
 
             <FormField
-              name="numeroSecuriteSociale"
+              name="nir"
               control={form.control}
               label="Numéro de sécurité sociale"
               required
@@ -193,7 +193,7 @@ export function InformationsForm({
             />
 
             <FormField
-              name="cle"
+              name="cleNir"
               control={form.control}
               label="Clé"
               required
@@ -203,7 +203,7 @@ export function InformationsForm({
                   {...field}
                   {...attributes}
                   inputMode="numeric"
-                  onChange={(e) => field.onChange(formatCle(e.target.value))}
+                  onChange={(e) => field.onChange(formatCleNir(e.target.value))}
                 />
               )}
             />
