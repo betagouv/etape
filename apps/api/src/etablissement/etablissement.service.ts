@@ -9,6 +9,9 @@ import {
   type SireneSearchResponse,
 } from "./sirene.js";
 
+/** Au-delà, le front affiche « ne répond pas » plutôt que de laisser la personne attendre. */
+const SIRENE_TIMEOUT_MS = 5_000;
+
 const NO_ETABLISSEMENT: SearchEtablissementsResponse = {
   etablissementCount: 0,
   etablissements: [],
@@ -25,6 +28,7 @@ export class EtablissementService {
 
     const response = await fetch(url, {
       headers: { "X-INSEE-Api-Key-Integration": this.config.get("INSEE_API_KEY", { infer: true }) },
+      signal: AbortSignal.timeout(SIRENE_TIMEOUT_MS),
     });
 
     // Sirene répond 404 à une recherche sans résultat.
