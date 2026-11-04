@@ -27,6 +27,8 @@ export const SEARCH_STATUS = {
   RESULTS: "results",
   NO_RESULT: "no-result",
   ERROR: "error",
+  /** « Relancer la recherche » : l'alerte d'erreur reste affichée pendant le nouvel appel. */
+  RETRYING: "retrying",
 } as const;
 
 export type SearchStatus = (typeof SEARCH_STATUS)[keyof typeof SEARCH_STATUS];
@@ -38,6 +40,7 @@ const ETABLISSEMENT_FOUND_LABELS: PluralForms<string> = {
 
 export const NO_RESULT_TITLE = "Aucun établissement ne correspond à cette recherche";
 export const SEARCH_ERROR_TITLE = "La recherche d’entreprises ne répond pas pour le moment";
+const RETRYING_ANNOUNCEMENT = "Nouvelle recherche en cours…";
 
 export interface EmployeurSearchInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -70,9 +73,14 @@ async function fetchEtablissements(search: string): Promise<SearchEtablissements
   return searchEtablissements.response.parse(response.data);
 }
 
-function findStatus(isSearching: boolean, isError: boolean, count?: number): SearchStatus {
+function findStatus(
+  isSearching: boolean,
+  hasFailed: boolean,
+  isFetching: boolean,
+  count?: number,
+): SearchStatus {
   if (!isSearching) return SEARCH_STATUS.IDLE;
-  if (isError) return SEARCH_STATUS.ERROR;
+  if (hasFailed) return isFetching ? SEARCH_STATUS.RETRYING : SEARCH_STATUS.ERROR;
   if (count === undefined) return SEARCH_STATUS.IDLE;
   return count === 0 ? SEARCH_STATUS.NO_RESULT : SEARCH_STATUS.RESULTS;
 }
@@ -96,10 +104,14 @@ export function useEmployeurSearch(
     enabled: isSearching,
     // La liste précédente reste affichée pendant l'appel, au lieu de se fermer puis de se rouvrir.
     placeholderData: keepPreviousData,
+    // Chaque relance automatique entame le quota de la clé Insee et retarde l'alerte : « Relancer la recherche » suffit.
+    retry: false,
   });
 
+  // Pas `isError` : une requête qui n'a jamais abouti repasse en chargement pendant la relance, et l'alerte disparaîtrait avec le focus.
+  const hasFailed = query.errorUpdatedAt > query.dataUpdatedAt;
   const count = query.data?.etablissementCount;
-  const status = findStatus(isSearching, query.isError, count);
+  const status = findStatus(isSearching, hasFailed, query.isFetching, count);
   const etablissements = (status === SEARCH_STATUS.RESULTS && query.data?.etablissements) || [];
   const resultLabel =
     count === undefined ? "" : `${count} ${selectPlural(count, ETABLISSEMENT_FOUND_LABELS)}`;
@@ -117,6 +129,7 @@ export function useEmployeurSearch(
     [SEARCH_STATUS.RESULTS]: resultLabel,
     [SEARCH_STATUS.NO_RESULT]: NO_RESULT_TITLE,
     [SEARCH_STATUS.ERROR]: SEARCH_ERROR_TITLE,
+    [SEARCH_STATUS.RETRYING]: RETRYING_ANNOUNCEMENT,
   };
 
   const isPopupOpen =
@@ -153,6 +166,13 @@ export function useEmployeurSearch(
       navigation.reset();
     },
     close: () => setOpen(false),
-    retry: () => void query.refetch(),
+    retry: () => {
+      if (status === SEARCH_STATUS.RETRYING) return;
+      // `cancelRefetch: false` : un second clic avant le rendu ne relance pas l'appel en cours.
+      void query.refetch({ cancelRefetch: false }).then(({ isSuccess }) => {
+        // L'alerte disparaît avec le bouton qui a le focus : il revient au champ, qui rouvre la liste.
+        if (isSuccess) document.getElementById(EMPLOYEUR_FIELD_ID)?.focus();
+      });
+    },
   };
 }

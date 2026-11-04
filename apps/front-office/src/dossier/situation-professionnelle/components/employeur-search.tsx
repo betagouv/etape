@@ -52,6 +52,7 @@ export function EmployeurSearch({
   isFocusRequested,
   onManualEntry,
 }: EmployeurSearchProps) {
+  const isRetrying = search.status === SEARCH_STATUS.RETRYING;
   const manualEntryButton = (
     <Button type="button" variant="outline" size="sm" onClick={onManualEntry}>
       <FilePenLineIcon aria-hidden="true" />
@@ -163,7 +164,7 @@ export function EmployeurSearch({
           suivi de la ville.
         </FieldDescription>
       )}
-      {search.status === SEARCH_STATUS.ERROR && (
+      {(search.status === SEARCH_STATUS.ERROR || search.status === SEARCH_STATUS.RETRYING) && (
         <Alert variant="warning">
           <TriangleAlertIcon aria-hidden="true" />
           <AlertTitle>{SEARCH_ERROR_TITLE}</AlertTitle>
@@ -172,7 +173,15 @@ export function EmployeurSearch({
           </AlertDescription>
           <AlertActions>
             {manualEntryButton}
-            <Button type="button" variant="link" size="inline-sm" onClick={search.retry}>
+            <Button
+              type="button"
+              variant="link"
+              size="inline-sm"
+              // Pas de `disabled` : il ferait perdre le focus pendant l'appel.
+              aria-disabled={isRetrying || undefined}
+              aria-busy={isRetrying || undefined}
+              onClick={search.retry}
+            >
               <RefreshCwIcon aria-hidden="true" />
               Relancer la recherche
             </Button>
