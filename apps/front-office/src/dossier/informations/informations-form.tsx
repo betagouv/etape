@@ -33,7 +33,7 @@ import { formatTelephone } from "./domain/format-telephone";
 import type { UseInformationsFormResult } from "./hooks/use-informations-form";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
-import { useErrorsAlertFocus } from "../hooks/use-errors-alert-focus";
+import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
 import type { VoletNoticeContent } from "../domain/volets";
 import {
@@ -82,11 +82,11 @@ export function InformationsForm({
 }: InformationsFormProps) {
   const { form, sections, voletErrors } = informations;
   const { submitCount } = form.formState;
-  const errorsAlertRef = useErrorsAlertFocus(submitCount);
+  const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
 
   return (
     <>
-      <VoletErrorsAlert ref={errorsAlertRef} errors={voletErrors} />
+      <VoletErrorsAlert ref={errorsAlertRef} errors={submittedErrors} />
       <VoletNotice notice={notice} />
 
       <form

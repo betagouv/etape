@@ -15,7 +15,7 @@ import { Separator } from "@etape/ui/components/separator";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { DateField, type DateFieldCalendar } from "../components/date-field";
-import { useErrorsAlertFocus } from "../hooks/use-errors-alert-focus";
+import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { EmployeurField } from "./components/employeur-field";
 import type { UseSituationProfessionnelleFormResult } from "./hooks/use-situation-professionnelle-form";
 import {
@@ -50,11 +50,11 @@ export function SituationProfessionnelleForm({
   };
   const { submitCount } = form.formState;
   const demission = useWatch({ control: form.control, name: "demission" });
-  const errorsAlertRef = useErrorsAlertFocus(submitCount);
+  const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
 
   return (
     <>
-      <VoletErrorsAlert ref={errorsAlertRef} errors={voletErrors} />
+      <VoletErrorsAlert ref={errorsAlertRef} errors={submittedErrors} />
 
       <form
         id={formId}
