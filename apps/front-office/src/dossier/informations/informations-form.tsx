@@ -24,8 +24,9 @@ import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { Separator } from "@etape/ui/components/separator";
 
 import { PROFIL_PATH } from "@/navigation/paths";
-import { DateNaissanceInput } from "./components/date-naissance-input";
+import { DateField, type DateFieldCalendar } from "../components/date-field";
 import { DescriptionSupport } from "./components/description-support";
+import { computeDateNaissanceBounds } from "./domain/date-naissance";
 import { NationaliteInput } from "./components/nationalite-input";
 import { formatCleNir } from "./domain/format-cle-nir";
 import { formatNir } from "./domain/format-nir";
@@ -41,6 +42,15 @@ import {
   INFORMATIONS_SECTION,
   type InformationsFormData,
 } from "./schema";
+
+const DATE_NAISSANCE_BOUNDS = computeDateNaissanceBounds(new Date());
+
+const DATE_NAISSANCE_CALENDAR: DateFieldCalendar = {
+  defaultMonth: new Date(1990, 0),
+  startMonth: DATE_NAISSANCE_BOUNDS.min,
+  endMonth: DATE_NAISSANCE_BOUNDS.max,
+  disabled: { before: DATE_NAISSANCE_BOUNDS.min, after: DATE_NAISSANCE_BOUNDS.max },
+};
 
 export interface InformationsPreRemplies {
   nom: string;
@@ -153,11 +163,12 @@ export function InformationsForm({
               name="dateNaissance"
               control={form.control}
               render={({ field, fieldState }) => (
-                <DateNaissanceInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  fieldRef={field.ref}
-                  isInvalid={fieldState.invalid}
+                <DateField
+                  id="dateNaissance"
+                  label="Date de naissance"
+                  description="Format : JJ/MM/AAAA"
+                  calendar={DATE_NAISSANCE_CALENDAR}
+                  field={field}
                   error={fieldState.error}
                 />
               )}

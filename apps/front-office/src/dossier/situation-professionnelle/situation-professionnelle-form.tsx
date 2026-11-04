@@ -15,7 +15,7 @@ import { Separator } from "@etape/ui/components/separator";
 
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
-import { DateDemissionInput } from "./components/date-demission-input";
+import { DateField, type DateFieldCalendar } from "../components/date-field";
 import { EmployeurField } from "./components/employeur-field";
 import type { UseSituationProfessionnelleFormResult } from "./hooks/use-situation-professionnelle-form";
 import {
@@ -41,6 +41,13 @@ export function SituationProfessionnelleForm({
   onSubmitValid,
 }: SituationProfessionnelleFormProps) {
   const { form, sections, voletErrors } = situationProfessionnelle;
+  const today = new Date();
+  // Les jours à venir ne se choisissent pas (maquette 11).
+  const dateDemissionCalendar: DateFieldCalendar = {
+    defaultMonth: today,
+    endMonth: today,
+    disabled: { after: today },
+  };
   const { submitCount } = form.formState;
   const demission = useWatch({ control: form.control, name: "demission" });
   const errorsAlertRef = useRef<HTMLDivElement>(null);
@@ -135,11 +142,12 @@ export function SituationProfessionnelleForm({
                 name="dateDemission"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <DateDemissionInput
-                    value={field.value}
-                    onChange={field.onChange}
-                    fieldRef={field.ref}
-                    isInvalid={fieldState.invalid}
+                  <DateField
+                    id="dateDemission"
+                    label="Date de votre démission"
+                    description="Date de l’accusé de réception ou de la remise en main propre contre décharge. Format : jj/mm/aaaa"
+                    calendar={dateDemissionCalendar}
+                    field={field}
                     error={fieldState.error}
                   />
                 )}

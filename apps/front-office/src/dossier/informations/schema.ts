@@ -1,15 +1,16 @@
 import { z } from "zod";
 
-import { computeDateNaissanceBounds, parseDateNaissance } from "./domain/date-naissance";
+import { parseFieldDate } from "../domain/field-date";
+import { computeDateNaissanceBounds } from "./domain/date-naissance";
 import { isCleNirValid, NIR_PATTERN } from "./domain/validate-nir";
 
 function isAgeSuffisant(value: string): boolean {
-  const date = parseDateNaissance(value);
+  const date = parseFieldDate(value);
   return date !== undefined && date <= computeDateNaissanceBounds(new Date()).max;
 }
 
 function isAgeMaximumRespected(value: string): boolean {
-  const date = parseDateNaissance(value);
+  const date = parseFieldDate(value);
   return date !== undefined && date >= computeDateNaissanceBounds(new Date()).min;
 }
 

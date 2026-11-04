@@ -7,52 +7,67 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/compo
 import { InputGroup, InputGroupAddon, InputGroupTrigger } from "@etape/ui/components/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 
-import { formatDateDemission, parseDateDemission } from "../domain/date-demission";
+import { formatFieldDate, parseFieldDate } from "../domain/field-date";
 
-const FIELD_ID = "dateDemission";
-const LABEL_ID = `${FIELD_ID}-label`;
-const VALUE_ID = `${FIELD_ID}-value`;
-const DESCRIPTION_ID = `${FIELD_ID}-description`;
-const ERROR_ID = `${FIELD_ID}-error`;
+/** Les bornes du calendrier, pour qu'il ne propose aucune date que le schéma refuserait. */
+export interface DateFieldCalendar {
+  defaultMonth: Date;
+  startMonth?: Date;
+  endMonth: Date;
+  disabled: React.ComponentProps<typeof Calendar>["disabled"];
+}
 
-export interface DateDemissionInputProps {
+/** Ce que fournit le `field` d'un `Controller` de react-hook-form. */
+export interface DateFieldControl {
   value: string;
   onChange: (value: string) => void;
-  fieldRef: React.Ref<HTMLButtonElement>;
-  isInvalid: boolean;
+  ref: React.Ref<HTMLButtonElement>;
+}
+
+export interface DateFieldProps {
+  id: string;
+  label: string;
+  description: string;
+  calendar: DateFieldCalendar;
+  field: DateFieldControl;
   error?: { message?: string };
 }
 
-/** Comme la date de naissance de « Mes informations » ; les jours à venir ne se choisissent pas (maquette 11). */
-export function DateDemissionInput({
-  value,
-  onChange,
-  fieldRef,
-  isInvalid,
+/** Une date choisie dans un calendrier, au format jj/mm/aaaa. */
+export function DateField({
+  id,
+  label,
+  description,
+  calendar,
+  field: { value, onChange, ref: fieldRef },
   error,
-}: DateDemissionInputProps) {
+}: DateFieldProps) {
   const [isOpen, setOpen] = useState(false);
-  const selectedDate = parseDateDemission(value);
-  const today = new Date();
+  const selectedDate = parseFieldDate(value);
+  const isInvalid = error !== undefined;
+  const labelId = `${id}-label`;
+  const valueId = `${id}-value`;
+  const descriptionId = `${id}-description`;
+  const errorId = `${id}-error`;
 
   return (
     <Field data-invalid={isInvalid}>
-      <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID} required>
-        Date de votre démission
+      <FieldLabel id={labelId} htmlFor={id} required>
+        {label}
       </FieldLabel>
       <Popover open={isOpen} onOpenChange={setOpen}>
         <InputGroup>
           <PopoverTrigger asChild>
             <InputGroupTrigger
-              id={FIELD_ID}
+              id={id}
               ref={fieldRef}
               // Nommé par le libellé seul, un bouton n'annonce pas la date choisie : on y ajoute sa valeur.
-              aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
+              aria-labelledby={`${labelId} ${valueId}`}
               aria-invalid={isInvalid || undefined}
-              aria-describedby={isInvalid ? ERROR_ID : DESCRIPTION_ID}
+              aria-describedby={isInvalid ? errorId : descriptionId}
               data-placeholder={value ? undefined : ""}
             >
-              <span id={VALUE_ID}>{value}</span>
+              <span id={valueId}>{value}</span>
             </InputGroupTrigger>
           </PopoverTrigger>
           <InputGroupAddon align="inline-end">
@@ -69,23 +84,21 @@ export function DateDemissionInput({
               formatMonthDropdown: (date) => date.toLocaleString("fr-FR", { month: "long" }),
             }}
             selected={selectedDate}
-            defaultMonth={selectedDate ?? today}
-            endMonth={today}
-            disabled={{ after: today }}
+            defaultMonth={selectedDate ?? calendar.defaultMonth}
+            startMonth={calendar.startMonth}
+            endMonth={calendar.endMonth}
+            disabled={calendar.disabled}
             onSelect={(date) => {
-              if (date) onChange(formatDateDemission(date));
+              if (date) onChange(formatFieldDate(date));
               setOpen(false);
             }}
           />
         </PopoverContent>
       </Popover>
       {isInvalid ? (
-        <FieldError id={ERROR_ID} errors={[error]} />
+        <FieldError id={errorId} errors={[error]} />
       ) : (
-        <FieldDescription id={DESCRIPTION_ID}>
-          Date de l’accusé de réception ou de la remise en main propre contre décharge. Format :
-          jj/mm/aaaa
-        </FieldDescription>
+        <FieldDescription id={descriptionId}>{description}</FieldDescription>
       )}
     </Field>
   );
