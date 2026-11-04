@@ -4,62 +4,59 @@ import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import type { SectionProgress, VoletProgress } from "../../domain/statut-volet";
 import type { VoletError } from "../../domain/volet-errors";
 import {
-  SITUATION_PROFESSIONNELLE_SECTION_FIELDS,
+  EMPLOYEUR_ENTRY_MODE,
+  findSectionFields,
   situationProfessionnelleSchema,
   type Demission,
   type SituationProfessionnelleFormData,
-  type SituationProfessionnelleFormValues,
   type SituationProfessionnelleSection,
 } from "../schema";
 
 export interface UseSituationProfessionnelleFormResult {
-  form: UseFormReturn<
-    SituationProfessionnelleFormValues,
-    unknown,
-    SituationProfessionnelleFormData
-  >;
+  form: UseFormReturn<SituationProfessionnelleFormData>;
   progress: VoletProgress;
   sections: Record<SituationProfessionnelleSection, SectionProgress>;
   voletErrors: VoletError[];
 }
 
-const ALL_REQUIRED_FIELDS = Object.values(SITUATION_PROFESSIONNELLE_SECTION_FIELDS).flat();
-
-function countFilled(
-  values: Partial<Record<keyof SituationProfessionnelleFormValues, unknown>>,
-  fields: readonly (keyof SituationProfessionnelleFormValues)[],
-): number {
-  return fields.filter((name) => Boolean(values[name])).length;
-}
-
 /** Le formulaire « Ma situation professionnelle » et ce qui s'en déduit pendant le rendu. */
 export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFormResult {
-  const form = useForm<
-    SituationProfessionnelleFormValues,
-    unknown,
-    SituationProfessionnelleFormData
-  >({
+  const form = useForm<SituationProfessionnelleFormData>({
     resolver: zodResolver(situationProfessionnelleSchema),
     mode: "onBlur",
-    defaultValues: { employeur: null, intitulePoste: "", demission: "" as Demission },
+    defaultValues: {
+      employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
+      employeur: null,
+      denomination: "",
+      siret: "",
+      secteurActivite: "",
+      adresse: "",
+      intitulePoste: "",
+      demission: "" as Demission,
+    },
     // Le focus revient au résumé d'erreurs de l'écran, pas au premier champ fautif.
     shouldFocusError: false,
   });
 
   const values = useWatch({ control: form.control });
   const { errors } = form.formState;
+  const sectionFields = findSectionFields(values.employeurEntryMode ?? EMPLOYEUR_ENTRY_MODE.SEARCH);
+  const requiredFields = Object.values(sectionFields).flat();
+
+  const countFilled = (fields: readonly (keyof SituationProfessionnelleFormData)[]): number =>
+    fields.filter((name) => Boolean(values[name])).length;
 
   const sections = Object.fromEntries(
-    Object.entries(SITUATION_PROFESSIONNELLE_SECTION_FIELDS).map(([section, fields]) => [
+    Object.entries(sectionFields).map(([section, fields]) => [
       section,
       {
-        remainingFieldCount: fields.length - countFilled(values, fields),
+        remainingFieldCount: fields.length - countFilled(fields),
         errorCount: fields.filter((name) => errors[name] !== undefined).length,
       },
     ]),
   ) as Record<SituationProfessionnelleSection, SectionProgress>;
 
-  const filledFieldCount = countFilled(values, ALL_REQUIRED_FIELDS);
+  const filledFieldCount = countFilled(requiredFields);
 
   const voletErrors: VoletError[] = Object.entries(errors).map(([fieldId, error]) => ({
     fieldId,
@@ -69,9 +66,9 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
   return {
     form,
     progress: {
-      requiredFieldCount: ALL_REQUIRED_FIELDS.length,
+      requiredFieldCount: requiredFields.length,
       filledFieldCount,
-      remainingFieldCount: ALL_REQUIRED_FIELDS.length - filledFieldCount,
+      remainingFieldCount: requiredFields.length - filledFieldCount,
       errorCount: voletErrors.length,
     },
     sections,

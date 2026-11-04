@@ -13,21 +13,61 @@ export const DEMISSION_LABEL: Record<Demission, string> = {
   [DEMISSION.NON]: "Non",
 };
 
-export const situationProfessionnelleSchema = z.object({
-  employeur: EtablissementSchema.nullable().refine((value) => value !== null, {
-    message: "Veuillez choisir votre employeur.",
-  }),
-  intitulePoste: z.string().trim().min(1, "Veuillez saisir l’intitulé de votre poste."),
-  demission: z.enum(DEMISSION, "Veuillez indiquer si vous avez remis votre démission."),
-});
+/** L'employeur se choisit dans Sirene, ou se saisit à la main quand la recherche échoue. */
+export const EMPLOYEUR_ENTRY_MODE = {
+  SEARCH: "search",
+  MANUAL: "manual",
+} as const;
 
-/** Saisie en cours : l'employeur peut manquer. */
-export type SituationProfessionnelleFormValues = z.input<typeof situationProfessionnelleSchema>;
+export type EmployeurEntryMode = (typeof EMPLOYEUR_ENTRY_MODE)[keyof typeof EMPLOYEUR_ENTRY_MODE];
 
-/** Après validation : l'employeur est choisi. */
-export type SituationProfessionnelleFormData = z.output<typeof situationProfessionnelleSchema>;
+const SIRET_PATTERN = /^\d{14}$/;
 
-type SituationProfessionnelleFieldName = keyof SituationProfessionnelleFormValues;
+const REQUIRED_MESSAGES = {
+  employeur: "Veuillez choisir votre employeur.",
+  denomination: "Veuillez saisir le nom de votre employeur.",
+  secteurActivite: "Veuillez choisir le secteur d’activité.",
+  adresse: "Veuillez saisir l’adresse de votre employeur.",
+} as const;
+
+export const situationProfessionnelleSchema = z
+  .object({
+    employeurEntryMode: z.enum(EMPLOYEUR_ENTRY_MODE),
+    employeur: EtablissementSchema.nullable(),
+    denomination: z.string().trim(),
+    siret: z.string(),
+    secteurActivite: z.string(),
+    adresse: z.string().trim(),
+    intitulePoste: z.string().trim().min(1, "Veuillez saisir l’intitulé de votre poste."),
+    demission: z.enum(DEMISSION, "Veuillez indiquer si vous avez remis votre démission."),
+  })
+  // Seuls les champs du mode en cours sont exigés.
+  .superRefine((data, ctx) => {
+    const require = (path: keyof typeof REQUIRED_MESSAGES, isFilled: boolean): void => {
+      if (!isFilled)
+        ctx.addIssue({ code: "custom", path: [path], message: REQUIRED_MESSAGES[path] });
+    };
+
+    if (data.employeurEntryMode === EMPLOYEUR_ENTRY_MODE.SEARCH) {
+      require("employeur", data.employeur !== null);
+      return;
+    }
+
+    require("denomination", data.denomination !== "");
+    if (!SIRET_PATTERN.test(data.siret.replace(/\s/g, ""))) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["siret"],
+        message: "Le numéro SIRET doit comporter 14 chiffres.",
+      });
+    }
+    require("secteurActivite", data.secteurActivite !== "");
+    require("adresse", data.adresse !== "");
+  });
+
+export type SituationProfessionnelleFormData = z.infer<typeof situationProfessionnelleSchema>;
+
+type SituationProfessionnelleFieldName = keyof SituationProfessionnelleFormData;
 
 export const SITUATION_PROFESSIONNELLE_SECTION = {
   EMPLOI: "emploi",
@@ -37,10 +77,23 @@ export const SITUATION_PROFESSIONNELLE_SECTION = {
 export type SituationProfessionnelleSection =
   (typeof SITUATION_PROFESSIONNELLE_SECTION)[keyof typeof SITUATION_PROFESSIONNELLE_SECTION];
 
-export const SITUATION_PROFESSIONNELLE_SECTION_FIELDS: Record<
-  SituationProfessionnelleSection,
-  readonly SituationProfessionnelleFieldName[]
-> = {
-  [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: ["employeur", "intitulePoste"],
-  [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]: ["demission"],
+/** Champs obligatoires de « Votre emploi » : 2 en recherche, 5 en saisie manuelle (maquettes 01 et 07). */
+const EMPLOI_FIELDS: Record<EmployeurEntryMode, readonly SituationProfessionnelleFieldName[]> = {
+  [EMPLOYEUR_ENTRY_MODE.SEARCH]: ["employeur", "intitulePoste"],
+  [EMPLOYEUR_ENTRY_MODE.MANUAL]: [
+    "denomination",
+    "siret",
+    "secteurActivite",
+    "adresse",
+    "intitulePoste",
+  ],
 };
+
+export function findSectionFields(
+  mode: EmployeurEntryMode,
+): Record<SituationProfessionnelleSection, readonly SituationProfessionnelleFieldName[]> {
+  return {
+    [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: EMPLOI_FIELDS[mode],
+    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]: ["demission"],
+  };
+}

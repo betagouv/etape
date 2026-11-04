@@ -64,19 +64,7 @@ export function SituationProfessionnelleForm({
             <SectionCounter progress={sections[SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]} />
           </FormSectionHeader>
 
-          <Controller
-            name="employeur"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <EmployeurField
-                value={field.value}
-                onChange={field.onChange}
-                fieldRef={field.ref}
-                isInvalid={fieldState.invalid}
-                error={fieldState.error}
-              />
-            )}
-          />
+          <EmployeurField form={form} />
 
           <FormField
             name="intitulePoste"

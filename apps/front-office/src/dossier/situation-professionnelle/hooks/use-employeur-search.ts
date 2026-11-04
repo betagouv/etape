@@ -1,5 +1,4 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from "react";
-import { flushSync } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ETABLISSEMENT_SEARCH_MIN_LENGTH,
@@ -11,19 +10,10 @@ import {
 import { httpClient } from "@/lib/clients";
 import { selectPlural, type PluralForms } from "@/lib/plural";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
 
 /** Chaque frappe n'appelle pas Sirene, dont la clé a un quota. */
 const SEARCH_DELAY_MS = 300;
-
-const NO_ACTIVE = -1;
-
-const ETABLISSEMENT_FOUND_LABELS: PluralForms<string> = {
-  one: "établissement trouvé",
-  other: "établissements trouvés",
-};
-
-export const NO_ETABLISSEMENT_MESSAGE = "Aucun établissement ne correspond.";
-export const SEARCH_ERROR_MESSAGE = "La recherche est indisponible. Réessayez dans un instant.";
 
 /** Le résumé d'erreurs mène à `#employeur`. */
 export const EMPLOYEUR_FIELD_ID = "employeur";
@@ -32,18 +22,36 @@ export function employeurOptionId({ siret }: Etablissement): string {
   return `${EMPLOYEUR_FIELD_ID}-option-${siret}`;
 }
 
+export const SEARCH_STATUS = {
+  IDLE: "idle",
+  RESULTS: "results",
+  NO_RESULT: "no-result",
+  ERROR: "error",
+} as const;
+
+export type SearchStatus = (typeof SEARCH_STATUS)[keyof typeof SEARCH_STATUS];
+
+const ETABLISSEMENT_FOUND_LABELS: PluralForms<string> = {
+  one: "établissement trouvé",
+  other: "établissements trouvés",
+};
+
+export const NO_RESULT_TITLE = "Aucun établissement ne correspond à cette recherche";
+export const SEARCH_ERROR_TITLE = "La recherche d’entreprises ne répond pas pour le moment";
+
 export interface EmployeurSearchInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   onFocus: () => void;
-  onBlur: () => void;
 }
 
 export interface UseEmployeurSearchResult {
   searchText: string;
-  isListOpen: boolean;
-  /** En tête de liste, et seul contenu de la liste quand il n'y a aucun établissement. */
-  listMessage: string;
+  status: SearchStatus;
+  /** La liste, ou l'alerte « aucun résultat », sous le champ. */
+  isPopupOpen: boolean;
+  /** « N établissements trouvés », en tête de liste. */
+  resultLabel: string;
   etablissements: Etablissement[];
   active: Etablissement | null;
   /** Pour la région `role="status"` : vide tant qu'aucune recherche n'a abouti. */
@@ -51,6 +59,8 @@ export interface UseEmployeurSearchResult {
   inputHandlers: EmployeurSearchInputHandlers;
   select: (etablissement: Etablissement) => void;
   clear: () => void;
+  close: () => void;
+  retry: () => void;
 }
 
 async function fetchEtablissements(search: string): Promise<SearchEtablissementsResponse> {
@@ -60,23 +70,25 @@ async function fetchEtablissements(search: string): Promise<SearchEtablissements
   return searchEtablissements.response.parse(response.data);
 }
 
-function describeResult(data: SearchEtablissementsResponse): string {
-  const { etablissementCount } = data;
-  return etablissementCount === 0
-    ? NO_ETABLISSEMENT_MESSAGE
-    : `${etablissementCount} ${selectPlural(etablissementCount, ETABLISSEMENT_FOUND_LABELS)}`;
+function findStatus(isSearching: boolean, isError: boolean, count?: number): SearchStatus {
+  if (!isSearching) return SEARCH_STATUS.IDLE;
+  if (isError) return SEARCH_STATUS.ERROR;
+  if (count === undefined) return SEARCH_STATUS.IDLE;
+  return count === 0 ? SEARCH_STATUS.NO_RESULT : SEARCH_STATUS.RESULTS;
 }
 
-/** Recherche de l'employeur dans Sirene, au fil de la saisie, et navigation au clavier dans les résultats. */
+/** Recherche de l'employeur dans Sirene, au fil de la saisie. */
 export function useEmployeurSearch(
   onSelect: (etablissement: Etablissement) => void,
 ): UseEmployeurSearchResult {
   const [searchText, setSearchText] = useState("");
   const [isOpen, setOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(NO_ACTIVE);
 
   const search = useDebouncedValue(searchText.trim(), SEARCH_DELAY_MS);
-  const isSearching = search.length >= ETABLISSEMENT_SEARCH_MIN_LENGTH;
+  // Le champ fait foi aussitôt qu'il passe sous le minimum : sans cela, l'ancienne recherche réapparaîtrait le temps du délai.
+  const isSearching =
+    search.length >= ETABLISSEMENT_SEARCH_MIN_LENGTH &&
+    searchText.trim().length >= ETABLISSEMENT_SEARCH_MIN_LENGTH;
 
   const query = useQuery({
     queryKey: ["etablissement", search],
@@ -84,68 +96,53 @@ export function useEmployeurSearch(
     enabled: isSearching,
   });
 
-  const etablissements = (isSearching && query.data?.etablissements) || [];
-  const resultMessage = query.data ? describeResult(query.data) : "";
-  const listMessage = query.isError ? SEARCH_ERROR_MESSAGE : resultMessage;
-  const active = etablissements[activeIndex] ?? null;
+  const count = query.data?.etablissementCount;
+  const status = findStatus(isSearching, query.isError, count);
+  const etablissements = (status === SEARCH_STATUS.RESULTS && query.data?.etablissements) || [];
+  const resultLabel =
+    count === undefined ? "" : `${count} ${selectPlural(count, ETABLISSEMENT_FOUND_LABELS)}`;
 
   function select(etablissement: Etablissement): void {
     onSelect(etablissement);
     setSearchText("");
     setOpen(false);
-    setActiveIndex(NO_ACTIVE);
   }
 
-  function activate(index: number): void {
-    flushSync(() => setActiveIndex(index));
-    document
-      .getElementById(employeurOptionId(etablissements[index]))
-      ?.scrollIntoView({ block: "nearest" });
-  }
+  const navigation = useListboxNavigation(etablissements, employeurOptionId, select);
 
-  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
-    const last = etablissements.length - 1;
-    switch (event.key) {
-      case "ArrowDown":
-        event.preventDefault();
-        if (last >= 0) activate(Math.min(activeIndex + 1, last));
-        return;
-      case "ArrowUp":
-        event.preventDefault();
-        if (last >= 0) activate(activeIndex > 0 ? activeIndex - 1 : last);
-        return;
-      case "Enter":
-        if (!active) return;
-        event.preventDefault();
-        select(active);
-        return;
-      case "Escape":
-        setOpen(false);
-        return;
-    }
-  }
+  const announcements: Record<SearchStatus, string> = {
+    [SEARCH_STATUS.IDLE]: "",
+    [SEARCH_STATUS.RESULTS]: resultLabel,
+    [SEARCH_STATUS.NO_RESULT]: NO_RESULT_TITLE,
+    [SEARCH_STATUS.ERROR]: SEARCH_ERROR_TITLE,
+  };
 
   return {
     searchText,
-    isListOpen: isOpen && isSearching && listMessage !== "",
-    listMessage,
+    status,
+    isPopupOpen: isOpen && (status === SEARCH_STATUS.RESULTS || status === SEARCH_STATUS.NO_RESULT),
+    resultLabel,
     etablissements,
-    active,
-    announcement: isSearching ? listMessage : "",
+    active: navigation.active,
+    announcement: announcements[status],
     inputHandlers: {
       onChange: (event) => {
         setSearchText(event.target.value);
         setOpen(true);
-        setActiveIndex(NO_ACTIVE);
+        navigation.reset();
       },
-      onKeyDown: handleKeyDown,
+      onKeyDown: (event) => {
+        if (event.key === "Escape") setOpen(false);
+        else navigation.onKeyDown(event);
+      },
       onFocus: () => setOpen(true),
-      onBlur: () => setOpen(false),
     },
     select,
     clear: () => {
       setSearchText("");
-      setActiveIndex(NO_ACTIVE);
+      navigation.reset();
     },
+    close: () => setOpen(false),
+    retry: () => void query.refetch(),
   };
 }

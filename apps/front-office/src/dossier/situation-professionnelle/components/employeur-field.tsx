@@ -1,40 +1,66 @@
 import { useState } from "react";
-import type { Etablissement } from "@etape/api-contract";
+import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 
 import { useEmployeurSearch } from "../hooks/use-employeur-search";
+import {
+  EMPLOYEUR_ENTRY_MODE,
+  type EmployeurEntryMode,
+  type SituationProfessionnelleFormData,
+} from "../schema";
 import { EmployeurCard } from "./employeur-card";
+import { EmployeurManualFields } from "./employeur-manual-fields";
 import { EmployeurSearch } from "./employeur-search";
 
+/** Les champs exigés par chaque mode : quitter un mode efface leurs erreurs. */
+const MODE_FIELDS: Record<EmployeurEntryMode, (keyof SituationProfessionnelleFormData)[]> = {
+  [EMPLOYEUR_ENTRY_MODE.SEARCH]: ["employeur"],
+  [EMPLOYEUR_ENTRY_MODE.MANUAL]: ["denomination", "siret", "secteurActivite", "adresse"],
+};
+
 export interface EmployeurFieldProps {
-  value: Etablissement | null;
-  onChange: (value: Etablissement | null) => void;
-  fieldRef: React.Ref<HTMLInputElement>;
-  isInvalid: boolean;
-  error?: { message?: string };
+  form: UseFormReturn<SituationProfessionnelleFormData>;
 }
 
-/** La recherche tant qu'aucun employeur n'est choisi, puis sa carte. */
-export function EmployeurField({
-  value,
-  onChange,
-  fieldRef,
-  isInvalid,
-  error,
-}: EmployeurFieldProps) {
-  // Le champ et la carte se remplacent : sans cela, le focus tomberait sur la page.
+/** La recherche Sirene, la carte de l'établissement choisi, ou la saisie manuelle. */
+export function EmployeurField({ form }: EmployeurFieldProps) {
+  const { control, setValue, clearErrors } = form;
+  const mode = useWatch({ control, name: "employeurEntryMode" });
+  const employeur = useWatch({ control, name: "employeur" });
+  // Champ, carte et saisie manuelle se remplacent : sans cela, le focus tomberait sur la page.
   const [isFocusRequested, setFocusRequested] = useState(false);
+
+  function switchMode(nextMode: EmployeurEntryMode): void {
+    clearErrors(MODE_FIELDS[mode]);
+    setValue("employeurEntryMode", nextMode);
+    setFocusRequested(true);
+  }
+
   const search = useEmployeurSearch((etablissement) => {
-    onChange(etablissement);
+    setValue("employeur", etablissement, { shouldValidate: true });
     setFocusRequested(true);
   });
 
-  if (value) {
+  if (mode === EMPLOYEUR_ENTRY_MODE.MANUAL) {
+    return (
+      <EmployeurManualFields
+        control={control}
+        isFocusRequested={isFocusRequested}
+        onSearch={() => {
+          // On repart d'une recherche vide : l'ancienne rouvrirait son alerte « aucun résultat ».
+          search.clear();
+          switchMode(EMPLOYEUR_ENTRY_MODE.SEARCH);
+        }}
+      />
+    );
+  }
+
+  if (employeur) {
     return (
       <EmployeurCard
-        etablissement={value}
+        etablissement={employeur}
         isFocusRequested={isFocusRequested}
         onChange={() => {
-          onChange(null);
+          setValue("employeur", null);
           setFocusRequested(true);
         }}
       />
@@ -42,12 +68,19 @@ export function EmployeurField({
   }
 
   return (
-    <EmployeurSearch
-      search={search}
-      fieldRef={fieldRef}
-      isInvalid={isInvalid}
-      error={error}
-      isFocusRequested={isFocusRequested}
+    <Controller
+      name="employeur"
+      control={control}
+      render={({ field, fieldState }) => (
+        <EmployeurSearch
+          search={search}
+          fieldRef={field.ref}
+          isInvalid={fieldState.invalid}
+          error={fieldState.error}
+          isFocusRequested={isFocusRequested}
+          onManualEntry={() => switchMode(EMPLOYEUR_ENTRY_MODE.MANUAL)}
+        />
+      )}
     />
   );
 }
