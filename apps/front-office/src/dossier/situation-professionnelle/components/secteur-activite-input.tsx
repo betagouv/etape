@@ -81,6 +81,7 @@ export function SecteurActiviteInput({
             ))}
           </ComboboxList>
           {search.secteurs.length === 0 && <ComboboxEmpty>{search.emptyMessage}</ComboboxEmpty>}
+          {search.moreMessage && <ComboboxEmpty>{search.moreMessage}</ComboboxEmpty>}
         </Combobox>
       </div>
       {/* Comme dans le kit et `FormField` : l'erreur remplace la description. */}

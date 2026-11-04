@@ -15,6 +15,15 @@ export function secteurActiviteOptionId({ code }: SecteurActivite): string {
 
 export const NO_SECTEUR_MESSAGE = "Aucun secteur d’activité ne correspond.";
 export const SECTEURS_ERROR_MESSAGE = "La liste des secteurs d’activité est indisponible.";
+export const SECTEURS_LOADING_MESSAGE = "Chargement des secteurs d’activité…";
+
+/** Une lettre en retient des centaines sur 732 : au-delà, on invite à préciser la recherche. */
+const SECTEURS_DISPLAY_LIMIT = 50;
+
+function findEmptyMessage(isPending: boolean, isError: boolean): string {
+  if (isPending) return SECTEURS_LOADING_MESSAGE;
+  return isError ? SECTEURS_ERROR_MESSAGE : NO_SECTEUR_MESSAGE;
+}
 
 export interface SecteurActiviteInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -27,8 +36,10 @@ export interface UseSecteurActiviteSearchResult {
   inputText: string;
   isListOpen: boolean;
   secteurs: SecteurActivite[];
-  /** Quand la liste n'a aucune option : aucun secteur trouvé, ou liste indisponible. */
+  /** Quand la liste n'a aucune option : chargement, aucun secteur trouvé, ou liste indisponible. */
   emptyMessage: string;
+  /** Sous la liste quand elle est tronquée, vide sinon. */
+  moreMessage: string;
   active: SecteurActivite | null;
   inputHandlers: SecteurActiviteInputHandlers;
   select: (secteur: SecteurActivite) => void;
@@ -53,7 +64,8 @@ export function useSecteurActiviteSearch(
   });
 
   const selected = query.data?.find((secteur) => secteur.code === code);
-  const secteurs = searchText ? findSecteursActivite(query.data ?? [], searchText) : [];
+  const matches = searchText ? findSecteursActivite(query.data ?? [], searchText) : [];
+  const secteurs = matches.slice(0, SECTEURS_DISPLAY_LIMIT);
 
   function select(secteur: SecteurActivite): void {
     onChange(secteur.code);
@@ -66,7 +78,11 @@ export function useSecteurActiviteSearch(
     inputText: searchText ?? (selected ? formatSecteurActivite(selected) : ""),
     isListOpen: Boolean(searchText?.trim()),
     secteurs,
-    emptyMessage: query.isError ? SECTEURS_ERROR_MESSAGE : NO_SECTEUR_MESSAGE,
+    emptyMessage: findEmptyMessage(query.isPending, query.isError),
+    moreMessage:
+      matches.length > secteurs.length
+        ? `${matches.length} secteurs correspondent : précisez votre recherche pour voir les autres.`
+        : "",
     active: navigation.active,
     inputHandlers: {
       onChange: (event) => {
