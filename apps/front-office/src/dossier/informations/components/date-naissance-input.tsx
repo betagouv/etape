@@ -56,7 +56,7 @@ export function DateNaissanceInput({
               aria-describedby={isInvalid ? ERROR_ID : DESCRIPTION_ID}
               data-placeholder={value ? undefined : ""}
             >
-              <span id={VALUE_ID}>{value || "JJ/MM/AAAA"}</span>
+              <span id={VALUE_ID}>{value}</span>
             </InputGroupTrigger>
           </PopoverTrigger>
           <InputGroupAddon align="inline-end">
