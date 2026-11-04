@@ -25,6 +25,9 @@ const alertVariants = cva(
         emphasis:
           "bg-secondary text-primary rounded-l-none rounded-r-md border-0 border-l-3 border-l-primary px-3 font-medium",
         info: "border-info-border bg-info-muted text-info-text *:data-[slot=alert-description]:text-accent-foreground",
+        /** `Variant=Warning` du kit. */
+        warning:
+          "border-warning-border bg-warning-muted text-warning-text *:data-[slot=alert-description]:text-accent-foreground",
         "destructive-subdued":
           "border-destructive-border bg-destructive-muted text-destructive-text *:data-[slot=alert-description]:text-accent-foreground",
       },
@@ -67,4 +70,15 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
   );
 }
 
-export { Alert, AlertTitle, AlertDescription };
+/** Les boutons sous le texte, alignés sur le bord gauche de l'alerte et à 8 px du texte, comme dans le kit. */
+function AlertActions({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-actions"
+      className={cn("col-span-full mt-1.5 flex flex-wrap items-center gap-2", className)}
+      {...props}
+    />
+  );
+}
+
+export { Alert, AlertTitle, AlertDescription, AlertActions };
