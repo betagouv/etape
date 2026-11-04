@@ -13,7 +13,7 @@ La seule chose que le front et l'API partagent : le **contrat de chaque route** 
 
 ## Lancer et vérifier
 
-**Ne dépend que de zod** : ni NestJS, ni React, ni axios. Compilé par `tsc` dans `dist/`, que Node lit (condition d'export `node` : l'API, les tests) ; TypeScript et Vite lisent `src/`. Turbo le construit avant `dev` et `test`.
+**Ne dépend que de zod** : ni NestJS, ni React, ni axios. Compilé par `tsc` dans `dist/`, que Node lit (condition d'export `node` : l'API, les tests) ; TypeScript et Vite lisent `src/`. Turbo le construit avant `dev` et `test`, et le recompile à chaque modification pendant `pnpm run dev` (tâche `dev` lancée avec celle de l'API).
 
 ```bash
 pnpm --filter @etape/api-contract run build

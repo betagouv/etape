@@ -28,6 +28,13 @@
       "cache": false,
       "persistent": true
     },
+    // `pnpm run dev --filter=@etape/api` recompile aussi le contrat à chaque modification.
+    "@etape/api#dev": {
+      "dependsOn": ["^build"],
+      "with": ["@etape/api-contract#dev"],
+      "cache": false,
+      "persistent": true
+    },
     "lint": {},
     "test": {
       "dependsOn": ["^build"]

@@ -6,6 +6,7 @@
   "prettier": "@etape/prettier-config",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
