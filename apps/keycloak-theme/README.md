@@ -114,6 +114,12 @@ formulaire envoyé (`src/login/components/submitted-form.ts`) :
 L'écran de connexion efface la marque à son affichage : un essai raté suivi
 d'une arrivée par FranceConnect ne garde pas « connexion ».
 
+Une vérification demandée par l'application (`kc_action=VERIFY_EMAIL`, soit
+`isAppInitiatedAction` dans le contexte) passe aussi par l'écran neutre : une
+session est déjà ouverte, et la marque « connexion » peut être restée dans
+l'onglet. Un compte déjà vérifié ne voit jamais cette page : Keycloak valide
+l'action sans l'afficher.
+
 ## Remplissage automatique de Chrome
 
 « Se connecter » reste grisé tant que les deux champs sont vides. Quand Chrome
