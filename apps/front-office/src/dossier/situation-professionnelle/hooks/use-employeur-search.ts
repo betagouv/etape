@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   ETABLISSEMENT_SEARCH_MIN_LENGTH,
   searchEtablissements,
@@ -94,6 +94,8 @@ export function useEmployeurSearch(
     queryKey: ["etablissement", search],
     queryFn: () => fetchEtablissements(search),
     enabled: isSearching,
+    // La liste précédente reste affichée pendant l'appel, au lieu de se fermer puis de se rouvrir.
+    placeholderData: keepPreviousData,
   });
 
   const count = query.data?.etablissementCount;
