@@ -44,7 +44,13 @@ export function EmployeurCard({ etablissement, isFocusRequested, onChange }: Emp
     <Card variant="secondary">
       <div className="flex items-center justify-between gap-4">
         <h4 className="text-primary text-base font-semibold">{etablissement.denomination}</h4>
-        <Button variant="outline" size="sm" onClick={onChange} autoFocus={isFocusRequested}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onChange}
+          autoFocus={isFocusRequested}
+        >
           <PencilLineIcon aria-hidden="true" />
           Changer l’entreprise
         </Button>

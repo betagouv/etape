@@ -53,7 +53,7 @@ export function EmployeurSearch({
   onManualEntry,
 }: EmployeurSearchProps) {
   const manualEntryButton = (
-    <Button variant="outline" size="sm" onClick={onManualEntry}>
+    <Button type="button" variant="outline" size="sm" onClick={onManualEntry}>
       <FilePenLineIcon aria-hidden="true" />
       Saisir mon employeur moi-même
     </Button>
@@ -93,10 +93,15 @@ export function EmployeurSearch({
           {search.searchText && (
             <InputGroupAddon align="inline-end">
               <Button
+                type="button"
                 variant="secondary"
                 size="icon-xs"
                 aria-label="Effacer la recherche"
-                onClick={search.clear}
+                onClick={() => {
+                  search.clear();
+                  // Le bouton disparaît avec le texte : sans cela, le focus tomberait sur la page.
+                  document.getElementById(EMPLOYEUR_FIELD_ID)?.focus();
+                }}
               >
                 <CircleXIcon aria-hidden="true" />
               </Button>
@@ -167,7 +172,7 @@ export function EmployeurSearch({
           </AlertDescription>
           <AlertActions>
             {manualEntryButton}
-            <Button variant="link" size="inline-sm" onClick={search.retry}>
+            <Button type="button" variant="link" size="inline-sm" onClick={search.retry}>
               <RefreshCwIcon aria-hidden="true" />
               Relancer la recherche
             </Button>

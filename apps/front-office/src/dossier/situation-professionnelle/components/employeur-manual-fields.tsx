@@ -71,7 +71,7 @@ export function EmployeurManualFields({
         render={({ field, attributes }) => <Input {...field} {...attributes} />}
       />
 
-      <Button variant="link" size="inline" className="self-start" onClick={onSearch}>
+      <Button type="button" variant="link" size="inline" className="self-start" onClick={onSearch}>
         <SearchIcon aria-hidden="true" />
         Rechercher dans l’annuaire des entreprises
       </Button>

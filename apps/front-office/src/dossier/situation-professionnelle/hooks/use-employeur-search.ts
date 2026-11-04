@@ -117,10 +117,13 @@ export function useEmployeurSearch(
     [SEARCH_STATUS.ERROR]: SEARCH_ERROR_TITLE,
   };
 
+  const isPopupOpen =
+    isOpen && (status === SEARCH_STATUS.RESULTS || status === SEARCH_STATUS.NO_RESULT);
+
   return {
     searchText,
     status,
-    isPopupOpen: isOpen && (status === SEARCH_STATUS.RESULTS || status === SEARCH_STATUS.NO_RESULT),
+    isPopupOpen,
     resultLabel,
     etablissements,
     active: navigation.active,
@@ -132,8 +135,13 @@ export function useEmployeurSearch(
         navigation.reset();
       },
       onKeyDown: (event) => {
-        if (event.key === "Escape") setOpen(false);
-        else navigation.onKeyDown(event);
+        if (event.key === "Escape") {
+          setOpen(false);
+          navigation.reset();
+        } else if (isPopupOpen) {
+          // Liste fermée : ni flèche ni Entrée ne désignent une option masquée.
+          navigation.onKeyDown(event);
+        }
       },
       onFocus: () => setOpen(true),
     },
