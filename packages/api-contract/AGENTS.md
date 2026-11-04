@@ -33,4 +33,4 @@ pnpm --filter @etape/api-contract run typecheck
 
 ## État
 
-Routes : `auth/` (session) et `etablissement/` (recherche Sirene du volet « Ma situation professionnelle »). Un contrat s'écrit avec l'écran qui appelle la route, pas avant : ne pas en ajouter « pour préparer ».
+Routes : `auth/` (session), `etablissement/` (recherche Sirene du volet « Ma situation professionnelle ») et `secteur-activite/` (NAF rév. 2). Un contrat s'écrit avec l'écran qui appelle la route, pas avant : ne pas en ajouter « pour préparer ».

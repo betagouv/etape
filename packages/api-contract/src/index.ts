@@ -29,3 +29,10 @@ export {
   type RouteQuery,
   type RouteResponse,
 } from "./route-definition.js";
+export { getSecteursActivite } from "./secteur-activite/secteur-activite.routes.js";
+export {
+  SecteurActiviteSchema,
+  SecteursActiviteResponseSchema,
+  type SecteurActivite,
+  type SecteursActiviteResponse,
+} from "./secteur-activite/secteur-activite.schemas.js";

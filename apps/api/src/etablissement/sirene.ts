@@ -1,6 +1,6 @@
 import type { Etablissement, SearchEtablissementsResponse } from "@etape/api-contract";
 
-import { LIBELLES_NAF } from "./libelles-naf.js";
+import { LIBELLES_NAF } from "../secteur-activite/libelles-naf.js";
 
 const SEARCH_RESULT_LIMIT = 20;
 

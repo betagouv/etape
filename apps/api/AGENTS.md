@@ -35,7 +35,8 @@ pnpm --filter @etape/api run typecheck
 - `src/account/` — `AccountService`.
 - `prisma/schema.prisma` — modèles `Account` et `Session` ; `prisma/migrations/`. Le client est généré dans `src/generated/prisma` (ignoré par le lint).
 
-- `src/etablissement/` — `GET /api/etablissement`, recherche dans le répertoire Sirene de l'Insee (clé `INSEE_API_KEY`), libellés NAF rév. 2 dans `libelles-naf.ts`.
+- `src/etablissement/` — `GET /api/etablissement`, recherche dans le répertoire Sirene de l'Insee (clé `INSEE_API_KEY`).
+- `src/secteur-activite/` — `GET /api/secteur-activite`, les 732 sous-classes de la NAF rév. 2 (`libelles-naf.ts`, lu aussi par `etablissement/`), sans session.
 - `src/common/validation.pipe.ts` — pipe global : une entrée déclarée par `{ schema }` est validée par le schéma du contrat.
 
 Le découpage cible des modules métier est dans `architecture-api.md`, « Découpage des dossiers ».
