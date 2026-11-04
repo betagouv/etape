@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Controller } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 
 import { FieldError, FieldLegend, FieldSet } from "@etape/ui/components/field";
 import { FormField } from "@etape/ui/components/form-field";
@@ -15,6 +15,7 @@ import { Separator } from "@etape/ui/components/separator";
 
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
+import { DateDemissionInput } from "./components/date-demission-input";
 import { EmployeurField } from "./components/employeur-field";
 import type { UseSituationProfessionnelleFormResult } from "./hooks/use-situation-professionnelle-form";
 import {
@@ -41,6 +42,7 @@ export function SituationProfessionnelleForm({
 }: SituationProfessionnelleFormProps) {
   const { form, sections, voletErrors } = situationProfessionnelle;
   const { submitCount } = form.formState;
+  const demission = useWatch({ control: form.control, name: "demission" });
   const errorsAlertRef = useRef<HTMLDivElement>(null);
 
   // Comme dans « Mes informations » : le résumé, focalisé à chaque soumission invalide, annonce les erreurs.
@@ -96,7 +98,11 @@ export function SituationProfessionnelleForm({
                   <RadioGroup
                     id={DEMISSION_FIELD_ID}
                     value={field.value}
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // Après « non », la date n'est plus demandée : son erreur ne doit pas rester au résumé.
+                      if (value === DEMISSION.NON) form.clearErrors("dateDemission");
+                    }}
                     className="flex gap-5"
                     aria-invalid={fieldState.invalid}
                     aria-describedby={fieldState.invalid ? DEMISSION_ERROR_ID : undefined}
@@ -122,6 +128,24 @@ export function SituationProfessionnelleForm({
               )}
             />
           </FieldSet>
+
+          {demission === DEMISSION.OUI && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Controller
+                name="dateDemission"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <DateDemissionInput
+                    value={field.value}
+                    onChange={field.onChange}
+                    fieldRef={field.ref}
+                    isInvalid={fieldState.invalid}
+                    error={fieldState.error}
+                  />
+                )}
+              />
+            </div>
+          )}
         </FormSection>
       </form>
     </>

@@ -28,6 +28,7 @@ const REQUIRED_MESSAGES = {
   denomination: "Veuillez saisir le nom de votre employeur.",
   secteurActivite: "Veuillez choisir le secteur d’activité.",
   adresse: "Veuillez saisir l’adresse de votre employeur.",
+  dateDemission: "Veuillez choisir la date de votre démission.",
 } as const;
 
 export const situationProfessionnelleSchema = z
@@ -40,6 +41,7 @@ export const situationProfessionnelleSchema = z
     adresse: z.string().trim(),
     intitulePoste: z.string().trim().min(1, "Veuillez saisir l’intitulé de votre poste."),
     demission: z.enum(DEMISSION, "Veuillez indiquer si vous avez remis votre démission."),
+    dateDemission: z.string(),
   })
   // Seuls les champs du mode en cours sont exigés.
   .superRefine((data, ctx) => {
@@ -47,6 +49,8 @@ export const situationProfessionnelleSchema = z
       if (!isFilled)
         ctx.addIssue({ code: "custom", path: [path], message: REQUIRED_MESSAGES[path] });
     };
+
+    if (data.demission === DEMISSION.OUI) require("dateDemission", data.dateDemission !== "");
 
     if (data.employeurEntryMode === EMPLOYEUR_ENTRY_MODE.SEARCH) {
       require("employeur", data.employeur !== null);
@@ -89,11 +93,14 @@ const EMPLOI_FIELDS: Record<EmployeurEntryMode, readonly SituationProfessionnell
   ],
 };
 
+/** La date n'est exigée qu'après un « oui » (maquette 10). */
 export function findSectionFields(
   mode: EmployeurEntryMode,
+  demission: Demission | undefined,
 ): Record<SituationProfessionnelleSection, readonly SituationProfessionnelleFieldName[]> {
   return {
     [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: EMPLOI_FIELDS[mode],
-    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]: ["demission"],
+    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]:
+      demission === DEMISSION.OUI ? ["demission", "dateDemission"] : ["demission"],
   };
 }

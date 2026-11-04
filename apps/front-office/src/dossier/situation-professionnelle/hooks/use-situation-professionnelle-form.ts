@@ -33,6 +33,7 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
       adresse: "",
       intitulePoste: "",
       demission: "" as Demission,
+      dateDemission: "",
     },
     // Le focus revient au résumé d'erreurs de l'écran, pas au premier champ fautif.
     shouldFocusError: false,
@@ -40,7 +41,10 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
 
   const values = useWatch({ control: form.control });
   const { errors } = form.formState;
-  const sectionFields = findSectionFields(values.employeurEntryMode ?? EMPLOYEUR_ENTRY_MODE.SEARCH);
+  const sectionFields = findSectionFields(
+    values.employeurEntryMode ?? EMPLOYEUR_ENTRY_MODE.SEARCH,
+    values.demission,
+  );
   const requiredFields = Object.values(sectionFields).flat();
 
   const countFilled = (fields: readonly (keyof SituationProfessionnelleFormData)[]): number =>
@@ -58,10 +62,10 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
 
   const filledFieldCount = countFilled(requiredFields);
 
-  const voletErrors: VoletError[] = Object.entries(errors).map(([fieldId, error]) => ({
-    fieldId,
-    message: error?.message ?? "",
-  }));
+  // Dans l'ordre de la page : zod place les erreurs de `superRefine` après celles des champs.
+  const voletErrors: VoletError[] = requiredFields
+    .filter((name) => errors[name] !== undefined)
+    .map((fieldId) => ({ fieldId, message: errors[fieldId]?.message ?? "" }));
 
   return {
     form,
