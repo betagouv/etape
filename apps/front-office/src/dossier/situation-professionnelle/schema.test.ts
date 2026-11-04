@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { EMPLOYEUR_ENTRY_MODE, situationProfessionnelleSchema } from "./schema";
+import {
+  DEMISSION,
+  EMPLOYEUR_ENTRY_MODE,
+  findSectionFields,
+  situationProfessionnelleSchema,
+} from "./schema";
 
 const EMPTY_FORM = {
   employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
@@ -23,5 +28,21 @@ describe("situationProfessionnelleSchema", () => {
       "demission",
       "employeur",
     ]);
+  });
+});
+
+describe("findSectionFields", () => {
+  it("exige l'employeur choisi et le poste en recherche", () => {
+    expect(findSectionFields(EMPLOYEUR_ENTRY_MODE.SEARCH, undefined)).toEqual({
+      emploi: ["employeur", "intitulePoste"],
+      demission: ["demission"],
+    });
+  });
+
+  it("exige les quatre champs de l'employeur, le poste et la date après un « oui »", () => {
+    expect(findSectionFields(EMPLOYEUR_ENTRY_MODE.MANUAL, DEMISSION.OUI)).toEqual({
+      emploi: ["denomination", "siret", "secteurActivite", "adresse", "intitulePoste"],
+      demission: ["demission", "dateDemission"],
+    });
   });
 });

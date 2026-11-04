@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "@tanstack/react-router";
 import { MailIcon, PhoneIcon, SearchIcon } from "lucide-react";
@@ -34,6 +33,7 @@ import { formatTelephone } from "./domain/format-telephone";
 import type { UseInformationsFormResult } from "./hooks/use-informations-form";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
+import { useErrorsAlertFocus } from "../hooks/use-errors-alert-focus";
 import { VoletNotice } from "../components/volet-notice";
 import type { VoletNoticeContent } from "../domain/volets";
 import {
@@ -82,13 +82,7 @@ export function InformationsForm({
 }: InformationsFormProps) {
   const { form, sections, voletErrors } = informations;
   const { submitCount } = form.formState;
-  const errorsAlertRef = useRef<HTMLDivElement>(null);
-
-  // `FieldError` n'a pas de rôle d'alerte : c'est le résumé, focalisé à chaque soumission
-  // invalide, qui annonce les erreurs (`shouldFocusError` est désactivé pour cela).
-  useEffect(() => {
-    if (submitCount > 0) errorsAlertRef.current?.focus();
-  }, [submitCount]);
+  const errorsAlertRef = useErrorsAlertFocus(submitCount);
 
   return (
     <>

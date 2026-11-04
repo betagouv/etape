@@ -4,18 +4,13 @@ import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 import { useEmployeurSearch } from "../hooks/use-employeur-search";
 import {
   EMPLOYEUR_ENTRY_MODE,
+  EMPLOYEUR_FIELDS,
   type EmployeurEntryMode,
   type SituationProfessionnelleFormData,
 } from "../schema";
 import { EmployeurCard } from "./employeur-card";
 import { EmployeurManualFields } from "./employeur-manual-fields";
 import { EmployeurSearch } from "./employeur-search";
-
-/** Les champs exigés par chaque mode : quitter un mode efface leurs erreurs. */
-const MODE_FIELDS: Record<EmployeurEntryMode, (keyof SituationProfessionnelleFormData)[]> = {
-  [EMPLOYEUR_ENTRY_MODE.SEARCH]: ["employeur"],
-  [EMPLOYEUR_ENTRY_MODE.MANUAL]: ["denomination", "siret", "secteurActivite", "adresse"],
-};
 
 export interface EmployeurFieldProps {
   form: UseFormReturn<SituationProfessionnelleFormData>;
@@ -30,7 +25,8 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
   const [isFocusRequested, setFocusRequested] = useState(false);
 
   function switchMode(nextMode: EmployeurEntryMode): void {
-    clearErrors(MODE_FIELDS[mode]);
+    // Quitter un mode efface les erreurs de ses champs.
+    clearErrors([...EMPLOYEUR_FIELDS[mode]]);
     setValue("employeurEntryMode", nextMode);
     setFocusRequested(true);
   }

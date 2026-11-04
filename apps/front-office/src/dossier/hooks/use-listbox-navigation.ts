@@ -1,8 +1,6 @@
 import { useState, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 
-const NO_ACTIVE = -1;
-
 export interface UseListboxNavigationResult<T> {
   /** L'option désignée au clavier, pour `aria-activedescendant`. */
   active: T | null;
@@ -19,12 +17,15 @@ export function useListboxNavigation<T>(
   optionId: (item: T) => string,
   onSelect: (item: T) => void,
 ): UseListboxNavigationResult<T> {
-  const [activeIndex, setActiveIndex] = useState(NO_ACTIVE);
+  // Par son id, pas par sa position : quand la liste change, une option disparue cesse d'être désignée.
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const activeIndex = items.findIndex((item) => optionId(item) === activeId);
   const active = items[activeIndex] ?? null;
 
   function activate(index: number): void {
-    flushSync(() => setActiveIndex(index));
-    document.getElementById(optionId(items[index]))?.scrollIntoView({ block: "nearest" });
+    const id = optionId(items[index]);
+    flushSync(() => setActiveId(id));
+    document.getElementById(id)?.scrollIntoView({ block: "nearest" });
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
@@ -42,10 +43,10 @@ export function useListboxNavigation<T>(
         if (!active) return;
         event.preventDefault();
         onSelect(active);
-        setActiveIndex(NO_ACTIVE);
+        setActiveId(null);
         return;
     }
   }
 
-  return { active, onKeyDown, reset: () => setActiveIndex(NO_ACTIVE) };
+  return { active, onKeyDown, reset: () => setActiveId(null) };
 }

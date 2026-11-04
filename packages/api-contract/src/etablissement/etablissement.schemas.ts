@@ -1,10 +1,16 @@
 import { z } from "zod";
 
 export const ETABLISSEMENT_SEARCH_MIN_LENGTH = 3;
+/** Au-delà, chaque mot ajouterait une clause à la requête envoyée à Sirene. */
+export const ETABLISSEMENT_SEARCH_MAX_LENGTH = 100;
 
 /** Un SIRET de 14 chiffres, ou des débuts de mots du nom et de la commune. */
 export const SearchEtablissementsQuerySchema = z.object({
-  search: z.string().trim().min(ETABLISSEMENT_SEARCH_MIN_LENGTH),
+  search: z
+    .string()
+    .trim()
+    .min(ETABLISSEMENT_SEARCH_MIN_LENGTH)
+    .max(ETABLISSEMENT_SEARCH_MAX_LENGTH),
 });
 
 export type SearchEtablissementsQuery = z.infer<typeof SearchEtablissementsQuerySchema>;

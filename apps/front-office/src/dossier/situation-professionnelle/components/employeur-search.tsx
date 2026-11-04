@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { ETABLISSEMENT_SEARCH_MAX_LENGTH } from "@etape/api-contract";
 import {
   CircleXIcon,
   FilePenLineIcon,
@@ -87,6 +88,7 @@ export function EmployeurSearch({
             aria-invalid={isInvalid || undefined}
             aria-describedby={isInvalid ? ERROR_ID : DESCRIPTION_ID}
             autoComplete="off"
+            maxLength={ETABLISSEMENT_SEARCH_MAX_LENGTH}
             autoFocus={isFocusRequested}
             value={search.searchText}
             {...search.inputHandlers}

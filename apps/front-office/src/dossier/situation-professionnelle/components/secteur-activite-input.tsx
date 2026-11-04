@@ -6,6 +6,7 @@ import {
 } from "@etape/ui/components/combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/components/field";
 import { Input } from "@etape/ui/components/input";
+import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { formatSecteurActivite } from "../domain/secteur-activite";
 import {
@@ -93,6 +94,7 @@ export function SecteurActiviteInput({
           ou un mot-clé.
         </FieldDescription>
       )}
+      <StatusRegion message={search.announcement} />
     </Field>
   );
 }

@@ -24,6 +24,15 @@ export function findSecteursActivite(
   );
 }
 
+/** Le secteur dont le code est exactement celui saisi (`1071C`, `10.71c`), sinon `undefined`. */
+export function findSecteurActiviteByCode(
+  secteurs: readonly SecteurActivite[],
+  search: string,
+): SecteurActivite | undefined {
+  const code = normalize(search);
+  return code === "" ? undefined : secteurs.find((secteur) => normalize(secteur.code) === code);
+}
+
 /** `Boulangerie et boulangerie-pâtisserie (10.71C)`, comme dans la maquette. */
 export function formatSecteurActivite({ code, libelle }: SecteurActivite): string {
   return `${libelle} (${code})`;

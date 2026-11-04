@@ -3,8 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { getSecteursActivite, type SecteurActivite } from "@etape/api-contract";
 
 import { httpClient } from "@/lib/clients";
+import { selectPlural, type PluralForms } from "@/lib/plural";
+import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
-import { findSecteursActivite, formatSecteurActivite } from "../domain/secteur-activite";
+import {
+  findSecteurActiviteByCode,
+  findSecteursActivite,
+  formatSecteurActivite,
+} from "../domain/secteur-activite";
 
 /** Le résumé d'erreurs mène à `#secteurActivite`. */
 export const SECTEUR_ACTIVITE_FIELD_ID = "secteurActivite";
@@ -20,9 +26,28 @@ export const SECTEURS_LOADING_MESSAGE = "Chargement des secteurs d’activité�
 /** Une lettre en retient des centaines sur 732 : au-delà, on invite à préciser la recherche. */
 const SECTEURS_DISPLAY_LIMIT = 50;
 
+/** La liste se filtre à chaque frappe : on n'annonce que le nombre où la saisie s'arrête. */
+const ANNOUNCEMENT_DELAY_MS = 300;
+
+const SECTEUR_FOUND_LABELS: PluralForms<string> = {
+  one: "secteur d’activité trouvé",
+  other: "secteurs d’activité trouvés",
+};
+
 function findEmptyMessage(isPending: boolean, isError: boolean): string {
   if (isPending) return SECTEURS_LOADING_MESSAGE;
   return isError ? SECTEURS_ERROR_MESSAGE : NO_SECTEUR_MESSAGE;
+}
+
+function findAnnouncement(
+  isListOpen: boolean,
+  secteurCount: number,
+  emptyMessage: string,
+  moreMessage: string,
+): string {
+  if (!isListOpen) return "";
+  if (secteurCount === 0) return emptyMessage;
+  return moreMessage || `${secteurCount} ${selectPlural(secteurCount, SECTEUR_FOUND_LABELS)}`;
 }
 
 export interface SecteurActiviteInputHandlers {
@@ -40,6 +65,8 @@ export interface UseSecteurActiviteSearchResult {
   emptyMessage: string;
   /** Sous la liste quand elle est tronquée, vide sinon. */
   moreMessage: string;
+  /** Pour la région `role="status"` : vide tant que la liste est fermée. */
+  announcement: string;
   active: SecteurActivite | null;
   inputHandlers: SecteurActiviteInputHandlers;
   select: (secteur: SecteurActivite) => void;
@@ -74,15 +101,24 @@ export function useSecteurActiviteSearch(
 
   const navigation = useListboxNavigation(secteurs, secteurActiviteOptionId, select);
 
+  const isListOpen = Boolean(searchText?.trim());
+  const emptyMessage = findEmptyMessage(query.isPending, query.isError);
+  const moreMessage =
+    matches.length > secteurs.length
+      ? `${matches.length} secteurs correspondent : précisez votre recherche pour voir les autres.`
+      : "";
+  const announcement = useDebouncedValue(
+    findAnnouncement(isListOpen, secteurs.length, emptyMessage, moreMessage),
+    ANNOUNCEMENT_DELAY_MS,
+  );
+
   return {
     inputText: searchText ?? (selected ? formatSecteurActivite(selected) : ""),
-    isListOpen: Boolean(searchText?.trim()),
+    isListOpen,
     secteurs,
-    emptyMessage: findEmptyMessage(query.isPending, query.isError),
-    moreMessage:
-      matches.length > secteurs.length
-        ? `${matches.length} secteurs correspondent : précisez votre recherche pour voir les autres.`
-        : "",
+    emptyMessage,
+    moreMessage,
+    announcement,
     active: navigation.active,
     inputHandlers: {
       onChange: (event) => {
@@ -95,7 +131,14 @@ export function useSecteurActiviteSearch(
         if (event.key === "Escape") setSearchText(null);
         else navigation.onKeyDown(event);
       },
-      onBlur: () => setSearchText(null),
+      onBlur: () => {
+        // Un code complet tapé sans passer par la liste désigne déjà son secteur.
+        const secteur = searchText
+          ? findSecteurActiviteByCode(query.data ?? [], searchText)
+          : undefined;
+        if (secteur) select(secteur);
+        else setSearchText(null);
+      },
     },
     select,
   };

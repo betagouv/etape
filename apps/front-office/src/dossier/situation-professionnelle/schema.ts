@@ -96,16 +96,13 @@ export const SITUATION_PROFESSIONNELLE_SECTION = {
 export type SituationProfessionnelleSection =
   (typeof SITUATION_PROFESSIONNELLE_SECTION)[keyof typeof SITUATION_PROFESSIONNELLE_SECTION];
 
-/** Champs obligatoires de « Votre emploi » : 2 en recherche, 5 en saisie manuelle (maquettes 01 et 07). */
-const EMPLOI_FIELDS: Record<EmployeurEntryMode, readonly SituationProfessionnelleFieldName[]> = {
-  [EMPLOYEUR_ENTRY_MODE.SEARCH]: ["employeur", "intitulePoste"],
-  [EMPLOYEUR_ENTRY_MODE.MANUAL]: [
-    "denomination",
-    "siret",
-    "secteurActivite",
-    "adresse",
-    "intitulePoste",
-  ],
+/** Les champs exigés par chaque mode de saisie de l'employeur. */
+export const EMPLOYEUR_FIELDS: Record<
+  EmployeurEntryMode,
+  readonly SituationProfessionnelleFieldName[]
+> = {
+  [EMPLOYEUR_ENTRY_MODE.SEARCH]: ["employeur"],
+  [EMPLOYEUR_ENTRY_MODE.MANUAL]: ["denomination", "siret", "secteurActivite", "adresse"],
 };
 
 /** La date n'est exigée qu'après un « oui » (maquette 10). */
@@ -114,7 +111,8 @@ export function findSectionFields(
   demission: Demission | undefined,
 ): Record<SituationProfessionnelleSection, readonly SituationProfessionnelleFieldName[]> {
   return {
-    [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: EMPLOI_FIELDS[mode],
+    // 2 champs en recherche, 5 en saisie manuelle (maquettes 01 et 07).
+    [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: [...EMPLOYEUR_FIELDS[mode], "intitulePoste"],
     [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]:
       demission === DEMISSION.OUI ? ["demission", "dateDemission"] : ["demission"],
   };

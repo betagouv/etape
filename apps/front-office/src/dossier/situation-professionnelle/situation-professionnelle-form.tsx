@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { Controller, useWatch } from "react-hook-form";
 
 import { FieldError, FieldLegend, FieldSet } from "@etape/ui/components/field";
@@ -16,6 +15,7 @@ import { Separator } from "@etape/ui/components/separator";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { DateField, type DateFieldCalendar } from "../components/date-field";
+import { useErrorsAlertFocus } from "../hooks/use-errors-alert-focus";
 import { EmployeurField } from "./components/employeur-field";
 import type { UseSituationProfessionnelleFormResult } from "./hooks/use-situation-professionnelle-form";
 import {
@@ -50,12 +50,7 @@ export function SituationProfessionnelleForm({
   };
   const { submitCount } = form.formState;
   const demission = useWatch({ control: form.control, name: "demission" });
-  const errorsAlertRef = useRef<HTMLDivElement>(null);
-
-  // Comme dans « Mes informations » : le résumé, focalisé à chaque soumission invalide, annonce les erreurs.
-  useEffect(() => {
-    if (submitCount > 0) errorsAlertRef.current?.focus();
-  }, [submitCount]);
+  const errorsAlertRef = useErrorsAlertFocus(submitCount);
 
   return (
     <>

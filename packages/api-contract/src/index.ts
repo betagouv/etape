@@ -12,6 +12,7 @@ export {
 export { buildRoutePath } from "./build-route-path.js";
 export { searchEtablissements } from "./etablissement/etablissement.routes.js";
 export {
+  ETABLISSEMENT_SEARCH_MAX_LENGTH,
   ETABLISSEMENT_SEARCH_MIN_LENGTH,
   EtablissementSchema,
   SearchEtablissementsQuerySchema,
