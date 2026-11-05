@@ -28,7 +28,6 @@ function Prose({
         "[&_address]:not-italic",
 
         "[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4",
-        "[&_a:hover]:text-content-accent-hover",
         "[&_a]:focus-visible:outline-ring [&_a]:rounded-sm [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-2",
 
         className,
