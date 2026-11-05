@@ -39,8 +39,13 @@ const baseInformationsSchema = z.object({
   nir: z
     .string()
     .min(1, "Veuillez saisir votre numéro de sécurité sociale.")
-    .regex(NIR_PATTERN, "Le numéro de sécurité sociale n'est pas valide."),
-  cleNir: z.string().regex(CLE_NIR_PATTERN, "La clé doit comporter 2 chiffres."),
+    .regex(NIR_PATTERN, "Saisissez les 13 premiers chiffres qui figurent sur votre carte Vitale."),
+  cleNir: z
+    .string()
+    .regex(
+      CLE_NIR_PATTERN,
+      "Saisissez les 2 derniers chiffres qui figurent sur votre carte Vitale.",
+    ),
   telephone: z
     .string()
     .min(1, "Veuillez saisir un numéro de téléphone.")
@@ -53,7 +58,8 @@ export const informationsSchema = baseInformationsSchema.superRefine((data, ctx)
     if (!isCleNirValid(data.nir, data.cleNir)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "La clé ne correspond pas au numéro de sécurité sociale.",
+        message:
+          "La clé ne correspond pas au numéro : vérifiez les 2 derniers chiffres de votre carte Vitale.",
         path: ["cleNir"],
       });
     }
