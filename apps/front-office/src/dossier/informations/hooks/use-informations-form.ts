@@ -9,6 +9,7 @@ import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcem
 import { countFilled, countInvalid, listFilledFields } from "../domain/count-fields";
 import {
   INFORMATIONS_FIELD_LABEL,
+  INFORMATIONS_SECTION,
   INFORMATIONS_SECTION_FIELDS,
   informationsSchema,
   type InformationsFieldName,
@@ -91,15 +92,19 @@ export function useInformationsForm(): UseInformationsFormResult {
   });
   const { errors } = form.formState;
 
-  const sections = Object.fromEntries(
-    Object.entries(INFORMATIONS_SECTION_FIELDS).map(([section, fields]) => [
-      section,
-      {
-        remainingFieldCount: fields.length - countFilled(filledFields, fields),
-        errorCount: countInvalid(errors, fields),
-      },
-    ]),
-  ) as Record<InformationsSection, SectionProgress>;
+  const computeSectionProgress = (section: InformationsSection): SectionProgress => {
+    const fields = INFORMATIONS_SECTION_FIELDS[section];
+    return {
+      remainingFieldCount: fields.length - countFilled(filledFields, fields),
+      errorCount: countInvalid(errors, fields),
+    };
+  };
+
+  // Un littéral plutôt qu'un `Object.fromEntries` casté : une section ajoutée sans compteur ne compile pas.
+  const sections: Record<InformationsSection, SectionProgress> = {
+    [INFORMATIONS_SECTION.IDENTITE]: computeSectionProgress(INFORMATIONS_SECTION.IDENTITE),
+    [INFORMATIONS_SECTION.CONTACT]: computeSectionProgress(INFORMATIONS_SECTION.CONTACT),
+  };
 
   const voletErrors: VoletError[] = Object.entries(errors).map(([fieldId, error]) => ({
     fieldId,
