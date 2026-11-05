@@ -218,9 +218,9 @@ function FieldSeparator({
 
 /*
  * En gris et sans `role="alert"`, contrairement à la source shadcn, comme le
- * message d'un champ invalide du kit. L'annonce passe par le résumé d'erreurs de
- * l'écran (`VoletErrorsAlert` au front-office), focalisé à la soumission ; chaque
- * champ relie ensuite son message par `aria-describedby`.
+ * message d'un champ invalide du kit. L'annonce revient à l'écran qui l'emploie :
+ * un résumé d'erreurs focalisé à la soumission (`stack-front.md`, décision 1).
+ * Chaque champ relie son message par `aria-describedby`.
  */
 function FieldError({
   className,
