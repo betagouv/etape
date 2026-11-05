@@ -19,7 +19,6 @@ const LABEL_ID = `${FIELD_ID}-label`;
 const VALUE_ID = `${FIELD_ID}-value`;
 const DESCRIPTION_ID = `${FIELD_ID}-description`;
 const ERROR_ID = `${FIELD_ID}-error`;
-const DATE_NAISSANCE_BOUNDS = computeDateNaissanceBounds(new Date());
 const DEFAULT_MONTH = new Date(1990, 0);
 
 export interface DateNaissanceInputProps {
@@ -40,14 +39,22 @@ export function DateNaissanceInput({
   error,
 }: DateNaissanceInputProps) {
   const [isOpen, setOpen] = useState(false);
+  // Recalculées à chaque ouverture, comme le schéma à chaque validation : un onglet resté
+  // ouvert après minuit ne propose pas une date que le schéma refuserait.
+  const [bounds, setBounds] = useState(() => computeDateNaissanceBounds(new Date()));
   const selectedDate = parseDateNaissance(value);
+
+  const handleOpenChange = (open: boolean): void => {
+    if (open) setBounds(computeDateNaissanceBounds(new Date()));
+    setOpen(open);
+  };
 
   return (
     <Field data-invalid={isInvalid}>
       <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID} required>
         {INFORMATIONS_FIELD_LABEL.dateNaissance}
       </FieldLabel>
-      <Popover open={isOpen} onOpenChange={setOpen}>
+      <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <InputGroup>
           <PopoverTrigger asChild>
             <InputGroupTrigger
@@ -89,9 +96,9 @@ export function DateNaissanceInput({
             }}
             selected={selectedDate}
             defaultMonth={selectedDate ?? DEFAULT_MONTH}
-            startMonth={DATE_NAISSANCE_BOUNDS.min}
-            endMonth={DATE_NAISSANCE_BOUNDS.max}
-            disabled={{ before: DATE_NAISSANCE_BOUNDS.min, after: DATE_NAISSANCE_BOUNDS.max }}
+            startMonth={bounds.min}
+            endMonth={bounds.max}
+            disabled={{ before: bounds.min, after: bounds.max }}
             onSelect={(date) => {
               if (date) {
                 onChange(formatDateNaissance(date));
