@@ -24,7 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { Separator } from "@etape/ui/components/separator";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
-import { PROFIL_PATH } from "@/navigation/paths";
+import { ACCOUNT_PATH } from "@/navigation/paths";
 import { DateNaissanceInput } from "./components/date-naissance-input";
 import { DescriptionSupport } from "./components/description-support";
 import { NationaliteInput } from "./components/nationalite-input";
@@ -234,7 +234,7 @@ export function InformationsForm({
             </InputGroup>
             <FieldDescription>
               Cette adresse provient de votre profil.{" "}
-              <Link to={PROFIL_PATH}>Modifier mon adresse dans mon profil</Link>
+              <Link to={ACCOUNT_PATH}>Modifier mon adresse dans mon profil</Link>
             </FieldDescription>
           </Field>
         </FormSection>
