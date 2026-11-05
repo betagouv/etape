@@ -48,6 +48,19 @@ const STATUT_LABELS: Record<StatutVolet, (progress: VoletProgress) => string> = 
   [STATUT_VOLET.FACULTATIF]: () => "Facultatif",
 };
 
+// Distinctes des libellés (`accessibilite.md`, § 3) : une phrase reprend les deux lignes du statut.
+const STATUT_ANNOUNCEMENTS: Record<StatutVolet, (progress: VoletProgress) => string> = {
+  [STATUT_VOLET.A_REMPLIR]: () => "à remplir",
+  [STATUT_VOLET.EN_COURS]: ({ remainingFieldCount }) =>
+    formatCount(remainingFieldCount, REMAINING_FIELD_LABELS),
+  [STATUT_VOLET.A_CORRIGER]: ({ errorCount, remainingFieldCount }) =>
+    remainingFieldCount > 0
+      ? `${formatCount(errorCount, ERROR_LABELS)} et ${formatCount(remainingFieldCount, REMAINING_FIELD_LABELS)}`
+      : formatCount(errorCount, ERROR_LABELS),
+  [STATUT_VOLET.COMPLET]: () => "complet",
+  [STATUT_VOLET.FACULTATIF]: () => "facultatif",
+};
+
 // Un volet sans champ obligatoire ne bloque pas la soumission du dossier.
 const IS_COMPLETED_BY_STATUT: Record<StatutVolet, boolean> = {
   [STATUT_VOLET.A_REMPLIR]: false,
@@ -89,4 +102,9 @@ export function listStatutVoletLines(progress: VoletProgress): StatutVoletLine[]
   }
 
   return lines;
+}
+
+/** Annonce du statut, pour la région `role="status"` de l'écran : « Mes informations : complet. » */
+export function formatStatutVoletAnnouncement(voletLabel: string, progress: VoletProgress): string {
+  return `${voletLabel} : ${STATUT_ANNOUNCEMENTS[getStatutVolet(progress)](progress)}.`;
 }

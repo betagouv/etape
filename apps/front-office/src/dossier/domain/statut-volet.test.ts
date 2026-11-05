@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatStatutVoletAnnouncement,
   getStatutVolet,
   isVoletCompleted,
   listStatutVoletLines,
@@ -122,5 +123,46 @@ describe("listStatutVoletLines", () => {
         errorCount: 3,
       }),
     ).toEqual([{ statut: STATUT_VOLET.A_CORRIGER, label: "3 erreurs à corriger" }]);
+  });
+});
+
+describe("formatStatutVoletAnnouncement", () => {
+  it("annonce le statut en une phrase, précédé du nom du volet", () => {
+    expect(formatStatutVoletAnnouncement("Mes informations", A_REMPLIR)).toBe(
+      "Mes informations : à remplir.",
+    );
+    expect(
+      formatStatutVoletAnnouncement("Mes informations", {
+        ...A_REMPLIR,
+        filledFieldCount: 4,
+        remainingFieldCount: 1,
+      }),
+    ).toBe("Mes informations : 1 champ restant.");
+    expect(
+      formatStatutVoletAnnouncement("Mes informations", {
+        ...A_REMPLIR,
+        filledFieldCount: 5,
+        remainingFieldCount: 0,
+      }),
+    ).toBe("Mes informations : complet.");
+  });
+
+  it("réunit erreurs et champs restants", () => {
+    expect(
+      formatStatutVoletAnnouncement("Mes informations", {
+        ...A_REMPLIR,
+        filledFieldCount: 3,
+        remainingFieldCount: 2,
+        errorCount: 1,
+      }),
+    ).toBe("Mes informations : 1 erreur à corriger et 2 champs restants.");
+    expect(
+      formatStatutVoletAnnouncement("Mes informations", {
+        ...A_REMPLIR,
+        filledFieldCount: 5,
+        remainingFieldCount: 0,
+        errorCount: 3,
+      }),
+    ).toBe("Mes informations : 3 erreurs à corriger.");
   });
 });
