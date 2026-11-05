@@ -44,7 +44,7 @@ import {
   type InformationsFormData,
 } from "./schema";
 
-export interface InformationsPreRemplies {
+export interface InformationsPrefilledValues {
   nom: string;
   prenom: string;
   email: string;
@@ -54,7 +54,7 @@ export interface InformationsPreRemplies {
 export interface InformationsFormProps {
   formId: string;
   informations: UseInformationsFormResult;
-  preRemplies: InformationsPreRemplies;
+  prefilledValues: InformationsPrefilledValues;
   supportEmail: string;
   notice?: VoletNoticeContent;
   onSubmitValid: (data: InformationsFormData) => void;
@@ -67,7 +67,7 @@ const CIVILITE_ERROR_ID = `${CIVILITE_FIELD_ID}-error`;
 export function InformationsForm({
   formId,
   informations,
-  preRemplies,
+  prefilledValues,
   supportEmail,
   notice,
   onSubmitValid,
@@ -146,13 +146,13 @@ export function InformationsForm({
           <div className="grid gap-5 sm:grid-cols-2">
             <Field data-disabled>
               <FieldLabel htmlFor="nom">Nom</FieldLabel>
-              <Input id="nom" value={preRemplies.nom} disabled />
+              <Input id="nom" value={prefilledValues.nom} disabled />
               <DescriptionSupport email={supportEmail} />
             </Field>
 
             <Field data-disabled>
               <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
-              <Input id="prenom" value={preRemplies.prenom} disabled />
+              <Input id="prenom" value={prefilledValues.prenom} disabled />
               <DescriptionSupport email={supportEmail} />
             </Field>
 
@@ -230,7 +230,7 @@ export function InformationsForm({
               <InputGroupAddon>
                 <SearchIcon aria-hidden="true" />
               </InputGroupAddon>
-              <InputGroupInput id="adresse" value={preRemplies.adresse} disabled />
+              <InputGroupInput id="adresse" value={prefilledValues.adresse} disabled />
             </InputGroup>
             <FieldDescription>
               Cette adresse provient de votre profil.{" "}
@@ -254,7 +254,7 @@ export function InformationsForm({
                 <InputGroupAddon>
                   <MailIcon aria-hidden="true" />
                 </InputGroupAddon>
-                <InputGroupInput id="email" value={preRemplies.email} disabled />
+                <InputGroupInput id="email" value={prefilledValues.email} disabled />
               </InputGroup>
               <DescriptionSupport email={supportEmail} />
             </Field>
