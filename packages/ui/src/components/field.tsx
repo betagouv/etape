@@ -21,21 +21,29 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   );
 }
 
+const fieldLegendVariants = cva("mb-3 font-medium", {
+  variants: {
+    variant: {
+      legend: "text-base",
+      label: "text-sm",
+    },
+  },
+  defaultVariants: {
+    variant: "legend",
+  },
+});
+
 function FieldLegend({
   className,
   variant = "legend",
   ...props
-}: React.ComponentProps<"legend"> & { variant?: "legend" | "label" }) {
+}: React.ComponentProps<"legend"> & VariantProps<typeof fieldLegendVariants>) {
   return (
     <legend
       data-slot="field-legend"
+      // `FieldDescription` s'en sert comme sélecteur.
       data-variant={variant}
-      className={cn(
-        "mb-3 font-medium",
-        "data-[variant=legend]:text-base",
-        "data-[variant=label]:text-sm",
-        className,
-      )}
+      className={cn(fieldLegendVariants({ variant }), className)}
       {...props}
     />
   );
