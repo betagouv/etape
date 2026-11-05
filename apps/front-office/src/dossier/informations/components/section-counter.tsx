@@ -4,17 +4,13 @@ import { CircleAlertIcon, InfoIcon, type LucideIcon } from "lucide-react";
 import { Tag } from "@etape/ui/components/tag";
 
 import { selectPlural, type PluralForms } from "@/lib/plural";
-import { ERROR_LABELS, REMAINING_FIELD_LABELS } from "../../domain/statut-volet";
+import { ERROR_LABELS, REMAINING_FIELD_LABELS, STATUT_VOLET } from "../../domain/statut-volet";
 import type { SectionProgress } from "../hooks/use-informations-form";
 
 type TagStatus = NonNullable<ComponentProps<typeof Tag>["status"]>;
 
-const COUNTER_KIND = {
-  ERREURS: "erreurs",
-  RESTANTS: "restants",
-} as const;
-
-type CounterKind = (typeof COUNTER_KIND)[keyof typeof COUNTER_KIND];
+/** Les deux statuts du volet qu'une section reprend ; complète, elle n'affiche rien. */
+type CounterStatut = typeof STATUT_VOLET.A_CORRIGER | typeof STATUT_VOLET.EN_COURS;
 
 interface CounterUi {
   Icon: LucideIcon;
@@ -23,14 +19,14 @@ interface CounterUi {
   count: (progress: SectionProgress) => number;
 }
 
-const COUNTER_UI: Record<CounterKind, CounterUi> = {
-  [COUNTER_KIND.ERREURS]: {
+const COUNTER_UI: Record<CounterStatut, CounterUi> = {
+  [STATUT_VOLET.A_CORRIGER]: {
     Icon: CircleAlertIcon,
     status: "error",
     labels: ERROR_LABELS,
     count: ({ errorCount }) => errorCount,
   },
-  [COUNTER_KIND.RESTANTS]: {
+  [STATUT_VOLET.EN_COURS]: {
     Icon: InfoIcon,
     status: "primary",
     labels: REMAINING_FIELD_LABELS,
@@ -39,9 +35,12 @@ const COUNTER_UI: Record<CounterKind, CounterUi> = {
 };
 
 /** Les erreurs l'emportent sur les champs restants, comme dans le statut du volet. */
-function getCounterKind({ errorCount, remainingFieldCount }: SectionProgress): CounterKind | null {
-  if (errorCount > 0) return COUNTER_KIND.ERREURS;
-  if (remainingFieldCount > 0) return COUNTER_KIND.RESTANTS;
+function getCounterStatut({
+  errorCount,
+  remainingFieldCount,
+}: SectionProgress): CounterStatut | null {
+  if (errorCount > 0) return STATUT_VOLET.A_CORRIGER;
+  if (remainingFieldCount > 0) return STATUT_VOLET.EN_COURS;
   return null;
 }
 
@@ -50,10 +49,10 @@ export interface SectionCounterProps {
 }
 
 export function SectionCounter({ progress }: SectionCounterProps) {
-  const kind = getCounterKind(progress);
-  if (kind === null) return null;
+  const statut = getCounterStatut(progress);
+  if (statut === null) return null;
 
-  const { Icon, status, labels, count } = COUNTER_UI[kind];
+  const { Icon, status, labels, count } = COUNTER_UI[statut];
   const value = count(progress);
 
   return (
