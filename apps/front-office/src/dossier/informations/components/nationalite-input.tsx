@@ -97,6 +97,7 @@ export function NationaliteInput({
           variant="list"
           align="start"
           className="w-[var(--radix-popover-trigger-width)]"
+          aria-label="Choisir une nationalité"
           // Quitter la liste ouverte (clic ou tabulation ailleurs) quitte le champ, sauf vers son bouton.
           onInteractOutside={(event) => {
             if (!(event.target instanceof Element && event.target.closest(`#${FIELD_ID}`)))
