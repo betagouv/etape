@@ -369,7 +369,7 @@ export default function Register(props: RegisterProps) {
               size="form"
               aria-disabled={form.isSubmitBlocked}
               aria-busy={form.isSubmitting}
-              className="w-full aria-busy:cursor-progress"
+              className="w-full"
             >
               {msg("doRegister")}
             </Button>

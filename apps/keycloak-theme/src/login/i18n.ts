@@ -85,6 +85,8 @@ const { useI18n, ofTypeI18n } = i18nBuilder
         "Vous pouvez saisir vous-même votre adresse. Elle sera vérifiée de la même façon pour confirmer votre région.",
       etapeAdresseManual: "Saisir mon adresse moi-même",
       etapeAdresseRetry: "Relancer la recherche",
+      etapeAdresseManualLoading: "Chargement du formulaire…",
+      etapeAdresseManualLoadFailed: "Le formulaire de saisie n'a pas pu se charger.",
       etapeAdresseHorsRegionTitle:
         "Cette adresse n'est pas située dans une région présente sur ce portail",
       etapeAdresseHorsRegionHint:
@@ -237,6 +239,8 @@ const { useI18n, ofTypeI18n } = i18nBuilder
         "You can enter your address yourself. It will be checked the same way to confirm your region.",
       etapeAdresseManual: "Enter my address myself",
       etapeAdresseRetry: "Retry the search",
+      etapeAdresseManualLoading: "Loading the form…",
+      etapeAdresseManualLoadFailed: "The entry form could not be loaded.",
       etapeAdresseHorsRegionTitle: "This address is not in a region covered by this portal",
       etapeAdresseHorsRegionHint:
         "Your file falls under Transitions Pro {0}: please apply on its website.",

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { parseAdresses, toSearchQuery } from "./adresse-api";
+import { findAdresses, parseAdresses, toSearchQuery } from "./adresse-api";
 
 const feature = (properties: Record<string, string>) => ({ properties });
 const PARIS = { postcode: "75002", city: "Paris", citycode: "75102" };
@@ -41,6 +41,30 @@ describe("parseAdresses", () => {
 
   it("refuse une réponse inattendue", () => {
     expect(() => parseAdresses({})).toThrow();
+  });
+});
+
+describe("findAdresses", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("n'appelle pas l'API quand il ne reste rien à chercher", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(findAdresses("-ab", new AbortController().signal)).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("envoie la requête nettoyée", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ features: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await findAdresses("-rue victor", new AbortController().signal);
+
+    const url = fetchMock.mock.calls[0]?.[0] as URL;
+    expect(url.searchParams.get("q")).toBe("rue victor");
   });
 });
 

@@ -2,7 +2,6 @@ import { Button } from "@etape/ui/components/button";
 import { ComboboxList, ComboboxOption } from "@etape/ui/components/combobox";
 import { StatusRegion } from "@etape/ui/components/status-region";
 import { ExternalLink, FilePenLine, RefreshCw, Search, X } from "lucide-react";
-import { lazy, Suspense } from "react";
 
 import { ADRESSE_SEARCH_STATUS, type AdresseSearchStatus } from "../../hooks/use-adresse-search";
 import { ADRESSE_SEARCH_INPUT_ID, type UseAdresseFieldResult } from "../../hooks/use-adresse-field";
@@ -10,9 +9,8 @@ import type { I18n } from "../../i18n";
 import { Alert, MESSAGE_TYPE } from "../alert";
 import { Field, FieldError, TextInput } from "../form";
 import { ADRESSE_ATTRIBUTE } from "./adresse";
+import { ManualAdresseLoader } from "./manual-adresse-loader";
 import { type RegionCode, REGIONS, TRANSITIONS_PRO_CONTACTS_URL } from "./region";
-
-const ManualAdresseForm = lazy(() => import("./manual-adresse-form"));
 
 const SUGGESTIONS_ID = "adresse-suggestions";
 const SINGLE_RESULT = 1;
@@ -31,9 +29,7 @@ export function AdresseField(props: {
   return (
     <div className="flex flex-col gap-4">
       {isManual ? (
-        <Suspense>
-          <ManualAdresseForm manual={manual} i18n={i18n} />
-        </Suspense>
+        <ManualAdresseLoader manual={manual} i18n={i18n} />
       ) : (
         <AdresseSearch
           field={field}

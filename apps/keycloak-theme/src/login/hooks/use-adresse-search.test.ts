@@ -47,10 +47,16 @@ describe("useAdresseSearch", () => {
     const { result } = renderHook(() => useAdresseSearch(null));
 
     act(() => result.current.changeText(typed("12 rue")));
-    expect(search).not.toHaveBeenCalled();
     expect(result.current.status).toBe(ADRESSE_SEARCH_STATUS.SEARCHING);
 
-    await passDebounce();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DEBOUNCE_MS - 1);
+    });
+    expect(search).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
     expect(search).toHaveBeenCalledOnce();
     expect(result.current.status).toBe(ADRESSE_SEARCH_STATUS.FOUND);
   });
@@ -133,7 +139,9 @@ describe("useAdresseSearch", () => {
     act(() => result.current.handleBlur());
     expect(result.current.isOpen).toBe(false);
 
+    act(() => result.current.handleFocus());
     act(() => result.current.changeText(typed("12 rue de")));
+    act(() => result.current.handleBlur());
     await passDebounce();
     expect(result.current.status).toBe(ADRESSE_SEARCH_STATUS.FOUND);
     expect(result.current.isOpen).toBe(false);
