@@ -4,6 +4,7 @@ import {
   type FocusEvent,
   type FormEvent,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -22,7 +23,7 @@ export const LOGIN_FIELD = {
 export type LoginField = (typeof LOGIN_FIELD)[keyof typeof LOGIN_FIELD];
 
 const AUTOFILL_ANIMATION = "etape-autofill";
-const PRESSED_ACTION_SELECTOR = "a:active, button:active";
+const ACTION_SELECTOR = "a, button";
 
 interface UseLoginFormOptions {
   initialUsername: string;
@@ -52,9 +53,26 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasEmailFormatError, setHasEmailFormatError] = useState(false);
   const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
+  const isActionPressed = useRef(false);
 
   useEffect(() => {
     forgetSubmittedForm();
+  }, []);
+
+  useEffect(() => {
+    const press = (event: MouseEvent): void => {
+      isActionPressed.current =
+        event.target instanceof Element && event.target.closest(ACTION_SELECTOR) !== null;
+    };
+    const release = (): void => {
+      isActionPressed.current = false;
+    };
+    document.addEventListener("mousedown", press, true);
+    document.addEventListener("mouseup", release, true);
+    return () => {
+      document.removeEventListener("mousedown", press, true);
+      document.removeEventListener("mouseup", release, true);
+    };
   }, []);
 
   const isFilled = (hasUsername: boolean, hasPassword: boolean): boolean =>
@@ -91,7 +109,7 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
       if (event.animationName === AUTOFILL_ANIMATION) markFilled(field, true);
     },
     checkEmailFormat: (event) => {
-      if (document.querySelector(PRESSED_ACTION_SELECTOR) !== null) return;
+      if (isActionPressed.current) return;
       setHasEmailFormatError(isEmailFormatWrong(event.currentTarget.value));
     },
     submit: (event) => {
