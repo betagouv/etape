@@ -41,7 +41,10 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
    * « mot de passe incorrect » révélerait que l'adresse existe. L'erreur porte
    * donc sur les deux champs à la fois.
    */
-  const hasCredentialsError = messagesPerField.existsError("username", "password");
+  const hasCredentialsError = messagesPerField.existsError(
+    LOGIN_FIELD.USERNAME,
+    LOGIN_FIELD.PASSWORD,
+  );
 
   const isRegistrationAllowed = realm.registrationAllowed && !registrationDisabled;
 
@@ -116,8 +119,8 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                     autoComplete="username"
                     aria-required
                     aria-describedby={usernameDescribedBy}
-                    value={form.username}
-                    onChange={(event) => form.changeUsername(event.target.value)}
+                    defaultValue={login.username ?? ""}
+                    onChange={form.changeUsername}
                     onAnimationStart={form.detectAutofill(LOGIN_FIELD.USERNAME)}
                     onBlur={form.checkEmailFormat}
                     invalid={form.hasEmailFormatError}
@@ -147,8 +150,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                   autoComplete="current-password"
                   aria-required
                   aria-describedby={hasCredentialsError ? CREDENTIALS_ERROR_ID : undefined}
-                  value={form.password}
-                  onChange={(event) => form.changePassword(event.target.value)}
+                  onChange={form.changePassword}
                   onAnimationStart={form.detectAutofill(LOGIN_FIELD.PASSWORD)}
                 />
               </Field>
@@ -158,7 +160,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
               <Alert
                 id={CREDENTIALS_ERROR_ID}
                 type={MESSAGE_TYPE.ERROR}
-                summary={messagesPerField.getFirstError("username", "password")}
+                summary={messagesPerField.getFirstError(LOGIN_FIELD.USERNAME, LOGIN_FIELD.PASSWORD)}
               />
             )}
           </div>

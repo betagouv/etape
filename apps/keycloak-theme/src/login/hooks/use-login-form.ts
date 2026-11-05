@@ -1,4 +1,11 @@
-import { type AnimationEvent, type FormEvent, useEffect, useState } from "react";
+import {
+  type AnimationEvent,
+  type ChangeEvent,
+  type FocusEvent,
+  type FormEvent,
+  useEffect,
+  useState,
+} from "react";
 
 import { isEmailFormatValid } from "../components/email-format";
 import {
@@ -23,29 +30,23 @@ interface UseLoginFormOptions {
 }
 
 export interface UseLoginFormResult {
-  username: string;
-  password: string;
   isSubmittable: boolean;
   isSubmitting: boolean;
   hasEmailFormatError: boolean;
-  changeUsername: (value: string) => void;
-  changePassword: (value: string) => void;
+  changeUsername: (event: ChangeEvent<HTMLInputElement>) => void;
+  changePassword: (event: ChangeEvent<HTMLInputElement>) => void;
   detectAutofill: (field: LoginField) => (event: AnimationEvent<HTMLInputElement>) => void;
-  checkEmailFormat: () => void;
+  checkEmailFormat: (event: FocusEvent<HTMLInputElement>) => void;
   submit: (event: FormEvent<HTMLFormElement>) => void;
 }
-
-const NO_AUTOFILL: Record<LoginField, boolean> = {
-  [LOGIN_FIELD.USERNAME]: false,
-  [LOGIN_FIELD.PASSWORD]: false,
-};
 
 export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
   const { initialUsername, isUsernameHidden, shouldCheckEmailFormat } = options;
 
-  const [username, setUsername] = useState(initialUsername);
-  const [password, setPassword] = useState("");
-  const [autofilled, setAutofilled] = useState(NO_AUTOFILL);
+  const [filled, setFilled] = useState<Record<LoginField, boolean>>({
+    [LOGIN_FIELD.USERNAME]: initialUsername.trim() !== "",
+    [LOGIN_FIELD.PASSWORD]: false,
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasEmailFormatError, setHasEmailFormatError] = useState(false);
 
@@ -62,33 +63,26 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
     value.trim() !== "" &&
     !isEmailFormatValid(value);
 
-  const clearAutofill = (field: LoginField): void =>
-    setAutofilled((current) => (current[field] ? { ...current, [field]: false } : current));
+  const markFilled = (field: LoginField, isFieldFilled: boolean): void =>
+    setFilled((current) =>
+      current[field] === isFieldFilled ? current : { ...current, [field]: isFieldFilled },
+    );
 
   return {
-    username,
-    password,
-    isSubmittable: isFilled(
-      autofilled[LOGIN_FIELD.USERNAME] || username.trim() !== "",
-      autofilled[LOGIN_FIELD.PASSWORD] || password !== "",
-    ),
+    isSubmittable: isFilled(filled[LOGIN_FIELD.USERNAME], filled[LOGIN_FIELD.PASSWORD]),
     isSubmitting,
     hasEmailFormatError,
-    changeUsername: (value) => {
-      clearAutofill(LOGIN_FIELD.USERNAME);
-      setUsername(value);
+    changeUsername: (event) => {
+      const { value } = event.currentTarget;
+      markFilled(LOGIN_FIELD.USERNAME, value.trim() !== "");
       if (hasEmailFormatError && !isEmailFormatWrong(value)) setHasEmailFormatError(false);
     },
-    changePassword: (value) => {
-      clearAutofill(LOGIN_FIELD.PASSWORD);
-      setPassword(value);
-    },
+    changePassword: (event) => markFilled(LOGIN_FIELD.PASSWORD, event.currentTarget.value !== ""),
     detectAutofill: (field) => (event) => {
-      if (event.animationName === AUTOFILL_ANIMATION) {
-        setAutofilled((current) => ({ ...current, [field]: true }));
-      }
+      if (event.animationName === AUTOFILL_ANIMATION) markFilled(field, true);
     },
-    checkEmailFormat: () => setHasEmailFormatError(isEmailFormatWrong(username)),
+    checkEmailFormat: (event) =>
+      setHasEmailFormatError(isEmailFormatWrong(event.currentTarget.value)),
     submit: (event) => {
       const form = event.currentTarget;
       const data = new FormData(form);

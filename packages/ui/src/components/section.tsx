@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { focusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 import { Container, type ContainerSize } from "@etape/ui/components/container";
 
@@ -48,43 +49,91 @@ function Section({
   );
 }
 
+const sectionHeaderVariants = cva("flex flex-col gap-2", {
+  variants: {
+    variant: {
+      default: "lg:gap-4",
+      compact: "",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+/** Chapô de `SectionHeader`, exporté pour un libellé de même rang hors en-tête. */
+const sectionCaptionVariants = cva("uppercase", {
+  variants: {
+    variant: {
+      default: "text-caption text-primary font-medium tracking-wide",
+      compact: "text-muted-foreground text-sm leading-none font-semibold",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+const sectionSubtextVariants = cva("text-muted-foreground", {
+  variants: {
+    variant: {
+      default: "text-body-lg",
+      compact: "text-sm",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
 /**
  * En-tête de section. Le chapô est un `<p>` et jamais un titre : il n'ouvre pas
- * de niveau dans le plan du document.
+ * de niveau dans le plan du document. Avec `titleRef`, le titre peut recevoir
+ * le focus par script, sans entrer dans l'ordre de tabulation.
  */
 function SectionHeader({
   caption,
   title,
   titleId,
+  titleRef,
   subtext,
   align = "center",
+  variant,
   className,
   ...props
-}: Omit<React.ComponentProps<"div">, "children"> & {
-  caption?: React.ReactNode;
-  title: React.ReactNode;
-  titleId: string;
-  subtext?: React.ReactNode;
-  align?: "center" | "start";
-}) {
+}: Omit<React.ComponentProps<"div">, "children"> &
+  VariantProps<typeof sectionHeaderVariants> & {
+    caption?: React.ReactNode;
+    title: React.ReactNode;
+    titleId: string;
+    titleRef?: React.Ref<HTMLHeadingElement>;
+    subtext?: React.ReactNode;
+    align?: "center" | "start";
+  }) {
+  const isTitleFocusable = titleRef !== undefined;
+
   return (
     <div
       data-slot="section-header"
+      data-variant={variant}
       className={cn(
-        "flex flex-col gap-2 lg:gap-4",
+        sectionHeaderVariants({ variant }),
         align === "center" ? "items-center text-center" : "items-start text-left",
         className,
       )}
       {...props}
     >
-      {caption ? (
-        <p className="text-caption text-primary font-medium tracking-wide uppercase">{caption}</p>
-      ) : null}
-      <h2 id={titleId} className="font-heading text-heading-sm">
+      {caption ? <p className={sectionCaptionVariants({ variant })}>{caption}</p> : null}
+      <h2
+        id={titleId}
+        ref={titleRef}
+        tabIndex={isTitleFocusable ? -1 : undefined}
+        className={cn("font-heading text-heading-sm", isTitleFocusable && focusRing)}
+      >
         {title}
       </h2>
       {subtext ? (
-        <p className={cn("text-body-lg text-muted-foreground", align === "center" && "max-w-3xl")}>
+        <p className={cn(sectionSubtextVariants({ variant }), align === "center" && "max-w-3xl")}>
           {subtext}
         </p>
       ) : null}
@@ -92,4 +141,4 @@ function SectionHeader({
   );
 }
 
-export { Section, SectionHeader, sectionVariants };
+export { Section, SectionHeader, sectionCaptionVariants, sectionVariants };

@@ -30,7 +30,20 @@
     },
     "start": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      /*
+       * `pnpm run dev:tunnel` remplace les URL locales par celles du tunnel.
+       * Turborepo ne transmet aux tâches que les variables déclarées : sans
+       * cette liste, l'API et Vite garderaient `localhost`.
+       */
+      "passThroughEnv": [
+        "ETAPE_TUNNEL_HOSTS",
+        "FRONT_OFFICE_BASE_URL",
+        "FRONT_OFFICE_API_BASE_URL",
+        "BACK_OFFICE_BASE_URL",
+        "BACK_OFFICE_API_BASE_URL",
+        "KEYCLOAK_URL"
+      ]
     }
   }
 }
