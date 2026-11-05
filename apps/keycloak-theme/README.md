@@ -126,9 +126,10 @@ formulaire de l'écran 07.
 ## Formulaire de connexion : erreurs et envoi incomplet
 
 L'adresse est contrôlée à la sortie du champ, mais pas quand cette sortie vient
-d'un appui sur un lien ou un bouton (`a:active, button:active`) : l'erreur en
-s'insérant décalerait la page, et le clic tomberait à côté de sa cible. L'envoi
-contrôle de toute façon le format.
+d'un appui sur un lien ou un bouton : l'erreur en s'insérant décalerait la page,
+et le clic tomberait à côté de sa cible. L'appui se repère par `mousedown`, qui
+précède la sortie du champ dans tous les navigateurs ; `:active` n'offre pas cette
+garantie. L'envoi contrôle de toute façon le format.
 
 Un envoi incomplet (Entrée, ou clic sur le bouton grisé) reste bloqué : le focus
 part sur le premier champ vide et une région `role="status"` dit quoi faire. Le
