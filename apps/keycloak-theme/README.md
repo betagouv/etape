@@ -123,6 +123,17 @@ formulaire de l'écran 07.
 - **Un lien déjà utilisé ou remplacé par un renvoi** arrive sur `error.ftl` avec
   `expiredActionMessage`, que `Error.tsx` traite comme un lien expiré.
 
+## Formulaire de connexion : erreurs et envoi incomplet
+
+L'adresse est contrôlée à la sortie du champ, mais pas quand cette sortie vient
+d'un appui sur un lien ou un bouton (`a:active, button:active`) : l'erreur en
+s'insérant décalerait la page, et le clic tomberait à côté de sa cible. L'envoi
+contrôle de toute façon le format.
+
+Un envoi incomplet (Entrée, ou clic sur le bouton grisé) reste bloqué : le focus
+part sur le premier champ vide et une région `role="status"` dit quoi faire. Le
+bouton porte le même texte en `aria-describedby`.
+
 ## Vérification d'adresse : deux écrans pour une seule page
 
 Keycloak affiche `login-verify-email.ftl` dans deux cas : juste après une
