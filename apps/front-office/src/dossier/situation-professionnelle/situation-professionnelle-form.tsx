@@ -93,7 +93,7 @@ export function SituationProfessionnelleForm({
 
           <FieldSet>
             <FieldLegend variant="label" required>
-              {SITUATION_PROFESSIONNELLE_FIELD_LABEL.demission}
+              Avez-vous déjà remis votre démission à votre employeur ?
             </FieldLegend>
             <Controller
               name="demission"
