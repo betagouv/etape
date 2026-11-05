@@ -21,6 +21,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/componen
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { Separator } from "@etape/ui/components/separator";
+import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { PROFIL_PATH } from "@/navigation/paths";
 import { DateField, type DateFieldCalendar } from "../components/date-field";
@@ -88,9 +89,7 @@ export function InformationsForm({
   return (
     <>
       <VoletErrorsAlert ref={errorsAlertRef} errors={submittedErrors} />
-      <p role="status" className="sr-only">
-        {errorAnnouncement}
-      </p>
+      <StatusRegion message={errorAnnouncement} />
       <VoletNotice notice={notice} />
 
       <form
