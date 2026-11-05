@@ -30,6 +30,7 @@ import {
   SEARCH_STATUS,
   type UseEmployeurSearchResult,
 } from "../hooks/use-employeur-search";
+import { SITUATION_PROFESSIONNELLE_FIELD_LABEL } from "../schema";
 
 const DESCRIPTION_ID = `${EMPLOYEUR_FIELD_ID}-description`;
 const ERROR_ID = `${EMPLOYEUR_FIELD_ID}-error`;
@@ -66,7 +67,7 @@ export function EmployeurSearch({
   return (
     <Field data-invalid={isInvalid}>
       <FieldLabel htmlFor={EMPLOYEUR_FIELD_ID} required>
-        Votre employeur
+        {SITUATION_PROFESSIONNELLE_FIELD_LABEL.employeur}
       </FieldLabel>
       {/* La liste reste ouverte tant que le focus est dans le champ ou dans la liste : le bouton de l'alerte doit rester atteignable. */}
       <div

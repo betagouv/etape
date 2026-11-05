@@ -14,6 +14,7 @@ import {
   secteurActiviteOptionId,
   useSecteurActiviteSearch,
 } from "../hooks/use-secteur-activite-search";
+import { SITUATION_PROFESSIONNELLE_FIELD_LABEL } from "../schema";
 
 const DESCRIPTION_ID = `${SECTEUR_ACTIVITE_FIELD_ID}-description`;
 const ERROR_ID = `${SECTEUR_ACTIVITE_FIELD_ID}-error`;
@@ -41,7 +42,7 @@ export function SecteurActiviteInput({
   return (
     <Field data-invalid={isInvalid}>
       <FieldLabel htmlFor={SECTEUR_ACTIVITE_FIELD_ID} required>
-        Secteur d’activité
+        {SITUATION_PROFESSIONNELLE_FIELD_LABEL.secteurActivite}
       </FieldLabel>
       <div className="relative">
         <Input

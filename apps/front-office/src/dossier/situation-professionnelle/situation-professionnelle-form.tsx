@@ -11,6 +11,7 @@ import { Input } from "@etape/ui/components/input";
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { Separator } from "@etape/ui/components/separator";
+import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
@@ -21,6 +22,7 @@ import type { UseSituationProfessionnelleFormResult } from "./hooks/use-situatio
 import {
   DEMISSION,
   DEMISSION_LABEL,
+  SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   SITUATION_PROFESSIONNELLE_SECTION,
   type SituationProfessionnelleFormData,
 } from "./schema";
@@ -40,7 +42,7 @@ export function SituationProfessionnelleForm({
   situationProfessionnelle,
   onSubmitValid,
 }: SituationProfessionnelleFormProps) {
-  const { form, sections, voletErrors } = situationProfessionnelle;
+  const { form, sections, voletErrors, errorAnnouncement } = situationProfessionnelle;
   const today = new Date();
   // Les jours à venir ne se choisissent pas (maquette 11).
   const dateDemissionCalendar: DateFieldCalendar = {
@@ -55,6 +57,7 @@ export function SituationProfessionnelleForm({
   return (
     <>
       <VoletErrorsAlert ref={errorsAlertRef} errors={submittedErrors} />
+      <StatusRegion message={errorAnnouncement} />
 
       <form
         id={formId}
@@ -73,7 +76,7 @@ export function SituationProfessionnelleForm({
           <FormField
             name="intitulePoste"
             control={form.control}
-            label="Intitulé de votre poste"
+            label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.intitulePoste}
             required
             description="Par exemple : comptable, chef d’équipe logistique"
             render={({ field, attributes }) => <Input {...field} {...attributes} />}
@@ -90,7 +93,7 @@ export function SituationProfessionnelleForm({
 
           <FieldSet>
             <FieldLegend variant="label" required>
-              Avez-vous déjà remis votre démission à votre employeur ?
+              {SITUATION_PROFESSIONNELLE_FIELD_LABEL.demission}
             </FieldLegend>
             <Controller
               name="demission"
@@ -143,7 +146,7 @@ export function SituationProfessionnelleForm({
                 render={({ field, fieldState }) => (
                   <DateField
                     id="dateDemission"
-                    label="Date de votre démission"
+                    label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.dateDemission}
                     description="Date de l’accusé de réception ou de la remise en main propre contre décharge. Format : jj/mm/aaaa"
                     calendar={dateDemissionCalendar}
                     field={field}

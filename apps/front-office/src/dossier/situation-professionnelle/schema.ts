@@ -88,6 +88,21 @@ export type SituationProfessionnelleFormData = z.infer<typeof situationProfessio
 
 type SituationProfessionnelleFieldName = keyof SituationProfessionnelleFormData;
 
+/** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
+export const SITUATION_PROFESSIONNELLE_FIELD_LABEL: Record<
+  Exclude<SituationProfessionnelleFieldName, "employeurEntryMode">,
+  string
+> = {
+  employeur: "Votre employeur",
+  denomination: "Nom de votre employeur",
+  siret: "Numéro SIRET",
+  secteurActivite: "Secteur d’activité",
+  adresse: "Adresse",
+  intitulePoste: "Intitulé de votre poste",
+  demission: "Avez-vous déjà remis votre démission à votre employeur ?",
+  dateDemission: "Date de votre démission",
+};
+
 export const SITUATION_PROFESSIONNELLE_SECTION = {
   EMPLOI: "emploi",
   DEMISSION: "demission",

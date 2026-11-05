@@ -5,7 +5,10 @@ import { Button } from "@etape/ui/components/button";
 import { FormField } from "@etape/ui/components/form-field";
 import { Input } from "@etape/ui/components/input";
 
-import type { SituationProfessionnelleFormData } from "../schema";
+import {
+  SITUATION_PROFESSIONNELLE_FIELD_LABEL,
+  type SituationProfessionnelleFormData,
+} from "../schema";
 import { SecteurActiviteInput } from "./secteur-activite-input";
 
 export interface EmployeurManualFieldsProps {
@@ -26,7 +29,7 @@ export function EmployeurManualFields({
       <FormField
         name="denomination"
         control={control}
-        label="Nom de votre employeur"
+        label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.denomination}
         required
         description="Tel qu’il figure sur votre bulletin de salaire"
         render={({ field, attributes }) => (
@@ -38,7 +41,7 @@ export function EmployeurManualFields({
         <FormField
           name="siret"
           control={control}
-          label="Numéro SIRET"
+          label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.siret}
           required
           description="Les 14 chiffres qui figurent sur votre bulletin de salaire"
           render={({ field, attributes }) => (
@@ -65,7 +68,7 @@ export function EmployeurManualFields({
       <FormField
         name="adresse"
         control={control}
-        label="Adresse"
+        label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.adresse}
         required
         description="Telle qu’elle figure sur votre bulletin de salaire"
         render={({ field, attributes }) => <Input {...field} {...attributes} />}

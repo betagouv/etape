@@ -3,9 +3,11 @@ import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import type { SectionProgress, VoletProgress } from "../../domain/statut-volet";
 import type { VoletError } from "../../domain/volet-errors";
+import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcement";
 import {
   EMPLOYEUR_ENTRY_MODE,
   findSectionFields,
+  SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   situationProfessionnelleSchema,
   type Demission,
   type SituationProfessionnelleFormData,
@@ -17,6 +19,8 @@ export interface UseSituationProfessionnelleFormResult {
   progress: VoletProgress;
   sections: Record<SituationProfessionnelleSection, SectionProgress>;
   voletErrors: VoletError[];
+  /** Erreur du champ qu'on vient de quitter, pour la région `role="status"` de l'écran. */
+  errorAnnouncement: string;
 }
 
 /** Le formulaire « Ma situation professionnelle » et ce qui s'en déduit pendant le rendu. */
@@ -62,6 +66,7 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
   ) as Record<SituationProfessionnelleSection, SectionProgress>;
 
   const filledFieldCount = countFilled(requiredFields);
+  const errorAnnouncement = useFieldErrorAnnouncement(form, SITUATION_PROFESSIONNELLE_FIELD_LABEL);
 
   // Dans l'ordre de la page : zod place les erreurs de `superRefine` après celles des champs.
   const voletErrors: VoletError[] = requiredFields
@@ -78,5 +83,6 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
     },
     sections,
     voletErrors,
+    errorAnnouncement,
   };
 }
