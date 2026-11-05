@@ -38,6 +38,7 @@ import type { VoletNoticeContent } from "../domain/volets";
 import {
   CIVILITE,
   CIVILITE_LABEL,
+  INFORMATIONS_FIELD_LABEL,
   INFORMATIONS_SECTION,
   type InformationsFormData,
 } from "./schema";
@@ -70,7 +71,7 @@ export function InformationsForm({
   notice,
   onSubmitValid,
 }: InformationsFormProps) {
-  const { form, sections, voletErrors } = informations;
+  const { form, sections, voletErrors, errorAnnouncement } = informations;
   const { submitCount } = form.formState;
   const errorsAlertRef = useRef<HTMLDivElement>(null);
 
@@ -83,6 +84,9 @@ export function InformationsForm({
   return (
     <>
       <VoletErrorsAlert ref={errorsAlertRef} errors={voletErrors} />
+      <p role="status" className="sr-only">
+        {errorAnnouncement}
+      </p>
       <VoletNotice notice={notice} />
 
       <form
@@ -99,7 +103,7 @@ export function InformationsForm({
 
           <FieldSet>
             <FieldLegend variant="label" required>
-              Civilité
+              {INFORMATIONS_FIELD_LABEL.civilite}
             </FieldLegend>
             <Controller
               name="civilite"
@@ -186,7 +190,7 @@ export function InformationsForm({
             <FormField
               name="nir"
               control={form.control}
-              label="Numéro de sécurité sociale"
+              label={INFORMATIONS_FIELD_LABEL.nir}
               required
               description="Les 13 premiers chiffres qui figurent sur votre carte Vitale"
               render={({ field, attributes }) => (
@@ -201,7 +205,7 @@ export function InformationsForm({
             <FormField
               name="cleNir"
               control={form.control}
-              label="Clé"
+              label={INFORMATIONS_FIELD_LABEL.cleNir}
               required
               description="Les 2 derniers chiffres qui figurent sur votre carte Vitale"
               render={({ field, attributes }) => (
@@ -259,7 +263,7 @@ export function InformationsForm({
             <FormField
               name="telephone"
               control={form.control}
-              label="Téléphone"
+              label={INFORMATIONS_FIELD_LABEL.telephone}
               required
               render={({ field, attributes }) => (
                 <InputGroup>

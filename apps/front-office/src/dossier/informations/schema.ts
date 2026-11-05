@@ -69,6 +69,16 @@ export type InformationsFormData = z.infer<typeof informationsSchema>;
 
 export type InformationsFieldName = keyof InformationsFormData;
 
+/** Libellés des champs, partagés par le formulaire et l'annonce de leurs erreurs. */
+export const INFORMATIONS_FIELD_LABEL: Record<InformationsFieldName, string> = {
+  civilite: "Civilité",
+  dateNaissance: "Date de naissance",
+  nationalite: "Nationalité",
+  nir: "Numéro de sécurité sociale",
+  cleNir: "Clé",
+  telephone: "Téléphone",
+};
+
 export const INFORMATIONS_SECTION = {
   IDENTITE: "identite",
   CONTACT: "contact",

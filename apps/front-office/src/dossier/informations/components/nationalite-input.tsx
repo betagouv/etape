@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/po
 
 import { findNationaliteByLabel, flagUrl } from "../domain/nationalites";
 import { useNationaliteSearch } from "../hooks/use-nationalite-search";
+import { INFORMATIONS_FIELD_LABEL } from "../schema";
 import { NationaliteLabel } from "./nationalite-label";
 
 const FIELD_ID = "nationalite";
@@ -56,7 +57,7 @@ export function NationaliteInput({
   return (
     <Field data-invalid={isInvalid}>
       <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID} required>
-        Nationalité
+        {INFORMATIONS_FIELD_LABEL.nationalite}
       </FieldLabel>
       <Popover
         open={isOpen}

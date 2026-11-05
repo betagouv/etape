@@ -12,6 +12,7 @@ import {
   formatDateNaissance,
   parseDateNaissance,
 } from "../domain/date-naissance";
+import { INFORMATIONS_FIELD_LABEL } from "../schema";
 
 const FIELD_ID = "dateNaissance";
 const LABEL_ID = `${FIELD_ID}-label`;
@@ -44,7 +45,7 @@ export function DateNaissanceInput({
   return (
     <Field data-invalid={isInvalid}>
       <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID} required>
-        Date de naissance
+        {INFORMATIONS_FIELD_LABEL.dateNaissance}
       </FieldLabel>
       <Popover open={isOpen} onOpenChange={setOpen}>
         <InputGroup>
