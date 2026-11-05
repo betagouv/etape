@@ -48,11 +48,15 @@ existe… » et oublie l'adresse saisie. L'extension, elle :
 ## Ne rien révéler de l'existence d'un compte
 
 La page est la même pour toutes les adresses, compte à rebours compris : il
-part de la demande faite dans la session, pas du dernier envoi au compte. Le
-compte est détaché de la session avant l'affichage, sans quoi le contexte de la
+part de la fin de la tentative d'envoi faite dans la session, pas du dernier
+envoi au compte. Noter l'heure avant l'envoi, qui est synchrone, ferait afficher
+moins de 2:00 pour une adresse connue. Le temps de réponse reste un indice,
+hérité de Keycloak. Le compte est détaché de la session avant l'affichage, sans quoi le contexte de la
 page (`auth.showUsername`) différerait selon que l'adresse existe ou non. Le
 lien l'y rattache.
 
 Deux minutes séparent aussi deux envois à un même compte, toutes sessions
 confondues (`singleUseObjects`) : ouvrir dix onglets n'envoie pas dix e-mails.
-Le refus est journalisé (`slow_down`) sans rien changer à la page.
+Le refus est journalisé (`slow_down`) sans rien changer à la page. Ce verrou dure
+5 s de moins que le délai affiché : sinon, un clic à la fin du décompte
+annoncerait un renvoi sans qu'aucun e-mail ne parte.

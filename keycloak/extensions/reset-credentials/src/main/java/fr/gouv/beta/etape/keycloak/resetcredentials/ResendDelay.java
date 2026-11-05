@@ -3,6 +3,7 @@ package fr.gouv.beta.etape.keycloak.resetcredentials;
 final class ResendDelay {
 
     static final int SECONDS = 120;
+    static final int LOCK_SECONDS = SECONDS - 5;
 
     private ResendDelay() {
     }

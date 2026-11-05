@@ -5,7 +5,7 @@ import {
   formatCountdown,
   getResendState,
   RESEND_ANNOUNCEMENTS,
-  RESEND_STATE,
+  RESEND_AVAILABILITY,
 } from "../components/resend-countdown";
 
 const TICK_MS = 1000;
@@ -43,7 +43,7 @@ export function useResendCountdown(options: UseResendCountdownOptions): UseResen
   }, [initialSeconds]);
 
   const state = getResendState(remainingSeconds, initialSeconds, isResent);
-  const isAvailable = state === RESEND_STATE.AVAILABLE;
+  const isAvailable = RESEND_AVAILABILITY[state];
   const announcementKey = RESEND_ANNOUNCEMENTS[state];
 
   return {

@@ -49,6 +49,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
 
       etapeLoginTitle: "Se connecter à votre espace personnel",
       etapeEmailFormatInvalid: "Adresse e-mail incorrecte",
+      etapeLoginIncomplete: "Renseignez tous les champs pour vous connecter.",
       etapeSupportHelp: "Besoin d'aide ? Écrivez au support :",
       etapeRegisterTitle: "Créer votre espace personnel",
       etapeRegisterStep: "Étape {0} sur {1}",
@@ -200,6 +201,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
 
       etapeLoginTitle: "Sign in to your personal space",
       etapeEmailFormatInvalid: "Incorrect email address",
+      etapeLoginIncomplete: "Fill in all the fields to sign in.",
       etapeSupportHelp: "Need help? Email support:",
       etapeRegisterTitle: "Create your personal space",
       etapeRegisterStep: "Step {0} of {1}",

@@ -35,6 +35,7 @@ function AccountNotActivated(props: LoginVerifyEmailProps) {
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("etapeLoginTitle")}
+      displayMessage={kcContext.message?.type !== MESSAGE_TYPE.WARNING}
     >
       <Alert type={MESSAGE_TYPE.ERROR} summary={msgStr("etapeAccountNotActivated")}>
         <p className="text-foreground">{msg("etapeAccountNotActivatedHint", user?.email ?? "")}</p>

@@ -22,6 +22,7 @@ export const LOGIN_FIELD = {
 export type LoginField = (typeof LOGIN_FIELD)[keyof typeof LOGIN_FIELD];
 
 const AUTOFILL_ANIMATION = "etape-autofill";
+const PRESSED_ACTION_SELECTOR = "a:active, button:active";
 
 interface UseLoginFormOptions {
   initialUsername: string;
@@ -33,6 +34,7 @@ export interface UseLoginFormResult {
   isSubmittable: boolean;
   isSubmitting: boolean;
   hasEmailFormatError: boolean;
+  shouldAnnounceIncomplete: boolean;
   changeUsername: (event: ChangeEvent<HTMLInputElement>) => void;
   changePassword: (event: ChangeEvent<HTMLInputElement>) => void;
   detectAutofill: (field: LoginField) => (event: AnimationEvent<HTMLInputElement>) => void;
@@ -49,6 +51,7 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasEmailFormatError, setHasEmailFormatError] = useState(false);
+  const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
 
   useEffect(() => {
     forgetSubmittedForm();
@@ -68,10 +71,16 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
       current[field] === isFieldFilled ? current : { ...current, [field]: isFieldFilled },
     );
 
+  const focusField = (form: HTMLFormElement, field: LoginField): void =>
+    form.querySelector<HTMLInputElement>(`[name="${field}"]`)?.focus();
+
+  const isSubmittable = isFilled(filled[LOGIN_FIELD.USERNAME], filled[LOGIN_FIELD.PASSWORD]);
+
   return {
-    isSubmittable: isFilled(filled[LOGIN_FIELD.USERNAME], filled[LOGIN_FIELD.PASSWORD]),
+    isSubmittable,
     isSubmitting,
     hasEmailFormatError,
+    shouldAnnounceIncomplete: hasIncompleteAttempt && !isSubmittable,
     changeUsername: (event) => {
       const { value } = event.currentTarget;
       markFilled(LOGIN_FIELD.USERNAME, value.trim() !== "");
@@ -81,22 +90,34 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
     detectAutofill: (field) => (event) => {
       if (event.animationName === AUTOFILL_ANIMATION) markFilled(field, true);
     },
-    checkEmailFormat: (event) =>
-      setHasEmailFormatError(isEmailFormatWrong(event.currentTarget.value)),
+    checkEmailFormat: (event) => {
+      if (document.querySelector(PRESSED_ACTION_SELECTOR) !== null) return;
+      setHasEmailFormatError(isEmailFormatWrong(event.currentTarget.value));
+    },
     submit: (event) => {
       const form = event.currentTarget;
       const data = new FormData(form);
       const currentUsername = String(data.get(LOGIN_FIELD.USERNAME) ?? "");
       const currentPassword = String(data.get(LOGIN_FIELD.PASSWORD) ?? "");
 
-      if (isSubmitting || !isFilled(currentUsername.trim() !== "", currentPassword !== "")) {
+      if (isSubmitting) {
         event.preventDefault();
+        return;
+      }
+      const hasUsername = currentUsername.trim() !== "";
+      if (!isFilled(hasUsername, currentPassword !== "")) {
+        event.preventDefault();
+        setHasIncompleteAttempt(true);
+        focusField(
+          form,
+          isUsernameHidden || hasUsername ? LOGIN_FIELD.PASSWORD : LOGIN_FIELD.USERNAME,
+        );
         return;
       }
       if (isEmailFormatWrong(currentUsername)) {
         event.preventDefault();
         setHasEmailFormatError(true);
-        form.querySelector<HTMLInputElement>(`[name="${LOGIN_FIELD.USERNAME}"]`)?.focus();
+        focusField(form, LOGIN_FIELD.USERNAME);
         return;
       }
       rememberSubmittedForm(SUBMITTED_FORM.LOGIN);

@@ -131,7 +131,7 @@ RUN mvn -B -q package
 
 # `kc.sh build` ici plutôt qu'au démarrage : c'est ce qui autorise
 # `start --optimized`. Les options figées alors ne varient plus à l'exécution.
-FROM quay.io/keycloak/keycloak:26.7 AS keycloak
+FROM quay.io/keycloak/keycloak:26.7.3 AS keycloak
 
 COPY --from=theme /app/apps/keycloak-theme/dist_keycloak/etape-keycloak-theme.jar /opt/keycloak/providers/
 COPY --from=franceconnect-extension /keycloak-franceconnect.jar /opt/keycloak/providers/

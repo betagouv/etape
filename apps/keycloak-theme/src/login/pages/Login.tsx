@@ -1,4 +1,5 @@
 import { Button } from "@etape/ui/components/button";
+import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { Alert, MESSAGE_TYPE } from "../components/alert";
 import { Field, FieldError, PasswordInput, TextInput } from "../components/form";
@@ -10,6 +11,7 @@ import type { KcContext } from "../KcContext";
 
 const EMAIL_FORMAT_ERROR_ID = "input-error-username";
 const CREDENTIALS_ERROR_ID = "input-error";
+const INCOMPLETE_HINT_ID = "login-incomplete-hint";
 
 export default function Login(props: EtapePageProps<Extract<KcContext, { pageId: "login.ftl" }>>) {
   const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
@@ -119,6 +121,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                     autoComplete="username"
                     aria-required
                     aria-describedby={usernameDescribedBy}
+                    aria-invalid={hasCredentialsError || undefined}
                     defaultValue={login.username ?? ""}
                     onChange={form.changeUsername}
                     onAnimationStart={form.detectAutofill(LOGIN_FIELD.USERNAME)}
@@ -150,6 +153,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                   autoComplete="current-password"
                   aria-required
                   aria-describedby={hasCredentialsError ? CREDENTIALS_ERROR_ID : undefined}
+                  aria-invalid={hasCredentialsError || undefined}
                   onChange={form.changePassword}
                   onAnimationStart={form.detectAutofill(LOGIN_FIELD.PASSWORD)}
                 />
@@ -174,10 +178,21 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
             size="form"
             aria-disabled={!form.isSubmittable || form.isSubmitting}
             aria-busy={form.isSubmitting}
-            className="w-full aria-busy:cursor-progress"
+            aria-describedby={form.isSubmittable ? undefined : INCOMPLETE_HINT_ID}
+            className="w-full"
           >
             {msg("doLogIn")}
           </Button>
+
+          {!form.isSubmittable && (
+            <span id={INCOMPLETE_HINT_ID} className="sr-only">
+              {msg("etapeLoginIncomplete")}
+            </span>
+          )}
+
+          <StatusRegion
+            message={form.shouldAnnounceIncomplete ? msgStr("etapeLoginIncomplete") : ""}
+          />
         </form>
       )}
     </Template>

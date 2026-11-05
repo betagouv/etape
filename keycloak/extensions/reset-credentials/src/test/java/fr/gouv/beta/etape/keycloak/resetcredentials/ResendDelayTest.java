@@ -1,6 +1,7 @@
 package fr.gouv.beta.etape.keycloak.resetcredentials;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,15 @@ class ResendDelayTest {
     @Test
     void neverExceedsTheDelayWhenTheClockGoesBack() {
         assertEquals(120, ResendDelay.remainingSeconds(Long.toString(NOW + 30), NOW));
+    }
+
+    @Test
+    void releasesTheLockBeforeTheDisplayedDelayEnds() {
+        double lockAcquiredAt = NOW + 0.999;
+        double lockExpiresAt = lockAcquiredAt + ResendDelay.LOCK_SECONDS;
+        long resendOpensAt = NOW + ResendDelay.SECONDS;
+
+        assertTrue(lockExpiresAt < resendOpensAt);
     }
 
     @Test

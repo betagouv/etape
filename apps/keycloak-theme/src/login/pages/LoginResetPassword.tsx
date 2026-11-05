@@ -8,6 +8,7 @@ import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
 const USERNAME_ERROR_ID = "input-error-username";
+const USERNAME_HINT_ID = "username-hint";
 
 export default function LoginResetPassword(
   props: EtapePageProps<Extract<KcContext, { pageId: "login-reset-password.ftl" }>>,
@@ -82,7 +83,9 @@ export default function LoginResetPassword(
               autoFocus={!shouldFocusAltcha}
               autoComplete="username"
               aria-required
-              aria-describedby={hasUsernameError ? USERNAME_ERROR_ID : undefined}
+              aria-describedby={
+                hasUsernameError ? `${USERNAME_HINT_ID} ${USERNAME_ERROR_ID}` : USERNAME_HINT_ID
+              }
               value={form.username}
               onChange={(event) => form.changeUsername(event.target.value)}
               onBlur={form.checkEmailFormat}
