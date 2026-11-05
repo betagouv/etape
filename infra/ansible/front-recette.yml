@@ -1,0 +1,97 @@
+# Socle de la VM front de Recette (REBFCOETAPFRT01) : nginx servant le site de
+# Recette en statique depuis /srv/etape-recette.
+#
+# Même montage que le dev : le TLS est terminé sur le point d'entrée Cegedim, la
+# VM reçoit du trafic en clair et la conf appliquée est infra/nginx/recette.conf
+# (port 80, aucun certificat sur la VM).
+#
+# Différences avec front.yml, voulues :
+#   - pas de previews par PR : la Recette n'a qu'une version, celle validée par
+#     la PO, déployée par la CI dans un dossier unique ;
+#   - pas de basic auth : l'URL n'est joignable qu'en interne (bastion ou réseau
+#     FCO), le mot de passe partagé n'y protégerait rien de plus.
+# Aucune variable d'environnement attendue. Rejouable sans risque : chaque
+# tâche décrit un état.
+
+- name: Configurer la VM front de Recette
+  hosts: front_recette
+  become: true
+
+  tasks:
+    # nginx est installé en deux temps, comme sur le dev. IPv6 est désactivé sur
+    # les VM Cegedim, or le site par défaut du paquet Debian écoute sur [::]:80 :
+    # installer `nginx` directement fait échouer son premier démarrage, donc apt
+    # (constaté le 8/09 sur le dev : « socket() [::]:80 failed (97: Address
+    # family not supported) »). `nginx-common` pose l'arborescence /etc/nginx
+    # sans lancer de service ; on retire le site par défaut, on pose notre conf,
+    # et le paquet `nginx` démarre alors directement sur elle.
+    - name: Paquets requis (arborescence nginx, rsync)
+      ansible.builtin.apt:
+        name: [nginx-common, rsync]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Site nginx par défaut retiré (écoute [::]:80, IPv6 désactivé ; sinon default_server en double)
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Recharger nginx
+
+    # Le compte deploy existe normalement déjà (créé par Cegedim) ; cette tâche
+    # et les suivantes garantissent son état exact quoi qu'il arrive.
+    - name: Compte de service deploy
+      ansible.builtin.user:
+        name: deploy
+        shell: /bin/bash
+
+    # Cible du rsync de la CI : deploy doit pouvoir y écrire, nginx y lire.
+    - name: Racine du site de Recette
+      ansible.builtin.file:
+        path: /srv/etape-recette
+        state: directory
+        owner: deploy
+        group: deploy
+        mode: "0755"
+
+    - ansible.builtin.import_tasks: taches/cle-runner.yml
+
+    # --- nginx
+    - name: Configuration nginx de la Recette
+      ansible.builtin.copy:
+        src: ../nginx/recette.conf
+        dest: /etc/nginx/sites-available/recette.conf
+        mode: "0644"
+      notify: Recharger nginx
+
+    - name: Site Recette activé
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/recette.conf
+        dest: /etc/nginx/sites-enabled/recette.conf
+        state: link
+      notify: Recharger nginx
+
+    - name: Paquet nginx (démarre sur la conf de Recette)
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    # `nginx -s reload` (ExecReload Debian) renvoie 0 même si la nouvelle conf
+    # est refusée : sans ce test, une conf cassée laisserait l'ancienne en
+    # service avec un play vert. Ici, une conf cassée arrête le play avant le
+    # reload et l'erreur exacte est affichée.
+    - name: Configuration nginx valide
+      ansible.builtin.command: nginx -t
+      changed_when: false
+
+    - name: Nginx démarré et activé au démarrage
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+  handlers:
+    - name: Recharger nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
