@@ -26,7 +26,7 @@ import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { ACCOUNT_PATH } from "@/navigation/paths";
 import { DateNaissanceInput } from "./components/date-naissance-input";
-import { DescriptionSupport } from "./components/description-support";
+import { PrefilledFieldDescription } from "./components/prefilled-field-description";
 import { NationaliteInput } from "./components/nationalite-input";
 import { SectionCounter } from "./components/section-counter";
 import { formatCleNir } from "./domain/format-cle-nir";
@@ -157,7 +157,7 @@ export function InformationsForm({
                 readOnly
                 aria-describedby="nom-description"
               />
-              <DescriptionSupport id="nom-description" email={supportEmail} />
+              <PrefilledFieldDescription id="nom-description" email={supportEmail} />
             </Field>
 
             <Field data-disabled>
@@ -168,7 +168,7 @@ export function InformationsForm({
                 readOnly
                 aria-describedby="prenom-description"
               />
-              <DescriptionSupport id="prenom-description" email={supportEmail} />
+              <PrefilledFieldDescription id="prenom-description" email={supportEmail} />
             </Field>
 
             <Controller
@@ -281,7 +281,7 @@ export function InformationsForm({
                   aria-describedby="email-description"
                 />
               </InputGroup>
-              <DescriptionSupport id="email-description" email={supportEmail} />
+              <PrefilledFieldDescription id="email-description" email={supportEmail} />
             </Field>
 
             <FormField
