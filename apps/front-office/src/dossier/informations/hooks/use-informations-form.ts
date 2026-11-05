@@ -6,11 +6,12 @@ import { VOLET_ID } from "../../domain/volet-id";
 import { VOLETS_DOSSIER } from "../../domain/volets-dossier";
 import type { VoletError } from "../../domain/volet-errors";
 import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcement";
-import { countFilled, countInvalid } from "../domain/count-fields";
+import { countFilled, countInvalid, listFilledFields } from "../domain/count-fields";
 import {
   INFORMATIONS_FIELD_LABEL,
   INFORMATIONS_SECTION_FIELDS,
   informationsSchema,
+  type InformationsFieldName,
   type InformationsFormData,
   type InformationsSection,
 } from "../schema";
@@ -34,10 +35,10 @@ const ALL_REQUIRED_FIELDS = Object.values(INFORMATIONS_SECTION_FIELDS).flat();
 const VOLET_LABEL = VOLETS_DOSSIER.find(({ id }) => id === VOLET_ID.INFORMATIONS)?.label ?? "";
 
 function computeProgress(
-  values: Partial<InformationsFormData>,
+  filledFields: readonly InformationsFieldName[],
   errors: FieldErrors<InformationsFormData>,
 ): VoletProgress {
-  const filledFieldCount = countFilled(values, ALL_REQUIRED_FIELDS);
+  const filledFieldCount = countFilled(filledFields, ALL_REQUIRED_FIELDS);
   return {
     requiredFieldCount: ALL_REQUIRED_FIELDS.length,
     filledFieldCount,
@@ -50,7 +51,10 @@ function describeVoletStatut(
   values: InformationsFormData,
   errors: FieldErrors<InformationsFormData>,
 ): string {
-  return formatStatutVoletAnnouncement(VOLET_LABEL, computeProgress(values, errors));
+  return formatStatutVoletAnnouncement(
+    VOLET_LABEL,
+    computeProgress(listFilledFields(values, ALL_REQUIRED_FIELDS), errors),
+  );
 }
 
 /**
@@ -79,14 +83,19 @@ export function useInformationsForm(): UseInformationsFormResult {
     INFORMATIONS_FIELD_LABEL,
     describeVoletStatut,
   );
-  const values = useWatch({ control: form.control });
+  // Le formulaire vit dans `DossierScreen` : surveiller les valeurs elles-mêmes re-rendrait
+  // tout le dossier à chaque frappe ; la liste des champs remplis ne change que de vide à rempli.
+  const filledFields = useWatch({
+    control: form.control,
+    compute: (values) => listFilledFields(values, ALL_REQUIRED_FIELDS),
+  });
   const { errors } = form.formState;
 
   const sections = Object.fromEntries(
     Object.entries(INFORMATIONS_SECTION_FIELDS).map(([section, fields]) => [
       section,
       {
-        remainingFieldCount: fields.length - countFilled(values, fields),
+        remainingFieldCount: fields.length - countFilled(filledFields, fields),
         errorCount: countInvalid(errors, fields),
       },
     ]),
@@ -99,7 +108,7 @@ export function useInformationsForm(): UseInformationsFormResult {
 
   return {
     form,
-    progress: computeProgress(values, errors),
+    progress: computeProgress(filledFields, errors),
     sections,
     voletErrors,
     errorAnnouncement,

@@ -1,13 +1,21 @@
 import type { InformationsFieldName, InformationsFormData } from "../schema";
 
-export function countFilled(
+/** Les champs qui ont une valeur : ne change qu'au passage de vide à rempli, pas à chaque frappe. */
+export function listFilledFields(
   values: Partial<InformationsFormData>,
   fields: readonly InformationsFieldName[],
-): number {
+): InformationsFieldName[] {
   return fields.filter((name) => {
     const value = values[name];
     return typeof value === "string" && value.length > 0;
-  }).length;
+  });
+}
+
+export function countFilled(
+  filledFields: readonly InformationsFieldName[],
+  fields: readonly InformationsFieldName[],
+): number {
+  return fields.filter((name) => filledFields.includes(name)).length;
 }
 
 export function countInvalid(

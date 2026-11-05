@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { countFilled, countInvalid } from "./count-fields";
+import { countFilled, countInvalid, listFilledFields } from "./count-fields";
 
-describe("countFilled", () => {
-  it("ne compte que les champs demandés qui ont une valeur", () => {
+describe("listFilledFields", () => {
+  it("ne garde que les champs demandés qui ont une valeur", () => {
     expect(
-      countFilled({ civilite: "madame", dateNaissance: "", telephone: "06 12 34 56 78" }, [
+      listFilledFields({ civilite: "madame", dateNaissance: "", telephone: "06 12 34 56 78" }, [
         "civilite",
         "dateNaissance",
         "nationalite",
       ]),
-    ).toBe(1);
+    ).toEqual(["civilite"]);
+  });
+});
+
+describe("countFilled", () => {
+  it("compte les champs demandés parmi les champs remplis", () => {
+    expect(countFilled(["civilite", "telephone"], ["civilite", "dateNaissance"])).toBe(1);
   });
 });
 
