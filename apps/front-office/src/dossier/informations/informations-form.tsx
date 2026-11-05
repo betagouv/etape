@@ -212,6 +212,12 @@ export function InformationsForm({
                   {...field}
                   {...attributes}
                   onChange={(e) => field.onChange(formatNir(e.target.value))}
+                  // La clé se contrôle contre le NIR : en mode `onBlur`, quitter le NIR ne
+                  // revaliderait que lui, et l'erreur de clé resterait périmée.
+                  onBlur={() => {
+                    field.onBlur();
+                    if (form.getValues("cleNir")) void form.trigger("cleNir");
+                  }}
                 />
               )}
             />

@@ -59,8 +59,10 @@ const baseInformationsSchema = z.object({
     .regex(/^0[1-79]/, "Le numéro doit être un téléphone français (fixe ou mobile)."),
 });
 
-export const informationsSchema = baseInformationsSchema.superRefine((data, ctx) => {
-  if (NIR_PATTERN.test(data.nir) && CLE_NIR_PATTERN.test(data.cleNir)) {
+const nirCleSchema = baseInformationsSchema.pick({ nir: true, cleNir: true });
+
+export const informationsSchema = baseInformationsSchema.superRefine(
+  (data, ctx) => {
     if (!isCleNirValid(data.nir, data.cleNir)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -69,8 +71,13 @@ export const informationsSchema = baseInformationsSchema.superRefine((data, ctx)
         path: ["cleNir"],
       });
     }
-  }
-});
+  },
+  {
+    // Sans `when`, zod saute ce contrôle dès qu'un champ est rejeté d'emblée : une civilité
+    // vide suffisait à laisser passer une clé fausse.
+    when: ({ value }) => nirCleSchema.safeParse(value).success,
+  },
+);
 
 export type InformationsFormData = z.infer<typeof informationsSchema>;
 
