@@ -83,11 +83,16 @@ export function TextInput({
   icon,
   invalid,
   className,
+  "aria-invalid": ariaInvalid,
   ...props
 }: ComponentProps<"input"> & { icon?: IconComponent; invalid?: boolean }) {
   return (
     <InputShell icon={icon} invalid={invalid}>
-      <input {...props} aria-invalid={invalid} className={cn(inputClassName, className)} />
+      <input
+        {...props}
+        aria-invalid={invalid || ariaInvalid}
+        className={cn(inputClassName, className)}
+      />
     </InputShell>
   );
 }
@@ -103,6 +108,7 @@ export function PasswordInput({
   i18n,
   invalid,
   className,
+  "aria-invalid": ariaInvalid,
   ...props
 }: ComponentProps<"input"> & { id: string; i18n: I18n; invalid?: boolean }) {
   const { msgStr } = i18n;
@@ -133,7 +139,7 @@ export function PasswordInput({
         {...props}
         id={id}
         type="password"
-        aria-invalid={invalid}
+        aria-invalid={invalid || ariaInvalid}
         className={cn(inputClassName, className)}
       />
     </InputShell>

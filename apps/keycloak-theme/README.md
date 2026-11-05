@@ -94,6 +94,17 @@ Une transition de vue entre documents a été tentée pour aller plus loin ; ell
 démarre pas de façon fiable dans ce contexte et a été retirée plutôt que laissée
 à moitié fonctionnelle.
 
+## Formulaire de connexion : erreurs et envoi incomplet
+
+L'adresse est contrôlée à la sortie du champ, mais pas quand cette sortie vient
+d'un appui sur un lien ou un bouton (`a:active, button:active`) : l'erreur en
+s'insérant décalerait la page, et le clic tomberait à côté de sa cible. L'envoi
+contrôle de toute façon le format.
+
+Un envoi incomplet (Entrée, ou clic sur le bouton grisé) reste bloqué : le focus
+part sur le premier champ vide et une région `role="status"` dit quoi faire. Le
+bouton porte le même texte en `aria-describedby`.
+
 ## Vérification d'adresse : deux écrans pour une seule page
 
 Keycloak affiche `login-verify-email.ftl` dans deux cas : juste après une
