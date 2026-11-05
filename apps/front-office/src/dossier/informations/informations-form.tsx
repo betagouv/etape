@@ -151,14 +151,24 @@ export function InformationsForm({
           <div className="grid gap-5 sm:grid-cols-2">
             <Field data-disabled>
               <FieldLabel htmlFor="nom">Nom</FieldLabel>
-              <Input id="nom" value={prefilledValues.nom} disabled />
-              <DescriptionSupport email={supportEmail} />
+              <Input
+                id="nom"
+                value={prefilledValues.nom}
+                readOnly
+                aria-describedby="nom-description"
+              />
+              <DescriptionSupport id="nom-description" email={supportEmail} />
             </Field>
 
             <Field data-disabled>
               <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
-              <Input id="prenom" value={prefilledValues.prenom} disabled />
-              <DescriptionSupport email={supportEmail} />
+              <Input
+                id="prenom"
+                value={prefilledValues.prenom}
+                readOnly
+                aria-describedby="prenom-description"
+              />
+              <DescriptionSupport id="prenom-description" email={supportEmail} />
             </Field>
 
             <Controller
@@ -235,9 +245,14 @@ export function InformationsForm({
               <InputGroupAddon>
                 <SearchIcon aria-hidden="true" />
               </InputGroupAddon>
-              <InputGroupInput id="adresse" value={prefilledValues.adresse} disabled />
+              <InputGroupInput
+                id="adresse"
+                value={prefilledValues.adresse}
+                readOnly
+                aria-describedby="adresse-description"
+              />
             </InputGroup>
-            <FieldDescription>
+            <FieldDescription id="adresse-description">
               Cette adresse provient de votre profil.{" "}
               <Link to={ACCOUNT_PATH}>Modifier mon adresse dans mon profil</Link>
             </FieldDescription>
@@ -259,9 +274,14 @@ export function InformationsForm({
                 <InputGroupAddon>
                   <MailIcon aria-hidden="true" />
                 </InputGroupAddon>
-                <InputGroupInput id="email" value={prefilledValues.email} disabled />
+                <InputGroupInput
+                  id="email"
+                  value={prefilledValues.email}
+                  readOnly
+                  aria-describedby="email-description"
+                />
               </InputGroup>
-              <DescriptionSupport email={supportEmail} />
+              <DescriptionSupport id="email-description" email={supportEmail} />
             </Field>
 
             <FormField
