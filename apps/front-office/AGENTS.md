@@ -29,8 +29,9 @@ Les tests Vitest couvrent les fonctions pures de `domain/`, sans DOM.
 
 - `src/main.tsx` — monte `SessionApp` (`packages/session`) : cache, routeur et région `role="status"`.
 - `src/navigation/` — `router.ts` (contexte du routeur : `apiBaseUrl`, `httpClient`, `queryClient` ; `AppErrorScreen` par défaut) et `routes.tsx`, dont chaque route s'accroche à `sessionRootRoute`. Pas de routage par fichiers : `tsc -b` tourne avant Vite et ne trouverait pas `routeTree.gen.ts` (`stack-front.md`, décision 12).
+- `src/navigation/routes.tsx` — toutes les routes des maquettes, y compris celles dont l'écran n'est pas encore intégré (`PlaceholderScreen`).
 - `src/lib/clients.ts` — `httpClient` et `queryClient`, reliés par `createSessionClients` (`packages/api-client`) : un 401 expire la session.
-- `src/App.tsx` — écran de démonstration, à remplacer.
+- `src/dossier/demo.ts` — données de la maquette, en attendant celles de l'API.
 
 ## Conventions
 
@@ -40,7 +41,7 @@ Les tests Vitest couvrent les fonctions pures de `domain/`, sans DOM.
 
 ## État et pièges
 
-- **Scaffold** : un seul écran de démonstration ; seule la session appelle l'API. Ne pas le prendre pour un modèle — le code de référence du front est `apps/simulateur`.
+- **Scaffold** : écrans sur données de démonstration ; seule la session appelle l'API. Ne pas le prendre pour un modèle — le code de référence du front est `apps/simulateur`.
 - Toute l'app est derrière la connexion : sans session, la garde de `sessionRootRoute` part vers le formulaire de Keycloak. Il faut l'API et `docker compose up -d` (`docs/authentification.md`).
 - `VITE_API_BASE_URL` est relative (`/api`) et figée au build (déclarée dans `turbo.json`). En local, le proxy de Vite la relaie à l'API sur la même origine : pas de CORS.
 - Le proxy de `vite.config.ts` garde sa forme objet : la forme courte réécrit l'en-tête `Host`, auquel l'API reconnaît le front (421 sinon).

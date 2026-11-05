@@ -143,22 +143,34 @@ formulaire envoyé (`src/login/components/submitted-form.ts`) :
 L'écran de connexion efface la marque à son affichage : un essai raté suivi
 d'une arrivée par FranceConnect ne garde pas « connexion ».
 
+Une vérification demandée par l'application (`kc_action=VERIFY_EMAIL`, soit
+`isAppInitiatedAction` dans le contexte) passe aussi par l'écran neutre : une
+session est déjà ouverte, et la marque « connexion » peut être restée dans
+l'onglet. Un compte déjà vérifié ne voit jamais cette page : Keycloak valide
+l'action sans l'afficher.
+
 ## Remplissage automatique de Chrome
 
 « Se connecter » reste grisé tant que les deux champs sont vides. Quand Chrome
-remplit le mot de passe au chargement, il n'expose la valeur au code qu'après un
-geste de la personne, et sans événement de saisie : le bouton resterait grisé
-devant des champs visiblement remplis.
+remplit un mot de passe enregistré au chargement, il n'émet aucun événement et
+cache la valeur au code (`input.value` vaut `""`) jusqu'au premier geste de la
+personne. À ce geste, il émet de vrais événements `input` et `change`.
 
-Le seul signal est la pseudo-classe `:-webkit-autofill`. `src/styles/theme.css`
-y attache une animation sans effet visible (`etape-autofill`), dont
-`useLoginForm` écoute le début pour tenir le champ pour rempli. La saisie dans
-ce champ reprend ensuite la main. L'envoi, lui, n'a jamais dépendu de ce signal :
-il relit `FormData`, que Chrome remplit dès le clic.
+Le seul signal au chargement est la pseudo-classe `:-webkit-autofill`.
+`src/styles/theme.css` y attache une animation sans effet visible
+(`etape-autofill`), dont `useLoginForm` écoute le début pour tenir le champ pour
+rempli. Sa durée est de 1 ms : à 0 s, l'événement `animationstart` ne part pas
+sur cette page, alors qu'il part sur une page minimale.
 
-Vérifié dans Chrome par le protocole DevTools (`Autofill.trigger`) sur le champ
-e-mail ; le préremplissage d'un mot de passe enregistré ne se simule pas et n'a
-pas été testé.
+Les champs ne sont pas contrôlés, et cela compte : un champ avec `value` serait
+réécrit par React au rendu suivant, donc vidé si le navigateur l'a rempli sans
+événement. Le hook ne retient qu'un booléen par champ, et l'envoi relit
+`FormData`.
+
+Vérifié dans Chrome avec un vrai mot de passe enregistré dans un profil
+temporaire (ajouté par `chrome.passwordsPrivate`), sur la page en contexte
+simulé et non dans un vrai Keycloak. `Autofill.trigger`, du protocole DevTools,
+ne convient pas à ce test : il émet des événements de saisie dès le remplissage.
 
 ## Case « Je ne suis pas un robot »
 

@@ -15,7 +15,7 @@ type LoginVerifyEmailProps = EtapePageProps<
 export default function LoginVerifyEmail(props: LoginVerifyEmailProps) {
   const [submittedForm] = useState(readSubmittedForm);
 
-  return submittedForm === SUBMITTED_FORM.LOGIN ? (
+  return submittedForm === SUBMITTED_FORM.LOGIN && !props.kcContext.isAppInitiatedAction ? (
     <AccountNotActivated {...props} />
   ) : (
     <ActivationEmailSent {...props} />

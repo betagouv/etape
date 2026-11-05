@@ -15,26 +15,27 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:not-aria-disabled:bg-primary/90",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+          "bg-destructive text-white hover:not-aria-disabled:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
         outline:
-          "border bg-background text-secondary-foreground shadow-xs hover:bg-secondary dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        "ghost-primary": "text-secondary-foreground hover:bg-secondary",
-        link: "text-primary underline-offset-4 hover:underline",
+          "border bg-background text-secondary-foreground shadow-xs hover:not-aria-disabled:bg-secondary dark:border-input dark:bg-input/30 dark:hover:not-aria-disabled:bg-input/50",
+        secondary: "bg-secondary text-secondary-foreground hover:not-aria-disabled:bg-secondary/80",
+        ghost:
+          "hover:not-aria-disabled:bg-accent hover:not-aria-disabled:text-accent-foreground dark:hover:not-aria-disabled:bg-accent/50",
+        "ghost-primary": "text-secondary-foreground hover:not-aria-disabled:bg-secondary",
+        link: "text-primary underline-offset-4 hover:not-aria-disabled:underline",
         // Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
         // CTA posés sur un fond coloré.
-        inverse: "bg-background text-primary shadow-xs hover:bg-background/90",
-        // `hover:text-secondary-foreground` n'est pas décoratif : sans lui, le
+        inverse: "bg-background text-primary shadow-xs hover:not-aria-disabled:bg-background/90",
+        // Le `text-secondary-foreground` du survol n'est pas décoratif : sans lui, le
         // libellé reste en `text-primary` sur le fond `secondary` du survol, et
         // le contraste tombe de 5,70:1 à 4,65:1.
         "outline-primary":
-          "border border-primary bg-background text-primary hover:bg-secondary hover:text-secondary-foreground",
+          "border border-primary bg-background text-primary hover:not-aria-disabled:bg-secondary hover:not-aria-disabled:text-secondary-foreground",
         // Écart au kit : libellé en `destructive-text` (7:1), `destructive` n'y fait que 4,1:1.
         "destructive-subdued":
-          "bg-destructive/10 text-destructive-text hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30",
+          "bg-destructive/10 text-destructive-text hover:not-aria-disabled:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:not-aria-disabled:bg-destructive/30",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -42,6 +43,8 @@ const buttonVariants = cva(
         sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
         // Le `Variant=Link` du kit n'a ni hauteur ni padding.
         inline: "gap-1.5",
+        // `Size=lg` du kit (36px) : notre `lg` reste à 40px pour ne pas modifier l'existant.
+        md: "h-9 gap-1.5 rounded-lg px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { descendantLinksFocusRing } from "@etape/ui/lib/focus";
 import { cn } from "@etape/ui/lib/utils";
 
 /*
@@ -23,6 +24,9 @@ const alertVariants = cva(
         destructive: "bg-card text-destructive *:data-[slot=alert-description]:text-destructive",
         emphasis:
           "bg-secondary text-primary rounded-l-none rounded-r-md border-0 border-l-3 border-l-primary px-3 font-medium",
+        info: "border-info-border bg-info-muted text-info-text *:data-[slot=alert-description]:text-accent-foreground",
+        "destructive-subdued":
+          "border-destructive-border bg-destructive-muted text-destructive-text *:data-[slot=alert-description]:text-accent-foreground",
       },
     },
     defaultVariants: {
@@ -54,7 +58,8 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
     <div
       data-slot="alert-description"
       className={cn(
-        "text-muted-foreground col-start-2 grid justify-items-start gap-1 text-sm",
+        "text-muted-foreground col-start-2 grid justify-items-start gap-1 text-sm [&_a]:underline",
+        descendantLinksFocusRing,
         className,
       )}
       {...props}

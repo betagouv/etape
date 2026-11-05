@@ -201,4 +201,5 @@ altcha-widget {
 
 input:-webkit-autofill {
   animation-name: etape-autofill;
+  animation-duration: 1ms;
 }
