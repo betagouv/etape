@@ -94,7 +94,6 @@
   /* Contenu — extensions ETAPE */
   --content-strong: #262626; /* neutral-800 */
   --content-secondary: #404040; /* neutral-700 */
-  --content-accent-hover: #12423e; /* teal-950, survol d'un lien primary */
 
   /* Overlay (identique light & dark) */
   --overlay-black-60: rgba(0, 0, 0, 0.6);
@@ -180,7 +179,6 @@
   /* Contenu */
   --content-strong: #e5e5e5; /* neutral-200 */
   --content-secondary: #d4d4d4; /* neutral-300 */
-  --content-accent-hover: #fafafa;
 
   /* Charts */
   --chart-1: #1d4ed8; /* base/chart-1 */
@@ -308,7 +306,6 @@
 
   --color-content-strong: var(--content-strong);
   --color-content-secondary: var(--content-secondary);
-  --color-content-accent-hover: var(--content-accent-hover);
 
   --color-overlay-black-60: var(--overlay-black-60);
 
