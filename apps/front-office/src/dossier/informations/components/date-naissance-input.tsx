@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { fr } from "date-fns/locale/fr";
 import { CalendarDaysIcon } from "lucide-react";
 
 import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/components/field";
@@ -80,6 +79,7 @@ export function DateNaissanceInput({
         <PopoverContent
           align="start"
           className="w-[var(--radix-popover-trigger-width)] p-0"
+          aria-label="Choisir une date de naissance"
           // Quitter la liste ouverte (clic ou tabulation ailleurs) quitte le champ, sauf vers son bouton.
           onInteractOutside={(event) => {
             if (!(event.target instanceof Element && event.target.closest(`#${FIELD_ID}`)))
@@ -90,7 +90,6 @@ export function DateNaissanceInput({
             className="w-full"
             mode="single"
             captionLayout="dropdown"
-            locale={fr}
             formatters={{
               formatMonthDropdown: (date) => date.toLocaleString("fr-FR", { month: "long" }),
             }}
