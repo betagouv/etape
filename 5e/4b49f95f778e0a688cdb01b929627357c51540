@@ -1,0 +1,23 @@
+.claude/skills/review-pr/SKILL.md
+  s_503baec29ffaba::t_fdaf2b7d7660b4 41-42,46-48,50,52,54-81
+  s_503baec29ffaba::t_93c0c74e8d20a4 12-13
+  s_503baec29ffaba::t_7b0f594d4cfc7d 85,93,108
+.claude/agents/revue-front.md
+  s_503baec29ffaba::t_9b15b03dfadb68 63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5e4b49f95f778e0a688cdb01b929627357c51540",
+  "prompts": {},
+  "sessions": {
+    "s_503baec29ffaba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "839f27a4-1eb7-4cfd-8b83-b0e079713e74",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Eric SANCHEZ <eric.cmsfr@gmail.com>"
+    }
+  }
+}
