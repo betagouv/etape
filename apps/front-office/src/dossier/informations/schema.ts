@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { computeDateNaissanceBounds, parseDateNaissance } from "./domain/date-naissance";
+import {
+  AGE_MAXIMUM,
+  AGE_MINIMUM,
+  computeDateNaissanceBounds,
+  parseDateNaissance,
+} from "./domain/date-naissance";
 import { isCleNirValid, NIR_PATTERN } from "./domain/validate-nir";
 
 function isAgeMinimumRespected(value: string): boolean {
@@ -31,9 +36,10 @@ const baseInformationsSchema = z.object({
   civilite: z.enum(CIVILITE, "Veuillez indiquer votre civilité."),
   dateNaissance: z
     .string()
+    .min(1, "Veuillez indiquer votre date de naissance.")
     .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Le format attendu est JJ/MM/AAAA.")
-    .refine(isAgeMinimumRespected, "Vous devez avoir au moins 18 ans.")
-    .refine(isAgeMaximumRespected, "Vous devez avoir moins de 70 ans."),
+    .refine(isAgeMinimumRespected, `Vous devez avoir au moins ${AGE_MINIMUM} ans.`)
+    .refine(isAgeMaximumRespected, `Vous devez avoir moins de ${AGE_MAXIMUM} ans.`),
   nationalite: z.string().min(1, "Veuillez choisir une nationalité."),
   nir: z
     .string()
@@ -41,6 +47,7 @@ const baseInformationsSchema = z.object({
     .regex(NIR_PATTERN, "Saisissez les 13 premiers chiffres qui figurent sur votre carte Vitale."),
   cleNir: z
     .string()
+    .min(1, "Veuillez saisir la clé de votre numéro de sécurité sociale.")
     .regex(
       CLE_NIR_PATTERN,
       "Saisissez les 2 derniers chiffres qui figurent sur votre carte Vitale.",
