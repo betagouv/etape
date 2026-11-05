@@ -42,6 +42,10 @@ interface FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPa
  * dans le kit. L'`id` du contrôle est son `name` (ou `id` s'il est fourni), pour que
  * le résumé d'erreurs de l'écran puisse y mener par un lien.
  *
+ * L'aide disparaît dès que le champ est en erreur : le message d'erreur reprend donc
+ * la consigne (« Saisissez les 13 premiers chiffres de votre carte Vitale. » plutôt
+ * que « Ce numéro n'est pas valide. »), RGAA 11.11.
+ *
  * - Contrôle natif : `render={({ field, attributes }) => <Input {...field} {...attributes} />}`.
  * - Contrôle Radix : brancher la valeur à la main, les attributs sur l'élément focalisable :
  *   `<Select value={field.value} onValueChange={field.onChange}>` puis

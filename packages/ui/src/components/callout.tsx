@@ -37,8 +37,7 @@ const CALLOUT_PARTS: Record<
     icon: "bg-background size-11 rounded-md",
     heading: "gap-0",
     title: "font-semibold",
-    // Écart à la maquette : `muted-foreground` ne fait que 4,3:1 sur `secondary`.
-    text: "text-sm",
+    text: "text-muted-foreground text-sm",
   },
 };
 

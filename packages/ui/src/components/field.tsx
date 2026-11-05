@@ -21,24 +21,33 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   );
 }
 
+const fieldLegendVariants = cva("mb-3 font-medium", {
+  variants: {
+    variant: {
+      legend: "text-base",
+      label: "text-sm",
+    },
+  },
+  defaultVariants: {
+    variant: "legend",
+  },
+});
+
 function FieldLegend({
   className,
   variant = "legend",
   required = false,
   children,
   ...props
-}: React.ComponentProps<"legend"> & { variant?: "legend" | "label"; required?: boolean }) {
+}: React.ComponentProps<"legend"> &
+  VariantProps<typeof fieldLegendVariants> & { required?: boolean }) {
   return (
     <legend
       data-slot="field-legend"
+      // `FieldDescription` s'en sert comme sélecteur.
       data-variant={variant}
       data-required={required || undefined}
-      className={cn(
-        "mb-3 font-medium",
-        "data-[variant=legend]:text-base",
-        "data-[variant=label]:text-sm",
-        className,
-      )}
+      className={cn(fieldLegendVariants({ variant }), className)}
       {...props}
     >
       {required ? <FieldRequiredContent>{children}</FieldRequiredContent> : children}

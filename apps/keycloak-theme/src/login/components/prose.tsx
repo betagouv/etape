@@ -32,10 +32,7 @@ export function AccountSwitch(props: { question: ReactNode; href: string; label:
   return (
     <p className="text-body-lg text-content-secondary flex flex-wrap items-center justify-center gap-2">
       {props.question}
-      <a
-        href={props.href}
-        className="text-label-lg text-primary hover:text-content-accent-hover font-semibold hover:underline"
-      >
+      <a href={props.href} className="text-label-lg text-primary font-semibold hover:underline">
         {props.label}
       </a>
     </p>
@@ -47,7 +44,7 @@ export function BackToLogin(props: { href: string; label: ReactNode }) {
   return (
     <a
       href={props.href}
-      className="text-label-lg text-primary hover:text-content-accent-hover text-center font-semibold hover:underline"
+      className="text-label-lg text-primary text-center font-semibold hover:underline"
     >
       {props.label}
     </a>
