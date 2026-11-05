@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/po
 
 import { findNationaliteByLabel, flagUrl } from "../domain/nationalites";
 import { useNationaliteSearch } from "../hooks/use-nationalite-search";
+import { INFORMATIONS_FIELD_LABEL } from "../schema";
 import { NationaliteLabel } from "./nationalite-label";
 
 const FIELD_ID = "nationalite";
@@ -27,6 +28,7 @@ const NO_MATCH_NATIONALITE = "Aucune nationalité ne correspond.";
 export interface NationaliteInputProps {
   value: string;
   onChange: (value: string) => void;
+  onBlur: () => void;
   fieldRef: React.Ref<HTMLButtonElement>;
   isInvalid: boolean;
   error?: { message?: string };
@@ -35,6 +37,7 @@ export interface NationaliteInputProps {
 export function NationaliteInput({
   value,
   onChange,
+  onBlur,
   fieldRef,
   isInvalid,
   error,
@@ -54,7 +57,7 @@ export function NationaliteInput({
   return (
     <Field data-invalid={isInvalid}>
       <FieldLabel id={LABEL_ID} htmlFor={FIELD_ID} required>
-        Nationalité
+        {INFORMATIONS_FIELD_LABEL.nationalite}
       </FieldLabel>
       <Popover
         open={isOpen}
@@ -73,6 +76,10 @@ export function NationaliteInput({
             <InputGroupTrigger
               id={FIELD_ID}
               ref={fieldRef}
+              // Liste ouverte, le focus part dans la liste sans quitter le champ.
+              onBlur={() => {
+                if (!isOpen) onBlur();
+              }}
               // Nommé par le libellé seul, un bouton n'annonce pas la nationalité choisie : on y ajoute sa valeur.
               aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
               aria-invalid={isInvalid || undefined}
@@ -90,6 +97,11 @@ export function NationaliteInput({
           variant="list"
           align="start"
           className="w-[var(--radix-popover-trigger-width)]"
+          // Quitter la liste ouverte (clic ou tabulation ailleurs) quitte le champ, sauf vers son bouton.
+          onInteractOutside={(event) => {
+            if (!(event.target instanceof Element && event.target.closest(`#${FIELD_ID}`)))
+              onBlur();
+          }}
           onOpenAutoFocus={(e) => {
             e.preventDefault();
             inputRef.current?.focus();

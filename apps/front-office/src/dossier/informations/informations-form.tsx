@@ -39,6 +39,7 @@ import type { VoletNoticeContent } from "../domain/volets";
 import {
   CIVILITE,
   CIVILITE_LABEL,
+  INFORMATIONS_FIELD_LABEL,
   INFORMATIONS_SECTION,
   type InformationsFormData,
 } from "./schema";
@@ -80,13 +81,16 @@ export function InformationsForm({
   notice,
   onSubmitValid,
 }: InformationsFormProps) {
-  const { form, sections, voletErrors } = informations;
+  const { form, sections, voletErrors, errorAnnouncement } = informations;
   const { submitCount } = form.formState;
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
 
   return (
     <>
       <VoletErrorsAlert ref={errorsAlertRef} errors={submittedErrors} />
+      <p role="status" className="sr-only">
+        {errorAnnouncement}
+      </p>
       <VoletNotice notice={notice} />
 
       <form
@@ -103,7 +107,7 @@ export function InformationsForm({
 
           <FieldSet>
             <FieldLegend variant="label" required>
-              Civilité
+              {INFORMATIONS_FIELD_LABEL.civilite}
             </FieldLegend>
             <Controller
               name="civilite"
@@ -114,6 +118,10 @@ export function InformationsForm({
                     id={CIVILITE_FIELD_ID}
                     value={field.value}
                     onValueChange={field.onChange}
+                    // Les flèches déplacent le focus d'un bouton à l'autre : on ne sort qu'en quittant le groupe.
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) field.onBlur();
+                    }}
                     className="flex gap-5"
                     aria-invalid={fieldState.invalid}
                     aria-describedby={fieldState.invalid ? CIVILITE_ERROR_ID : undefined}
@@ -159,7 +167,7 @@ export function InformationsForm({
               render={({ field, fieldState }) => (
                 <DateField
                   id="dateNaissance"
-                  label="Date de naissance"
+                  label={INFORMATIONS_FIELD_LABEL.dateNaissance}
                   description="Format : JJ/MM/AAAA"
                   calendar={DATE_NAISSANCE_CALENDAR}
                   field={field}
@@ -175,6 +183,7 @@ export function InformationsForm({
                 <NationaliteInput
                   value={field.value}
                   onChange={field.onChange}
+                  onBlur={field.onBlur}
                   fieldRef={field.ref}
                   isInvalid={fieldState.invalid}
                   error={fieldState.error}
@@ -185,7 +194,7 @@ export function InformationsForm({
             <FormField
               name="nir"
               control={form.control}
-              label="Numéro de sécurité sociale"
+              label={INFORMATIONS_FIELD_LABEL.nir}
               required
               description="Les 13 premiers chiffres qui figurent sur votre carte Vitale"
               render={({ field, attributes }) => (
@@ -200,7 +209,7 @@ export function InformationsForm({
             <FormField
               name="cleNir"
               control={form.control}
-              label="Clé"
+              label={INFORMATIONS_FIELD_LABEL.cleNir}
               required
               description="Les 2 derniers chiffres qui figurent sur votre carte Vitale"
               render={({ field, attributes }) => (
@@ -258,7 +267,7 @@ export function InformationsForm({
             <FormField
               name="telephone"
               control={form.control}
-              label="Téléphone"
+              label={INFORMATIONS_FIELD_LABEL.telephone}
               required
               render={({ field, attributes }) => (
                 <InputGroup>

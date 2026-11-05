@@ -3,8 +3,10 @@ import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import type { SectionProgress, VoletProgress } from "../../domain/statut-volet";
 import type { VoletError } from "../../domain/volet-errors";
+import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcement";
 import { countFilled, countInvalid } from "../domain/count-fields";
 import {
+  INFORMATIONS_FIELD_LABEL,
   INFORMATIONS_SECTION_FIELDS,
   informationsSchema,
   type Civilite,
@@ -17,6 +19,8 @@ export interface UseInformationsFormResult {
   progress: VoletProgress;
   sections: Record<InformationsSection, SectionProgress>;
   voletErrors: VoletError[];
+  /** Erreur du champ qu'on vient de quitter, pour la région `role="status"` de l'écran. */
+  errorAnnouncement: string;
 }
 
 const ALL_REQUIRED_FIELDS = Object.values(INFORMATIONS_SECTION_FIELDS).flat();
@@ -29,6 +33,7 @@ export function useInformationsForm(): UseInformationsFormResult {
   const form = useForm<InformationsFormData>({
     resolver: zodResolver(informationsSchema),
     mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       civilite: "" as Civilite,
       dateNaissance: "",
@@ -41,6 +46,7 @@ export function useInformationsForm(): UseInformationsFormResult {
     shouldFocusError: false,
   });
 
+  const errorAnnouncement = useFieldErrorAnnouncement(form, INFORMATIONS_FIELD_LABEL);
   const values = useWatch({ control: form.control });
   const { errors } = form.formState;
 
@@ -71,5 +77,6 @@ export function useInformationsForm(): UseInformationsFormResult {
     },
     sections,
     voletErrors,
+    errorAnnouncement,
   };
 }

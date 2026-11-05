@@ -21,6 +21,7 @@ export interface DateFieldCalendar {
 export interface DateFieldControl {
   value: string;
   onChange: (value: string) => void;
+  onBlur: () => void;
   ref: React.Ref<HTMLButtonElement>;
 }
 
@@ -39,7 +40,7 @@ export function DateField({
   label,
   description,
   calendar,
-  field: { value, onChange, ref: fieldRef },
+  field: { value, onChange, onBlur, ref: fieldRef },
   error,
 }: DateFieldProps) {
   const [isOpen, setOpen] = useState(false);
@@ -61,6 +62,10 @@ export function DateField({
             <InputGroupTrigger
               id={id}
               ref={fieldRef}
+              // Liste ouverte, le focus part dans la liste sans quitter le champ.
+              onBlur={() => {
+                if (!isOpen) onBlur();
+              }}
               // Nommé par le libellé seul, un bouton n'annonce pas la date choisie : on y ajoute sa valeur.
               aria-labelledby={`${labelId} ${valueId}`}
               aria-invalid={isInvalid || undefined}
@@ -74,7 +79,15 @@ export function DateField({
             <CalendarDaysIcon aria-hidden="true" />
           </InputGroupAddon>
         </InputGroup>
-        <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+        <PopoverContent
+          align="start"
+          className="w-[var(--radix-popover-trigger-width)] p-0"
+          // Quitter la liste ouverte (clic ou tabulation ailleurs) quitte le champ, sauf vers son bouton.
+          onInteractOutside={(event) => {
+            if (!(event.target instanceof Element && event.target.closest(`#${CSS.escape(id)}`)))
+              onBlur();
+          }}
+        >
           <Calendar
             className="w-full"
             mode="single"
