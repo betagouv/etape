@@ -11,6 +11,7 @@ import {
   PASSWORD_RULE_MESSAGE_KEY,
   type PasswordRuleMessageKey,
 } from "./password-rules";
+import { usePressedAction } from "../hooks/use-pressed-action";
 
 export const PASSWORD_RULES_ID = "password-rules";
 
@@ -54,8 +55,12 @@ export function UserProfileField(props: {
   const onChange = (nextValue: string) =>
     dispatchFormAction({ action: "update", name: attribute.name, valueOrValues: nextValue });
 
-  const onBlur = () =>
+  const isActionPressed = usePressedAction();
+
+  const onBlur = () => {
+    if (isActionPressed.current) return;
     dispatchFormAction({ action: "focus lost", name: attribute.name, fieldIndex: undefined });
+  };
 
   const commonProps = {
     id: attribute.name,

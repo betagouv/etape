@@ -129,7 +129,8 @@ L'adresse est contrôlée à la sortie du champ, mais pas quand cette sortie vie
 d'un appui sur un lien ou un bouton : l'erreur en s'insérant décalerait la page,
 et le clic tomberait à côté de sa cible. L'appui se repère par `mousedown`, qui
 précède la sortie du champ dans tous les navigateurs ; `:active` n'offre pas cette
-garantie. L'envoi contrôle de toute façon le format.
+garantie. L'envoi contrôle de toute façon le format. L'inscription suit la même règle
+pour ses champs (`usePressedAction`), y compris sur une case à cocher.
 
 Un envoi incomplet (Entrée, ou clic sur le bouton grisé) reste bloqué : le focus
 part sur le premier champ vide et une région `role="status"` dit quoi faire. Le
@@ -185,6 +186,10 @@ simulé et non dans un vrai Keycloak. `Autofill.trigger`, du protocole DevTools,
 ne convient pas à ce test : il émet des événements de saisie dès le remplissage.
 
 ## Inscription en deux étapes
+
+« Continuer » et « S'inscrire » restent actionnables tant qu'une étape est incomplète :
+le focus part sur le premier champ manquant, et une région `role="status"` dit quoi
+faire. Le bouton porte le même texte en `aria-describedby`.
 
 Keycloak n'a qu'un formulaire d'inscription : `Register.tsx` en affiche les deux
 étapes dans le même `<form>`, sans changer de page. L'étape masquée reste montée,

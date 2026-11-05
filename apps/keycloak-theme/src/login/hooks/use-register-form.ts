@@ -19,6 +19,7 @@ interface UseRegisterFormOptions {
   initialStep: RegisterStep;
   isInformationsComplete: boolean;
   isCredentialsComplete: boolean;
+  firstMissingFieldId: Record<RegisterStep, string | undefined>;
 }
 
 export interface UseRegisterFormResult {
@@ -27,26 +28,41 @@ export interface UseRegisterFormResult {
   isContinueBlocked: boolean;
   isSubmitBlocked: boolean;
   isSubmitting: boolean;
+  shouldAnnounceIncomplete: boolean;
   goBack: () => void;
   submit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
 export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFormResult {
-  const { initialStep, isInformationsComplete, isCredentialsComplete } = options;
+  const { initialStep, isInformationsComplete, isCredentialsComplete, firstMissingFieldId } =
+    options;
 
   const [step, setStep] = useState(initialStep);
   const [hasStepChanged, setHasStepChanged] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
 
   const goTo = (nextStep: RegisterStep): void => {
     flushSync(() => {
       setStep(nextStep);
       setHasStepChanged(true);
+      setHasIncompleteAttempt(false);
     });
     document.getElementById(FIRST_FIELD_ID_BY_STEP[nextStep])?.focus();
   };
 
-  const isSubmitBlocked = !isInformationsComplete || !isCredentialsComplete || isSubmitting;
+  const signalIncomplete = (): void => {
+    setHasIncompleteAttempt(true);
+    const fieldId = firstMissingFieldId[step];
+    if (fieldId !== undefined) document.getElementById(fieldId)?.focus();
+  };
+
+  const isStepComplete: Record<RegisterStep, boolean> = {
+    [REGISTER_STEP.INFORMATIONS]: isInformationsComplete,
+    [REGISTER_STEP.CREDENTIALS]: isInformationsComplete && isCredentialsComplete,
+  };
+
+  const isSubmitBlocked = !isStepComplete[REGISTER_STEP.CREDENTIALS] || isSubmitting;
 
   return {
     step,
@@ -54,15 +70,18 @@ export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFor
     isContinueBlocked: !isInformationsComplete,
     isSubmitBlocked,
     isSubmitting,
+    shouldAnnounceIncomplete: hasIncompleteAttempt && !isStepComplete[step],
     goBack: () => goTo(REGISTER_STEP.INFORMATIONS),
     submit: (event) => {
       if (step === REGISTER_STEP.INFORMATIONS) {
         event.preventDefault();
         if (isInformationsComplete) goTo(REGISTER_STEP.CREDENTIALS);
+        else signalIncomplete();
         return;
       }
       if (isSubmitBlocked) {
         event.preventDefault();
+        if (!isSubmitting) signalIncomplete();
         return;
       }
       setIsSubmitting(true);

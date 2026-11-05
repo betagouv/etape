@@ -27,11 +27,16 @@ describe("buildManualAdresse", () => {
   });
 
   it("attend tous les champs obligatoires", () => {
-    expect(buildManualAdresse({ ...FIELDS, numeroVoie: " " }, AILLAS)).toBeNull();
     expect(buildManualAdresse({ ...FIELDS, typeVoie: "" }, AILLAS)).toBeNull();
     expect(buildManualAdresse({ ...FIELDS, nomVoie: "" }, AILLAS)).toBeNull();
     expect(buildManualAdresse({ ...FIELDS, codePostal: "331" }, AILLAS)).toBeNull();
     expect(buildManualAdresse(FIELDS, undefined)).toBeNull();
+  });
+
+  it("n'exige pas le numéro, un lieu-dit n'en a pas", () => {
+    expect(buildManualAdresse({ ...FIELDS, numeroVoie: " " }, AILLAS)?.voie).toBe(
+      "Rue Victor Hugo",
+    );
   });
 
   it("n'exige pas le complément", () => {

@@ -25,6 +25,7 @@ import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
 const REGISTRATION_CONTEXT = "REGISTRATION";
+const INCOMPLETE_HINT_ID = "register-incomplete-hint";
 
 const HIDDEN_ATTRIBUTES: readonly string[] = [
   USER_PROFILE_ATTRIBUTE.LOCALE,
@@ -43,7 +44,6 @@ const ADRESSE_ATTRIBUTES = [
 const REGISTER_FIELD = {
   USERNAME: "username",
   TERMS_ACCEPTED: "termsAccepted",
-  ALTCHA: "altcha",
 } as const;
 
 const STEP_ANNOUNCEMENT_KEY = {
@@ -154,7 +154,7 @@ export default function Register(props: RegisterProps) {
       USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM,
     ) ||
     messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED) ||
-    messagesPerField.existsError(REGISTER_FIELD.ALTCHA);
+    messagesPerField.existsError("altcha");
 
   const initialStep =
     hasCredentialsError && !hasInformationsError
@@ -179,13 +179,37 @@ export default function Register(props: RegisterProps) {
   };
   const invalidFieldName = invalidFieldCandidates[initialStep].find((name) => name !== false);
 
+  const isFirstNameMissing =
+    firstName.trim() === "" || hasErrorOn(USER_PROFILE_ATTRIBUTE.FIRST_NAME);
+  const isLastNameMissing = lastName.trim() === "" || hasErrorOn(USER_PROFILE_ATTRIBUTE.LAST_NAME);
+  const isPasswordMissing = !getPasswordRules(password).every((rule) => rule.isSatisfied);
+
   const form = useRegisterForm({
     initialStep,
     isInformationsComplete,
     isCredentialsComplete,
+    firstMissingFieldId: {
+      [REGISTER_STEP.INFORMATIONS]: [
+        isFirstNameMissing && USER_PROFILE_ATTRIBUTE.FIRST_NAME,
+        isLastNameMissing && USER_PROFILE_ATTRIBUTE.LAST_NAME,
+        adresseField.firstMissingFieldId,
+      ].find((id) => typeof id === "string"),
+      [REGISTER_STEP.CREDENTIALS]: [
+        !isEmailFormatValid(email) && USER_PROFILE_ATTRIBUTE.EMAIL,
+        isPasswordMissing && USER_PROFILE_ATTRIBUTE.PASSWORD,
+        !areTermsAccepted && REGISTER_FIELD.TERMS_ACCEPTED,
+      ].find((id) => typeof id === "string"),
+    },
   });
 
   const isOnInformations = form.step === REGISTER_STEP.INFORMATIONS;
+  const isCurrentStepBlocked = isOnInformations ? form.isContinueBlocked : form.isSubmitBlocked;
+
+  const stepAnnouncement = form.shouldAnnounceIncomplete
+    ? msgStr("etapeRegisterIncomplete")
+    : form.hasStepChanged
+      ? msgStr(STEP_ANNOUNCEMENT_KEY[form.step])
+      : "";
 
   const profileField = (name: string, extra?: Partial<Parameters<typeof UserProfileField>[0]>) => {
     const fieldState = fieldStates.get(name);
@@ -255,9 +279,7 @@ export default function Register(props: RegisterProps) {
             i18n={i18n}
           />
 
-          <StatusRegion
-            message={form.hasStepChanged ? msgStr(STEP_ANNOUNCEMENT_KEY[form.step]) : ""}
-          />
+          <StatusRegion message={stepAnnouncement} />
 
           <div hidden={!isOnInformations} className="flex flex-col gap-5">
             <section className="flex flex-col gap-4">
@@ -331,9 +353,7 @@ export default function Register(props: RegisterProps) {
               challenge={altchaChallenge}
               isUnavailable={altchaUnavailable ?? false}
               serverError={
-                messagesPerField.existsError(REGISTER_FIELD.ALTCHA)
-                  ? messagesPerField.get(REGISTER_FIELD.ALTCHA)
-                  : undefined
+                messagesPerField.existsError("altcha") ? messagesPerField.get("altcha") : undefined
               }
               i18n={i18n}
             />
@@ -357,6 +377,7 @@ export default function Register(props: RegisterProps) {
             type="submit"
             size="form"
             aria-disabled={form.isContinueBlocked}
+            aria-describedby={form.isContinueBlocked ? INCOMPLETE_HINT_ID : undefined}
             className="w-full"
           >
             {msg("etapeRegisterContinue")}
@@ -369,6 +390,7 @@ export default function Register(props: RegisterProps) {
               size="form"
               aria-disabled={form.isSubmitBlocked}
               aria-busy={form.isSubmitting}
+              aria-describedby={form.isSubmitBlocked ? INCOMPLETE_HINT_ID : undefined}
               className="w-full"
             >
               {msg("doRegister")}
@@ -377,6 +399,12 @@ export default function Register(props: RegisterProps) {
               {msg("etapeRegisterActivationHint")}
             </p>
           </div>
+        )}
+
+        {isCurrentStepBlocked && (
+          <span id={INCOMPLETE_HINT_ID} className="sr-only">
+            {msg("etapeRegisterIncomplete")}
+          </span>
         )}
       </form>
     </Template>

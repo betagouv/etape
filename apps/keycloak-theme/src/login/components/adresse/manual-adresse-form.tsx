@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 import {
   COMMUNES_STATUS,
   type CommunesStatus,
+  MANUAL_FIELD_ID,
   type UseManualAdresseResult,
 } from "../../hooks/use-manual-adresse";
 import type { I18n } from "../../i18n";
@@ -20,8 +21,6 @@ import { Alert, MESSAGE_TYPE } from "../alert";
 import { Field, FieldError, TextInput } from "../form";
 import type { ManualAdresseFields } from "./adresse";
 
-const COMMUNE_INPUT_ID = "adresse-commune";
-const CODE_POSTAL_INPUT_ID = "adresse-code-postal";
 const CODE_POSTAL_MAX_LENGTH = 5;
 
 export default function ManualAdresseForm(props: { manual: UseManualAdresseResult; i18n: I18n }) {
@@ -43,36 +42,35 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
     <div className="flex flex-col gap-4">
       <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
         <ManualTextField
-          id="adresse-numero-voie"
+          id={MANUAL_FIELD_ID.NUMERO_VOIE}
           field="numeroVoie"
           label={msg("etapeAdresseNumeroVoie")}
           manual={manual}
-          required
           autoFocus
         />
         <ManualTextField
-          id="adresse-type-voie"
+          id={MANUAL_FIELD_ID.TYPE_VOIE}
           field="typeVoie"
           label={msg("etapeAdresseTypeVoie")}
           manual={manual}
           required
         />
         <ManualTextField
-          id="adresse-nom-voie"
+          id={MANUAL_FIELD_ID.NOM_VOIE}
           field="nomVoie"
           label={msg("etapeAdresseNomVoie")}
           manual={manual}
           required
         />
         <ManualTextField
-          id="adresse-complement"
+          id={MANUAL_FIELD_ID.COMPLEMENT}
           field="complement"
           label={msg("etapeAdresseComplement")}
           manual={manual}
           autoComplete="address-line2"
         />
         <Field
-          id={CODE_POSTAL_INPUT_ID}
+          id={MANUAL_FIELD_ID.CODE_POSTAL}
           label={msg("etapeAdresseCodePostal")}
           required
           error={
@@ -85,7 +83,7 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
           }
         >
           <TextInput
-            id={CODE_POSTAL_INPUT_ID}
+            id={MANUAL_FIELD_ID.CODE_POSTAL}
             type="text"
             inputMode="numeric"
             autoComplete="postal-code"
@@ -97,7 +95,7 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
             onChange={(event) => manual.changeCodePostal(event.target.value)}
           />
         </Field>
-        <Field id={COMMUNE_INPUT_ID} label={msg("etapeAdresseCommune")} required>
+        <Field id={MANUAL_FIELD_ID.COMMUNE} label={msg("etapeAdresseCommune")} required>
           <Select
             key={fields.codePostal}
             value={codeCommune}
@@ -105,7 +103,7 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
             disabled={!isCommuneEnabled}
           >
             <SelectTrigger
-              id={COMMUNE_INPUT_ID}
+              id={MANUAL_FIELD_ID.COMMUNE}
               aria-required
               className="text-body-sm bg-background w-full rounded-lg shadow-none data-[size=default]:h-11"
             >
@@ -137,7 +135,7 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
             className="self-start"
             onClick={() => {
               manual.retryCommunes();
-              document.getElementById(CODE_POSTAL_INPUT_ID)?.focus();
+              document.getElementById(MANUAL_FIELD_ID.CODE_POSTAL)?.focus();
             }}
           >
             <RefreshCw aria-hidden />

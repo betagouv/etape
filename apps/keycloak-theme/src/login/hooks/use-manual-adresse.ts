@@ -18,6 +18,17 @@ export const COMMUNES_STATUS = {
 
 export type CommunesStatus = (typeof COMMUNES_STATUS)[keyof typeof COMMUNES_STATUS];
 
+export const MANUAL_FIELD_ID = {
+  NUMERO_VOIE: "adresse-numero-voie",
+  TYPE_VOIE: "adresse-type-voie",
+  NOM_VOIE: "adresse-nom-voie",
+  COMPLEMENT: "adresse-complement",
+  CODE_POSTAL: "adresse-code-postal",
+  COMMUNE: "adresse-commune",
+} as const;
+
+export type ManualFieldId = (typeof MANUAL_FIELD_ID)[keyof typeof MANUAL_FIELD_ID];
+
 const EMPTY_FIELDS: ManualAdresseFields = {
   numeroVoie: "",
   typeVoie: "",
@@ -26,12 +37,26 @@ const EMPTY_FIELDS: ManualAdresseFields = {
   codePostal: "",
 };
 
+export function findFirstMissingField(
+  fields: ManualAdresseFields,
+  communes: readonly Commune[],
+  isCommuneChosen: boolean,
+): ManualFieldId | undefined {
+  if (fields.typeVoie.trim() === "") return MANUAL_FIELD_ID.TYPE_VOIE;
+  if (fields.nomVoie.trim() === "") return MANUAL_FIELD_ID.NOM_VOIE;
+  if (!isCodePostalComplete(fields.codePostal) || communes.length === 0) {
+    return MANUAL_FIELD_ID.CODE_POSTAL;
+  }
+  return isCommuneChosen ? undefined : MANUAL_FIELD_ID.COMMUNE;
+}
+
 export interface UseManualAdresseResult {
   fields: ManualAdresseFields;
   communes: readonly Commune[];
   communesStatus: CommunesStatus;
   codeCommune: string;
   adresse: Adresse | null;
+  firstMissingFieldId: ManualFieldId | undefined;
   changeField: (field: keyof ManualAdresseFields, value: string) => void;
   changeCodePostal: (value: string) => void;
   changeCodeCommune: (value: string) => void;
@@ -73,6 +98,7 @@ export function useManualAdresse(): UseManualAdresseResult {
     communesStatus,
     codeCommune,
     adresse: buildManualAdresse(fields, commune),
+    firstMissingFieldId: findFirstMissingField(fields, communes, commune !== undefined),
     changeField: (field, value) => setFields((current) => ({ ...current, [field]: value })),
     changeCodePostal: (value) => {
       setFields((current) => ({ ...current, codePostal: value }));

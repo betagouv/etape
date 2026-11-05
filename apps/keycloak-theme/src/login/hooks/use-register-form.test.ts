@@ -10,15 +10,38 @@ const submitEvent = () => {
   return { preventDefault, event: { preventDefault } as unknown as FormEvent<HTMLFormElement> };
 };
 
+const MISSING_INFORMATION_ID = "champ-etape-1";
+const MISSING_CREDENTIAL_ID = "champ-etape-2";
+
 const render = (
   initialStep: RegisterStep,
   isInformationsComplete: boolean,
   isCredentialsComplete: boolean,
 ) =>
-  renderHook(() => useRegisterForm({ initialStep, isInformationsComplete, isCredentialsComplete }));
+  renderHook(() =>
+    useRegisterForm({
+      initialStep,
+      isInformationsComplete,
+      isCredentialsComplete,
+      firstMissingFieldId: {
+        [REGISTER_STEP.INFORMATIONS]: isInformationsComplete ? undefined : MISSING_INFORMATION_ID,
+        [REGISTER_STEP.CREDENTIALS]: isCredentialsComplete ? undefined : MISSING_CREDENTIAL_ID,
+      },
+    }),
+  );
+
+const addInput = (id: string): HTMLInputElement => {
+  const input = document.createElement("input");
+  input.id = id;
+  document.body.append(input);
+  return input;
+};
 
 describe("useRegisterForm", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    document.body.replaceChildren();
+  });
 
   it("n'envoie pas le formulaire à l'étape 1 et passe à la suivante", () => {
     const { result } = render(REGISTER_STEP.INFORMATIONS, true, false);
@@ -42,6 +65,37 @@ describe("useRegisterForm", () => {
     expect(result.current.isContinueBlocked).toBe(true);
   });
 
+  it("montre et annonce ce qui manque à l'étape 1", () => {
+    const input = addInput(MISSING_INFORMATION_ID);
+    const { result } = render(REGISTER_STEP.INFORMATIONS, false, false);
+    expect(result.current.shouldAnnounceIncomplete).toBe(false);
+
+    act(() => result.current.submit(submitEvent().event));
+
+    expect(document.activeElement).toBe(input);
+    expect(result.current.shouldAnnounceIncomplete).toBe(true);
+  });
+
+  it("montre et annonce ce qui manque à l'étape 2", () => {
+    const input = addInput(MISSING_CREDENTIAL_ID);
+    const { result } = render(REGISTER_STEP.CREDENTIALS, true, false);
+
+    act(() => result.current.submit(submitEvent().event));
+
+    expect(document.activeElement).toBe(input);
+    expect(result.current.shouldAnnounceIncomplete).toBe(true);
+  });
+
+  it("n'annonce plus rien en changeant d'étape", () => {
+    addInput(MISSING_CREDENTIAL_ID);
+    const { result } = render(REGISTER_STEP.CREDENTIALS, true, false);
+
+    act(() => result.current.submit(submitEvent().event));
+    act(() => result.current.goBack());
+
+    expect(result.current.shouldAnnounceIncomplete).toBe(false);
+  });
+
   it("bloque l'envoi d'une étape 2 incomplète", () => {
     const { result } = render(REGISTER_STEP.CREDENTIALS, true, false);
     const { event, preventDefault } = submitEvent();
@@ -63,6 +117,7 @@ describe("useRegisterForm", () => {
 
     act(() => result.current.submit(second.event));
     expect(second.preventDefault).toHaveBeenCalledOnce();
+    expect(result.current.shouldAnnounceIncomplete).toBe(false);
   });
 
   it("revient à l'étape 1", () => {

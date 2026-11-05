@@ -7,7 +7,11 @@ import {
   type RegionCode,
 } from "../components/adresse/region";
 import { useAdresseSearch, type UseAdresseSearchResult } from "./use-adresse-search";
-import { useManualAdresse, type UseManualAdresseResult } from "./use-manual-adresse";
+import {
+  MANUAL_FIELD_ID,
+  useManualAdresse,
+  type UseManualAdresseResult,
+} from "./use-manual-adresse";
 
 export const ADRESSE_SEARCH_INPUT_ID = "adresse-search";
 
@@ -19,6 +23,7 @@ export interface UseAdresseFieldResult {
   region: RegionCode | undefined;
   isHorsRegion: boolean;
   isComplete: boolean;
+  firstMissingFieldId: string | undefined;
   switchToManual: () => void;
   clearSearch: () => void;
   retrySearch: () => void;
@@ -37,6 +42,10 @@ export function useAdresseField(
   const adresse = isManual ? manual.adresse : search.chosen;
   const region = adresse === null ? undefined : findRegionByCodeCommune(adresse.codeCommune);
   const isHorsRegion = adresse !== null && !isRegionPilote(region, regionsPilotes);
+  const isComplete = adresse !== null && !isHorsRegion;
+  const incompleteFieldId = isManual
+    ? (manual.firstMissingFieldId ?? MANUAL_FIELD_ID.CODE_POSTAL)
+    : ADRESSE_SEARCH_INPUT_ID;
 
   return {
     isManual,
@@ -45,7 +54,8 @@ export function useAdresseField(
     adresse,
     region,
     isHorsRegion,
-    isComplete: adresse !== null && !isHorsRegion,
+    isComplete,
+    firstMissingFieldId: isComplete ? undefined : incompleteFieldId,
     switchToManual: () => setIsManual(true),
     clearSearch: () => {
       search.clear();

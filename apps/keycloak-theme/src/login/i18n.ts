@@ -59,6 +59,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeRegisterResidence: "Votre lieu de résidence principale",
       etapeRegisterCredentials: "Identifiants de connexion",
       etapeRegisterContinue: "Continuer",
+      etapeRegisterIncomplete: "Complétez ou corrigez vos informations pour continuer.",
       etapeRegisterBackToStepOne: "Retour à l'étape 1",
       etapeRegisterEmailHint:
         "Ce sera votre identifiant. Choisissez une adresse personnelle, que vous garderez même si vous quittez votre emploi : elle ne pourra plus être modifiée depuis votre espace.",
@@ -213,6 +214,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeRegisterResidence: "Your main place of residence",
       etapeRegisterCredentials: "Sign-in details",
       etapeRegisterContinue: "Continue",
+      etapeRegisterIncomplete: "Complete or correct your details to continue.",
       etapeRegisterBackToStepOne: "Back to step 1",
       etapeRegisterEmailHint:
         "This will be your username. Choose a personal address that you will keep even if you leave your job: it cannot be changed from your space afterwards.",

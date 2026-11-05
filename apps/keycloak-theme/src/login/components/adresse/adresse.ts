@@ -50,7 +50,6 @@ export function buildManualAdresse(
 
   if (
     commune === undefined ||
-    numeroVoie === "" ||
     typeVoie === "" ||
     nomVoie === "" ||
     !isCodePostalComplete(fields.codePostal)
@@ -59,7 +58,7 @@ export function buildManualAdresse(
   }
 
   return {
-    voie: `${numeroVoie} ${typeVoie} ${nomVoie}`,
+    voie: [numeroVoie, typeVoie, nomVoie].filter((part) => part !== "").join(" "),
     complement: fields.complement.trim(),
     codePostal: fields.codePostal,
     commune: commune.nom,
