@@ -2,6 +2,9 @@
 import * as React from "react";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { DayPicker, getDefaultClassNames, type DayButton } from "react-day-picker";
+// La locale de react-day-picker, pas celle de date-fns : elle traduit aussi les libellés
+// lus par les lecteurs d'écran (« Aujourd'hui », « sélectionné », navigation).
+import { fr } from "react-day-picker/locale";
 
 import { Button, buttonVariants } from "@etape/ui/components/button";
 import { cn } from "@etape/ui/lib/utils";
@@ -12,6 +15,7 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
+  locale = fr,
   formatters,
   labels,
   components,
@@ -24,6 +28,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={locale}
       className={cn(
         "group/calendar bg-background p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
