@@ -48,6 +48,11 @@ services:
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: keycloak
       KC_HEALTH_ENABLED: "true"
+      # Schéma lu dans `X-Forwarded-Proto` : posé par la garde de
+      # `pnpm run dev:tunnel` (`scripts/keycloak-gate.mjs`), Keycloak en déduit
+      # l'attribut `Secure` de ses cookies. Sans effet en local, où personne ne
+      # l'envoie. Permanent pour qu'une session de test ne recrée pas le conteneur.
+      KC_PROXY_HEADERS: xforwarded
     ports:
       - "8080:8080"
     volumes:
@@ -149,6 +154,12 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-}
+      # Origine de chaque front. Surchargées par `pnpm run dev:tunnel` avec les
+      # URL publiques du moment ; un lancement ordinaire les ramène ici.
+      FRONT_OFFICE_BASE_URL: ${FRONT_OFFICE_BASE_URL:-http://localhost:5173}
+      BACK_OFFICE_BASE_URL: ${BACK_OFFICE_BASE_URL:-http://localhost:5174}
+      # URL publique de Keycloak pendant `pnpm run dev:tunnel`, vide sinon.
+      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL:-}
     volumes:
       - ./deploy/keycloak-altcha.sh:/opt/keycloak/bin/etape-altcha.sh:ro
     entrypoint: ["/bin/bash", "-c"]
@@ -166,8 +177,8 @@ services:
         # relit pas son fichier. Le secret doit être le même que dans
         # `apps/api/.env` ; sans lui, Keycloak garde celui qu'il a tiré au sort
         # à l'import, et l'API ne peut plus échanger le code de connexion.
-        for entry in "etape:http://localhost:5173:$$FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET" \
-                     "etape-back-office:http://localhost:5174:$$BACK_OFFICE_KEYCLOAK_CLIENT_SECRET"; do
+        for entry in "etape:$$FRONT_OFFICE_BASE_URL:$$FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET" \
+                     "etape-back-office:$$BACK_OFFICE_BASE_URL:$$BACK_OFFICE_KEYCLOAK_CLIENT_SECRET"; do
           realm=$${entry%%:*}
           rest=$${entry#*:}
           front_url=$${rest%:*}
@@ -184,6 +195,18 @@ services:
           else
             echo "✗ $$realm — client etape-api : secret absent du .env à la racine,"
             echo "  l'API ne pourra pas s'y connecter (voir .env.example)."
+          fi
+
+          # `frontendUrl` du realm et non `KC_HOSTNAME` : seuls les realms ETAPE
+          # passent sur l'URL du tunnel, `master` et la console d'administration
+          # restent sur localhost, et Keycloak n'a pas à être recréé. Vidé, il
+          # rend la main à l'adresse de la requête : un lancement ordinaire
+          # efface ainsi ce qu'une session de test a posé.
+          $$KCADM update realms/$$realm -s "attributes.frontendUrl=$$KEYCLOAK_PUBLIC_URL"
+          if [ -n "$$KEYCLOAK_PUBLIC_URL" ]; then
+            echo "$$realm — URL publique : $$KEYCLOAK_PUBLIC_URL."
+          else
+            echo "$$realm — URL publique : aucune, adresse de la requête."
           fi
         done
 

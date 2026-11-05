@@ -127,21 +127,23 @@ C'est `keycloak-providers` qui recopie le JAR : un simple redémarrage de Keyclo
 
 **Après une modification du realm** (`keycloak/realms/etape-realm.json`) : l'import tourne en `IGNORE_EXISTING`, donc un redémarrage n'a **aucun effet** si le realm existe déjà. Il faut `docker compose down -v && docker compose up -d`, ce qui **efface aussi `app-db`** : rejouer ensuite `pnpm --filter @etape/api run db:migrate`. Ce fichier ne vaut que pour le développement local : ce qui varie d'un environnement à l'autre s'applique après l'import, par `kcadm` (`keycloak-init` en local, `deploy/keycloak-init.sh` ailleurs). Voir `keycloak/realms/README.md`.
 
+**Pour une session de test avec les PO**, `pnpm run dev:tunnel` ouvre le front-office, le back-office et Keycloak sur des URL publiques, Keycloak derrière une garde (`scripts/keycloak-gate.mjs`) qui reprend les règles du proxy de production : voir [`authentification.md`](./authentification.md), section « Session de test avec les PO ».
+
 **En production**, `docker-compose.prod.yml` place un proxy nginx `auth` devant Keycloak (seul le realm applicatif passe), et Keycloak tourne en build optimisé avec le JAR du thème et l'extension FranceConnect.
 
 Pour aller plus loin : [`authentification.md`](./authentification.md) (parcours et architecture), [`donnees.md`](./donnees.md) (base applicative), [`deploiement.md`](./deploiement.md).
 
 ## 6. Hors workspaces
 
-| Chemin                                             | Contenu                                                                                   | Référence                             |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------- |
-| `keycloak/realms/`                                 | Realm `etape` importé au démarrage de Keycloak                                            | `docs/authentification.md`            |
-| `docker-compose.yml`                               | Dépendances locales : bases, Keycloak et ses services d'amorçage                          | section 5                             |
-| `docker-compose.prod.yml`, `Dockerfile`, `deploy/` | Pile de production : `web` (nginx), `api`, `auth`, `keycloak`, bases                      | `docs/deploiement.md`                 |
-| `infra/`                                           | Ansible des VM Cegedim, nginx des previews                                                | `docs/previews.md`, `docs/infra/`     |
-| `scripts/`                                         | Assemblage des exports statiques, vérification de cette cartographie                      | —                                     |
-| `paths.mjs`                                        | Préfixe du simulateur (`/simulateur`), partagé par le site, le simulateur et l'assemblage | —                                     |
-| `.claude/`                                         | Règles, skills et sous-agents des conventions                                             | `docs/conventions/outillage-agent.md` |
+| Chemin                                             | Contenu                                                                                    | Référence                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------- |
+| `keycloak/realms/`                                 | Realm `etape` importé au démarrage de Keycloak                                             | `docs/authentification.md`            |
+| `docker-compose.yml`                               | Dépendances locales : bases, Keycloak et ses services d'amorçage                           | section 5                             |
+| `docker-compose.prod.yml`, `Dockerfile`, `deploy/` | Pile de production : `web` (nginx), `api`, `auth`, `keycloak`, bases                       | `docs/deploiement.md`                 |
+| `infra/`                                           | Ansible des VM Cegedim, nginx des previews                                                 | `docs/previews.md`, `docs/infra/`     |
+| `scripts/`                                         | `dev:stack` et `dev:tunnel`, assemblage des exports statiques, vérification de cette carte | `docs/authentification.md`            |
+| `paths.mjs`                                        | Préfixe du simulateur (`/simulateur`), partagé par le site, le simulateur et l'assemblage  | —                                     |
+| `.claude/`                                         | Règles, skills et sous-agents des conventions                                              | `docs/conventions/outillage-agent.md` |
 
 ## 7. Ports et commandes
 
@@ -157,7 +159,7 @@ Pour aller plus loin : [`authentification.md`](./authentification.md) (parcours 
 
 > **Collision connue** : `apps/keycloak-theme` n'a pas de port fixé ; son `pnpm run dev` prend 5173, comme le front-office. Avec un `pnpm run dev` global, Vite décale alors les ports de FO et BO. Cibler les apps avec `--filter` évite la surprise.
 
-Commandes communes, à la racine : `pnpm run lint`, `pnpm run typecheck`, `pnpm run test`, `pnpm run format:check`, `pnpm run check:workspace-map`.
+Commandes communes, à la racine : `pnpm run lint`, `pnpm run typecheck`, `pnpm run test`, `pnpm run test:scripts`, `pnpm run format:check`, `pnpm run check:workspace-map`.
 
 ## 8. Tenir cette cartographie à jour
 
