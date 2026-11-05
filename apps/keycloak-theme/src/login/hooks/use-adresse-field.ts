@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { flushSync } from "react-dom";
 
 import type { Adresse } from "../components/adresse/adresse";
 import {
@@ -10,7 +9,7 @@ import {
 import { useAdresseSearch, type UseAdresseSearchResult } from "./use-adresse-search";
 import { useManualAdresse, type UseManualAdresseResult } from "./use-manual-adresse";
 
-export const MANUAL_FIRST_FIELD_ID = "adresse-numero-voie";
+export const ADRESSE_SEARCH_INPUT_ID = "adresse-search";
 
 export interface UseAdresseFieldResult {
   isManual: boolean;
@@ -21,7 +20,11 @@ export interface UseAdresseFieldResult {
   isHorsRegion: boolean;
   isComplete: boolean;
   switchToManual: () => void;
+  clearSearch: () => void;
+  retrySearch: () => void;
 }
+
+const focusSearchInput = (): void => document.getElementById(ADRESSE_SEARCH_INPUT_ID)?.focus();
 
 export function useAdresseField(
   initial: Adresse | null,
@@ -43,9 +46,14 @@ export function useAdresseField(
     region,
     isHorsRegion,
     isComplete: adresse !== null && !isHorsRegion,
-    switchToManual: () => {
-      flushSync(() => setIsManual(true));
-      document.getElementById(MANUAL_FIRST_FIELD_ID)?.focus();
+    switchToManual: () => setIsManual(true),
+    clearSearch: () => {
+      search.clear();
+      focusSearchInput();
+    },
+    retrySearch: () => {
+      search.retry();
+      focusSearchInput();
     },
   };
 }

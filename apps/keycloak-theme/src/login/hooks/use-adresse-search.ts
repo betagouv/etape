@@ -1,7 +1,7 @@
-import { type ChangeEvent, type KeyboardEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { type Adresse, formatAdresse } from "../components/adresse/adresse";
-import { findAdresses } from "../components/adresse/adresse-api";
+import { findAdresses, MIN_QUERY_LENGTH } from "../components/adresse/adresse-api";
 
 export const ADRESSE_SEARCH_STATUS = {
   IDLE: "idle",
@@ -14,7 +14,6 @@ export const ADRESSE_SEARCH_STATUS = {
 export type AdresseSearchStatus =
   (typeof ADRESSE_SEARCH_STATUS)[keyof typeof ADRESSE_SEARCH_STATUS];
 
-const MIN_QUERY_LENGTH = 3;
 const DEBOUNCE_MS = 250;
 const NO_ACTIVE = -1;
 const NO_QUERY = "";
@@ -29,7 +28,8 @@ export interface UseAdresseSearchResult {
   choose: (adresse: Adresse) => void;
   clear: () => void;
   retry: () => void;
-  close: () => void;
+  handleFocus: () => void;
+  handleBlur: () => void;
   changeText: (event: ChangeEvent<HTMLInputElement>) => void;
   handleKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
 }
@@ -43,6 +43,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
   const [status, setStatus] = useState<AdresseSearchStatus>(ADRESSE_SEARCH_STATUS.IDLE);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(NO_ACTIVE);
+  const isFieldFocused = useRef(false);
 
   useEffect(() => {
     if (query === NO_QUERY) return;
@@ -54,7 +55,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
           setResults(found);
           setStatus(found.length === 0 ? ADRESSE_SEARCH_STATUS.EMPTY : ADRESSE_SEARCH_STATUS.FOUND);
           setActiveIndex(NO_ACTIVE);
-          setIsOpen(found.length !== 0);
+          setIsOpen(found.length !== 0 && isFieldFocused.current);
         })
         .catch(() => {
           if (controller.signal.aborted) return;
@@ -96,7 +97,13 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
     isOpen,
     activeIndex,
     choose,
-    close,
+    handleFocus: () => {
+      isFieldFocused.current = true;
+    },
+    handleBlur: () => {
+      isFieldFocused.current = false;
+      close();
+    },
     clear: () => {
       setChosen(null);
       setText("");
@@ -117,6 +124,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
         reset();
         return;
       }
+      if (nextQuery === query) return;
       setStatus(ADRESSE_SEARCH_STATUS.SEARCHING);
       setQuery(nextQuery);
     },

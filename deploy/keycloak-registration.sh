@@ -9,6 +9,10 @@
 #
 # Les options de `region` sont la liste des régions pilotes : le thème la lit
 # dans le profil, Keycloak refuse toute autre valeur.
+#
+# Ce script est la seule description du profil : `update users/profile` le
+# remplace en entier à chaque démarrage. Un attribut ajouté depuis la console est
+# perdu au redémarrage suivant.
 
 set -euo pipefail
 

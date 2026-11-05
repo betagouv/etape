@@ -4,6 +4,10 @@ const ADRESSE_SEARCH_URL = "https://data.geopf.fr/geocodage/search";
 const COMMUNES_URL = "https://geo.api.gouv.fr/communes";
 const REQUEST_TIMEOUT_MS = 5000;
 const SUGGESTION_LIMIT = "5";
+const MAX_QUERY_LENGTH = 200;
+const LEADING_SYMBOLS = /^[^\p{L}\p{N}]+/u;
+
+export const MIN_QUERY_LENGTH = 3;
 const COMMUNE_TYPE = "municipality";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -18,7 +22,7 @@ async function fetchJson(url: URL, signal: AbortSignal): Promise<unknown> {
   signal.addEventListener("abort", abort);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, { signal: controller.signal, referrerPolicy: "no-referrer" });
     if (!response.ok) throw new Error(`Réponse ${response.status} de ${url.hostname}`);
     return await response.json();
   } finally {
@@ -64,10 +68,17 @@ export function parseCommunes(payload: unknown): Commune[] {
   });
 }
 
+export function toSearchQuery(text: string): string {
+  return text.trim().replace(LEADING_SYMBOLS, "").slice(0, MAX_QUERY_LENGTH);
+}
+
 export async function findAdresses(query: string, signal: AbortSignal): Promise<Adresse[]> {
+  const q = toSearchQuery(query);
+  if (q.length < MIN_QUERY_LENGTH) return [];
+
   const url = new URL(ADRESSE_SEARCH_URL);
   url.search = new URLSearchParams({
-    q: query,
+    q,
     autocomplete: "1",
     index: "address",
     limit: SUGGESTION_LIMIT,

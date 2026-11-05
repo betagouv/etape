@@ -1,28 +1,20 @@
 import { Button } from "@etape/ui/components/button";
 import { ComboboxList, ComboboxOption } from "@etape/ui/components/combobox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@etape/ui/components/select";
+import { StatusRegion } from "@etape/ui/components/status-region";
 import { ExternalLink, FilePenLine, RefreshCw, Search, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { lazy, Suspense } from "react";
 
 import { ADRESSE_SEARCH_STATUS, type AdresseSearchStatus } from "../../hooks/use-adresse-search";
-import { MANUAL_FIRST_FIELD_ID, type UseAdresseFieldResult } from "../../hooks/use-adresse-field";
-import { COMMUNES_STATUS, type UseManualAdresseResult } from "../../hooks/use-manual-adresse";
+import { ADRESSE_SEARCH_INPUT_ID, type UseAdresseFieldResult } from "../../hooks/use-adresse-field";
 import type { I18n } from "../../i18n";
 import { Alert, MESSAGE_TYPE } from "../alert";
 import { Field, FieldError, TextInput } from "../form";
-import { ADRESSE_ATTRIBUTE, type ManualAdresseFields } from "./adresse";
+import { ADRESSE_ATTRIBUTE } from "./adresse";
 import { type RegionCode, REGIONS, TRANSITIONS_PRO_CONTACTS_URL } from "./region";
 
-const ADRESSE_INPUT_ID = "adresse-search";
+const ManualAdresseForm = lazy(() => import("./manual-adresse-form"));
+
 const SUGGESTIONS_ID = "adresse-suggestions";
-const COMMUNE_INPUT_ID = "adresse-commune";
-const CODE_POSTAL_MAX_LENGTH = 5;
 const SINGLE_RESULT = 1;
 
 const optionId = (index: number): string => `${SUGGESTIONS_ID}-${index}`;
@@ -39,7 +31,9 @@ export function AdresseField(props: {
   return (
     <div className="flex flex-col gap-4">
       {isManual ? (
-        <ManualAdresseForm manual={manual} i18n={i18n} />
+        <Suspense>
+          <ManualAdresseForm manual={manual} i18n={i18n} />
+        </Suspense>
       ) : (
         <AdresseSearch
           field={field}
@@ -50,7 +44,11 @@ export function AdresseField(props: {
       )}
 
       {!isManual && search.status === ADRESSE_SEARCH_STATUS.EMPTY && (
-        <Alert type={MESSAGE_TYPE.WARNING} summary={i18n.msgStr("etapeAdresseEmptyTitle")}>
+        <Alert
+          type={MESSAGE_TYPE.WARNING}
+          summary={i18n.msgStr("etapeAdresseEmptyTitle")}
+          isLive={false}
+        >
           <p className="text-foreground">{i18n.msg("etapeAdresseEmptyHint")}</p>
           <div className="flex flex-wrap items-center gap-2">
             <ManualButton onClick={switchToManual} i18n={i18n} />
@@ -59,11 +57,15 @@ export function AdresseField(props: {
       )}
 
       {!isManual && search.status === ADRESSE_SEARCH_STATUS.UNAVAILABLE && (
-        <Alert type={MESSAGE_TYPE.WARNING} summary={i18n.msgStr("etapeAdresseUnavailableTitle")}>
+        <Alert
+          type={MESSAGE_TYPE.WARNING}
+          summary={i18n.msgStr("etapeAdresseUnavailableTitle")}
+          isLive={false}
+        >
           <p className="text-foreground">{i18n.msg("etapeAdresseUnavailableHint")}</p>
           <div className="flex flex-wrap items-center gap-2">
             <ManualButton onClick={switchToManual} i18n={i18n} />
-            <Button type="button" variant="ghost-primary" size="sm" onClick={search.retry}>
+            <Button type="button" variant="ghost-primary" size="sm" onClick={field.retrySearch}>
               <RefreshCw aria-hidden />
               {i18n.msg("etapeAdresseRetry")}
             </Button>
@@ -141,7 +143,7 @@ function AdresseSearch(props: {
 
   return (
     <Field
-      id={ADRESSE_INPUT_ID}
+      id={ADRESSE_SEARCH_INPUT_ID}
       label={msg("etapeAdresseLabel")}
       required
       hint={msg("etapeAdresseHint")}
@@ -153,7 +155,7 @@ function AdresseSearch(props: {
     >
       <div className="relative">
         <TextInput
-          id={ADRESSE_INPUT_ID}
+          id={ADRESSE_SEARCH_INPUT_ID}
           type="text"
           role="combobox"
           aria-autocomplete="list"
@@ -161,7 +163,11 @@ function AdresseSearch(props: {
           aria-controls={SUGGESTIONS_ID}
           aria-activedescendant={activeOption}
           aria-required
-          aria-describedby={`${ADRESSE_INPUT_ID}-hint`}
+          aria-describedby={
+            serverError === undefined
+              ? `${ADRESSE_SEARCH_INPUT_ID}-hint`
+              : `${ADRESSE_SEARCH_INPUT_ID}-hint input-error-adresse`
+          }
           autoComplete="off"
           autoFocus={shouldFocusOnMount}
           spellCheck={false}
@@ -170,20 +176,27 @@ function AdresseSearch(props: {
           value={search.text}
           onChange={search.changeText}
           onKeyDown={search.handleKeyDown}
-          onBlur={search.close}
+          onFocus={search.handleFocus}
+          onBlur={search.handleBlur}
           trailing={
             search.text === "" ? undefined : (
-              <button
+              <Button
                 type="button"
-                onClick={search.clear}
+                variant="outline"
+                size="icon-xs"
+                onClick={field.clearSearch}
                 aria-label={msgStr("etapeAdresseClear")}
-                className="border-border text-primary focus-visible:outline-ring flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md border focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                <X aria-hidden className="size-3.5" />
-              </button>
+                <X aria-hidden />
+              </Button>
             )
           }
         />
+        {search.results.length !== 0 && (
+          <div className="mt-2">
+            <ManualButton onClick={field.switchToManual} i18n={i18n} />
+          </div>
+        )}
         <div
           hidden={!search.isOpen}
           className="bg-popover border-border absolute z-10 mt-2 w-full overflow-hidden rounded-lg border shadow-md"
@@ -236,146 +249,5 @@ function SearchAnnouncement(props: { status: AdresseSearchStatus; count: number;
     [ADRESSE_SEARCH_STATUS.UNAVAILABLE]: i18n.msgStr("etapeAdresseUnavailableTitle"),
   };
 
-  return (
-    <p role="status" className="sr-only">
-      {ANNOUNCEMENTS[status]}
-    </p>
-  );
-}
-
-function ManualAdresseForm(props: { manual: UseManualAdresseResult; i18n: I18n }) {
-  const { manual, i18n } = props;
-  const { fields, communes, communesStatus, codeCommune } = manual;
-  const { msg, msgStr } = i18n;
-
-  const isCommuneEnabled = communesStatus === COMMUNES_STATUS.READY && communes.length !== 0;
-  const isCodePostalUnknown = communesStatus === COMMUNES_STATUS.READY && communes.length === 0;
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-        <ManualTextField
-          id={MANUAL_FIRST_FIELD_ID}
-          field="numeroVoie"
-          label={msg("etapeAdresseNumeroVoie")}
-          manual={manual}
-          required
-        />
-        <ManualTextField
-          id="adresse-type-voie"
-          field="typeVoie"
-          label={msg("etapeAdresseTypeVoie")}
-          manual={manual}
-          required
-        />
-        <ManualTextField
-          id="adresse-nom-voie"
-          field="nomVoie"
-          label={msg("etapeAdresseNomVoie")}
-          manual={manual}
-          required
-        />
-        <ManualTextField
-          id="adresse-complement"
-          field="complement"
-          label={msg("etapeAdresseComplement")}
-          manual={manual}
-          autoComplete="address-line2"
-        />
-        <Field
-          id="adresse-code-postal"
-          label={msg("etapeAdresseCodePostal")}
-          required
-          error={
-            isCodePostalUnknown ? (
-              <FieldError
-                id="input-error-code-postal"
-                message={msgStr("etapeAdresseCodePostalUnknown")}
-              />
-            ) : undefined
-          }
-        >
-          <TextInput
-            id="adresse-code-postal"
-            type="text"
-            inputMode="numeric"
-            autoComplete="postal-code"
-            maxLength={CODE_POSTAL_MAX_LENGTH}
-            aria-required
-            invalid={isCodePostalUnknown}
-            value={fields.codePostal}
-            onChange={(event) => manual.changeCodePostal(event.target.value)}
-          />
-        </Field>
-        <Field id={COMMUNE_INPUT_ID} label={msg("etapeAdresseCommune")} required>
-          <Select
-            key={fields.codePostal}
-            value={codeCommune}
-            onValueChange={manual.changeCodeCommune}
-            disabled={!isCommuneEnabled}
-          >
-            <SelectTrigger
-              id={COMMUNE_INPUT_ID}
-              aria-required
-              className="text-body-sm bg-background w-full rounded-lg shadow-none data-[size=default]:h-11"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper" className="rounded-lg">
-              {communes.map((commune) => (
-                <SelectItem key={commune.code} value={commune.code}>
-                  {commune.nom}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-      </div>
-
-      <p role="status" className="sr-only">
-        {communesStatus === COMMUNES_STATUS.UNAVAILABLE
-          ? msgStr("etapeAdresseCommunesUnavailable")
-          : ""}
-      </p>
-
-      {communesStatus === COMMUNES_STATUS.UNAVAILABLE && (
-        <Alert type={MESSAGE_TYPE.WARNING} summary={msgStr("etapeAdresseCommunesUnavailable")}>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onClick={manual.retryCommunes}
-          >
-            <RefreshCw aria-hidden />
-            {msg("etapeAdresseRetry")}
-          </Button>
-        </Alert>
-      )}
-    </div>
-  );
-}
-
-function ManualTextField(props: {
-  id: string;
-  field: keyof ManualAdresseFields;
-  label: ReactNode;
-  manual: UseManualAdresseResult;
-  required?: boolean;
-  autoComplete?: string;
-}) {
-  const { id, field, label, manual, required = false, autoComplete = "off" } = props;
-
-  return (
-    <Field id={id} label={label} required={required}>
-      <TextInput
-        id={id}
-        type="text"
-        autoComplete={autoComplete}
-        aria-required={required}
-        value={manual.fields[field]}
-        onChange={(event) => manual.changeField(field, event.target.value)}
-      />
-    </Field>
-  );
+  return <StatusRegion message={ANNOUNCEMENTS[status]} />;
 }

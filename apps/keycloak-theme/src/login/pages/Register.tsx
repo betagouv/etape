@@ -1,4 +1,5 @@
 import { Button } from "@etape/ui/components/button";
+import { StatusRegion } from "@etape/ui/components/status-region";
 import { useUserProfileForm } from "keycloakify/login/lib/useUserProfileForm";
 import { ArrowRight, CircleArrowLeft } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
@@ -19,7 +20,7 @@ import {
   UserProfileField,
 } from "../components/user-profile-fields";
 import { useAdresseField } from "../hooks/use-adresse-field";
-import { REGISTER_STEP, useRegisterForm } from "../hooks/use-register-form";
+import { REGISTER_STEP, type RegisterStep, useRegisterForm } from "../hooks/use-register-form";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
@@ -29,6 +30,26 @@ const HIDDEN_ATTRIBUTES: readonly string[] = [
   USER_PROFILE_ATTRIBUTE.LOCALE,
   USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM,
 ];
+
+const ADRESSE_ATTRIBUTES = [
+  ADRESSE_ATTRIBUTE.ADRESSE,
+  ADRESSE_ATTRIBUTE.COMPLEMENT_ADRESSE,
+  ADRESSE_ATTRIBUTE.CODE_POSTAL,
+  ADRESSE_ATTRIBUTE.COMMUNE,
+  ADRESSE_ATTRIBUTE.CODE_COMMUNE,
+  ADRESSE_ATTRIBUTE.REGION,
+] as const;
+
+const REGISTER_FIELD = {
+  USERNAME: "username",
+  TERMS_ACCEPTED: "termsAccepted",
+  ALTCHA: "altcha",
+} as const;
+
+const STEP_ANNOUNCEMENT_KEY = {
+  [REGISTER_STEP.INFORMATIONS]: "etapeRegisterStepOneAnnouncement",
+  [REGISTER_STEP.CREDENTIALS]: "etapeRegisterStepTwoAnnouncement",
+} as const satisfies Record<RegisterStep, string>;
 
 type RegisterKcContext = Extract<KcContext, { pageId: "register.ftl" }>;
 
@@ -116,43 +137,50 @@ export default function Register(props: RegisterProps) {
     getPasswordRules(password).every((rule) => rule.isSatisfied) &&
     areTermsAccepted;
 
-  const adresseServerError = messagesPerField.existsError(
-    "adresse",
-    "complement_adresse",
-    "code_postal",
-    "commune",
-    "code_commune",
-    "region",
-  )
-    ? messagesPerField.getFirstError(
-        "adresse",
-        "complement_adresse",
-        "code_postal",
-        "commune",
-        "code_commune",
-        "region",
-      )
+  const adresseServerError = messagesPerField.existsError(...ADRESSE_ATTRIBUTES)
+    ? messagesPerField.getFirstError(...ADRESSE_ATTRIBUTES)
     : undefined;
 
   const hasInformationsError =
-    messagesPerField.existsError("firstName", "lastName") || adresseServerError !== undefined;
+    messagesPerField.existsError(
+      USER_PROFILE_ATTRIBUTE.FIRST_NAME,
+      USER_PROFILE_ATTRIBUTE.LAST_NAME,
+    ) || adresseServerError !== undefined;
   const hasCredentialsError =
-    messagesPerField.existsError("email", "username", "password", "password-confirm") ||
-    messagesPerField.existsError("termsAccepted") ||
-    messagesPerField.existsError("altcha");
+    messagesPerField.existsError(
+      USER_PROFILE_ATTRIBUTE.EMAIL,
+      REGISTER_FIELD.USERNAME,
+      USER_PROFILE_ATTRIBUTE.PASSWORD,
+      USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM,
+    ) ||
+    messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED) ||
+    messagesPerField.existsError(REGISTER_FIELD.ALTCHA);
 
-  const invalidFieldName = [
-    messagesPerField.existsError("firstName") && USER_PROFILE_ATTRIBUTE.FIRST_NAME,
-    messagesPerField.existsError("lastName") && USER_PROFILE_ATTRIBUTE.LAST_NAME,
-    messagesPerField.existsError("email", "username") && USER_PROFILE_ATTRIBUTE.EMAIL,
-    messagesPerField.existsError("password", "password-confirm") && USER_PROFILE_ATTRIBUTE.PASSWORD,
-  ].find((name) => name !== false);
+  const initialStep =
+    hasCredentialsError && !hasInformationsError
+      ? REGISTER_STEP.CREDENTIALS
+      : REGISTER_STEP.INFORMATIONS;
+
+  const invalidFieldCandidates: Record<RegisterStep, (string | false)[]> = {
+    [REGISTER_STEP.INFORMATIONS]: [
+      messagesPerField.existsError(USER_PROFILE_ATTRIBUTE.FIRST_NAME) &&
+        USER_PROFILE_ATTRIBUTE.FIRST_NAME,
+      messagesPerField.existsError(USER_PROFILE_ATTRIBUTE.LAST_NAME) &&
+        USER_PROFILE_ATTRIBUTE.LAST_NAME,
+    ],
+    [REGISTER_STEP.CREDENTIALS]: [
+      messagesPerField.existsError(USER_PROFILE_ATTRIBUTE.EMAIL, REGISTER_FIELD.USERNAME) &&
+        USER_PROFILE_ATTRIBUTE.EMAIL,
+      messagesPerField.existsError(
+        USER_PROFILE_ATTRIBUTE.PASSWORD,
+        USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM,
+      ) && USER_PROFILE_ATTRIBUTE.PASSWORD,
+    ],
+  };
+  const invalidFieldName = invalidFieldCandidates[initialStep].find((name) => name !== false);
 
   const form = useRegisterForm({
-    initialStep:
-      hasCredentialsError && !hasInformationsError
-        ? REGISTER_STEP.CREDENTIALS
-        : REGISTER_STEP.INFORMATIONS,
+    initialStep,
     isInformationsComplete,
     isCredentialsComplete,
   });
@@ -208,14 +236,16 @@ export default function Register(props: RegisterProps) {
         onSubmit={form.submit}
       >
         {!isOnInformations && (
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="inline"
             onClick={form.goBack}
-            className="text-body-sm text-primary inline-flex cursor-pointer items-center gap-1.5 self-start font-medium hover:underline"
+            className="self-start"
           >
-            <CircleArrowLeft aria-hidden className="size-4" />
+            <CircleArrowLeft aria-hidden />
             {msg("etapeRegisterBackToStepOne")}
-          </button>
+          </Button>
         )}
 
         <div className="flex flex-col gap-5">
@@ -225,15 +255,9 @@ export default function Register(props: RegisterProps) {
             i18n={i18n}
           />
 
-          <p role="status" className="sr-only">
-            {form.hasStepChanged
-              ? msgStr(
-                  isOnInformations
-                    ? "etapeRegisterStepOneAnnouncement"
-                    : "etapeRegisterStepTwoAnnouncement",
-                )
-              : ""}
-          </p>
+          <StatusRegion
+            message={form.hasStepChanged ? msgStr(STEP_ANNOUNCEMENT_KEY[form.step]) : ""}
+          />
 
           <div hidden={!isOnInformations} className="flex flex-col gap-5">
             <section className="flex flex-col gap-4">
@@ -269,8 +293,8 @@ export default function Register(props: RegisterProps) {
         <div hidden={isOnInformations} className="flex flex-col gap-6">
           <div className="flex flex-col gap-1">
             <CheckboxField
-              id="termsAccepted"
-              name="termsAccepted"
+              id={REGISTER_FIELD.TERMS_ACCEPTED}
+              name={REGISTER_FIELD.TERMS_ACCEPTED}
               checked={areTermsAccepted}
               onChange={(event) => setAreTermsAccepted(event.target.checked)}
               label={
@@ -282,7 +306,7 @@ export default function Register(props: RegisterProps) {
                 </>
               }
               aria-describedby={
-                messagesPerField.existsError("termsAccepted")
+                messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED)
                   ? "input-error-terms-accepted terms-privacy-notice"
                   : "terms-privacy-notice"
               }
@@ -294,10 +318,10 @@ export default function Register(props: RegisterProps) {
               </LegalLink>
               .
             </p>
-            {messagesPerField.existsError("termsAccepted") && (
+            {messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED) && (
               <FieldError
                 id="input-error-terms-accepted"
-                message={messagesPerField.get("termsAccepted")}
+                message={messagesPerField.get(REGISTER_FIELD.TERMS_ACCEPTED)}
               />
             )}
           </div>
@@ -307,7 +331,9 @@ export default function Register(props: RegisterProps) {
               challenge={altchaChallenge}
               isUnavailable={altchaUnavailable ?? false}
               serverError={
-                messagesPerField.existsError("altcha") ? messagesPerField.get("altcha") : undefined
+                messagesPerField.existsError(REGISTER_FIELD.ALTCHA)
+                  ? messagesPerField.get(REGISTER_FIELD.ALTCHA)
+                  : undefined
               }
               i18n={i18n}
             />

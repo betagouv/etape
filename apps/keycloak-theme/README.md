@@ -212,6 +212,10 @@ manuelle et le contrôle de la région.
   par `deploy/keycloak-registration.sh` : le thème les lit dans le contexte, et
   Keycloak refuse une autre valeur. Sans cette liste, aucune adresse n'est bloquée :
   un script de déploiement en échec ne doit pas fermer l'inscription.
+- **La saisie manuelle** est chargée à la demande (`manual-adresse-form.tsx`) :
+  `Select` et ses dépendances pèsent une centaine de kilo-octets, pour un repli. Son
+  bouton reste affiché sous le champ dès qu'il y a des suggestions : l'API propose
+  parfois d'autres rues sans dire qu'elle n'a pas trouvé la bonne.
 - **Ce que Keycloak enregistre** : `adresse`, `complement_adresse`, `code_postal`,
   `commune`, `code_commune`, `region`. Ils ne sont pas `required` dans le profil, sinon
   Keycloak les redemanderait aux comptes existants et aux arrivées par FranceConnect.
