@@ -11,7 +11,6 @@ import {
   INFORMATIONS_FIELD_LABEL,
   INFORMATIONS_SECTION_FIELDS,
   informationsSchema,
-  type Civilite,
   type InformationsFormData,
   type InformationsSection,
 } from "../schema";
@@ -64,7 +63,7 @@ export function useInformationsForm(): UseInformationsFormResult {
     mode: "onBlur",
     reValidateMode: "onBlur",
     defaultValues: {
-      civilite: "" as Civilite,
+      civilite: undefined,
       dateNaissance: "",
       nationalite: "",
       nir: "",

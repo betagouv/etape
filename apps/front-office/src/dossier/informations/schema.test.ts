@@ -5,7 +5,7 @@ import { informationsSchema } from "./schema";
 const CLE_MISMATCH =
   "La clé ne correspond pas au numéro : vérifiez les 2 derniers chiffres de votre carte Vitale.";
 
-function findCleNirMessages(data: Record<string, string>): string[] {
+function findCleNirMessages(data: Record<string, string | undefined>): string[] {
   const issues = informationsSchema.safeParse(data).error?.issues ?? [];
   return issues.filter((issue) => issue.path[0] === "cleNir").map((issue) => issue.message);
 }
@@ -31,5 +31,15 @@ describe("informationsSchema, clé du NIR", () => {
 
   it("ne compare pas la clé à un NIR incomplet", () => {
     expect(findCleNirMessages({ ...VALIDES, nir: "1 85", cleNir: "12" })).toEqual([]);
+  });
+});
+
+describe("informationsSchema, civilité", () => {
+  it("demande la civilité quand elle n'est pas choisie", () => {
+    const issues =
+      informationsSchema.safeParse({ ...VALIDES, civilite: undefined }).error?.issues ?? [];
+    expect(
+      issues.filter((issue) => issue.path[0] === "civilite").map((issue) => issue.message),
+    ).toEqual(["Veuillez indiquer votre civilité."]);
   });
 });

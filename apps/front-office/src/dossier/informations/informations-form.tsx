@@ -112,7 +112,7 @@ export function InformationsForm({
                 <>
                   <RadioGroup
                     id={CIVILITE_FIELD_ID}
-                    value={field.value}
+                    value={field.value ?? ""}
                     onValueChange={field.onChange}
                     // Les flèches déplacent le focus d'un bouton à l'autre : on ne sort qu'en quittant le groupe.
                     onBlur={(event) => {
