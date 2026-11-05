@@ -27,6 +27,8 @@ interface FormFieldRenderProps<
 
 interface FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> {
   name: TName;
+  /** Par défaut le `name` ; à fournir quand deux champs de même `name` partagent une page. */
+  id?: string;
   control: Control<TFieldValues>;
   label: React.ReactNode;
   description?: React.ReactNode;
@@ -36,8 +38,8 @@ interface FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPa
 /**
  * Champ react-hook-form mis en forme par `Field`. Relie le libellé, la description
  * et l'erreur au contrôle par `attributes` ; l'erreur remplace la description, comme
- * dans le kit. L'`id` du contrôle est son `name`, pour que le résumé d'erreurs de
- * l'écran puisse y mener par un lien.
+ * dans le kit. L'`id` du contrôle est son `name` (ou `id` s'il est fourni), pour que
+ * le résumé d'erreurs de l'écran puisse y mener par un lien.
  *
  * - Contrôle natif : `render={({ field, attributes }) => <Input {...field} {...attributes} />}`.
  * - Contrôle Radix : brancher la valeur à la main, les attributs sur l'élément focalisable :
@@ -51,34 +53,36 @@ interface FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPa
  */
 function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
   name,
+  id = name,
   control,
   label,
   description,
   render,
 }: FormFieldProps<TFieldValues, TName>) {
-  const descriptionId = `${name}-description`;
-  const errorId = `${name}-error`;
+  const descriptionId = `${id}-description`;
+  const errorId = `${id}-error`;
 
   return (
     <Controller
       name={name}
       control={control}
       render={({ field, fieldState }) => {
-        const describedBy = fieldState.invalid ? errorId : description ? descriptionId : undefined;
+        const errorMessage = fieldState.error?.message;
+        const describedBy = errorMessage ? errorId : description ? descriptionId : undefined;
 
         return (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={name}>{label}</FieldLabel>
+            <FieldLabel htmlFor={id}>{label}</FieldLabel>
             {render({
               field,
               attributes: {
-                id: name,
+                id,
                 "aria-invalid": fieldState.invalid,
                 "aria-describedby": describedBy,
               },
             })}
-            {fieldState.invalid ? (
-              <FieldError id={errorId} errors={[fieldState.error]} />
+            {errorMessage ? (
+              <FieldError id={errorId}>{errorMessage}</FieldError>
             ) : (
               description && <FieldDescription id={descriptionId}>{description}</FieldDescription>
             )}
