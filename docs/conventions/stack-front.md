@@ -105,6 +105,8 @@ Deux approches cohabitent donc dans le dépôt, assumées, avec un critère écr
 
 **Ce qui reste à notre charge dans les deux cas** : react-hook-form ne fournit ni style ni ARIA ; `FormField` les apporte. L'annonce des erreurs revient à l'écran : le focus automatique de react-hook-form (`shouldFocusError`) arrive avant l'affichage des erreurs, le lecteur d'écran lirait le champ sans son message. Un écran le désactive (`shouldFocusError: false`) et donne le focus, à la soumission, à son résumé d'erreurs (`VoletErrorsAlert` au front-office, comme dans la maquette), dont chaque lien mène au champ par son `id`, qui est son `name`. Le simulateur, lui, focalise le premier champ en erreur après affichage (`QuestionScreen`, `focusFirstInvalid`).
 
+**Quand une erreur s'affiche** (décision du 5 novembre 2026) : à la sortie du champ, jamais pendant la saisie. Un formulaire déclare `mode: "onBlur"` et `reValidateMode: "onBlur"` ; sans le second, react-hook-form revalide à chaque frappe après la première erreur ou la première soumission. Conséquence assumée : un message reste affiché pendant la correction, jusqu'à la sortie du champ. Un champ composé (groupe de boutons radio, bouton qui ouvre une liste ou un calendrier) transmet lui aussi sa sortie (`field.onBlur`) : le focus quitte le groupe, ou la liste fermée, ou l'on interagit hors de la liste ouverte.
+
 ## Décision 2 — Validation de schéma : zod
 
 **zod v4**, déjà présent côté `packages/ui` (^4.5) et côté API (^4.1.13, pour l'environnement). Une seule bibliothèque de schémas des deux côtés : c'est la condition du contrat de route partagé (décision 5), qui suppose qu'API et front lisent le même objet.

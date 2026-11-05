@@ -34,6 +34,7 @@ export function useInformationsForm(): UseInformationsFormResult {
   const form = useForm<InformationsFormData>({
     resolver: zodResolver(informationsSchema),
     mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       civilite: "" as Civilite,
       dateNaissance: "",

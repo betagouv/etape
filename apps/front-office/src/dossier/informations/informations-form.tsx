@@ -110,6 +110,10 @@ export function InformationsForm({
                     id={CIVILITE_FIELD_ID}
                     value={field.value}
                     onValueChange={field.onChange}
+                    // Les flèches déplacent le focus d'un bouton à l'autre : on ne sort qu'en quittant le groupe.
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) field.onBlur();
+                    }}
                     className="flex gap-5"
                     aria-invalid={fieldState.invalid}
                     aria-describedby={fieldState.invalid ? CIVILITE_ERROR_ID : undefined}
@@ -156,6 +160,7 @@ export function InformationsForm({
                 <DateNaissanceInput
                   value={field.value}
                   onChange={field.onChange}
+                  onBlur={field.onBlur}
                   fieldRef={field.ref}
                   isInvalid={fieldState.invalid}
                   error={fieldState.error}
@@ -170,6 +175,7 @@ export function InformationsForm({
                 <NationaliteInput
                   value={field.value}
                   onChange={field.onChange}
+                  onBlur={field.onBlur}
                   fieldRef={field.ref}
                   isInvalid={fieldState.invalid}
                   error={fieldState.error}

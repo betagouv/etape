@@ -24,6 +24,7 @@ const DEFAULT_MONTH = new Date(1990, 0);
 export interface DateNaissanceInputProps {
   value: string;
   onChange: (value: string) => void;
+  onBlur: () => void;
   fieldRef: React.Ref<HTMLButtonElement>;
   isInvalid: boolean;
   error?: { message?: string };
@@ -32,6 +33,7 @@ export interface DateNaissanceInputProps {
 export function DateNaissanceInput({
   value,
   onChange,
+  onBlur,
   fieldRef,
   isInvalid,
   error,
@@ -50,6 +52,10 @@ export function DateNaissanceInput({
             <InputGroupTrigger
               id={FIELD_ID}
               ref={fieldRef}
+              // Liste ouverte, le focus part dans la liste sans quitter le champ.
+              onBlur={() => {
+                if (!isOpen) onBlur();
+              }}
               // Nommé par le libellé seul, un bouton n'annonce pas la date choisie : on y ajoute sa valeur.
               aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
               aria-invalid={isInvalid || undefined}
@@ -63,7 +69,15 @@ export function DateNaissanceInput({
             <CalendarDaysIcon aria-hidden="true" />
           </InputGroupAddon>
         </InputGroup>
-        <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+        <PopoverContent
+          align="start"
+          className="w-[var(--radix-popover-trigger-width)] p-0"
+          // Quitter la liste ouverte (clic ou tabulation ailleurs) quitte le champ, sauf vers son bouton.
+          onInteractOutside={(event) => {
+            if (!(event.target instanceof Element && event.target.closest(`#${FIELD_ID}`)))
+              onBlur();
+          }}
+        >
           <Calendar
             className="w-full"
             mode="single"
