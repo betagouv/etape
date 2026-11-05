@@ -38,6 +38,7 @@ const LIST_ID = `${EMPLOYEUR_FIELD_ID}-list`;
 export interface EmployeurSearchProps {
   search: UseEmployeurSearchResult;
   fieldRef: React.Ref<HTMLInputElement>;
+  onBlur: () => void;
   isInvalid: boolean;
   error?: { message?: string };
   /** Vrai après « Changer l'entreprise » ou un retour de la saisie manuelle : le focus revient au champ. */
@@ -48,6 +49,7 @@ export interface EmployeurSearchProps {
 export function EmployeurSearch({
   search,
   fieldRef,
+  onBlur,
   isInvalid,
   error,
   isFocusRequested,
@@ -70,7 +72,9 @@ export function EmployeurSearch({
       <div
         className="relative"
         onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) search.close();
+          if (event.currentTarget.contains(event.relatedTarget)) return;
+          search.close();
+          onBlur();
         }}
       >
         <InputGroup>

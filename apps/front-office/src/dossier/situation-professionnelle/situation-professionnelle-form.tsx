@@ -105,6 +105,10 @@ export function SituationProfessionnelleForm({
                       // Après « non », la date n'est plus demandée : son erreur ne doit pas rester au résumé.
                       if (value === DEMISSION.NON) form.clearErrors("dateDemission");
                     }}
+                    // Les flèches déplacent le focus d'un bouton à l'autre : on ne sort qu'en quittant le groupe.
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) field.onBlur();
+                    }}
                     className="flex gap-5"
                     aria-invalid={fieldState.invalid}
                     aria-describedby={fieldState.invalid ? DEMISSION_ERROR_ID : undefined}

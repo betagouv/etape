@@ -71,6 +71,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
         <EmployeurSearch
           search={search}
           fieldRef={field.ref}
+          onBlur={field.onBlur}
           isInvalid={fieldState.invalid}
           error={fieldState.error}
           isFocusRequested={isFocusRequested}

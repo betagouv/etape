@@ -24,6 +24,7 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
   const form = useForm<SituationProfessionnelleFormData>({
     resolver: zodResolver(situationProfessionnelleSchema),
     mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
       employeur: null,
