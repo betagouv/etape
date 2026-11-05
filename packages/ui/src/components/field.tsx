@@ -219,7 +219,8 @@ function FieldSeparator({
 /*
  * En gris et sans `role="alert"`, contrairement à la source shadcn, comme le
  * message d'un champ invalide du kit. L'annonce revient à l'écran qui l'emploie :
- * un résumé d'erreurs focalisé à la soumission (`stack-front.md`, décision 1).
+ * une région `role="status"` à la sortie du champ, un résumé d'erreurs focalisé à
+ * la soumission (`stack-front.md`, décision 1).
  * Chaque champ relie son message par `aria-describedby`.
  */
 function FieldError({
