@@ -210,8 +210,9 @@ function normalize(text: string): string {
 }
 
 export function findNationalites(query: string): readonly Nationalite[] {
-  if (!query.trim()) return NATIONALITES;
-  const normalized = normalize(query);
+  const trimmed = query.trim();
+  if (!trimmed) return NATIONALITES;
+  const normalized = normalize(trimmed);
   return NATIONALITES.filter((n) => normalize(n.label).includes(normalized));
 }
 
