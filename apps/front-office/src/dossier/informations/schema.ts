@@ -3,7 +3,7 @@ import { z } from "zod";
 import { computeDateNaissanceBounds, parseDateNaissance } from "./domain/date-naissance";
 import { isCleNirValid, NIR_PATTERN } from "./domain/validate-nir";
 
-function isAgeSuffisant(value: string): boolean {
+function isAgeMinimumRespected(value: string): boolean {
   const date = parseDateNaissance(value);
   return date !== undefined && date <= computeDateNaissanceBounds(new Date()).max;
 }
@@ -32,7 +32,7 @@ const baseInformationsSchema = z.object({
   dateNaissance: z
     .string()
     .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Le format attendu est JJ/MM/AAAA.")
-    .refine(isAgeSuffisant, "Vous devez avoir au moins 18 ans.")
+    .refine(isAgeMinimumRespected, "Vous devez avoir au moins 18 ans.")
     .refine(isAgeMaximumRespected, "Vous devez avoir moins de 70 ans."),
   nationalite: z.string().min(1, "Veuillez choisir une nationalité."),
   nir: z
