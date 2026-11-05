@@ -27,6 +27,10 @@ describe("getResendState", () => {
 
   it("propose le renvoi une fois le délai écoulé", () => {
     expect(getResendState(0, 120, true)).toBe(RESEND_STATE.AVAILABLE);
-    expect(getResendState(0, 0, false)).toBe(RESEND_STATE.AVAILABLE);
+  });
+
+  it("n'annonce rien quand le délai est déjà écoulé à l'ouverture", () => {
+    expect(getResendState(0, 0, false)).toBe(RESEND_STATE.READY);
+    expect(getResendState(0, 0, true)).toBe(RESEND_STATE.READY);
   });
 });

@@ -103,7 +103,7 @@ export default function LoginUpdatePassword(
           <Button
             type="submit"
             size="form"
-            className="w-full aria-busy:cursor-progress"
+            className="w-full"
             aria-disabled={form.isSubmitBlocked}
             aria-busy={form.isSubmitting}
           >

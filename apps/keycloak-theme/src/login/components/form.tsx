@@ -41,7 +41,11 @@ export function Field(props: {
           {labelAction}
         </div>
         {children}
-        {hint !== undefined && <p className="text-body-sm text-muted-foreground">{hint}</p>}
+        {hint !== undefined && (
+          <p id={`${id}-hint`} className="text-body-sm text-muted-foreground">
+            {hint}
+          </p>
+        )}
       </div>
       <div role="status" className="[&:not(:empty)]:mt-2">
         {error}

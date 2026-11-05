@@ -112,13 +112,12 @@ public class EtapeResetCredentialEmail extends ResetCredentialEmail {
 
     private void requestLink(AuthenticationFlowContext context) {
         AuthenticationSessionModel authSession = context.getAuthenticationSession();
-        authSession.setAuthNote(REQUESTED_AT_NOTE, Integer.toString(Time.currentTime()));
         String userId = authSession.getAuthNote(REQUESTED_USER_NOTE);
         UserModel user = userId == null ? null : context.getSession().users().getUserById(context.getRealm(), userId);
-        if (user == null || !user.isEnabled() || !canReceiveLink(context, user) || !acquireThrottle(context, user)) {
-            return;
+        if (user != null && user.isEnabled() && canReceiveLink(context, user) && acquireThrottle(context, user)) {
+            sendLink(context, user);
         }
-        sendLink(context, user);
+        authSession.setAuthNote(REQUESTED_AT_NOTE, Integer.toString(Time.currentTime()));
     }
 
     private static boolean canReceiveLink(AuthenticationFlowContext context, UserModel user) {
@@ -140,7 +139,7 @@ public class EtapeResetCredentialEmail extends ResetCredentialEmail {
 
     private static boolean acquireThrottle(AuthenticationFlowContext context, UserModel user) {
         boolean isAcquired = context.getSession().singleUseObjects()
-                .putIfAbsent(THROTTLE_KEY_PREFIX + user.getId(), ResendDelay.SECONDS);
+                .putIfAbsent(THROTTLE_KEY_PREFIX + user.getId(), ResendDelay.LOCK_SECONDS);
         if (!isAcquired) {
             sendEvent(context, user).error(Errors.SLOW_DOWN);
         }
