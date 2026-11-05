@@ -20,6 +20,7 @@ interface UseRegisterFormOptions {
   isInformationsComplete: boolean;
   isCredentialsComplete: boolean;
   firstMissingFieldId: Record<RegisterStep, string | undefined>;
+  onIncomplete: (fieldId: string) => void;
 }
 
 export interface UseRegisterFormResult {
@@ -28,14 +29,20 @@ export interface UseRegisterFormResult {
   isContinueBlocked: boolean;
   isSubmitBlocked: boolean;
   isSubmitting: boolean;
+  isStepIncomplete: boolean;
   shouldAnnounceIncomplete: boolean;
   goBack: () => void;
   submit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
 export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFormResult {
-  const { initialStep, isInformationsComplete, isCredentialsComplete, firstMissingFieldId } =
-    options;
+  const {
+    initialStep,
+    isInformationsComplete,
+    isCredentialsComplete,
+    firstMissingFieldId,
+    onIncomplete,
+  } = options;
 
   const [step, setStep] = useState(initialStep);
   const [hasStepChanged, setHasStepChanged] = useState(false);
@@ -53,14 +60,19 @@ export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFor
 
   const signalIncomplete = (): void => {
     setHasIncompleteAttempt(true);
+    setHasStepChanged(false);
     const fieldId = firstMissingFieldId[step];
-    if (fieldId !== undefined) document.getElementById(fieldId)?.focus();
+    if (fieldId === undefined) return;
+    onIncomplete(fieldId);
+    document.getElementById(fieldId)?.focus();
   };
 
   const isStepComplete: Record<RegisterStep, boolean> = {
     [REGISTER_STEP.INFORMATIONS]: isInformationsComplete,
     [REGISTER_STEP.CREDENTIALS]: isInformationsComplete && isCredentialsComplete,
   };
+
+  if (hasIncompleteAttempt && isStepComplete[step]) setHasIncompleteAttempt(false);
 
   const isSubmitBlocked = !isStepComplete[REGISTER_STEP.CREDENTIALS] || isSubmitting;
 
@@ -70,6 +82,7 @@ export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFor
     isContinueBlocked: !isInformationsComplete,
     isSubmitBlocked,
     isSubmitting,
+    isStepIncomplete: !isStepComplete[step],
     shouldAnnounceIncomplete: hasIncompleteAttempt && !isStepComplete[step],
     goBack: () => goTo(REGISTER_STEP.INFORMATIONS),
     submit: (event) => {

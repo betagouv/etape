@@ -13,6 +13,8 @@ const submitEvent = () => {
 const MISSING_INFORMATION_ID = "champ-etape-1";
 const MISSING_CREDENTIAL_ID = "champ-etape-2";
 
+const onIncomplete = vi.fn();
+
 const render = (
   initialStep: RegisterStep,
   isInformationsComplete: boolean,
@@ -27,6 +29,7 @@ const render = (
         [REGISTER_STEP.INFORMATIONS]: isInformationsComplete ? undefined : MISSING_INFORMATION_ID,
         [REGISTER_STEP.CREDENTIALS]: isCredentialsComplete ? undefined : MISSING_CREDENTIAL_ID,
       },
+      onIncomplete,
     }),
   );
 
@@ -41,6 +44,7 @@ describe("useRegisterForm", () => {
   afterEach(() => {
     cleanup();
     document.body.replaceChildren();
+    onIncomplete.mockClear();
   });
 
   it("n'envoie pas le formulaire à l'étape 1 et passe à la suivante", () => {
@@ -83,7 +87,33 @@ describe("useRegisterForm", () => {
     act(() => result.current.submit(submitEvent().event));
 
     expect(document.activeElement).toBe(input);
+    expect(onIncomplete).toHaveBeenCalledWith(MISSING_CREDENTIAL_ID);
     expect(result.current.shouldAnnounceIncomplete).toBe(true);
+  });
+
+  it("n'annonce plus l'étape une fois un manque signalé, ni le manque une fois comblé", () => {
+    addInput(MISSING_CREDENTIAL_ID);
+    const options = {
+      initialStep: REGISTER_STEP.CREDENTIALS,
+      isInformationsComplete: true,
+      isCredentialsComplete: false,
+      firstMissingFieldId: {
+        [REGISTER_STEP.INFORMATIONS]: undefined,
+        [REGISTER_STEP.CREDENTIALS]: MISSING_CREDENTIAL_ID,
+      },
+      onIncomplete,
+    };
+    const { result, rerender } = renderHook((props) => useRegisterForm(props), {
+      initialProps: options,
+    });
+
+    act(() => result.current.submit(submitEvent().event));
+    rerender({ ...options, isCredentialsComplete: true });
+    expect(result.current.shouldAnnounceIncomplete).toBe(false);
+    expect(result.current.hasStepChanged).toBe(false);
+
+    rerender(options);
+    expect(result.current.shouldAnnounceIncomplete).toBe(false);
   });
 
   it("n'annonce plus rien en changeant d'étape", () => {
@@ -118,6 +148,7 @@ describe("useRegisterForm", () => {
     act(() => result.current.submit(second.event));
     expect(second.preventDefault).toHaveBeenCalledOnce();
     expect(result.current.shouldAnnounceIncomplete).toBe(false);
+    expect(result.current.isStepIncomplete).toBe(false);
   });
 
   it("revient à l'étape 1", () => {

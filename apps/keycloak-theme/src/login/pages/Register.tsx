@@ -200,10 +200,14 @@ export default function Register(props: RegisterProps) {
         !areTermsAccepted && REGISTER_FIELD.TERMS_ACCEPTED,
       ].find((id) => typeof id === "string"),
     },
+    onIncomplete: (fieldId) => {
+      if (fieldStates.has(fieldId)) {
+        dispatchFormAction({ action: "focus lost", name: fieldId, fieldIndex: undefined });
+      }
+    },
   });
 
   const isOnInformations = form.step === REGISTER_STEP.INFORMATIONS;
-  const isCurrentStepBlocked = isOnInformations ? form.isContinueBlocked : form.isSubmitBlocked;
 
   const stepAnnouncement = form.shouldAnnounceIncomplete
     ? msgStr("etapeRegisterIncomplete")
@@ -377,7 +381,7 @@ export default function Register(props: RegisterProps) {
             type="submit"
             size="form"
             aria-disabled={form.isContinueBlocked}
-            aria-describedby={form.isContinueBlocked ? INCOMPLETE_HINT_ID : undefined}
+            aria-describedby={form.isStepIncomplete ? INCOMPLETE_HINT_ID : undefined}
             className="w-full"
           >
             {msg("etapeRegisterContinue")}
@@ -390,7 +394,7 @@ export default function Register(props: RegisterProps) {
               size="form"
               aria-disabled={form.isSubmitBlocked}
               aria-busy={form.isSubmitting}
-              aria-describedby={form.isSubmitBlocked ? INCOMPLETE_HINT_ID : undefined}
+              aria-describedby={form.isStepIncomplete ? INCOMPLETE_HINT_ID : undefined}
               className="w-full"
             >
               {msg("doRegister")}
@@ -401,7 +405,7 @@ export default function Register(props: RegisterProps) {
           </div>
         )}
 
-        {isCurrentStepBlocked && (
+        {form.isStepIncomplete && (
           <span id={INCOMPLETE_HINT_ID} className="sr-only">
             {msg("etapeRegisterIncomplete")}
           </span>
