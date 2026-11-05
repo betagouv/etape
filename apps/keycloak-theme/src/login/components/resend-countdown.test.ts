@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCountdown, getResendState, RESEND_STATE } from "./resend-countdown";
+import {
+  formatCountdown,
+  getResendState,
+  RESEND_AVAILABILITY,
+  RESEND_STATE,
+} from "./resend-countdown";
 
 describe("formatCountdown", () => {
   it.each([
@@ -11,6 +16,15 @@ describe("formatCountdown", () => {
     [0, "0:00"],
   ])("affiche %i secondes en %s", (seconds, expected) => {
     expect(formatCountdown(seconds)).toBe(expected);
+  });
+});
+
+describe("RESEND_AVAILABILITY", () => {
+  it("n'ouvre le renvoi qu'une fois le délai écoulé", () => {
+    expect(RESEND_AVAILABILITY[RESEND_STATE.WAITING]).toBe(false);
+    expect(RESEND_AVAILABILITY[RESEND_STATE.JUST_RESENT]).toBe(false);
+    expect(RESEND_AVAILABILITY[RESEND_STATE.AVAILABLE]).toBe(true);
+    expect(RESEND_AVAILABILITY[RESEND_STATE.READY]).toBe(true);
   });
 });
 
