@@ -17,7 +17,7 @@ export function AnswersRecap({ entries, onEdit }: AnswersRecapProps) {
         <h2 id="recap-title" className="font-heading text-heading-sm text-foreground">
           Vos réponses
         </h2>
-        <p className="text-muted-foreground text-body">
+        <p className="text-muted-foreground text-base">
           Modifiez une réponse&nbsp;: les résultats se recalculent immédiatement.
         </p>
       </div>
@@ -30,7 +30,7 @@ export function AnswersRecap({ entries, onEdit }: AnswersRecapProps) {
                 key={`${entry.questionId}-${entry.fieldName}`}
                 className="border-border flex items-center gap-4 border-b pb-4 last:border-b-0 last:pb-0"
               >
-                <div className="text-body-sm flex min-w-0 flex-1 flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm md:flex-row md:items-center md:justify-between md:gap-4">
                   <p className="text-muted-foreground">{entry.question}</p>
                   <p className="text-foreground font-medium md:text-right">{entry.answer}</p>
                 </div>

@@ -19,10 +19,10 @@ export function Testimonials() {
             <Card variant="muted" asChild className="w-full px-6">
               <figure>
                 <figcaption className="flex flex-col">
-                  <span className="text-body font-bold">{name}</span>
-                  <span className="text-body-sm text-muted-foreground">{role}</span>
+                  <span className="text-base font-bold">{name}</span>
+                  <span className="text-muted-foreground text-sm">{role}</span>
                 </figcaption>
-                <blockquote className="text-body text-content-secondary">
+                <blockquote className="text-content-secondary text-base">
                   <span aria-hidden="true">«&nbsp;</span>
                   {quote}
                   <span aria-hidden="true">&nbsp;»</span>

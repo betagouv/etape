@@ -17,7 +17,7 @@ export function HowItWorks() {
           <li key={title} className="flex flex-col items-center gap-3 px-6 text-center">
             <Icon aria-hidden="true" focusable="false" className="text-primary size-12" />
             <h3 className="text-body-lg font-bold">{title}</h3>
-            <p className="text-body text-content-secondary">{description}</p>
+            <p className="text-content-secondary text-base">{description}</p>
           </li>
         ))}
       </ol>

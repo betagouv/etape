@@ -30,15 +30,14 @@ const CALLOUT_PARTS: Record<
     icon: "bg-secondary rounded-sm p-2",
     heading: "gap-1",
     title: "font-bold",
-    text: "text-body",
+    text: "text-base",
   },
   secondary: {
     body: "flex min-w-0 flex-1 items-center gap-3.5",
     icon: "bg-background size-11 rounded-md",
     heading: "gap-0",
     title: "font-semibold",
-    // Écart à la maquette : `muted-foreground` ne fait que 4,3:1 sur `secondary`.
-    text: "text-body-sm",
+    text: "text-muted-foreground text-sm",
   },
 };
 
@@ -78,7 +77,7 @@ function Callout({
         </div>
 
         <div className={cn("flex min-w-0 flex-col break-words", parts.heading)}>
-          <TitleTag className={cn("text-foreground text-body", parts.title)}>{title}</TitleTag>
+          <TitleTag className={cn("text-foreground text-base", parts.title)}>{title}</TitleTag>
           <div className={cn("text-content-secondary", parts.text)}>{children}</div>
         </div>
       </div>

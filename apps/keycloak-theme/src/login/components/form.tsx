@@ -27,12 +27,12 @@ export function Field(props: {
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <label htmlFor={id} className="text-body-sm text-foreground font-semibold">
+      <label htmlFor={id} className="text-foreground text-sm font-semibold">
         {label}
         {required && <span aria-hidden>*</span>}
       </label>
       {children}
-      {hint !== undefined && <p className="text-body-sm text-muted-foreground">{hint}</p>}
+      {hint !== undefined && <p className="text-muted-foreground text-sm">{hint}</p>}
       <div role="status">{error}</div>
     </div>
   );
@@ -69,7 +69,7 @@ function InputShell(props: {
 }
 
 const inputClassName =
-  "text-body-sm placeholder:text-muted-foreground w-full min-w-0 bg-transparent outline-none disabled:cursor-not-allowed disabled:opacity-50";
+  "text-sm placeholder:text-muted-foreground w-full min-w-0 bg-transparent outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
 export function TextInput({
   icon,
@@ -147,7 +147,7 @@ export function FieldError(props: { id: string; message: string }) {
   return (
     <span
       id={props.id}
-      className="text-body-sm text-destructive-text"
+      className="text-destructive-text text-sm"
       dangerouslySetInnerHTML={{ __html: kcSanitize(props.message) }}
     />
   );
@@ -168,7 +168,7 @@ export function CheckboxField(props: ComponentProps<"input"> & { id: string; lab
           className,
         )}
       />
-      <label htmlFor={id} className="text-body-sm text-foreground cursor-pointer font-semibold">
+      <label htmlFor={id} className="text-foreground cursor-pointer text-sm font-semibold">
         {label}
       </label>
     </div>

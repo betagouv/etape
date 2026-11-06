@@ -138,7 +138,7 @@
     border: 1px solid var(--border);
     background-color: var(--background);
     padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
-    font-size: var(--text-body-sm);
+    font-size: var(--text-sm);
   }
 
   .kc-fallback :where(input[type="submit"]),
@@ -154,7 +154,7 @@
   }
 
   .kc-fallback :where(a) {
-    color: var(--content-accent);
+    color: var(--primary);
     font-weight: 600;
   }
 
@@ -184,5 +184,5 @@ altcha-widget {
   --altcha-checkbox-border-color: var(--border-strong);
   --altcha-spinner-color: var(--primary);
   font-family: var(--font-sans);
-  font-size: var(--text-body-sm);
+  font-size: var(--text-sm);
 }

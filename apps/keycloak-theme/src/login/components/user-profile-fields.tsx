@@ -235,10 +235,10 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
 
   return (
     <div id={PASSWORD_RULES_ID} className="flex flex-col gap-1">
-      <p className="text-body-sm text-muted-foreground">{msgStr("etapePasswordRulesTitle")}</p>
+      <p className="text-muted-foreground text-sm">{msgStr("etapePasswordRulesTitle")}</p>
       <ul className="flex flex-col gap-1">
         {rules.map(({ messageKey, isSatisfied }) => (
-          <li key={messageKey} className="text-body-sm flex items-center gap-2">
+          <li key={messageKey} className="flex items-center gap-2 text-sm">
             {isSatisfied ? (
               <Check aria-hidden className="text-success size-4 shrink-0" />
             ) : (

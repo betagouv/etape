@@ -64,7 +64,7 @@ export function ResultsScreen({ answers, onEdit, headingRef }: ResultsScreenProp
           >
             Les dispositifs accessibles avec votre profil
           </h1>
-          <p className="text-muted-foreground text-body">
+          <p className="text-muted-foreground text-base">
             <TextParts parts={phrase} emphasisClassName="text-foreground font-medium" />
           </p>
         </header>
