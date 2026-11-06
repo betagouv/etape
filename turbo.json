@@ -12,11 +12,19 @@
         "!.next/cache/**"
       ],
       /*
-       * Les bundles Vite figent ces valeurs au build : sans les déclarer,
-       * Turborepo servirait depuis son cache un build construit avec l'URL
-       * d'API d'un autre environnement.
+       * Les bundles figent ces valeurs au build : sans les déclarer, Turborepo
+       * servirait depuis son cache un build construit avec l'URL d'API ou le
+       * site Matomo d'un autre environnement — et ne les transmettrait même pas
+       * à la tâche.
        */
-      "env": ["NODE_ENV", "VITE_API_BASE_URL"],
+      "env": [
+        "NODE_ENV",
+        "VITE_API_BASE_URL",
+        "NEXT_PUBLIC_MATOMO_URL",
+        "NEXT_PUBLIC_MATOMO_SITE_ID",
+        "VITE_MATOMO_URL",
+        "VITE_MATOMO_SITE_ID"
+      ],
       "passThroughEnv": ["DATABASE_URL"]
     },
     "dev": {

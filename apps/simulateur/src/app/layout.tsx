@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist } from "next/font/google";
+import { ANALYTICS_APP } from "@etape/analytics";
+import { MatomoAnalytics } from "@etape/analytics/next";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
 import { SkipLinks } from "@etape/ui/components/skip-links";
 import { Toaster } from "@etape/ui/components/sonner";
+
+import { MATOMO_CONFIG } from "@/lib/analytics";
 import "./globals.css";
 
 const geist = Geist({
@@ -42,6 +46,11 @@ export default function RootLayout({
             choix « dark » resté en localStorage. Le thème `.dark` de globals.css
             est gardé pour le jour où il le sera. */}
         <ThemeProvider attribute="class" forcedTheme="light" disableTransitionOnChange>
+          <MatomoAnalytics
+            config={MATOMO_CONFIG}
+            app={ANALYTICS_APP.SIMULATEUR}
+            basePath={process.env.NEXT_PUBLIC_BASE_PATH}
+          />
           <SkipLinks />
           <div id="contenu" tabIndex={-1} className="flex flex-1 flex-col">
             {children}

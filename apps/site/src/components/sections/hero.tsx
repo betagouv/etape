@@ -1,10 +1,12 @@
 import Image from "next/image";
 
+import { ANALYTICS_EVENT, analyticsEventProps } from "@etape/analytics";
 import { Button } from "@etape/ui/components/button";
 import { Section } from "@etape/ui/components/section";
 
 import heroImage from "@/assets/hero-reflexion.jpg";
 import { hero } from "@/content/home";
+import { EMPLACEMENT_ACCES_SIMULATEUR } from "@/lib/analytics";
 import { SIMULATEUR_URL } from "@/lib/navigation";
 
 export function Hero() {
@@ -39,7 +41,15 @@ export function Hero() {
         <p className="text-body-lg text-content-secondary">{hero.subtext}</p>
 
         <Button asChild size="xl" className="w-full sm:w-auto">
-          <a href={SIMULATEUR_URL}>{hero.cta}</a>
+          <a
+            href={SIMULATEUR_URL}
+            {...analyticsEventProps(
+              ANALYTICS_EVENT.ACCES_SIMULATEUR,
+              EMPLACEMENT_ACCES_SIMULATEUR.HERO,
+            )}
+          >
+            {hero.cta}
+          </a>
         </Button>
       </div>
     </Section>

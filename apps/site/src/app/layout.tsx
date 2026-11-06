@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist } from "next/font/google";
+import { ANALYTICS_APP } from "@etape/analytics";
+import { MatomoAnalytics } from "@etape/analytics/next";
 import { BackToTop } from "@etape/ui/components/back-to-top";
 import { SkipLinks } from "@etape/ui/components/skip-links";
 import { ThemeProvider } from "@etape/ui/components/theme-provider";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { MATOMO_CONFIG } from "@/lib/analytics";
 import { MAIN_CONTENT_ID, SKIP_LINKS } from "@/lib/navigation";
 import "./globals.css";
 
@@ -43,6 +46,7 @@ export default function RootLayout({
             choix « dark » resté en localStorage. Le thème `.dark` de globals.css
             est gardé pour le jour où il le sera. */}
         <ThemeProvider attribute="class" forcedTheme="light" disableTransitionOnChange>
+          <MatomoAnalytics config={MATOMO_CONFIG} app={ANALYTICS_APP.SITE} />
           <SkipLinks links={SKIP_LINKS} />
           {/* Doit rester haut dans l'arbre : cf. `BackToTop`. */}
           <BackToTop targetId={MAIN_CONTENT_ID} />
