@@ -41,7 +41,7 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          "group/accordion-trigger text-body-sm flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-4 rounded-sm py-4 text-left font-semibold wrap-anywhere hover:underline disabled:pointer-events-none disabled:opacity-50",
+          "group/accordion-trigger flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-semibold wrap-anywhere hover:underline disabled:pointer-events-none disabled:opacity-50",
           focusRing,
           className,
         )}
@@ -70,7 +70,7 @@ function AccordionContent({
       className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden motion-reduce:animate-none"
       {...props}
     >
-      <div className={cn("text-body-sm border-border border-t py-4 wrap-anywhere", className)}>
+      <div className={cn("border-border border-t py-4 text-sm wrap-anywhere", className)}>
         {children}
       </div>
     </AccordionPrimitive.Content>

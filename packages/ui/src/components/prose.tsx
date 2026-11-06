@@ -14,7 +14,7 @@ function Prose({
     <Comp
       data-slot="prose"
       className={cn(
-        "text-body text-foreground",
+        "text-foreground text-base",
 
         "[&_h2]:font-heading [&_h2]:text-heading-sm [&_h2]:text-foreground [&_h2]:text-balance",
         "[&_h3]:text-body-lg [&_h3]:text-foreground [&_h3]:font-bold [&_h3]:text-balance",
@@ -27,8 +27,7 @@ function Prose({
 
         "[&_address]:not-italic",
 
-        "[&_a]:text-content-accent [&_a]:underline [&_a]:underline-offset-4",
-        "[&_a:hover]:text-content-accent-hover",
+        "[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4",
         "[&_a]:focus-visible:outline-ring [&_a]:rounded-sm [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-2",
 
         className,

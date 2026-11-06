@@ -136,9 +136,7 @@ export default function Register(props: RegisterProps) {
           </Button>
 
           {!termsAcceptanceRequired && (
-            <p className="text-body-sm text-muted-foreground text-center">
-              {msg("etapeRegisterTerms")}
-            </p>
+            <p className="text-muted-foreground text-center text-sm">{msg("etapeRegisterTerms")}</p>
           )}
 
           <AccountSwitch

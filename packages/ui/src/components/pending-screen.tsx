@@ -13,7 +13,7 @@ export function PendingScreen({ message }: PendingScreenProps) {
   return (
     <main>
       <Container size="sm" className="py-12">
-        <p className="text-body text-content-secondary">{message}</p>
+        <p className="text-content-secondary text-base">{message}</p>
       </Container>
     </main>
   );

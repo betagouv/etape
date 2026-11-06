@@ -31,7 +31,7 @@ export function ReassuranceList({
               ? // Largeurs de la maquette : 150px en mobile, 160px en desktop.
                 "text-primary text-label-lg basis-32 flex-col gap-3 text-center font-semibold lg:basis-40"
               : // `Caption/Default` (12/16) en `Content/Secondary`, et `Gap/S` (8).
-                "text-content-secondary text-caption gap-2",
+                "text-content-secondary gap-2 text-xs",
           )}
         >
           <Icon

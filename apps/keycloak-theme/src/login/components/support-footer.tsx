@@ -6,7 +6,7 @@ export function SupportFooter(props: { i18n: I18n }) {
   const { msg } = props.i18n;
 
   return (
-    <footer className="border-border text-body-sm text-accent-foreground border-t pt-3">
+    <footer className="border-border text-accent-foreground border-t pt-3 text-sm">
       {msg("etapeSupportHelp")}{" "}
       <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline">
         {SUPPORT_EMAIL}

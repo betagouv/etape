@@ -139,7 +139,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
                   realm.resetPasswordAllowed && (
                     <a
                       href={url.loginResetCredentialsUrl}
-                      className="text-body-sm text-foreground font-normal hover:underline"
+                      className="text-foreground text-sm font-normal hover:underline"
                     >
                       {msg("doForgotPassword")}
                     </a>

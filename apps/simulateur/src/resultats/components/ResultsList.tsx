@@ -36,7 +36,7 @@ export function ResultsList({ resultats }: ResultsListProps) {
       {hiddenCount > 0 && (
         <Button
           type="button"
-          variant="ghost-primary"
+          variant="ghost"
           size="responsive-sm"
           onClick={showMore}
           className="self-center"
