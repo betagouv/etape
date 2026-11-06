@@ -14,8 +14,8 @@ import { cn } from "@etape/ui/lib/utils";
 const inputGroupVariants = cva(
   [
     "group/input-group border-input bg-background dark:bg-input/30 relative flex w-full min-w-0 items-center border shadow-xs transition-[color,box-shadow] outline-none",
-    "has-[>[data-align=inline-start]]:[&>input]:pl-2",
-    "has-[>[data-align=inline-end]]:[&>input]:pr-2",
+    "has-[>[data-align=inline-start]]:[&>:is(input,button)]:pl-1.5",
+    "has-[>[data-align=inline-end]]:[&>:is(input,button)]:pr-1.5",
     "has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot=input-group-control]:focus-visible]:ring-[3px]",
     "has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40 has-[[data-slot][aria-invalid=true]]:ring-[3px]",
   ],
@@ -49,12 +49,12 @@ function InputGroup({
 }
 
 const inputGroupAddonVariants = cva(
-  "text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none [&>svg:not([class*='size-'])]:size-4",
+  "text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none group-has-[button[data-slot=input-group-control]]/input-group:cursor-pointer [&>svg:not([class*='size-'])]:size-4",
   {
     variants: {
       align: {
-        "inline-start": "order-first pl-3 group-data-[size=lg]/input-group:pl-4",
-        "inline-end": "order-last pr-3 group-data-[size=lg]/input-group:pr-4",
+        "inline-start": "order-first pl-2.5 group-data-[size=lg]/input-group:pl-4",
+        "inline-end": "order-last pr-2.5 group-data-[size=lg]/input-group:pr-4",
       },
     },
     defaultVariants: {
@@ -65,7 +65,7 @@ const inputGroupAddonVariants = cva(
 
 /**
  * Complément affiché dans le cadre. Un clic dessus donne le focus au champ,
- * comme un clic sur le reste du cadre.
+ * comme un clic sur le reste du cadre ; devant un déclencheur, il l'active.
  */
 function InputGroupAddon({
   className,
@@ -79,7 +79,11 @@ function InputGroupAddon({
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
       onClick={(event) => {
-        event.currentTarget.parentElement?.querySelector("input")?.focus();
+        const control = event.currentTarget.parentElement?.querySelector<HTMLElement>(
+          "[data-slot=input-group-control]",
+        );
+        control?.focus();
+        if (control instanceof HTMLButtonElement) control.click();
         onClick?.(event);
       }}
       {...props}
@@ -100,4 +104,26 @@ function InputGroupInput({ className, ...props }: React.ComponentProps<"input">)
   );
 }
 
-export { InputGroup, InputGroupAddon, InputGroupInput };
+/**
+ * Bouton qui tient lieu de champ dans le cadre (date, choix dans une liste) : même
+ * cadre, même focus, valeur ou placeholder (`data-placeholder` quand il n'y a pas de
+ * valeur). C'est l'`InputGroup` du kit, dont le contenu s'ouvre au clic.
+ */
+function InputGroupTrigger({ className, ...props }: React.ComponentProps<"button">) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "data-[placeholder]:text-muted-foreground flex h-full min-w-0 flex-1 items-center gap-2 bg-transparent px-2.5 text-left text-sm outline-none group-data-[size=lg]/input-group:px-4 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "[&>span]:truncate",
+        className,
+      )}
+      {...props}
+      // Après les props : un `PopoverTrigger asChild` pose son propre `data-slot`, et le cadre
+      // (anneau de focus, clic sur le complément) ne reconnaît le contrôle que par celui-ci.
+      data-slot="input-group-control"
+    />
+  );
+}
+
+export { InputGroup, InputGroupAddon, InputGroupInput, InputGroupTrigger };

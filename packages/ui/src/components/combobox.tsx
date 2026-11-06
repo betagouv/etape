@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { CheckIcon, SearchIcon } from "lucide-react";
 
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
@@ -18,17 +19,34 @@ import { cn } from "@etape/ui/lib/utils";
  * renseigne `aria-expanded`, `aria-controls` et `aria-activedescendant` sur le
  * champ.
  *
- * Écart au kit : l'option active porte un anneau, le fond `accent` seul ne marque pas assez le focus.
+ * Écarts au kit : l'option active porte un anneau, le fond `accent` seul ne marque pas
+ * assez le focus ; sur mobile, champ et options font 44 px de haut (cible tactile) au
+ * lieu des 32 et 28 px du kit.
  */
 
-function Combobox({ className, ...props }: React.ComponentProps<"div">) {
+const comboboxVariants = cva("bg-popover text-popover-foreground flex w-full flex-col", {
+  variants: {
+    variant: {
+      default: "border-foreground/10 rounded-lg border shadow-md",
+      /** Dans un `PopoverContent` ou tout cadre qui porte déjà bordure et rayon. */
+      inset: "",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+function Combobox({
+  className,
+  variant,
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof comboboxVariants>) {
   return (
     <div
       data-slot="combobox"
-      className={cn(
-        "bg-popover text-popover-foreground flex w-full flex-col rounded-xl border p-1",
-        className,
-      )}
+      data-variant={variant}
+      className={cn(comboboxVariants({ variant }), className)}
       {...props}
     />
   );
@@ -36,13 +54,12 @@ function Combobox({ className, ...props }: React.ComponentProps<"div">) {
 
 function ComboboxInput({ className, ...props }: React.ComponentProps<"input">) {
   return (
-    <div data-slot="combobox-input-wrapper" className="p-1">
+    <div data-slot="combobox-input-wrapper" className="px-1 pt-1">
       <InputGroup size="responsive">
         <InputGroupAddon aria-hidden="true">
           <SearchIcon />
         </InputGroupAddon>
         <InputGroupInput
-          data-slot="combobox-input"
           role="combobox"
           aria-autocomplete="list"
           autoComplete="off"
@@ -74,6 +91,34 @@ function ComboboxList({ className, ...props }: React.ComponentProps<"ul">) {
   );
 }
 
+/**
+ * Groupe d'options sous un intitulé, comme le « Select Menu / Label » du kit. Le
+ * `<li>` est transparent pour l'ARIA : la liste contient un `group` nommé par son intitulé.
+ */
+function ComboboxGroup({
+  label,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"li"> & { label: React.ReactNode }) {
+  const labelId = React.useId();
+
+  return (
+    <li role="presentation" data-slot="combobox-group" className={className} {...props}>
+      <div
+        id={labelId}
+        data-slot="combobox-group-label"
+        className="text-muted-foreground px-2 py-1.5 text-xs"
+      >
+        {label}
+      </div>
+      <ul role="group" aria-labelledby={labelId}>
+        {children}
+      </ul>
+    </li>
+  );
+}
+
 function ComboboxOption({
   className,
   selected = false,
@@ -92,14 +137,19 @@ function ComboboxOption({
       aria-selected={selected}
       data-active={active}
       className={cn(
-        "hover:bg-accent hover:text-accent-foreground flex min-h-11 cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm select-none md:min-h-8",
+        "hover:bg-accent hover:text-accent-foreground relative flex min-h-11 cursor-pointer items-center gap-2 rounded-md py-1 pr-8 pl-1.5 text-sm select-none md:min-h-7",
         "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground data-[active=true]:ring-ring data-[active=true]:ring-2 data-[active=true]:ring-inset",
         className,
       )}
       {...props}
     >
       <span className="min-w-0 flex-1">{children}</span>
-      {selected && <CheckIcon aria-hidden="true" className="size-4 shrink-0" />}
+      {selected && (
+        <CheckIcon
+          aria-hidden="true"
+          className="absolute top-1/2 right-2 size-4 shrink-0 -translate-y-1/2"
+        />
+      )}
     </li>
   );
 }
@@ -114,4 +164,12 @@ function ComboboxEmpty({ className, ...props }: React.ComponentProps<"p">) {
   );
 }
 
-export { Combobox, ComboboxInput, ComboboxList, ComboboxOption, ComboboxEmpty };
+export {
+  Combobox,
+  ComboboxInput,
+  ComboboxList,
+  ComboboxGroup,
+  ComboboxOption,
+  ComboboxEmpty,
+  comboboxVariants,
+};

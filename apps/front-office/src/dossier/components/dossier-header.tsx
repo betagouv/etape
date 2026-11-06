@@ -9,7 +9,7 @@ import { Tag } from "@etape/ui/components/tag";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftIcon, CheckIcon, ClockIcon, FolderOpenIcon, type LucideIcon } from "lucide-react";
 
-import illustrationUrl from "@/assets/illustration-jumelles.svg";
+import illustrationUrl from "@/assets/illustration-dossier.svg";
 import {
   computeProgressPercent,
   formatVoletsLabel,
@@ -58,8 +58,8 @@ export function DossierHeader({
         <img
           src={illustrationUrl}
           alt=""
-          width={230}
-          height={191}
+          width={246}
+          height={204}
           className="absolute top-10.5 right-58 hidden xl:block"
         />
         <div className="flex flex-col items-start gap-2">
