@@ -81,7 +81,7 @@ export default function ResetPasswordEmailSent(
               type="submit"
               name="resend"
               value="true"
-              size="form-sm"
+              size="lg"
               aria-disabled={!resend.isAvailable || resend.isSubmitting}
               aria-busy={resend.isSubmitting}
               aria-describedby={resend.isAvailable ? undefined : RESEND_COUNTDOWN_ID}
