@@ -14,6 +14,7 @@ type Props = TemplateProps<KcContext, I18n> & {
   subtitle?: ReactNode;
   accountSwitchNode?: ReactNode;
   backLinkNode?: ReactNode;
+  footerNote?: ReactNode;
 };
 
 /**
@@ -33,6 +34,7 @@ export default function Template(props: Props) {
     subtitle,
     accountSwitchNode = null,
     backLinkNode = null,
+    footerNote,
     socialProvidersNode = null,
     infoNode = null,
     documentTitle,
@@ -163,7 +165,7 @@ export default function Template(props: Props) {
             )}
           </div>
 
-          <SupportFooter i18n={i18n} />
+          <SupportFooter i18n={i18n} note={footerNote} />
         </div>
       </main>
     </div>

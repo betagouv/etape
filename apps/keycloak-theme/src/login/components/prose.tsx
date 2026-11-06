@@ -25,23 +25,6 @@ export function Prose(props: { className?: string; children: ReactNode }) {
   );
 }
 
-/**
- * Bascule entre connexion et inscription, en pied de formulaire.
- *
- * Un lien, et pas un onglet : côté Keycloak ce sont deux pages distinctes, et un
- * onglet promettrait un basculement instantané qu'il ne peut pas tenir.
- */
-export function AccountSwitch(props: { question: ReactNode; href: string; label: ReactNode }) {
-  return (
-    <p className="text-body-lg text-content-secondary flex flex-wrap items-center justify-center gap-2">
-      {props.question}
-      <a href={props.href} className="text-label-lg text-primary font-semibold hover:underline">
-        {props.label}
-      </a>
-    </p>
-  );
-}
-
 export function HeaderAccountSwitch(props: {
   question: ReactNode;
   href: string;

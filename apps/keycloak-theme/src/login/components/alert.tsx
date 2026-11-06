@@ -41,15 +41,16 @@ export function Alert(props: {
   type: MessageType;
   summary: string;
   id?: string;
+  isLive?: boolean;
   children?: ReactNode;
 }) {
-  const { type, summary, id, children } = props;
+  const { type, summary, id, isLive = true, children } = props;
   const Icon = ICON_BY_MESSAGE_TYPE[type];
 
   return (
     <div
       id={id}
-      role={ROLE_BY_MESSAGE_TYPE[type]}
+      role={isLive ? ROLE_BY_MESSAGE_TYPE[type] : undefined}
       className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 ${STYLE_BY_MESSAGE_TYPE[type]}`}
     >
       <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />

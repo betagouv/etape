@@ -90,12 +90,13 @@ const inputClassName =
 export function TextInput({
   icon,
   invalid,
+  trailing,
   className,
   "aria-invalid": ariaInvalid,
   ...props
-}: ComponentProps<"input"> & { icon?: IconComponent; invalid?: boolean }) {
+}: ComponentProps<"input"> & { icon?: IconComponent; invalid?: boolean; trailing?: ReactNode }) {
   return (
-    <InputShell icon={icon} invalid={invalid}>
+    <InputShell icon={icon} invalid={invalid} trailing={trailing}>
       <input
         {...props}
         aria-invalid={invalid || ariaInvalid}
@@ -175,7 +176,7 @@ export function CheckboxField(props: ComponentProps<"input"> & { id: string; lab
   const { id, label, className, ...inputProps } = props;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-start gap-2">
       <input
         {...inputProps}
         id={id}
@@ -185,7 +186,7 @@ export function CheckboxField(props: ComponentProps<"input"> & { id: string; lab
           className,
         )}
       />
-      <label htmlFor={id} className="text-foreground cursor-pointer text-sm font-semibold">
+      <label htmlFor={id} className="text-foreground cursor-pointer text-sm">
         {label}
       </label>
     </div>

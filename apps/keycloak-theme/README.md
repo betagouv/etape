@@ -4,7 +4,7 @@ Thème Keycloak d'ETAPE — écrans de connexion et gabarits d'email, écrits en
 React avec [Keycloakify](https://keycloakify.dev).
 
 La connexion et le mot de passe oublié suivent la section « 00. SIGN-IN » du
-Figma _FRONT-OFFICE_ (écrans 01 à 06, ticket Notion 191 ; écrans 07 à 10, ticket 192) ; les autres écrans suivent encore les maquettes
+Figma _FRONT-OFFICE_ (écrans 01 à 06, ticket Notion 191 ; écrans 07 à 10, ticket 192), l'inscription sa section « 01. SIGN-UP » (ticket 202) ; les autres écrans suivent encore les maquettes
 `login-proposition-2` du Figma _Dépôt de dossier_. Ils réutilisent les variables
 de `@etape/ui` — couleurs, rayons, échelle typographique — plutôt que de les
 recopier : ce qui bouge dans le design system se propage ici au prochain build.
@@ -20,7 +20,7 @@ recopier : ce qui bouge dans le design system se propage ici au prochain build.
 - au-dessus du logo, l'emplacement `backLinkNode` (« Retour à la connexion » de
   l'écran 07) ;
 - le logo Transitions Pro (`components/logo.tsx`) au-dessus du titre ;
-- en bas, le pied de page « Besoin d'aide ? » vers `support@etape.com`
+- en bas, le pied de page « Besoin d'aide ? » vers `contact.etape@certif-pro.fr`
   (`components/support-footer.tsx`).
 
 ## Installer et lancer
@@ -129,7 +129,8 @@ L'adresse est contrôlée à la sortie du champ, mais pas quand cette sortie vie
 d'un appui sur un lien ou un bouton : l'erreur en s'insérant décalerait la page,
 et le clic tomberait à côté de sa cible. L'appui se repère par `mousedown`, qui
 précède la sortie du champ dans tous les navigateurs ; `:active` n'offre pas cette
-garantie. L'envoi contrôle de toute façon le format.
+garantie. L'envoi contrôle de toute façon le format. L'inscription suit la même règle
+pour ses champs (`usePressedAction`), y compris sur une case à cocher.
 
 Un envoi incomplet (Entrée, ou clic sur le bouton grisé) reste bloqué : le focus
 part sur le premier champ vide et une région `role="status"` dit quoi faire. Le
@@ -184,6 +185,52 @@ temporaire (ajouté par `chrome.passwordsPrivate`), sur la page en contexte
 simulé et non dans un vrai Keycloak. `Autofill.trigger`, du protocole DevTools,
 ne convient pas à ce test : il émet des événements de saisie dès le remplissage.
 
+## Inscription en deux étapes
+
+« Continuer » et « S'inscrire » restent actionnables tant qu'une étape est incomplète :
+le focus part sur le premier champ manquant, et une région `role="status"` dit quoi
+faire. Le bouton porte le même texte en `aria-describedby`.
+
+Keycloak n'a qu'un formulaire d'inscription : `Register.tsx` en affiche les deux
+étapes dans le même `<form>`, sans changer de page. L'étape masquée reste montée,
+ce qui conserve la saisie au retour et l'envoie avec le reste.
+
+- **Au retour du serveur**, la page revient sur l'étape du champ refusé, le focus
+  sur ce champ. Le mot de passe et la case des conditions sont à refaire : Keycloak
+  ne les renvoie pas. La case ALTCHA n'est montée qu'à l'étape 2 : obligatoire et
+  masquée, elle empêcherait le navigateur d'envoyer l'événement `submit` de l'étape 1.
+- **Pas de champ `type="email"`**, pour la même raison : mal rempli puis masqué, il
+  bloquerait « Continuer » sans rien dire.
+
+### Adresse
+
+`components/adresse/` et les hooks `use-adresse-*` portent la recherche, la saisie
+manuelle et le contrôle de la région.
+
+- **Deux API publiques sont appelées depuis le navigateur**, sans clé : la BAN
+  (`data.geopf.fr/geocodage`) pour les suggestions, `geo.api.gouv.fr` pour les
+  communes d'un code postal. Ce sont les seules exceptions à « une page de connexion
+  ne dépend pas d'un tiers » : le ticket les demande, et chacune a son repli à l'écran.
+  Si les communes ne répondent pas non plus, la saisie manuelle reste bloquée.
+- **La région se déduit du code commune**, en recherche comme en saisie manuelle,
+  grâce à la table des départements de `region.ts`.
+- **Les régions pilotes** sont les options de l'attribut `region` du profil, posées
+  par `deploy/keycloak-registration.sh` : le thème les lit dans le contexte, et
+  Keycloak refuse une autre valeur. Sans cette liste, aucune adresse n'est bloquée :
+  un script de déploiement en échec ne doit pas fermer l'inscription.
+- **La saisie manuelle** est chargée à la demande (`manual-adresse-form.tsx`) :
+  `Select` et ses dépendances pèsent une centaine de kilo-octets, pour un repli. Si
+  ce chargement échoue, un encart propose de réessayer sans perdre l'étape en cours.
+  Son bouton reste affiché sous le champ dès qu'il y a des suggestions : l'API propose
+  parfois d'autres rues sans dire qu'elle n'a pas trouvé la bonne.
+- **Ce que Keycloak enregistre** : `adresse`, `complement_adresse`, `code_postal`,
+  `commune`, `code_commune`, `region`. Ils ne sont pas `required` dans le profil, sinon
+  Keycloak les redemanderait aux comptes existants et aux arrivées par FranceConnect.
+  Seul l'écran les exige : un envoi forgé peut créer un compte sans adresse.
+
+Les liens des conditions générales et de la politique de confidentialité sont dans
+`components/legal-documents.ts`. Tant qu'une URL manque, le libellé reste du texte.
+
 ## Case « Je ne suis pas un robot »
 
 `src/login/components/altcha/`, avec le hook `src/login/hooks/use-altcha-widget.ts`, affiche le widget ALTCHA sur l'inscription et
@@ -225,5 +272,7 @@ doit pas dépendre d'un tiers.
   elle, `useUserProfileForm` n'ajoute pas les champs de mot de passe et
   l'inscription crée un compte sans moyen de connexion. `Register.tsx` la déduit
   du contexte ; à retirer si une version ultérieure corrige le tir.
-- **Attributs multivalués non gérés** dans `UserProfileFields` — le profil du
+- **Attributs multivalués non gérés** dans `UserProfileField` — le profil du
   realm n'en contient aucun. En ajouter un demanderait d'étendre le composant.
+- **Un attribut ajouté au profil n'apparaît pas tout seul à l'inscription** :
+  `Register.tsx` place chaque champ à son étape.
