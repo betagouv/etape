@@ -82,7 +82,7 @@ export default function Template(props: Props) {
                     <a
                       key={languageTag}
                       href={href}
-                      className="text-content-accent text-sm hover:underline"
+                      className="text-primary text-sm hover:underline"
                     >
                       {label}
                     </a>
@@ -111,7 +111,7 @@ export default function Template(props: Props) {
                     id="reset-login"
                     href={url.loginRestartFlowUrl}
                     aria-label={msgStr("restartLoginTooltip")}
-                    className="text-content-accent text-sm hover:underline"
+                    className="text-primary text-sm hover:underline"
                   >
                     {msg("restartLoginTooltip")}
                   </a>
@@ -146,7 +146,7 @@ export default function Template(props: Props) {
                 <input type="hidden" name="tryAnotherWay" value="on" />
                 <button
                   type="submit"
-                  className="text-content-accent cursor-pointer text-sm font-semibold hover:underline"
+                  className="text-primary cursor-pointer text-sm font-semibold hover:underline"
                 >
                   {msg("doTryAnotherWay")}
                 </button>
