@@ -53,7 +53,7 @@ export default function LoginResetPassword(
       }
     >
       <div className="flex flex-col gap-6">
-        <p className="text-body text-accent-foreground">{msg("etapeResetPasswordSubtitle")}</p>
+        <p className="text-accent-foreground text-base">{msg("etapeResetPasswordSubtitle")}</p>
 
         <form
           id="kc-reset-password-form"

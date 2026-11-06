@@ -77,18 +77,14 @@ export default function Template(props: Props) {
               <nav aria-label={msgStr("languages")} className="flex gap-3">
                 {enabledLanguages.map(({ languageTag, label, href }) =>
                   languageTag === currentLanguage.languageTag ? (
-                    <span
-                      key={languageTag}
-                      aria-current="true"
-                      className="text-body-sm font-semibold"
-                    >
+                    <span key={languageTag} aria-current="true" className="text-sm font-semibold">
                       {label}
                     </span>
                   ) : (
                     <a
                       key={languageTag}
                       href={href}
-                      className="text-body-sm text-content-accent hover:underline"
+                      className="text-primary text-sm hover:underline"
                     >
                       {label}
                     </a>
@@ -111,14 +107,14 @@ export default function Template(props: Props) {
                  * tentée et un lien pour repartir de zéro.
                  */
                 <div id="kc-username" className="flex items-center gap-3">
-                  <span className="text-body text-foreground font-semibold">
+                  <span className="text-foreground text-base font-semibold">
                     {auth.attemptedUsername}
                   </span>
                   <a
                     id="reset-login"
                     href={url.loginRestartFlowUrl}
                     aria-label={msgStr("restartLoginTooltip")}
-                    className="text-body-sm text-content-accent hover:underline"
+                    className="text-primary text-sm hover:underline"
                   >
                     {msg("restartLoginTooltip")}
                   </a>
@@ -129,7 +125,7 @@ export default function Template(props: Props) {
                 </h1>
               )}
               {subtitle !== undefined && (
-                <p className="text-body text-content-secondary">{subtitle}</p>
+                <p className="text-content-secondary text-base">{subtitle}</p>
               )}
             </header>
 
@@ -153,7 +149,7 @@ export default function Template(props: Props) {
                 <input type="hidden" name="tryAnotherWay" value="on" />
                 <button
                   type="submit"
-                  className="text-body-sm text-content-accent cursor-pointer font-semibold hover:underline"
+                  className="text-primary cursor-pointer text-sm font-semibold hover:underline"
                 >
                   {msg("doTryAnotherWay")}
                 </button>
@@ -161,7 +157,7 @@ export default function Template(props: Props) {
             )}
 
             {displayInfo && (
-              <div id="kc-info" className="text-body-sm text-content-secondary text-center">
+              <div id="kc-info" className="text-content-secondary text-center text-sm">
                 {infoNode}
               </div>
             )}

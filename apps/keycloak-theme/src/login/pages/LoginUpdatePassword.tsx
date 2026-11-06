@@ -63,7 +63,7 @@ export default function LoginUpdatePassword(
         className="flex flex-col gap-6"
       >
         {username !== undefined && username !== "" && (
-          <p className="text-body-sm text-foreground flex flex-wrap gap-x-1">
+          <p className="text-foreground flex flex-wrap gap-x-1 text-sm">
             {msg("etapeUpdatePasswordAccount")}
             <span className="font-medium break-all">{username}</span>
           </p>

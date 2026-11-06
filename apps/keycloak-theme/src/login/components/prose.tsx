@@ -15,8 +15,8 @@ export function Prose(props: { className?: string; children: ReactNode }) {
   return (
     <div
       className={cn(
-        "text-body text-content-secondary flex flex-col gap-4",
-        "[&_a]:text-content-accent [&_a]:font-semibold [&_a:hover]:underline",
+        "text-content-secondary flex flex-col gap-4 text-base",
+        "[&_a]:text-primary [&_a]:font-semibold [&_a:hover]:underline",
         props.className,
       )}
     >
@@ -35,10 +35,7 @@ export function AccountSwitch(props: { question: ReactNode; href: string; label:
   return (
     <p className="text-body-lg text-content-secondary flex flex-wrap items-center justify-center gap-2">
       {props.question}
-      <a
-        href={props.href}
-        className="text-label-lg text-content-accent hover:text-content-accent-hover font-semibold hover:underline"
-      >
+      <a href={props.href} className="text-label-lg text-primary font-semibold hover:underline">
         {props.label}
       </a>
     </p>
@@ -51,7 +48,7 @@ export function HeaderAccountSwitch(props: {
   label: ReactNode;
 }) {
   return (
-    <p className="text-body-sm text-accent-foreground flex flex-wrap items-center justify-end gap-1.5">
+    <p className="text-accent-foreground flex flex-wrap items-center justify-end gap-1.5 text-sm">
       {props.question}
       <a href={props.href} className="text-primary font-medium hover:underline">
         {props.label}
@@ -83,7 +80,7 @@ export function BackLink(props: { href: string; label: ReactNode }) {
   return (
     <a
       href={props.href}
-      className="text-body-sm text-primary inline-flex items-center gap-1.5 self-start font-medium hover:underline"
+      className="text-primary inline-flex items-center gap-1.5 self-start text-sm font-medium hover:underline"
     >
       <ArrowLeft aria-hidden className="size-4" />
       {props.label}
@@ -94,7 +91,7 @@ export function BackLink(props: { href: string; label: ReactNode }) {
 /** Question suivie d'une action en lien, sur une ligne (Figma FRONT-OFFICE, écrans 08 et 09). */
 export function InlineAction(props: { question: ReactNode; children: ReactNode }) {
   return (
-    <p className="text-body-sm text-accent-foreground flex flex-wrap items-center gap-x-1.5">
+    <p className="text-accent-foreground flex flex-wrap items-center gap-x-1.5 text-sm">
       {props.question}
       {props.children}
     </p>
@@ -106,7 +103,7 @@ export function BackToLogin(props: { href: string; label: ReactNode }) {
   return (
     <a
       href={props.href}
-      className="text-label-lg text-content-accent hover:text-content-accent-hover text-center font-semibold hover:underline"
+      className="text-label-lg text-primary text-center font-semibold hover:underline"
     >
       {props.label}
     </a>

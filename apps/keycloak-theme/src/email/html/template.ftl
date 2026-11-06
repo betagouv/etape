@@ -28,7 +28,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="background-color:#ffffff; border:1px solid #d3e2e0; border-radius:14px; padding:40px 32px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; line-height:24px; color:#404040;">
+                        <td style="background-color:#ffffff; border:1px solid #92b5b2; border-radius:14px; padding:40px 32px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; font-size:16px; line-height:24px; color:#404040;">
                             <#nested>
                         </td>
                     </tr>

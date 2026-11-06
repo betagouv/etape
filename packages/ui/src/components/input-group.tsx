@@ -22,7 +22,7 @@ const inputGroupVariants = cva(
   {
     variants: {
       size: {
-        default: "h-9 rounded-md",
+        default: "h-8 rounded-lg",
         lg: "h-12 rounded-lg [&>input]:px-4",
         responsive: "h-11 rounded-lg md:h-8",
       },
