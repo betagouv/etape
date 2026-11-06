@@ -19,6 +19,12 @@ export interface VoletProgress {
   errorCount: number;
 }
 
+/** Avancement d'une section de volet, affiché par `SectionCounter`. */
+export interface SectionProgress {
+  remainingFieldCount: number;
+  errorCount: number;
+}
+
 /** Une ligne du statut, avec le statut dont elle prend le libellé et la couleur. */
 export interface StatutVoletLine {
   statut: StatutVolet;

@@ -11,6 +11,8 @@ const cardVariants = cva("flex flex-col py-6", {
       muted: "bg-muted text-card-foreground gap-3 rounded-sm lg:gap-4",
       outline: "bg-card text-card-foreground gap-4 rounded-xl border",
       panel: "bg-card text-card-foreground gap-5 rounded-2xl border px-5",
+      /** Récapitulatif dans un formulaire, `front-office-form-card` de la maquette FRONT-OFFICE. */
+      secondary: "bg-secondary text-card-foreground gap-3 rounded-xl border px-4 py-3",
       // Les enfants passent sur fond `primary` : le `muted-foreground` de
       // `CardDescription` y tomberait à 2:1, le filet `border` y trancherait.
       primary:

@@ -1,7 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type FieldErrors, type UseFormReturn } from "react-hook-form";
 
-import { formatStatutVoletAnnouncement, type VoletProgress } from "../../domain/statut-volet";
+import {
+  formatStatutVoletAnnouncement,
+  type SectionProgress,
+  type VoletProgress,
+} from "../../domain/statut-volet";
 import { VOLET_ID } from "../../domain/volet-id";
 import { VOLETS_DOSSIER } from "../../domain/volets-dossier";
 import type { VoletError } from "../../domain/volet-errors";
@@ -16,11 +20,6 @@ import {
   type InformationsFormData,
   type InformationsSection,
 } from "../schema";
-
-export interface SectionProgress {
-  remainingFieldCount: number;
-  errorCount: number;
-}
 
 export interface UseInformationsFormResult {
   form: UseFormReturn<InformationsFormData>;

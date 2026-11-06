@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "@tanstack/react-router";
 import { MailIcon, PhoneIcon, SearchIcon } from "lucide-react";
@@ -25,15 +24,17 @@ import { Separator } from "@etape/ui/components/separator";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { ACCOUNT_PATH } from "@/navigation/paths";
-import { DateNaissanceInput } from "./components/date-naissance-input";
+import { DateField, type DateFieldCalendar } from "../components/date-field";
 import { PrefilledFieldDescription } from "./components/prefilled-field-description";
+import { computeDateNaissanceBounds } from "./domain/date-naissance";
 import { NationaliteInput } from "./components/nationalite-input";
-import { SectionCounter } from "./components/section-counter";
 import { formatCleNir } from "./domain/format-cle-nir";
 import { formatNir } from "./domain/format-nir";
 import { formatTelephone } from "./domain/format-telephone";
 import type { UseInformationsFormResult } from "./hooks/use-informations-form";
+import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
+import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
 import type { VoletNoticeContent } from "../domain/volets";
 import {
@@ -43,6 +44,16 @@ import {
   INFORMATIONS_SECTION,
   type InformationsFormData,
 } from "./schema";
+
+function computeDateNaissanceCalendar(today: Date): DateFieldCalendar {
+  const { min, max } = computeDateNaissanceBounds(today);
+  return {
+    defaultMonth: new Date(1990, 0),
+    startMonth: min,
+    endMonth: max,
+    disabled: { before: min, after: max },
+  };
+}
 
 export interface InformationsPrefilledValues {
   nom: string;
@@ -75,17 +86,11 @@ export function InformationsForm({
 }: InformationsFormProps) {
   const { form, sections, voletErrors, errorAnnouncement } = informations;
   const { submitCount } = form.formState;
-  const errorsAlertRef = useRef<HTMLDivElement>(null);
-
-  // `FieldError` n'a pas de rôle d'alerte : c'est le résumé, focalisé à chaque soumission
-  // invalide, qui annonce les erreurs (`shouldFocusError` est désactivé pour cela).
-  useEffect(() => {
-    if (submitCount > 0) errorsAlertRef.current?.focus();
-  }, [submitCount]);
+  const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
 
   return (
     <>
-      <VoletErrorsAlert ref={errorsAlertRef} errors={voletErrors} />
+      <VoletErrorsAlert ref={errorsAlertRef} errors={submittedErrors} />
       <StatusRegion message={errorAnnouncement} />
       <VoletNotice notice={notice} />
 
@@ -175,12 +180,12 @@ export function InformationsForm({
               name="dateNaissance"
               control={form.control}
               render={({ field, fieldState }) => (
-                <DateNaissanceInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  fieldRef={field.ref}
-                  isInvalid={fieldState.invalid}
+                <DateField
+                  id="dateNaissance"
+                  label={INFORMATIONS_FIELD_LABEL.dateNaissance}
+                  description="Format : JJ/MM/AAAA"
+                  getCalendar={computeDateNaissanceCalendar}
+                  field={field}
                   error={fieldState.error}
                 />
               )}

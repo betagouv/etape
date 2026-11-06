@@ -4,8 +4,12 @@ import { CircleAlertIcon, InfoIcon, type LucideIcon } from "lucide-react";
 import { Tag } from "@etape/ui/components/tag";
 
 import { selectPlural, type PluralForms } from "@/lib/plural";
-import { ERROR_LABELS, REMAINING_FIELD_LABELS, STATUT_VOLET } from "../../domain/statut-volet";
-import type { SectionProgress } from "../hooks/use-informations-form";
+import {
+  ERROR_LABELS,
+  REMAINING_FIELD_LABELS,
+  STATUT_VOLET,
+  type SectionProgress,
+} from "../domain/statut-volet";
 
 type TagStatus = NonNullable<ComponentProps<typeof Tag>["status"]>;
 

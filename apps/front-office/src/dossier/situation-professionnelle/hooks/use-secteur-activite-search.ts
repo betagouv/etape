@@ -1,0 +1,145 @@
+import { useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getSecteursActivite, type SecteurActivite } from "@etape/api-contract";
+
+import { httpClient } from "@/lib/clients";
+import { selectPlural, type PluralForms } from "@/lib/plural";
+import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
+import {
+  findSecteurActiviteByCode,
+  findSecteursActivite,
+  formatSecteurActivite,
+} from "../domain/secteur-activite";
+
+/** Le résumé d'erreurs mène à `#secteurActivite`. */
+export const SECTEUR_ACTIVITE_FIELD_ID = "secteurActivite";
+
+export function secteurActiviteOptionId({ code }: SecteurActivite): string {
+  return `${SECTEUR_ACTIVITE_FIELD_ID}-option-${code}`;
+}
+
+export const NO_SECTEUR_MESSAGE = "Aucun secteur d’activité ne correspond.";
+export const SECTEURS_ERROR_MESSAGE = "La liste des secteurs d’activité est indisponible.";
+export const SECTEURS_LOADING_MESSAGE = "Chargement des secteurs d’activité…";
+
+/** Une lettre en retient des centaines sur 732 : au-delà, on invite à préciser la recherche. */
+const SECTEURS_DISPLAY_LIMIT = 50;
+
+/** La liste se filtre à chaque frappe : on n'annonce que le nombre où la saisie s'arrête. */
+const ANNOUNCEMENT_DELAY_MS = 300;
+
+const SECTEUR_FOUND_LABELS: PluralForms<string> = {
+  one: "secteur d’activité trouvé",
+  other: "secteurs d’activité trouvés",
+};
+
+function findEmptyMessage(isPending: boolean, isError: boolean): string {
+  if (isPending) return SECTEURS_LOADING_MESSAGE;
+  return isError ? SECTEURS_ERROR_MESSAGE : NO_SECTEUR_MESSAGE;
+}
+
+function findAnnouncement(
+  isListOpen: boolean,
+  secteurCount: number,
+  emptyMessage: string,
+  moreMessage: string,
+): string {
+  if (!isListOpen) return "";
+  if (secteurCount === 0) return emptyMessage;
+  return moreMessage || `${secteurCount} ${selectPlural(secteurCount, SECTEUR_FOUND_LABELS)}`;
+}
+
+export interface SecteurActiviteInputHandlers {
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
+  onBlur: () => void;
+}
+
+export interface UseSecteurActiviteSearchResult {
+  /** Ce que montre le champ : la saisie en cours, sinon le secteur choisi. */
+  inputText: string;
+  isListOpen: boolean;
+  secteurs: SecteurActivite[];
+  /** Quand la liste n'a aucune option : chargement, aucun secteur trouvé, ou liste indisponible. */
+  emptyMessage: string;
+  /** Sous la liste quand elle est tronquée, vide sinon. */
+  moreMessage: string;
+  /** Pour la région `role="status"` : vide tant que la liste est fermée. */
+  announcement: string;
+  active: SecteurActivite | null;
+  inputHandlers: SecteurActiviteInputHandlers;
+  select: (secteur: SecteurActivite) => void;
+}
+
+/** Choix d'un secteur de la NAF rév. 2, par son code APE ou un mot-clé. La valeur est le code. */
+export function useSecteurActiviteSearch(
+  code: string,
+  onChange: (code: string) => void,
+): UseSecteurActiviteSearchResult {
+  // `null` : pas de saisie en cours, le champ montre le secteur choisi.
+  const [searchText, setSearchText] = useState<string | null>(null);
+
+  const query = useQuery({
+    queryKey: ["secteur-activite"],
+    queryFn: async () =>
+      getSecteursActivite.response.parse(
+        (await httpClient.get<unknown>(getSecteursActivite.path)).data,
+      ),
+    // La nomenclature ne change pas pendant la session.
+    staleTime: "static",
+  });
+
+  const selected = query.data?.find((secteur) => secteur.code === code);
+  const matches = searchText ? findSecteursActivite(query.data ?? [], searchText) : [];
+  const secteurs = matches.slice(0, SECTEURS_DISPLAY_LIMIT);
+
+  function select(secteur: SecteurActivite): void {
+    onChange(secteur.code);
+    setSearchText(null);
+  }
+
+  const navigation = useListboxNavigation(secteurs, secteurActiviteOptionId, select);
+
+  const isListOpen = Boolean(searchText?.trim());
+  const emptyMessage = findEmptyMessage(query.isPending, query.isError);
+  const moreMessage =
+    matches.length > secteurs.length
+      ? `${matches.length} secteurs correspondent : précisez votre recherche pour voir les autres.`
+      : "";
+  const announcement = useDebouncedValue(
+    findAnnouncement(isListOpen, secteurs.length, emptyMessage, moreMessage),
+    ANNOUNCEMENT_DELAY_MS,
+  );
+
+  return {
+    inputText: searchText ?? (selected ? formatSecteurActivite(selected) : ""),
+    isListOpen,
+    secteurs,
+    emptyMessage,
+    moreMessage,
+    announcement,
+    active: navigation.active,
+    inputHandlers: {
+      onChange: (event) => {
+        setSearchText(event.target.value);
+        // Le texte ne désigne plus le secteur choisi.
+        onChange("");
+        navigation.reset();
+      },
+      onKeyDown: (event) => {
+        if (event.key === "Escape") setSearchText(null);
+        else navigation.onKeyDown(event);
+      },
+      onBlur: () => {
+        // Un code complet tapé sans passer par la liste désigne déjà son secteur.
+        const secteur = searchText
+          ? findSecteurActiviteByCode(query.data ?? [], searchText)
+          : undefined;
+        if (secteur) select(secteur);
+        else setSearchText(null);
+      },
+    },
+    select,
+  };
+}

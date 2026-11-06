@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { computeDateNaissanceBounds, formatDateNaissance } from "./date-naissance";
+import { formatFieldDate } from "../../domain/field-date";
+import { computeDateNaissanceBounds } from "./date-naissance";
 
 function formatBounds(today: Date): { min: string; max: string } {
   const { min, max } = computeDateNaissanceBounds(today);
-  return { min: formatDateNaissance(min), max: formatDateNaissance(max) };
+  return { min: formatFieldDate(min), max: formatFieldDate(max) };
 }
 
 describe("computeDateNaissanceBounds", () => {

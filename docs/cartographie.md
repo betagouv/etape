@@ -20,7 +20,7 @@ flowchart LR
     ui["ui<br/>design system"]
     session["session<br/>session des SPA"]
     client["api-client<br/>axios + TanStack Query"]
-    contract["api-contract<br/>contrats zod (vide)"]
+    contract["api-contract<br/>contrats zod"]
   end
   subgraph docker["docker compose"]
     keycloak["Keycloak 26.7<br/>:8080"]
@@ -59,13 +59,13 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | `packages/ui`              | Design system unique : shadcn/ui + tokens Tailwind                        | Toutes les apps React          | Sources TS, sans build                                     | —        | Mature                             |
 | `packages/api-client`      | Couche HTTP des SPA : `createHttpClient`, `ApiError`, `createQueryClient` | FO, BO                         | Sources TS, axios + TanStack Query                         | —        | Socle, aucun hook métier           |
 | `packages/session`         | Session commune des SPA : garde, inactivité, « Session expirée »          | FO, BO                         | Sources TS, TanStack Router + Query                        | —        | En place                           |
-| `packages/api-contract`    | Contrats de route partagés front/API (méthode, chemin, schémas zod)       | API, FO, BO (prévu)            | Sources TS, ne dépend que de zod                           | —        | **Squelette vide volontaire**      |
+| `packages/api-contract`    | Contrats de route partagés front/API (méthode, chemin, schémas zod)       | API, FO, BO                    | TS compilé (`dist/` pour Node), zod seul                   | —        | Session, établissement, secteur    |
 | `packages/eslint-config`   | Presets ESLint `base`, `next`, `react-internal`                           | Tous les workspaces            | JS                                                         | —        | Stable                             |
 | `packages/prettier-config` | Configuration Prettier partagée                                           | Tout le dépôt                  | JS                                                         | —        | Stable                             |
 
 **Un scaffold n'est pas un modèle.** FO et BO ne contiennent qu'un écran de démonstration. Pour s'inspirer d'un code existant : le simulateur pour le front (domaine pur, hooks, vues), `apps/api/src/auth/` pour l'API.
 
-**`api-contract` est vide par décision**, pas par oubli : la première route s'écrit avec le premier vrai écran (`architecture-api.md`, décision 3). Ne pas y ajouter de contrat « pour préparer ».
+**Un contrat s'écrit avec l'écran qui l'appelle** (`architecture-api.md`, décision 3). Ne pas en ajouter « pour préparer ».
 
 ## 3. Je veux… → où, avec quel outil
 
