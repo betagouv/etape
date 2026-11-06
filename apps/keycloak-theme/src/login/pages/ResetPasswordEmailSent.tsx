@@ -53,9 +53,9 @@ export default function ResetPasswordEmailSent(
       }
     >
       <div className="flex flex-col gap-6">
-        <p className="text-body text-accent-foreground">{msg("etapeResetEmailSentBody")}</p>
+        <p className="text-accent-foreground text-base">{msg("etapeResetEmailSentBody")}</p>
         {etapeResetLinkLifespanMinutes !== undefined && (
-          <p className="text-body text-accent-foreground">
+          <p className="text-accent-foreground text-base">
             {msg("etapeResetLinkLifespan", String(etapeResetLinkLifespanMinutes))}
           </p>
         )}
@@ -66,11 +66,11 @@ export default function ResetPasswordEmailSent(
         >
           <h2
             id={EMAIL_NOT_RECEIVED_TITLE_ID}
-            className="text-body text-accent-foreground font-medium"
+            className="text-accent-foreground text-base font-medium"
           >
             {msg("etapeEmailNotReceivedTitle")}
           </h2>
-          <p className="text-body-sm text-muted-foreground">{msg("etapeEmailNotReceivedHint")}</p>
+          <p className="text-muted-foreground text-sm">{msg("etapeEmailNotReceivedHint")}</p>
           <form
             action={url.loginAction}
             method="post"
@@ -89,7 +89,7 @@ export default function ResetPasswordEmailSent(
               {msg("etapeResendEmail")}
             </Button>
             {!resend.isAvailable && (
-              <p id={RESEND_COUNTDOWN_ID} className="text-body-sm text-foreground">
+              <p id={RESEND_COUNTDOWN_ID} className="text-foreground text-sm">
                 {msg("etapeResendAvailableIn")}{" "}
                 <span className="text-primary">{resend.remainingLabel}</span>
               </p>

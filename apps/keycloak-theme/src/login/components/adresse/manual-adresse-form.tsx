@@ -105,7 +105,7 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
             <SelectTrigger
               id={MANUAL_FIELD_ID.COMMUNE}
               aria-required
-              className="text-body-sm bg-background w-full rounded-lg shadow-none data-[size=default]:h-11"
+              className="bg-background w-full rounded-lg text-sm shadow-none data-[size=default]:h-11"
             >
               <SelectValue />
             </SelectTrigger>
@@ -131,7 +131,6 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
           <Button
             type="button"
             variant="outline"
-            size="sm"
             className="self-start"
             onClick={() => {
               manual.retryCommunes();

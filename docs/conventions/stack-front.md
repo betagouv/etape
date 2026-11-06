@@ -71,19 +71,12 @@ const schema = z.object({
 <FormField
   control={form.control}
   name="nomConseiller"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Nom du conseiller</FormLabel>
-      <FormControl>
-        <Input {...field} />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
+  label="Nom du conseiller"
+  render={({ field, attributes }) => <Input {...field} {...attributes} />}
 />;
 ```
 
-**Ce que l'exemple montre** : `FormLabel`, `FormControl` et `FormMessage` génèrent et relient `id`, `aria-describedby` et `aria-invalid` entre eux. C'est exactement le travail que le simulateur fait à la main dans `fields/aria.ts` — une vingtaine de lignes qu'il faudrait réécrire, et surtout ne pas oublier, sur chaque nouveau formulaire.
+**Ce que l'exemple montre** : `FormField` génère et relie `id`, `aria-describedby` et `aria-invalid` entre le libellé, le champ et son message (exemple mis à jour le 30 octobre 2026 ; il montrait l'ancien `form.tsx`). C'est exactement le travail que le simulateur fait à la main dans `fields/aria.ts` — une vingtaine de lignes qu'il faudrait réécrire, et surtout ne pas oublier, sur chaque nouveau formulaire.
 
 </details>
 
@@ -102,13 +95,15 @@ const schema = z.object({
 
 Deux approches cohabitent donc dans le dépôt, assumées, avec un critère écrit pour savoir laquelle s'applique.
 
-**react-hook-form + zod, via `form.tsx`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API.
+**react-hook-form + zod, via `FormField`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API.
+
+> **Mise à jour du 30 octobre 2026 (#106)** : `form.tsx` est remplacé par `Field`, le composant du kit Figma, que shadcn associe désormais à react-hook-form, et par l'enveloppe `FormField` (`packages/ui/src/components/form-field.tsx`). Elle génère `id`, `aria-invalid` et `aria-describedby`, comme le faisait `form.tsx`. Le choix de react-hook-form et de zod ne change pas.
 
 **Le simulateur garde son moteur déclaratif.** Ce n'est pas un formulaire : une question par écran, une navigation dérivée de l'URL, des réponses persistées entre les sessions, des règles de cohérence entre questions. react-hook-form gère l'état d'un formulaire monté — il n'a rien à apporter ici, et ferait perdre le caractère déclaratif des questions.
 
 **Pourquoi react-hook-form plutôt que TanStack Form** : le composant `Form` de shadcn/ui, sur lequel repose déjà notre bibliothèque, est écrit pour react-hook-form. Choisir TanStack Form (1.33.5, projet actif et sérieux) voudrait dire réécrire ce câblage nous-mêmes, pour un gain que nous ne savons pas nommer aujourd'hui.
 
-**Ce qui reste à notre charge dans les deux cas** : react-hook-form ne fournit ni style ni ARIA, et `form.tsx` ne déplace pas le focus vers le premier champ en erreur — ce que le simulateur, lui, fait déjà (`QuestionScreen`, `focusFirstInvalid`).
+**Ce qui reste à notre charge dans les deux cas** : react-hook-form ne fournit ni style ni ARIA ; `FormField` les apporte. L'annonce des erreurs revient à l'écran : le focus automatique de react-hook-form (`shouldFocusError`) arrive avant l'affichage des erreurs, le lecteur d'écran lirait le champ sans son message. Un écran le désactive (`shouldFocusError: false`) et donne le focus, à la soumission, à son résumé d'erreurs (`VoletErrorsAlert` au front-office, comme dans la maquette), dont chaque lien mène au champ par son `id`, qui est son `name`. Le simulateur, lui, focalise le premier champ en erreur après affichage (`QuestionScreen`, `focusFirstInvalid`).
 
 ## Décision 2 — Validation de schéma : zod
 

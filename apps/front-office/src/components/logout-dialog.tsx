@@ -19,12 +19,7 @@ export function LogoutDialog() {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost-primary"
-          size="icon-compact"
-          aria-label="Se déconnecter"
-        >
+        <Button type="button" variant="ghost" size="icon-sm" aria-label="Se déconnecter">
           <LogOutIcon aria-hidden="true" />
         </Button>
       </AlertDialogTrigger>

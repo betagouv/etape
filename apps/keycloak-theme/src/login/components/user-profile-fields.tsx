@@ -122,12 +122,12 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
 
   return (
     <div id={PASSWORD_RULES_ID} className="bg-secondary flex flex-col gap-2 rounded-md px-3 py-2">
-      <p className="text-body-sm text-foreground">{msgStr("etapePasswordRulesTitle")}</p>
+      <p className="text-foreground text-sm">{msgStr("etapePasswordRulesTitle")}</p>
       <ul className="flex flex-wrap gap-2">
         {rules.map(({ messageKey, isSatisfied }) => (
           <li
             key={messageKey}
-            className={cn("text-body-sm flex items-center gap-1.5", RULE_WIDTH[messageKey])}
+            className={cn("flex items-center gap-1.5 text-sm", RULE_WIDTH[messageKey])}
           >
             <span
               aria-hidden
@@ -135,7 +135,7 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
                 "flex shrink-0 rounded-full p-1",
                 isSatisfied
                   ? "bg-success text-success-foreground"
-                  : "bg-secondary-selected text-muted-foreground",
+                  : "bg-divider text-muted-foreground",
               )}
             >
               {isSatisfied ? <Check className="size-2.5" /> : <X className="size-2.5" />}

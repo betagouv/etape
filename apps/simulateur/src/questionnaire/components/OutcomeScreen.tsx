@@ -67,13 +67,13 @@ export function OutcomeScreen({
                 <dl className="flex min-w-0 flex-col gap-2">
                   {causes.map((entry) => (
                     <div key={entry.fieldName}>
-                      <dt className="text-body text-muted-foreground">{entry.question}</dt>
+                      <dt className="text-muted-foreground text-base">{entry.question}</dt>
                       <dd className="text-body-lg text-foreground font-medium">{entry.answer}</dd>
                     </div>
                   ))}
                 </dl>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={onBack}>
+              <Button type="button" variant="outline" onClick={onBack}>
                 <PencilLine aria-hidden="true" />
                 Modifier ma réponse
               </Button>

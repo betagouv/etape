@@ -65,7 +65,7 @@ const sectionHeaderVariants = cva("flex flex-col gap-2", {
 const sectionCaptionVariants = cva("uppercase", {
   variants: {
     variant: {
-      default: "text-caption text-primary font-medium tracking-wide",
+      default: "text-xs text-primary font-medium tracking-wide",
       compact: "text-muted-foreground text-sm leading-none font-semibold",
     },
   },

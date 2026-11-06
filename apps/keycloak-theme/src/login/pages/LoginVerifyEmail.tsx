@@ -40,7 +40,7 @@ function AccountNotActivated(props: LoginVerifyEmailProps) {
       <Alert type={MESSAGE_TYPE.ERROR} summary={msgStr("etapeAccountNotActivated")}>
         <p className="text-foreground">{msg("etapeAccountNotActivatedHint", user?.email ?? "")}</p>
         <div>
-          <Button asChild variant="outline" size="sm" className="rounded-lg">
+          <Button asChild variant="outline">
             <a href={url.loginAction}>{msg("etapeResendActivationEmail")}</a>
           </Button>
         </div>
@@ -65,7 +65,7 @@ function ActivationEmailSent(props: LoginVerifyEmailProps) {
       subtitle={msg("etapeVerifyEmailSubtitle")}
     >
       <div className="flex flex-col gap-4">
-        <span className="bg-secondary text-content-accent flex size-12 items-center justify-center rounded-full">
+        <span className="bg-secondary text-primary flex size-12 items-center justify-center rounded-full">
           <MailCheck aria-hidden className="size-6" />
         </span>
         <Prose>

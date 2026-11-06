@@ -54,7 +54,7 @@ export function Alert(props: {
       className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 ${STYLE_BY_MESSAGE_TYPE[type]}`}
     >
       <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />
-      <div className="text-body-sm flex min-w-0 flex-1 flex-col gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 text-sm">
         <span
           className="font-medium"
           dangerouslySetInnerHTML={{

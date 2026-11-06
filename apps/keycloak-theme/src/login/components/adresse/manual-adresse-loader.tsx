@@ -36,7 +36,6 @@ export function ManualAdresseLoader(props: { manual: UseManualAdresseResult; i18
           <Button
             type="button"
             variant="outline"
-            size="sm"
             className="self-start"
             autoFocus
             onClick={() => {
@@ -52,9 +51,7 @@ export function ManualAdresseLoader(props: { manual: UseManualAdresseResult; i18
     >
       <Suspense
         fallback={
-          <p className="text-body-sm text-muted-foreground">
-            {i18n.msg("etapeAdresseManualLoading")}
-          </p>
+          <p className="text-muted-foreground text-sm">{i18n.msg("etapeAdresseManualLoading")}</p>
         }
       >
         <ManualAdresseForm manual={manual} i18n={i18n} />

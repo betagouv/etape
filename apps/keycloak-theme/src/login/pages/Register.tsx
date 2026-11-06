@@ -399,7 +399,7 @@ export default function Register(props: RegisterProps) {
             >
               {msg("doRegister")}
             </Button>
-            <p className="text-body-sm text-muted-foreground text-center">
+            <p className="text-muted-foreground text-center text-sm">
               {msg("etapeRegisterActivationHint")}
             </p>
           </div>
@@ -416,7 +416,7 @@ export default function Register(props: RegisterProps) {
 }
 
 function SectionTitle(props: { children: ReactNode }) {
-  return <h2 className="text-body text-foreground leading-none font-semibold">{props.children}</h2>;
+  return <h2 className="text-foreground text-base leading-none font-semibold">{props.children}</h2>;
 }
 
 function LegalLink(props: { href: string | undefined; children: ReactNode }) {

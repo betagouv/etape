@@ -17,10 +17,7 @@ export function RegisterStepIndicator(props: {
 
   return (
     <div className="flex flex-col gap-2">
-      <p
-        id={LABEL_ID}
-        className="text-body-sm text-muted-foreground leading-none font-medium uppercase"
-      >
+      <p id={LABEL_ID} className="text-muted-foreground text-sm leading-none font-medium uppercase">
         {i18n.msg("etapeRegisterStep", String(step), String(STEP_COUNT))}
       </p>
       <Progress aria-labelledby={LABEL_ID} value={completedSteps * PROGRESS_PER_STEP} />

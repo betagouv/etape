@@ -61,7 +61,7 @@ export function AdresseField(props: {
           <p className="text-foreground">{i18n.msg("etapeAdresseUnavailableHint")}</p>
           <div className="flex flex-wrap items-center gap-2">
             <ManualButton onClick={switchToManual} i18n={i18n} />
-            <Button type="button" variant="ghost-primary" size="sm" onClick={field.retrySearch}>
+            <Button type="button" variant="ghost" onClick={field.retrySearch}>
               <RefreshCw aria-hidden />
               {i18n.msg("etapeAdresseRetry")}
             </Button>
@@ -90,7 +90,7 @@ function HiddenAdresseAttribute(props: { name: string; value: string | undefined
 
 function ManualButton(props: { onClick: () => void; i18n: I18n }) {
   return (
-    <Button type="button" variant="outline" size="sm" onClick={props.onClick}>
+    <Button type="button" variant="outline" onClick={props.onClick}>
       <FilePenLine aria-hidden />
       {props.i18n.msg("etapeAdresseManual")}
     </Button>
@@ -108,7 +108,7 @@ function HorsRegionAlert(props: { region: RegionCode | undefined; i18n: I18n }) 
           ? i18n.msg("etapeAdresseHorsRegionUnknownHint")
           : i18n.msg("etapeAdresseHorsRegionHint", details.nom)}
       </p>
-      <Button variant="outline" size="sm" className="self-start" asChild>
+      <Button variant="outline" className="self-start" asChild>
         <a
           href={details?.transitionsProUrl ?? TRANSITIONS_PRO_CONTACTS_URL}
           target="_blank"
@@ -197,7 +197,7 @@ function AdresseSearch(props: {
           hidden={!search.isOpen}
           className="bg-popover border-border absolute z-10 mt-2 w-full overflow-hidden rounded-lg border shadow-md"
         >
-          <p aria-hidden className="text-body-sm text-muted-foreground border-border border-b p-3">
+          <p aria-hidden className="text-muted-foreground border-border border-b p-3 text-sm">
             {resultsLabel(search.results.length, i18n)}
           </p>
           <ComboboxList
@@ -214,8 +214,8 @@ function AdresseSearch(props: {
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => search.choose(adresse)}
               >
-                <span className="text-body-sm text-foreground block">{adresse.voie}</span>
-                <span className="text-body-sm text-muted-foreground block">
+                <span className="text-foreground block text-sm">{adresse.voie}</span>
+                <span className="text-muted-foreground block text-sm">
                   {adresse.codePostal} {adresse.commune}
                 </span>
               </ComboboxOption>
