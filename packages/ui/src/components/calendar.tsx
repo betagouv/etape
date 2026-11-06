@@ -1,7 +1,16 @@
-/* eslint-disable react/prop-types -- composants inline typés par react-day-picker */
 import * as React from "react";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { DayPicker, getDefaultClassNames, type DayButton } from "react-day-picker";
+import {
+  DayPicker,
+  getDefaultClassNames,
+  type Chevron,
+  type DayButton,
+  type Root,
+  type WeekNumber,
+} from "react-day-picker";
+// La locale de react-day-picker, pas celle de date-fns : elle traduit aussi les libellés
+// lus par les lecteurs d'écran (« Aujourd'hui », « sélectionné », navigation).
+import { fr } from "react-day-picker/locale";
 
 import { Button, buttonVariants } from "@etape/ui/components/button";
 import { cn } from "@etape/ui/lib/utils";
@@ -12,6 +21,7 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
+  locale = fr,
   formatters,
   labels,
   components,
@@ -24,6 +34,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={locale}
       className={cn(
         "group/calendar bg-background p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -115,36 +126,44 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root({ className: rootClassName, rootRef, ...rootProps }) {
-          return (
-            <div data-slot="calendar" ref={rootRef} className={cn(rootClassName)} {...rootProps} />
-          );
-        },
-        Chevron({ className: chevronClassName, orientation, ...chevronProps }) {
-          if (orientation === "left") {
-            return <ChevronLeftIcon className={cn("size-4", chevronClassName)} {...chevronProps} />;
-          }
-          if (orientation === "right") {
-            return (
-              <ChevronRightIcon className={cn("size-4", chevronClassName)} {...chevronProps} />
-            );
-          }
-          return <ChevronDownIcon className={cn("size-4", chevronClassName)} {...chevronProps} />;
-        },
+        Root: CalendarRoot,
+        Chevron: CalendarChevron,
         DayButton: CalendarDayButton,
-        WeekNumber({ children, ...weekNumberProps }) {
-          return (
-            <td {...weekNumberProps}>
-              <div className="flex size-(--cell-size) items-center justify-center text-center">
-                {children}
-              </div>
-            </td>
-          );
-        },
+        WeekNumber: CalendarWeekNumber,
         ...components,
       }}
       {...props}
     />
+  );
+}
+
+// Au niveau du module, pas dans le rendu de `Calendar` : un composant recréé à chaque rendu
+// changerait de type, et React remonterait toute la grille (focus du jour perdu).
+function CalendarRoot({ className, rootRef, ...props }: React.ComponentProps<typeof Root>) {
+  return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
+}
+
+function CalendarChevron({
+  className,
+  orientation,
+  ...props
+}: React.ComponentProps<typeof Chevron>) {
+  if (orientation === "left") {
+    return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
+  }
+  if (orientation === "right") {
+    return <ChevronRightIcon className={cn("size-4", className)} {...props} />;
+  }
+  return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
+}
+
+function CalendarWeekNumber({ children, ...props }: React.ComponentProps<typeof WeekNumber>) {
+  return (
+    <td {...props}>
+      <div className="flex size-(--cell-size) items-center justify-center text-center">
+        {children}
+      </div>
+    </td>
   );
 }
 

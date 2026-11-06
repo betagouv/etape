@@ -48,7 +48,8 @@ export function VoletScreen() {
         <InformationsForm
           formId={VOLET_ID.INFORMATIONS}
           informations={informations}
-          preRemplies={{ nom: "", prenom: "", email: "", adresse: "" }}
+          // Nom, prénom, e-mail, adresse : en attendant l'API.
+          prefilledValues={{ nom: "", prenom: "", email: "", adresse: "" }}
           supportEmail={SUPPORT_EMAIL}
           notice={position.current.notice}
           onSubmitValid={goToNextVolet}

@@ -1,4 +1,4 @@
-export const PROFIL_PATH = "/profil";
+export const ACCOUNT_PATH = "/profil";
 
 export const VOLET_PATH = "/dossiers/$dossierId/$voletId";
 

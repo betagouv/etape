@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { fr } from "date-fns/locale/fr";
 import { CalendarDaysIcon } from "lucide-react";
 
 import { Calendar } from "@etape/ui/components/calendar";
@@ -29,7 +28,7 @@ export interface DateFieldProps {
   id: string;
   label: string;
   description: string;
-  calendar: DateFieldCalendar;
+  getCalendar: (today: Date) => DateFieldCalendar;
   field: DateFieldControl;
   error?: { message?: string };
 }
@@ -39,7 +38,7 @@ export function DateField({
   id,
   label,
   description,
-  calendar,
+  getCalendar,
   field: { value, onChange, onBlur, ref: fieldRef },
   error,
 }: DateFieldProps) {
@@ -50,13 +49,21 @@ export function DateField({
   const valueId = `${id}-value`;
   const descriptionId = `${id}-description`;
   const errorId = `${id}-error`;
+  // Recalculées à chaque ouverture, comme le schéma à chaque validation : un onglet resté
+  // ouvert après minuit ne propose pas une date que le schéma refuserait.
+  const [calendar, setCalendar] = useState(() => getCalendar(new Date()));
+
+  const handleOpenChange = (open: boolean): void => {
+    if (open) setCalendar(getCalendar(new Date()));
+    setOpen(open);
+  };
 
   return (
     <Field data-invalid={isInvalid}>
       <FieldLabel id={labelId} htmlFor={id} required>
         {label}
       </FieldLabel>
-      <Popover open={isOpen} onOpenChange={setOpen}>
+      <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <InputGroup>
           <PopoverTrigger asChild>
             <InputGroupTrigger
@@ -82,6 +89,7 @@ export function DateField({
         <PopoverContent
           align="start"
           className="w-[var(--radix-popover-trigger-width)] p-0"
+          aria-labelledby={labelId}
           // Quitter la liste ouverte (clic ou tabulation ailleurs) quitte le champ, sauf vers son bouton.
           onInteractOutside={(event) => {
             if (!(event.target instanceof Element && event.target.closest(`#${CSS.escape(id)}`)))
@@ -92,7 +100,6 @@ export function DateField({
             className="w-full"
             mode="single"
             captionLayout="dropdown"
-            locale={fr}
             formatters={{
               formatMonthDropdown: (date) => date.toLocaleString("fr-FR", { month: "long" }),
             }}

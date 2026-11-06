@@ -49,7 +49,8 @@ export const NATIONALITES: readonly Nationalite[] = [
   { label: "Chypriote", code: "cy" },
   { label: "Colombienne", code: "co" },
   { label: "Comorienne", code: "km" },
-  { label: "Congolaise", code: "cg" },
+  { label: "Congolaise (Congo)", code: "cg" },
+  { label: "Congolaise (RD Congo)", code: "cd" },
   { label: "Costaricaine", code: "cr" },
   { label: "Croate", code: "hr" },
   { label: "Cubaine", code: "cu" },
@@ -59,10 +60,12 @@ export const NATIONALITES: readonly Nationalite[] = [
   { label: "Dominiquaise", code: "dm" },
   { label: "Égyptienne", code: "eg" },
   { label: "Émirienne", code: "ae" },
+  { label: "Équatoguinéenne", code: "gq" },
   { label: "Équatorienne", code: "ec" },
   { label: "Érythréenne", code: "er" },
   { label: "Espagnole", code: "es" },
   { label: "Estonienne", code: "ee" },
+  { label: "Eswatinienne", code: "sz" },
   { label: "Éthiopienne", code: "et" },
   { label: "Fidjienne", code: "fj" },
   { label: "Finlandaise", code: "fi" },
@@ -95,6 +98,7 @@ export const NATIONALITES: readonly Nationalite[] = [
   { label: "Kényane", code: "ke" },
   { label: "Kirghize", code: "kg" },
   { label: "Kiribatienne", code: "ki" },
+  { label: "Kittitienne-et-Névicienne", code: "kn" },
   { label: "Koweïtienne", code: "kw" },
   { label: "Laotienne", code: "la" },
   { label: "Lesothane", code: "ls" },
@@ -113,6 +117,7 @@ export const NATIONALITES: readonly Nationalite[] = [
   { label: "Malienne", code: "ml" },
   { label: "Maltaise", code: "mt" },
   { label: "Marocaine", code: "ma" },
+  { label: "Marshallaise", code: "mh" },
   { label: "Mauricienne", code: "mu" },
   { label: "Mauritanienne", code: "mr" },
   { label: "Mexicaine", code: "mx" },
@@ -150,6 +155,8 @@ export const NATIONALITES: readonly Nationalite[] = [
   { label: "Russe", code: "ru" },
   { label: "Rwandaise", code: "rw" },
   { label: "Saint-Lucienne", code: "lc" },
+  { label: "Saint-Marinaise", code: "sm" },
+  { label: "Saint-Vincentaise", code: "vc" },
   { label: "Salomonaise", code: "sb" },
   { label: "Salvadorienne", code: "sv" },
   { label: "Samoane", code: "ws" },
@@ -203,8 +210,9 @@ function normalize(text: string): string {
 }
 
 export function findNationalites(query: string): readonly Nationalite[] {
-  if (!query.trim()) return NATIONALITES;
-  const normalized = normalize(query);
+  const trimmed = query.trim();
+  if (!trimmed) return NATIONALITES;
+  const normalized = normalize(trimmed);
   return NATIONALITES.filter((n) => normalize(n.label).includes(normalized));
 }
 

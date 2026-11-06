@@ -37,19 +37,17 @@ export interface SituationProfessionnelleFormProps {
 const DEMISSION_FIELD_ID = "demission";
 const DEMISSION_ERROR_ID = `${DEMISSION_FIELD_ID}-error`;
 
+// Les jours à venir ne se choisissent pas (maquette 11).
+function computeDateDemissionCalendar(today: Date): DateFieldCalendar {
+  return { defaultMonth: today, endMonth: today, disabled: { after: today } };
+}
+
 export function SituationProfessionnelleForm({
   formId,
   situationProfessionnelle,
   onSubmitValid,
 }: SituationProfessionnelleFormProps) {
   const { form, sections, voletErrors, errorAnnouncement } = situationProfessionnelle;
-  const today = new Date();
-  // Les jours à venir ne se choisissent pas (maquette 11).
-  const dateDemissionCalendar: DateFieldCalendar = {
-    defaultMonth: today,
-    endMonth: today,
-    disabled: { after: today },
-  };
   const { submitCount } = form.formState;
   const demission = useWatch({ control: form.control, name: "demission" });
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
@@ -148,7 +146,7 @@ export function SituationProfessionnelleForm({
                     id="dateDemission"
                     label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.dateDemission}
                     description="Date de l’accusé de réception ou de la remise en main propre contre décharge. Format : jj/mm/aaaa"
-                    calendar={dateDemissionCalendar}
+                    getCalendar={computeDateDemissionCalendar}
                     field={field}
                     error={fieldState.error}
                   />

@@ -23,9 +23,9 @@ import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { Separator } from "@etape/ui/components/separator";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
-import { PROFIL_PATH } from "@/navigation/paths";
+import { ACCOUNT_PATH } from "@/navigation/paths";
 import { DateField, type DateFieldCalendar } from "../components/date-field";
-import { DescriptionSupport } from "./components/description-support";
+import { PrefilledFieldDescription } from "./components/prefilled-field-description";
 import { computeDateNaissanceBounds } from "./domain/date-naissance";
 import { NationaliteInput } from "./components/nationalite-input";
 import { formatCleNir } from "./domain/format-cle-nir";
@@ -45,16 +45,17 @@ import {
   type InformationsFormData,
 } from "./schema";
 
-const DATE_NAISSANCE_BOUNDS = computeDateNaissanceBounds(new Date());
+function computeDateNaissanceCalendar(today: Date): DateFieldCalendar {
+  const { min, max } = computeDateNaissanceBounds(today);
+  return {
+    defaultMonth: new Date(1990, 0),
+    startMonth: min,
+    endMonth: max,
+    disabled: { before: min, after: max },
+  };
+}
 
-const DATE_NAISSANCE_CALENDAR: DateFieldCalendar = {
-  defaultMonth: new Date(1990, 0),
-  startMonth: DATE_NAISSANCE_BOUNDS.min,
-  endMonth: DATE_NAISSANCE_BOUNDS.max,
-  disabled: { before: DATE_NAISSANCE_BOUNDS.min, after: DATE_NAISSANCE_BOUNDS.max },
-};
-
-export interface InformationsPreRemplies {
+export interface InformationsPrefilledValues {
   nom: string;
   prenom: string;
   email: string;
@@ -64,7 +65,7 @@ export interface InformationsPreRemplies {
 export interface InformationsFormProps {
   formId: string;
   informations: UseInformationsFormResult;
-  preRemplies: InformationsPreRemplies;
+  prefilledValues: InformationsPrefilledValues;
   supportEmail: string;
   notice?: VoletNoticeContent;
   onSubmitValid: (data: InformationsFormData) => void;
@@ -72,12 +73,13 @@ export interface InformationsFormProps {
 
 // Le résumé d'erreurs mène à `#civilite` : l'id est porté par le groupe, pas par un bouton radio.
 const CIVILITE_FIELD_ID = "civilite";
+const CIVILITE_LEGEND_ID = `${CIVILITE_FIELD_ID}-legend`;
 const CIVILITE_ERROR_ID = `${CIVILITE_FIELD_ID}-error`;
 
 export function InformationsForm({
   formId,
   informations,
-  preRemplies,
+  prefilledValues,
   supportEmail,
   notice,
   onSubmitValid,
@@ -105,7 +107,7 @@ export function InformationsForm({
           </FormSectionHeader>
 
           <FieldSet>
-            <FieldLegend variant="label" required>
+            <FieldLegend id={CIVILITE_LEGEND_ID} variant="label" required>
               {INFORMATIONS_FIELD_LABEL.civilite}
             </FieldLegend>
             <Controller
@@ -115,13 +117,16 @@ export function InformationsForm({
                 <>
                   <RadioGroup
                     id={CIVILITE_FIELD_ID}
-                    value={field.value}
+                    value={field.value ?? ""}
                     onValueChange={field.onChange}
                     // Les flèches déplacent le focus d'un bouton à l'autre : on ne sort qu'en quittant le groupe.
                     onBlur={(event) => {
                       if (!event.currentTarget.contains(event.relatedTarget)) field.onBlur();
                     }}
                     className="flex gap-5"
+                    required
+                    // La légende nomme le `fieldset`, pas le `radiogroup` de Radix.
+                    aria-labelledby={CIVILITE_LEGEND_ID}
                     aria-invalid={fieldState.invalid}
                     aria-describedby={fieldState.invalid ? CIVILITE_ERROR_ID : undefined}
                   >
@@ -130,6 +135,7 @@ export function InformationsForm({
                         <RadioGroupItem
                           value={value}
                           id={`${CIVILITE_FIELD_ID}-${value}`}
+                          aria-invalid={fieldState.invalid}
                           // Un seul élément peut porter le ref du champ : le premier bouton radio.
                           ref={index === 0 ? field.ref : undefined}
                         />
@@ -150,14 +156,24 @@ export function InformationsForm({
           <div className="grid gap-5 sm:grid-cols-2">
             <Field data-disabled>
               <FieldLabel htmlFor="nom">Nom</FieldLabel>
-              <Input id="nom" value={preRemplies.nom} disabled />
-              <DescriptionSupport email={supportEmail} />
+              <Input
+                id="nom"
+                value={prefilledValues.nom}
+                readOnly
+                aria-describedby="nom-description"
+              />
+              <PrefilledFieldDescription id="nom-description" email={supportEmail} />
             </Field>
 
             <Field data-disabled>
               <FieldLabel htmlFor="prenom">Prénom</FieldLabel>
-              <Input id="prenom" value={preRemplies.prenom} disabled />
-              <DescriptionSupport email={supportEmail} />
+              <Input
+                id="prenom"
+                value={prefilledValues.prenom}
+                readOnly
+                aria-describedby="prenom-description"
+              />
+              <PrefilledFieldDescription id="prenom-description" email={supportEmail} />
             </Field>
 
             <Controller
@@ -168,7 +184,7 @@ export function InformationsForm({
                   id="dateNaissance"
                   label={INFORMATIONS_FIELD_LABEL.dateNaissance}
                   description="Format : JJ/MM/AAAA"
-                  calendar={DATE_NAISSANCE_CALENDAR}
+                  getCalendar={computeDateNaissanceCalendar}
                   field={field}
                   error={fieldState.error}
                 />
@@ -201,6 +217,12 @@ export function InformationsForm({
                   {...field}
                   {...attributes}
                   onChange={(e) => field.onChange(formatNir(e.target.value))}
+                  // La clé se contrôle contre le NIR : en mode `onBlur`, quitter le NIR ne
+                  // revaliderait que lui, et l'erreur de clé resterait périmée.
+                  onBlur={() => {
+                    field.onBlur();
+                    if (form.getValues("cleNir")) void form.trigger("cleNir");
+                  }}
                 />
               )}
             />
@@ -234,11 +256,16 @@ export function InformationsForm({
               <InputGroupAddon>
                 <SearchIcon aria-hidden="true" />
               </InputGroupAddon>
-              <InputGroupInput id="adresse" value={preRemplies.adresse} disabled />
+              <InputGroupInput
+                id="adresse"
+                value={prefilledValues.adresse}
+                readOnly
+                aria-describedby="adresse-description"
+              />
             </InputGroup>
-            <FieldDescription>
+            <FieldDescription id="adresse-description">
               Cette adresse provient de votre profil.{" "}
-              <Link to={PROFIL_PATH}>Modifier mon adresse dans mon profil</Link>
+              <Link to={ACCOUNT_PATH}>Modifier mon adresse dans mon profil</Link>
             </FieldDescription>
           </Field>
         </FormSection>
@@ -258,9 +285,14 @@ export function InformationsForm({
                 <InputGroupAddon>
                   <MailIcon aria-hidden="true" />
                 </InputGroupAddon>
-                <InputGroupInput id="email" value={preRemplies.email} disabled />
+                <InputGroupInput
+                  id="email"
+                  value={prefilledValues.email}
+                  readOnly
+                  aria-describedby="email-description"
+                />
               </InputGroup>
-              <DescriptionSupport email={supportEmail} />
+              <PrefilledFieldDescription id="email-description" email={supportEmail} />
             </Field>
 
             <FormField

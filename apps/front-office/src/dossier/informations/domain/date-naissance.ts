@@ -1,3 +1,5 @@
+import { startOfDay, subYears } from "date-fns";
+
 export const AGE_MINIMUM = 18;
 export const AGE_MAXIMUM = 70;
 
@@ -10,8 +12,10 @@ export interface DateNaissanceBounds {
 
 /** Bornes communes au schéma et au calendrier, pour qu'il ne propose aucune date refusée. */
 export function computeDateNaissanceBounds(today: Date): DateNaissanceBounds {
+  // `subYears` ramène un 29 février au 28 : `new Date(année, 1, 29)` déborderait au 1er mars.
+  const day = startOfDay(today);
   return {
-    min: new Date(today.getFullYear() - AGE_MAXIMUM, today.getMonth(), today.getDate()),
-    max: new Date(today.getFullYear() - AGE_MINIMUM, today.getMonth(), today.getDate()),
+    min: subYears(day, AGE_MAXIMUM),
+    max: subYears(day, AGE_MINIMUM),
   };
 }
