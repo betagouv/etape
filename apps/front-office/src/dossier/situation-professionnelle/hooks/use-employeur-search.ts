@@ -8,9 +8,13 @@ import {
 } from "@etape/api-contract";
 
 import { httpClient } from "@/lib/clients";
-import { selectPlural, type PluralForms } from "@/lib/plural";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
+import {
+  formatEtablissementCount,
+  hasMoreEtablissements,
+  MORE_ETABLISSEMENTS_MESSAGE,
+} from "../domain/format-etablissement-count";
 
 /** Chaque frappe n'appelle pas Sirene, dont la clé a un quota. */
 const SEARCH_DELAY_MS = 300;
@@ -33,11 +37,6 @@ export const SEARCH_STATUS = {
 
 export type SearchStatus = (typeof SEARCH_STATUS)[keyof typeof SEARCH_STATUS];
 
-const ETABLISSEMENT_FOUND_LABELS: PluralForms<string> = {
-  one: "établissement trouvé",
-  other: "établissements trouvés",
-};
-
 export const NO_RESULT_TITLE = "Aucun établissement ne correspond à cette recherche";
 export const SEARCH_ERROR_TITLE = "La recherche d’entreprises ne répond pas pour le moment";
 const RETRYING_ANNOUNCEMENT = "Nouvelle recherche en cours…";
@@ -53,8 +52,10 @@ export interface UseEmployeurSearchResult {
   status: SearchStatus;
   /** La liste, ou l'alerte « aucun résultat », sous le champ. */
   isPopupOpen: boolean;
-  /** « N établissements trouvés », en tête de liste. */
+  /** « 20 établissements trouvés sur 45 451 », en tête de liste. */
   resultLabel: string;
+  /** Sous la liste quand l'API n'en renvoie qu'une partie, vide sinon. */
+  moreMessage: string;
   etablissements: Etablissement[];
   active: Etablissement | null;
   /** Pour la région `role="status"` : vide tant qu'aucune recherche n'a abouti. */
@@ -114,7 +115,14 @@ export function useEmployeurSearch(
   const status = findStatus(isSearching, hasFailed, query.isFetching, count);
   const etablissements = (status === SEARCH_STATUS.RESULTS && query.data?.etablissements) || [];
   const resultLabel =
-    count === undefined ? "" : `${count} ${selectPlural(count, ETABLISSEMENT_FOUND_LABELS)}`;
+    query.data === undefined
+      ? ""
+      : formatEtablissementCount(query.data.etablissements.length, query.data.etablissementCount);
+  const moreMessage =
+    query.data !== undefined &&
+    hasMoreEtablissements(query.data.etablissements.length, query.data.etablissementCount)
+      ? MORE_ETABLISSEMENTS_MESSAGE
+      : "";
 
   function select(etablissement: Etablissement): void {
     onSelect(etablissement);
@@ -126,7 +134,7 @@ export function useEmployeurSearch(
 
   const announcements: Record<SearchStatus, string> = {
     [SEARCH_STATUS.IDLE]: "",
-    [SEARCH_STATUS.RESULTS]: resultLabel,
+    [SEARCH_STATUS.RESULTS]: [resultLabel, moreMessage].filter(Boolean).join(" "),
     [SEARCH_STATUS.NO_RESULT]: NO_RESULT_TITLE,
     [SEARCH_STATUS.ERROR]: SEARCH_ERROR_TITLE,
     [SEARCH_STATUS.RETRYING]: RETRYING_ANNOUNCEMENT,
@@ -140,6 +148,7 @@ export function useEmployeurSearch(
     status,
     isPopupOpen,
     resultLabel,
+    moreMessage,
     etablissements,
     active: navigation.active,
     announcement: announcements[status],

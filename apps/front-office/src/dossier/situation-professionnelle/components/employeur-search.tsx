@@ -12,6 +12,7 @@ import { Alert, AlertActions, AlertDescription, AlertTitle } from "@etape/ui/com
 import { Button } from "@etape/ui/components/button";
 import {
   Combobox,
+  ComboboxEmpty,
   ComboboxGroup,
   ComboboxList,
   ComboboxOption,
@@ -160,6 +161,7 @@ export function EmployeurSearch({
               ))}
             </ComboboxGroup>
           </ComboboxList>
+          {search.moreMessage && <ComboboxEmpty>{search.moreMessage}</ComboboxEmpty>}
         </Combobox>
       </div>
       {/* Comme dans le kit et `FormField` : l'erreur remplace la description. */}
