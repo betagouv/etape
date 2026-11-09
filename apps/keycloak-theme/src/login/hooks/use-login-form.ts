@@ -14,6 +14,7 @@ import {
   SUBMITTED_FORM,
 } from "../components/submitted-form";
 import { useActionPress } from "./use-action-press";
+import { useSubmitting } from "./use-submitting";
 
 export const LOGIN_FIELD = {
   USERNAME: "username",
@@ -49,7 +50,7 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
     [LOGIN_FIELD.USERNAME]: initialUsername.trim() !== "",
     [LOGIN_FIELD.PASSWORD]: false,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isSubmitting, startSubmitting } = useSubmitting();
   const [hasEmailFormatError, setHasEmailFormatError] = useState(false);
   const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
   const isActionPressed = useActionPress();
@@ -122,7 +123,7 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
         return;
       }
       rememberSubmittedForm(SUBMITTED_FORM.LOGIN);
-      setIsSubmitting(true);
+      startSubmitting();
     },
   };
 }
