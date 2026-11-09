@@ -11,7 +11,7 @@ import {
   PASSWORD_RULE_MESSAGE_KEY,
   type PasswordRuleMessageKey,
 } from "./password-rules";
-import { usePressedAction } from "../hooks/use-pressed-action";
+import { useActionPress } from "../hooks/use-action-press";
 
 export const PASSWORD_RULES_ID = "password-rules";
 
@@ -55,7 +55,7 @@ export function UserProfileField(props: {
   const onChange = (nextValue: string) =>
     dispatchFormAction({ action: "update", name: attribute.name, valueOrValues: nextValue });
 
-  const isActionPressed = usePressedAction();
+  const isActionPressed = useActionPress();
 
   const onBlur = () => {
     if (isActionPressed.current) return;

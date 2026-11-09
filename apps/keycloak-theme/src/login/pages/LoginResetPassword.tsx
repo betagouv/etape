@@ -1,14 +1,14 @@
 import { Button } from "@etape/ui/components/button";
 
 import { AltchaField } from "../components/altcha/altcha-field";
-import { Field, FieldError, TextInput } from "../components/form";
+import { Field, FieldError, fieldHintId, TextInput } from "../components/form";
 import { BackLink, CreateAccountSwitch } from "../components/prose";
 import { RESET_PASSWORD_FIELD, useResetPasswordForm } from "../hooks/use-reset-password-form";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
 const USERNAME_ERROR_ID = "input-error-username";
-const USERNAME_HINT_ID = "username-hint";
+const USERNAME_HINT_ID = fieldHintId(RESET_PASSWORD_FIELD.USERNAME);
 
 export default function LoginResetPassword(
   props: EtapePageProps<Extract<KcContext, { pageId: "login-reset-password.ftl" }>>,
@@ -63,7 +63,7 @@ export default function LoginResetPassword(
           className="flex flex-col gap-6"
         >
           <Field
-            id="username"
+            id={RESET_PASSWORD_FIELD.USERNAME}
             label={usernameLabel}
             required
             hint={msg("etapeResetPasswordFranceConnectHint")}
@@ -76,7 +76,7 @@ export default function LoginResetPassword(
             }
           >
             <TextInput
-              id="username"
+              id={RESET_PASSWORD_FIELD.USERNAME}
               name={RESET_PASSWORD_FIELD.USERNAME}
               type="text"
               inputMode={realm.registrationEmailAsUsername ? "email" : undefined}

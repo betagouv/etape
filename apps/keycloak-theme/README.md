@@ -116,12 +116,19 @@ formulaire de l'écran 07.
 - **L'écran 10 n'a qu'un champ** : `password-confirm`, qu'exige Keycloak, est
   recopié en champ caché, et `logout-sessions` est envoyé d'office. Un refus du
   serveur (historique, politique) s'affiche sous le champ, comme les erreurs de
-  la connexion.
+  la connexion. Un envoi bloqué avant le serveur affiche les critères, rend le
+  focus au champ et s'annonce. Les critères testent chaque caractère comme
+  Keycloak (`Character.isUpperCase`…), pour ne jamais bloquer un mot de passe
+  qu'il accepterait.
 - **L'écran 07 contrôle le format de l'adresse**, comme la connexion : sans
   « @ », la personne arriverait sur « Consultez votre boîte e-mail » sans
   qu'aucun e-mail ne parte.
 - **Un lien déjà utilisé ou remplacé par un renvoi** arrive sur `error.ftl` avec
-  `expiredActionMessage`, que `Error.tsx` traite comme un lien expiré.
+  `expiredActionMessage`. Keycloak renvoie aussi ce message pour un formulaire
+  renvoyé après un retour arrière (`SessionCodeChecks`) et à l'inscription
+  (`RegistrationUserCreation`) : `Error.tsx` n'y voit un lien expiré, avec
+  `etapeUsedLinkMessage`, que sur la page `/login-actions/action-token`. Le
+  message lui-même garde son texte Keycloak.
 
 ## Formulaire de connexion : erreurs et envoi incomplet
 
@@ -130,7 +137,7 @@ d'un appui sur un lien ou un bouton : l'erreur en s'insérant décalerait la pag
 et le clic tomberait à côté de sa cible. L'appui se repère par `mousedown`, qui
 précède la sortie du champ dans tous les navigateurs ; `:active` n'offre pas cette
 garantie. L'envoi contrôle de toute façon le format. L'inscription suit la même règle
-pour ses champs (`usePressedAction`), y compris sur une case à cocher.
+pour ses champs (`useActionPress`), y compris sur une case à cocher.
 
 Un envoi incomplet (Entrée, ou clic sur le bouton grisé) reste bloqué : le focus
 part sur le premier champ vide et une région `role="status"` dit quoi faire. Le

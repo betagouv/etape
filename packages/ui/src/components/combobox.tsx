@@ -8,8 +8,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/componen
 import { cn } from "@etape/ui/lib/utils";
 
 /*
- * Motif « combobox » de l'APG, liste à autocomplétion affichée dans le fil de la page
- * (`inline`) ou dans un panneau flottant que l'appelant positionne (`popup`).
+ * Motif « combobox » de l'APG, liste à autocomplétion affichée dans le fil de la page,
+ * ou dans un panneau flottant que l'appelant positionne (`popup`).
  *
  * Pas de `cmdk`, la bibliothèque du `command` de shadcn : faite pour une palette
  * de commandes, elle annonce sa liste toujours ouverte (`aria-expanded` forcé à
@@ -20,20 +20,24 @@ import { cn } from "@etape/ui/lib/utils";
  * renseigne `aria-expanded`, `aria-controls` et `aria-activedescendant` sur le
  * champ.
  *
- * Écart au kit : l'option active porte un anneau, le fond `accent` seul ne marque pas assez le focus.
+ * Écarts au kit : l'option active porte un anneau, le fond `accent` seul ne marque pas
+ * assez le focus ; sur mobile, champ et options font 44 px de haut (cible tactile) au
+ * lieu des 32 et 28 px du kit.
  */
 
-const comboboxVariants = cva("bg-popover text-popover-foreground flex w-full flex-col border", {
+const comboboxVariants = cva("bg-popover text-popover-foreground flex w-full flex-col", {
   variants: {
     variant: {
-      inline: "rounded-xl p-1",
+      default: "border-foreground/10 rounded-lg border shadow-md",
+      /** Dans un `PopoverContent` ou tout cadre qui porte déjà bordure et rayon. */
+      inset: "",
       // Panneau ouvert sous le champ de recherche d'adresse (Figma FRONT-OFFICE, « 01. SIGN-UP ») :
       // l'appelant le positionne ; la liste y touche les bords, pour les options `separated`.
-      popup: "overflow-hidden rounded-lg shadow-md *:data-[slot=combobox-list]:p-0",
+      popup: "overflow-hidden rounded-lg border shadow-md *:data-[slot=combobox-list]:p-0",
     },
   },
   defaultVariants: {
-    variant: "inline",
+    variant: "default",
   },
 });
 
@@ -43,7 +47,12 @@ function Combobox({
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof comboboxVariants>) {
   return (
-    <div data-slot="combobox" className={cn(comboboxVariants({ variant }), className)} {...props} />
+    <div
+      data-slot="combobox"
+      data-variant={variant}
+      className={cn(comboboxVariants({ variant }), className)}
+      {...props}
+    />
   );
 }
 
@@ -60,13 +69,12 @@ function ComboboxHeader({ className, ...props }: React.ComponentProps<"p">) {
 
 function ComboboxInput({ className, ...props }: React.ComponentProps<"input">) {
   return (
-    <div data-slot="combobox-input-wrapper" className="p-1">
+    <div data-slot="combobox-input-wrapper" className="px-1 pt-1">
       <InputGroup size="responsive">
         <InputGroupAddon aria-hidden="true">
           <SearchIcon />
         </InputGroupAddon>
         <InputGroupInput
-          data-slot="combobox-input"
           role="combobox"
           aria-autocomplete="list"
           autoComplete="off"
@@ -98,15 +106,43 @@ function ComboboxList({ className, ...props }: React.ComponentProps<"ul">) {
   );
 }
 
+/**
+ * Groupe d'options sous un intitulé, comme le « Select Menu / Label » du kit. Le
+ * `<li>` est transparent pour l'ARIA : la liste contient un `group` nommé par son intitulé.
+ */
+function ComboboxGroup({
+  label,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"li"> & { label: React.ReactNode }) {
+  const labelId = React.useId();
+
+  return (
+    <li role="presentation" data-slot="combobox-group" className={className} {...props}>
+      <div
+        id={labelId}
+        data-slot="combobox-group-label"
+        className="text-muted-foreground px-2 py-1.5 text-xs"
+      >
+        {label}
+      </div>
+      <ul role="group" aria-labelledby={labelId}>
+        {children}
+      </ul>
+    </li>
+  );
+}
+
 const comboboxOptionVariants = cva(
   [
-    "hover:bg-accent hover:text-accent-foreground flex min-h-11 cursor-pointer items-center gap-2 text-sm select-none md:min-h-8",
+    "hover:bg-accent hover:text-accent-foreground relative flex min-h-11 cursor-pointer items-center gap-2 text-sm select-none md:min-h-7",
     "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground data-[active=true]:ring-ring data-[active=true]:ring-2 data-[active=true]:ring-inset",
   ],
   {
     variants: {
       variant: {
-        default: "rounded-sm px-2 py-1.5",
+        default: "rounded-md py-1 pr-8 pl-1.5",
         // Options sur deux lignes séparées par un filet, dans un `Combobox` `popup` :
         // suggestions d'adresse, Figma « 01. SIGN-UP ».
         separated: "rounded-none border-b px-3 py-2 last:border-b-0",
@@ -141,7 +177,12 @@ function ComboboxOption({
       {...props}
     >
       <span className="min-w-0 flex-1">{children}</span>
-      {selected && <CheckIcon aria-hidden="true" className="size-4 shrink-0" />}
+      {selected && (
+        <CheckIcon
+          aria-hidden="true"
+          className="absolute top-1/2 right-2 size-4 shrink-0 -translate-y-1/2"
+        />
+      )}
     </li>
   );
 }
@@ -172,7 +213,9 @@ export {
   ComboboxHeader,
   ComboboxInput,
   ComboboxList,
+  ComboboxGroup,
   ComboboxOption,
   ComboboxOptionDescription,
   ComboboxEmpty,
+  comboboxVariants,
 };

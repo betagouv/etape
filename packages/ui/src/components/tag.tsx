@@ -40,6 +40,8 @@ const tagVariants = cva(
         lg: "h-10 gap-2 px-3 text-base",
       },
     },
+    // Dans le kit, « subdued » n'a pas de padding horizontal, sauf en xsmall.
+    compoundVariants: [{ importance: "subdued", size: ["sm", "default", "lg"], class: "px-0" }],
     defaultVariants: {
       status: "neutral",
       importance: "default",

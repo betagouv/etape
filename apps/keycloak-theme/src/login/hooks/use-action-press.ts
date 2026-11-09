@@ -2,7 +2,7 @@ import { type RefObject, useEffect, useRef } from "react";
 
 const ACTION_SELECTOR = "a, button, label, input[type='checkbox']";
 
-export function usePressedAction(): RefObject<boolean> {
+export function useActionPress(): RefObject<boolean> {
   const isActionPressed = useRef(false);
 
   useEffect(() => {

@@ -125,3 +125,4 @@ Ces termes ne sont **pas** métier : ils restent en anglais dans les identifiant
 | Compte            | `account`   | Identité authentifiée, identique quel que soit le rôle (bénéficiaire, instructeur…) ; l'URL visible reste `/compte/` |
 | Réponse           | `answers`   | Mécanisme du moteur de questionnaire ; les champs qu'il porte sont nommés en français (`FIELD_SITUATION`)            |
 | Issue du parcours | `outcome`   | Écran terminal du moteur ; le cas porté reste en français (`OUTCOME_HORS_FRANCE`)                                    |
+| Section           | `section`   | Subdivision visuelle d'un volet (Identité, Contact), comme `FormSection` de `packages/ui` ; jamais un volet          |

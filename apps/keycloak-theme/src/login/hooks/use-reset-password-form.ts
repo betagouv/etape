@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react";
 
 import { isEmailFormatValid } from "../components/email-format";
+import { useActionPress } from "./use-action-press";
 
 export const RESET_PASSWORD_FIELD = {
   USERNAME: "username",
@@ -27,9 +28,10 @@ export function useResetPasswordForm(
 
   const [username, setUsername] = useState(initialUsername);
   const [hasEmailFormatError, setHasEmailFormatError] = useState(false);
+  const isActionPressed = useActionPress();
 
   const isEmailFormatWrong = (value: string): boolean =>
-    shouldCheckEmailFormat && value.trim() !== "" && !isEmailFormatValid(value);
+    shouldCheckEmailFormat && value !== "" && !isEmailFormatValid(value);
 
   return {
     username,
@@ -38,7 +40,10 @@ export function useResetPasswordForm(
       setUsername(value);
       if (hasEmailFormatError && !isEmailFormatWrong(value)) setHasEmailFormatError(false);
     },
-    checkEmailFormat: () => setHasEmailFormatError(isEmailFormatWrong(username)),
+    checkEmailFormat: () => {
+      if (isActionPressed.current) return;
+      setHasEmailFormatError(isEmailFormatWrong(username));
+    },
     submit: (event) => {
       const form = event.currentTarget;
       const currentUsername = String(new FormData(form).get(RESET_PASSWORD_FIELD.USERNAME) ?? "");

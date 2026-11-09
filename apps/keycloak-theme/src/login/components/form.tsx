@@ -8,6 +8,10 @@ import type { I18n } from "../i18n";
 
 type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 
+export function fieldHintId(id: string): string {
+  return `${id}-hint`;
+}
+
 /**
  * Libellé + contrôle + message d'erreur.
  *
@@ -42,7 +46,7 @@ export function Field(props: {
         </div>
         {children}
         {hint !== undefined && (
-          <p id={`${id}-hint`} className="text-muted-foreground text-sm">
+          <p id={fieldHintId(id)} className="text-muted-foreground text-sm">
             {hint}
           </p>
         )}
