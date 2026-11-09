@@ -35,3 +35,33 @@ export function findSecteurActiviteByCode(
 export function formatSecteurActivite({ code, libelle }: SecteurActivite): string {
   return `${libelle} (${code})`;
 }
+
+export const SECTEUR_BLUR_OUTCOME = {
+  /** Un code complet tapé sans passer par la liste désigne déjà son secteur. */
+  SELECT: "select",
+  /** Le champ a été vidé : le bénéficiaire retire son secteur. */
+  CLEAR: "clear",
+  /** Un secteur est choisi et le texte ne désigne rien d'autre : le champ le réaffiche. */
+  RESTORE: "restore",
+  /** Aucun secteur choisi : le texte tapé reste, la recherche pourra reprendre. */
+  KEEP_TEXT: "keep-text",
+} as const;
+
+export type SecteurBlurOutcome =
+  | { outcome: typeof SECTEUR_BLUR_OUTCOME.SELECT; secteur: SecteurActivite }
+  | { outcome: typeof SECTEUR_BLUR_OUTCOME.CLEAR }
+  | { outcome: typeof SECTEUR_BLUR_OUTCOME.RESTORE }
+  | { outcome: typeof SECTEUR_BLUR_OUTCOME.KEEP_TEXT };
+
+/** Ce que devient le champ quand il perd le focus ; `searchText` à `null` : aucune saisie en cours. */
+export function findSecteurBlurOutcome(
+  secteurs: readonly SecteurActivite[],
+  searchText: string | null,
+  hasSelection: boolean,
+): SecteurBlurOutcome {
+  if (searchText === null) return { outcome: SECTEUR_BLUR_OUTCOME.RESTORE };
+  if (searchText.trim() === "") return { outcome: SECTEUR_BLUR_OUTCOME.CLEAR };
+  const secteur = findSecteurActiviteByCode(secteurs, searchText);
+  if (secteur) return { outcome: SECTEUR_BLUR_OUTCOME.SELECT, secteur };
+  return { outcome: hasSelection ? SECTEUR_BLUR_OUTCOME.RESTORE : SECTEUR_BLUR_OUTCOME.KEEP_TEXT };
+}

@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   findSecteurActiviteByCode,
+  findSecteurBlurOutcome,
   findSecteursActivite,
   formatSecteurActivite,
+  SECTEUR_BLUR_OUTCOME,
 } from "./secteur-activite";
 
 const BOULANGERIE = { code: "10.71C", libelle: "Boulangerie et boulangerie-pâtisserie" };
@@ -46,5 +48,44 @@ describe("formatSecteurActivite", () => {
     expect(formatSecteurActivite(BOULANGERIE)).toBe(
       "Boulangerie et boulangerie-pâtisserie (10.71C)",
     );
+  });
+});
+
+describe("findSecteurBlurOutcome", () => {
+  it("réaffiche le secteur choisi sans saisie en cours", () => {
+    expect(findSecteurBlurOutcome(SECTEURS, null, true)).toEqual({
+      outcome: SECTEUR_BLUR_OUTCOME.RESTORE,
+    });
+  });
+
+  it("réaffiche le secteur choisi quand le texte modifié ne désigne aucun code", () => {
+    expect(
+      findSecteurBlurOutcome(SECTEURS, "Boulangerie et boulangerie-pâtisserie (10.71", true),
+    ).toEqual({ outcome: SECTEUR_BLUR_OUTCOME.RESTORE });
+    expect(findSecteurBlurOutcome(SECTEURS, "pati", true)).toEqual({
+      outcome: SECTEUR_BLUR_OUTCOME.RESTORE,
+    });
+  });
+
+  it("garde le texte tapé quand aucun secteur n'est choisi", () => {
+    expect(findSecteurBlurOutcome(SECTEURS, "boul", false)).toEqual({
+      outcome: SECTEUR_BLUR_OUTCOME.KEEP_TEXT,
+    });
+  });
+
+  it("sélectionne le secteur dont le code complet a été tapé", () => {
+    expect(findSecteurBlurOutcome(SECTEURS, "10.71c", false)).toEqual({
+      outcome: SECTEUR_BLUR_OUTCOME.SELECT,
+      secteur: BOULANGERIE,
+    });
+  });
+
+  it("retire le secteur quand le champ a été vidé", () => {
+    expect(findSecteurBlurOutcome(SECTEURS, "", true)).toEqual({
+      outcome: SECTEUR_BLUR_OUTCOME.CLEAR,
+    });
+    expect(findSecteurBlurOutcome(SECTEURS, "  ", true)).toEqual({
+      outcome: SECTEUR_BLUR_OUTCOME.CLEAR,
+    });
   });
 });

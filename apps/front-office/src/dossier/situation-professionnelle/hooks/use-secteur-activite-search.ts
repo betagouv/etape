@@ -7,9 +7,10 @@ import { selectPlural, type PluralForms } from "@/lib/plural";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
 import {
-  findSecteurActiviteByCode,
+  findSecteurBlurOutcome,
   findSecteursActivite,
   formatSecteurActivite,
+  SECTEUR_BLUR_OUTCOME,
 } from "../domain/secteur-activite";
 
 /** Le résumé d'erreurs mène à `#secteurActivite`. */
@@ -53,6 +54,7 @@ function findAnnouncement(
 export interface SecteurActiviteInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
+  onFocus: () => void;
   onBlur: () => void;
 }
 
@@ -79,6 +81,8 @@ export function useSecteurActiviteSearch(
 ): UseSecteurActiviteSearchResult {
   // `null` : pas de saisie en cours, le champ montre le secteur choisi.
   const [searchText, setSearchText] = useState<string | null>(null);
+  // Le texte reste au départ du champ ; seule la liste se ferme, et se rouvre au focus ou à la frappe.
+  const [isOpen, setOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ["secteur-activite"],
@@ -97,11 +101,12 @@ export function useSecteurActiviteSearch(
   function select(secteur: SecteurActivite): void {
     onChange(secteur.code);
     setSearchText(null);
+    setOpen(false);
   }
 
   const navigation = useListboxNavigation(secteurs, secteurActiviteOptionId, select);
 
-  const isListOpen = Boolean(searchText?.trim());
+  const isListOpen = isOpen && Boolean(searchText?.trim());
   const emptyMessage = findEmptyMessage(query.isPending, query.isError);
   const moreMessage =
     matches.length > secteurs.length
@@ -121,23 +126,31 @@ export function useSecteurActiviteSearch(
     announcement,
     active: navigation.active,
     inputHandlers: {
+      // Le code reste tant qu'aucune nouvelle sélection n'est faite : Échap ou un texte non reconnu reviennent au secteur choisi.
       onChange: (event) => {
         setSearchText(event.target.value);
-        // Le texte ne désigne plus le secteur choisi.
-        onChange("");
+        setOpen(true);
         navigation.reset();
       },
       onKeyDown: (event) => {
-        if (event.key === "Escape") setSearchText(null);
-        else navigation.onKeyDown(event);
+        if (event.key === "Escape") {
+          setOpen(false);
+          navigation.reset();
+          if (selected) setSearchText(null);
+        } else if (isListOpen) {
+          // Liste fermée : ni flèche ni Entrée ne désignent une option masquée.
+          navigation.onKeyDown(event);
+        }
       },
+      onFocus: () => setOpen(true),
       onBlur: () => {
-        // Un code complet tapé sans passer par la liste désigne déjà son secteur.
-        const secteur = searchText
-          ? findSecteurActiviteByCode(query.data ?? [], searchText)
-          : undefined;
-        if (secteur) select(secteur);
-        else setSearchText(null);
+        setOpen(false);
+        const result = findSecteurBlurOutcome(query.data ?? [], searchText, selected !== undefined);
+        if (result.outcome === SECTEUR_BLUR_OUTCOME.SELECT) select(result.secteur);
+        else if (result.outcome === SECTEUR_BLUR_OUTCOME.CLEAR) {
+          onChange("");
+          setSearchText(null);
+        } else if (result.outcome === SECTEUR_BLUR_OUTCOME.RESTORE) setSearchText(null);
       },
     },
     select,
