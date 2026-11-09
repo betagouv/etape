@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import type { FormEvent } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CANCEL_FIELD,
@@ -31,8 +31,15 @@ const createSubmitEvent = (form: HTMLFormElement, submitterName?: string): Submi
   } as unknown as SubmitEvent;
 };
 
+const ANNOUNCE_DELAY_MS = 100;
+
 describe("useUpdatePasswordForm", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   afterEach(() => {
+    vi.useRealTimers();
     document.body.innerHTML = "";
   });
 
@@ -53,6 +60,7 @@ describe("useUpdatePasswordForm", () => {
 
     const event = createSubmitEvent(form);
     act(() => result.current.submit(event));
+    act(() => vi.advanceTimersByTime(ANNOUNCE_DELAY_MS));
 
     expect(event.preventDefault).toHaveBeenCalled();
     expect(result.current.isSubmitting).toBe(false);
@@ -66,11 +74,31 @@ describe("useUpdatePasswordForm", () => {
 
     act(() => result.current.changePassword("nouveau-mot2passe!"));
     act(() => result.current.submit(createSubmitEvent(createForm())));
+    act(() => vi.advanceTimersByTime(ANNOUNCE_DELAY_MS));
     expect(result.current.shouldAnnounceInvalid).toBe(true);
 
     act(() => result.current.changePassword(VALID_PASSWORD));
     expect(result.current.shouldAnnounceInvalid).toBe(false);
     expect(result.current.isSubmitBlocked).toBe(false);
+
+    act(() => result.current.changePassword("court"));
+    expect(result.current.shouldAnnounceInvalid).toBe(false);
+  });
+
+  it("réannonce chaque nouveau refus, en vidant d'abord la région", () => {
+    const { result } = renderHook(() => useUpdatePasswordForm());
+    const form = createForm();
+
+    act(() => result.current.submit(createSubmitEvent(form)));
+    act(() => vi.advanceTimersByTime(ANNOUNCE_DELAY_MS));
+    expect(result.current.shouldAnnounceInvalid).toBe(true);
+
+    act(() => result.current.changePassword("abc"));
+    act(() => result.current.submit(createSubmitEvent(form)));
+    expect(result.current.shouldAnnounceInvalid).toBe(false);
+
+    act(() => vi.advanceTimersByTime(ANNOUNCE_DELAY_MS));
+    expect(result.current.shouldAnnounceInvalid).toBe(true);
   });
 
   it("laisse partir un mot de passe valide, une seule fois", () => {

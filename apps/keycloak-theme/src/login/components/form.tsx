@@ -8,16 +8,16 @@ import type { I18n } from "../i18n";
 
 type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 
+export function fieldHintId(id: string): string {
+  return `${id}-hint`;
+}
+
 /**
  * Libellé + contrôle + message d'erreur.
  *
  * L'astérisque des maquettes est décorative : c'est `aria-required` sur le
  * champ qui porte l'information pour les technologies d'assistance.
  */
-export function fieldHintId(id: string): string {
-  return `${id}-hint`;
-}
-
 export function Field(props: {
   id: string;
   label: ReactNode;
