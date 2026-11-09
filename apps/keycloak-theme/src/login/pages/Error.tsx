@@ -1,6 +1,7 @@
 import { Button } from "@etape/ui/components/button";
 import { kcSanitize } from "keycloakify/lib/kcSanitize";
 
+import { isActionTokenPage } from "../components/action-token-page";
 import { Prose } from "../components/prose";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
@@ -15,10 +16,16 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
   // rendu ne dit rien au typage, et obligeait à réaffirmer l'existence en dessous.
   const backToApplicationUrl = skipLink ? undefined : client?.baseUrl;
 
+  const isUsedLink =
+    message.summary === msgStr("expiredActionMessage") &&
+    isActionTokenPage(window.location.pathname);
+
   const isExpiredLink =
     message.summary === msgStr("expiredActionTokenNoSessionMessage") ||
     message.summary === msgStr("expiredActionTokenSessionExistsMessage") ||
-    message.summary === msgStr("expiredActionMessage");
+    isUsedLink;
+
+  const summary = isUsedLink ? msgStr("etapeUsedLinkMessage") : message.summary;
 
   const resetCredentialsUrl = isExpiredLink ? url.loginResetCredentialsUrl : undefined;
 
@@ -34,7 +41,7 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
     >
       <div id="kc-error-message" className="flex flex-col gap-8">
         <Prose>
-          <p dangerouslySetInnerHTML={{ __html: kcSanitize(message.summary) }} />
+          <p dangerouslySetInnerHTML={{ __html: kcSanitize(summary) }} />
         </Prose>
         {(resetCredentialsUrl ?? backToApplicationUrl) !== undefined && (
           <div className="flex flex-col gap-4">

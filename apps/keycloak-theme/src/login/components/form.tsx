@@ -14,6 +14,10 @@ type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean
  * L'astérisque des maquettes est décorative : c'est `aria-required` sur le
  * champ qui porte l'information pour les technologies d'assistance.
  */
+export function fieldHintId(id: string): string {
+  return `${id}-hint`;
+}
+
 export function Field(props: {
   id: string;
   label: ReactNode;
@@ -42,7 +46,7 @@ export function Field(props: {
         </div>
         {children}
         {hint !== undefined && (
-          <p id={`${id}-hint`} className="text-muted-foreground text-sm">
+          <p id={fieldHintId(id)} className="text-muted-foreground text-sm">
             {hint}
           </p>
         )}

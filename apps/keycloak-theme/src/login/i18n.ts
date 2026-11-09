@@ -44,8 +44,6 @@ const { useI18n, ofTypeI18n } = i18nBuilder
         "Ce lien de réinitialisation a expiré. Un lien reste valable 15 minutes et ne peut servir que pour une seule demande.",
       expiredActionTokenSessionExistsMessage:
         "Ce lien de réinitialisation a expiré. Un lien reste valable 15 minutes et ne peut servir que pour une seule demande.",
-      expiredActionMessage:
-        "Ce lien a expiré ou a déjà été utilisé. Un lien reste valable 15 minutes et ne peut servir que pour une seule demande.",
 
       etapeLoginTitle: "Se connecter à votre espace personnel",
       etapeEmailFormatInvalid: "Adresse e-mail incorrecte",
@@ -106,6 +104,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
 
       etapeUpdatePasswordTitle: "Choisir un nouveau mot de passe",
       etapeUpdatePasswordAccount: "Adresse concernée :",
+      etapeUpdatePasswordInvalid: "Le mot de passe ne respecte pas encore tous les critères.",
       etapeUpdatePasswordCta: "Enregistrer le mot de passe",
       etapeVerifyEmailSubtitle: "Plus qu'une étape avant d'accéder à votre espace.",
       etapeAccountNotActivated: "Votre espace n'est pas encore activé.",
@@ -117,12 +116,14 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeErrorSubtitle: "L'opération n'a pas pu aboutir.",
       etapeExpiredLinkTitle: "Lien expiré",
       etapeExpiredLinkRestart: "Demander un nouveau lien",
+      etapeUsedLinkMessage:
+        "Ce lien a expiré ou a déjà été utilisé. Un lien reste valable 15 minutes et ne peut servir que pour une seule demande.",
 
       etapePasswordRulesTitle: "Il doit contenir au moins :",
       etapePasswordRuleLength: "12 caractères",
       etapePasswordRuleUpper: "Une majuscule (A-Z)",
       etapePasswordRuleLower: "Une minuscule (a-z)",
-      etapePasswordRuleDigit: "Un chiffre (1-9)",
+      etapePasswordRuleDigit: "Un chiffre (0-9)",
       etapePasswordRuleSpecial: "Un caractère spécial (!@#%^&*)",
       etapePasswordRuleMet: "(satisfait)",
       etapePasswordRuleUnmet: "(non satisfait)",
@@ -152,8 +153,6 @@ const { useI18n, ofTypeI18n } = i18nBuilder
         "This reset link has expired. A link stays valid for 15 minutes and can only be used once.",
       expiredActionTokenSessionExistsMessage:
         "This reset link has expired. A link stays valid for 15 minutes and can only be used once.",
-      expiredActionMessage:
-        "This link has expired or has already been used. A link stays valid for 15 minutes and can only be used once.",
 
       etapeLoginTitle: "Sign in to your personal space",
       etapeEmailFormatInvalid: "Incorrect email address",
@@ -206,6 +205,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
 
       etapeUpdatePasswordTitle: "Choose a new password",
       etapeUpdatePasswordAccount: "Account:",
+      etapeUpdatePasswordInvalid: "The password does not meet every requirement yet.",
       etapeUpdatePasswordCta: "Save the password",
       etapeVerifyEmailSubtitle: "One last step before accessing your account.",
       etapeAccountNotActivated: "Your space is not activated yet.",
@@ -217,12 +217,14 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeErrorSubtitle: "The operation could not be completed.",
       etapeExpiredLinkTitle: "Link expired",
       etapeExpiredLinkRestart: "Request a new link",
+      etapeUsedLinkMessage:
+        "This link has expired or has already been used. A link stays valid for 15 minutes and can only be used once.",
 
       etapePasswordRulesTitle: "It must contain at least:",
       etapePasswordRuleLength: "12 characters",
       etapePasswordRuleUpper: "One uppercase letter (A-Z)",
       etapePasswordRuleLower: "One lowercase letter (a-z)",
-      etapePasswordRuleDigit: "One digit (1-9)",
+      etapePasswordRuleDigit: "One digit (0-9)",
       etapePasswordRuleSpecial: "One special character (!@#%^&*)",
       etapePasswordRuleMet: "(met)",
       etapePasswordRuleUnmet: "(not met)",

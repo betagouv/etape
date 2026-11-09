@@ -1,3 +1,4 @@
+import { Button } from "@etape/ui/components/button";
 import { cn } from "@etape/ui/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
@@ -78,13 +79,12 @@ export function CreateAccountSwitch(props: {
 /** Lien de retour au-dessus du logo (Figma FRONT-OFFICE, écran 07). */
 export function BackLink(props: { href: string; label: ReactNode }) {
   return (
-    <a
-      href={props.href}
-      className="text-primary inline-flex items-center gap-1.5 self-start text-sm font-medium hover:underline"
-    >
-      <ArrowLeft aria-hidden className="size-4" />
-      {props.label}
-    </a>
+    <Button asChild variant="link" size="inline" className="self-start">
+      <a href={props.href}>
+        <ArrowLeft aria-hidden />
+        {props.label}
+      </a>
+    </Button>
   );
 }
 

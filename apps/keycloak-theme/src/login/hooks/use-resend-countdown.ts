@@ -7,6 +7,7 @@ import {
   RESEND_ANNOUNCEMENTS,
   RESEND_AVAILABILITY,
 } from "../components/resend-countdown";
+import { useSubmitting } from "./use-submitting";
 
 const TICK_MS = 1000;
 
@@ -29,13 +30,16 @@ export function useResendCountdown(options: UseResendCountdownOptions): UseResen
   const { initialSeconds, isResent, i18n } = options;
 
   const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isSubmitting, startSubmitting } = useSubmitting();
 
   useEffect(() => {
     if (initialSeconds <= 0) return;
     const deadline = Date.now() + initialSeconds * TICK_MS;
     const interval = window.setInterval(() => {
-      const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / TICK_MS));
+      const seconds = Math.min(
+        initialSeconds,
+        Math.max(0, Math.ceil((deadline - Date.now()) / TICK_MS)),
+      );
       setRemainingSeconds(seconds);
       if (seconds === 0) window.clearInterval(interval);
     }, TICK_MS);
@@ -56,7 +60,7 @@ export function useResendCountdown(options: UseResendCountdownOptions): UseResen
         event.preventDefault();
         return;
       }
-      setIsSubmitting(true);
+      startSubmitting();
     },
   };
 }

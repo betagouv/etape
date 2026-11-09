@@ -1,10 +1,15 @@
 import { Button } from "@etape/ui/components/button";
+import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { Alert, MESSAGE_TYPE } from "../components/alert";
 import { Field, PasswordInput } from "../components/form";
 import { CreateAccountSwitch } from "../components/prose";
 import { PASSWORD_RULES_ID, PasswordRules } from "../components/user-profile-fields";
-import { useUpdatePasswordForm } from "../hooks/use-update-password-form";
+import {
+  CANCEL_FIELD,
+  PASSWORD_NEW_FIELD,
+  useUpdatePasswordForm,
+} from "../hooks/use-update-password-form";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
@@ -25,7 +30,7 @@ export default function LoginUpdatePassword(
   const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
 
   const { url, realm, username, message, messagesPerField, isAppInitiatedAction } = kcContext;
-  const { msg } = i18n;
+  const { msg, msgStr } = i18n;
 
   const form = useUpdatePasswordForm();
 
@@ -70,10 +75,10 @@ export default function LoginUpdatePassword(
         )}
 
         <div className="flex flex-col gap-5">
-          <Field id="password-new" label={msg("passwordNew")} required>
+          <Field id={PASSWORD_NEW_FIELD} label={msg("passwordNew")} required>
             <PasswordInput
-              id="password-new"
-              name="password-new"
+              id={PASSWORD_NEW_FIELD}
+              name={PASSWORD_NEW_FIELD}
               i18n={i18n}
               autoFocus
               autoComplete="new-password"
@@ -87,7 +92,7 @@ export default function LoginUpdatePassword(
               value={form.password}
               onChange={(event) => form.changePassword(event.target.value)}
             />
-            <div hidden={form.password === ""}>
+            <div hidden={!form.shouldShowRules}>
               <PasswordRules value={form.password} i18n={i18n} />
             </div>
           </Field>
@@ -112,7 +117,7 @@ export default function LoginUpdatePassword(
           {isAppInitiatedAction && (
             <Button
               type="submit"
-              name="cancel-aia"
+              name={CANCEL_FIELD}
               value="true"
               variant="outline"
               size="form"
@@ -121,6 +126,9 @@ export default function LoginUpdatePassword(
               {msg("doCancel")}
             </Button>
           )}
+          <StatusRegion
+            message={form.shouldAnnounceInvalid ? msgStr("etapeUpdatePasswordInvalid") : ""}
+          />
         </div>
       </form>
     </Template>
