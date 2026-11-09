@@ -21,6 +21,7 @@ flowchart LR
     session["session<br/>session des SPA"]
     client["api-client<br/>axios + TanStack Query"]
     contract["api-contract<br/>contrats zod"]
+    utils["utils<br/>fonctions pures"]
   end
   subgraph docker["docker compose"]
     keycloak["Keycloak 26.7<br/>:8080"]
@@ -34,6 +35,7 @@ flowchart LR
   fo & bo --> session
   session --> client & ui
   fo & bo --> client
+  api & fo & simulateur --> utils
   contract -. prévu .-> api
   contract -. prévu .-> client
   site -- "fetch /api" --> api
@@ -60,6 +62,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | `packages/api-client`      | Couche HTTP des SPA : `createHttpClient`, `ApiError`, `createQueryClient` | FO, BO                         | Sources TS, axios + TanStack Query                         | —        | Socle, aucun hook métier           |
 | `packages/session`         | Session commune des SPA : garde, inactivité, « Session expirée »          | FO, BO                         | Sources TS, TanStack Router + Query                        | —        | En place                           |
 | `packages/api-contract`    | Contrats de route partagés front/API (méthode, chemin, schémas zod)       | API, FO, BO                    | TS compilé (`dist/` pour Node), zod seul                   | —        | Session, établissement, secteur    |
+| `packages/utils`           | Fonctions pures partagées : normalisation de texte (`normalizeForSearch`) | API, FO, simulateur            | TS compilé (`dist/` pour Node), aucune dépendance          | —        | Une fonction                       |
 | `packages/eslint-config`   | Presets ESLint `base`, `next`, `react-internal`                           | Tous les workspaces            | JS                                                         | —        | Stable                             |
 | `packages/prettier-config` | Configuration Prettier partagée                                           | Tout le dépôt                  | JS                                                         | —        | Stable                             |
 
@@ -87,6 +90,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | Un écran de connexion ou un e-mail (inscription, mot de passe) | `apps/keycloak-theme/src/login/pages/`, `apps/keycloak-theme/src/email/`                                                                                 | README du thème, section 5 ci-dessous                          |
 | Un client OIDC, une URI de redirection, FranceConnect          | `keycloak/realms/etape-realm.json`                                                                                                                       | `docs/authentification.md`                                     |
 | L'appel HTTP commun (401, erreurs, cookie)                     | `packages/api-client/src/http-client.ts`                                                                                                                 | `stack-front.md` décision 12                                   |
+| Une normalisation de texte (accents, forme Unicode)            | `packages/utils/src/text.ts` (`@etape/utils/text`) — chaque appelant garde sa casse et sa ponctuation                                                    | `packages/utils/AGENTS.md`                                     |
 | Une règle de lint                                              | `packages/eslint-config/` (`base`, `next` ou `react-internal`, selon le workspace)                                                                       | `outillage-agent.md`                                           |
 | Le déploiement, les images, les VM                             | `Dockerfile`, `docker-compose.prod.yml`, `deploy/`, `infra/`, `.github/workflows/`                                                                       | `docs/deploiement.md`, `docs/previews.md`                      |
 | Relire une PR ou un diff                                       | —                                                                                                                                                        | skill `review-pr` (et sous-agent `revue-front` pour le `.tsx`) |
@@ -98,6 +102,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 - **Les données venant de l'API passent par TanStack Query**, jamais par un `fetch` dans un `useEffect`.
 - **Un type Prisma ne franchit pas la frontière HTTP**, et le service ne voit jamais Prisma (`.claude/rules/api.md`).
 - **`api-contract` ne dépend que de zod.** Il ne doit importer ni NestJS, ni React, ni axios.
+- **`utils` ne dépend de rien** et ne contient aucun métier : une fonction n'y entre qu'au second appelant.
 - **Une couleur ne s'écrit que dans les tokens de `packages/ui`.** Une app étend par variante `cva` dans `packages/ui`, jamais par `className` d'apparence.
 - **`keycloak-theme` est hors du périmètre de `react.md`** : ses contraintes viennent de Keycloakify (voir son README).
 

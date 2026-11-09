@@ -9,19 +9,29 @@ const query = (search: string): string | null | undefined =>
 
 describe("buildSireneSearchUrl", () => {
   it("cherche un SIRET, espaces compris", () => {
-    expect(query("503 932 568 00010")).toBe("siret:50393256800010");
+    expect(query("503 932 568 00010")).toBe(
+      "siret:50393256800010 AND statutDiffusionEtablissement:O",
+    );
   });
 
   it("cherche chaque mot en début de nom ou de commune", () => {
     expect(query("carrefour le cannet")).toBe(
       "(raisonSociale:carrefour* OR libelleCommuneEtablissement:carrefour*) AND " +
         "(raisonSociale:le* OR libelleCommuneEtablissement:le*) AND " +
-        "(raisonSociale:cannet* OR libelleCommuneEtablissement:cannet*)",
+        "(raisonSociale:cannet* OR libelleCommuneEtablissement:cannet*) AND " +
+        "statutDiffusionEtablissement:O",
     );
   });
 
+  it("envoie les mots sans accent, saisie composée (NFC) ou décomposée (NFD)", () => {
+    expect(query("Cre\u0301teil")).toBe(query("Créteil"));
+    expect(query("créteil")).toContain("raisonSociale:creteil*");
+  });
+
   it("écarte la syntaxe de requête de Sirene", () => {
-    expect(query('car:"*)')).toBe("(raisonSociale:car* OR libelleCommuneEtablissement:car*)");
+    expect(query('car:"*)')).toBe(
+      "(raisonSociale:car* OR libelleCommuneEtablissement:car*) AND statutDiffusionEtablissement:O",
+    );
   });
 
   it("ne cherche rien sans aucun mot", () => {

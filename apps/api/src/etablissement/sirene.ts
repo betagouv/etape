@@ -1,4 +1,5 @@
 import type { Etablissement, SearchEtablissementsResponse } from "@etape/api-contract";
+import { stripDiacritics } from "@etape/utils/text";
 
 import { LIBELLES_NAF } from "../secteur-activite/libelles-naf.js";
 
@@ -54,14 +55,18 @@ interface SireneEtablissement {
 export function buildSireneSearchUrl(baseUrl: string, search: string): URL | null {
   const siret = search.replace(/\s/g, "");
   // Seuls lettres et chiffres passent : le reste ferait partie de la syntaxe de `q`.
-  const words = search.match(/[\p{L}\p{N}]+/gu) ?? [];
-  const query = SIRET_PATTERN.test(siret)
+  // Sirene ignore les accents ; les retirer évite qu'une saisie décomposée (NFD) soit coupée en deux mots.
+  const words = stripDiacritics(search).match(/[\p{L}\p{N}]+/gu) ?? [];
+
+  const criteres = SIRET_PATTERN.test(siret)
     ? `siret:${siret}`
     : words
         .map((word) => `(raisonSociale:${word}* OR libelleCommuneEtablissement:${word}*)`)
         .join(" AND ");
 
-  if (query === "") return null;
+  if (criteres === "") return null;
+
+  const query = `${criteres} AND statutDiffusionEtablissement:O`;
 
   const url = new URL(`${baseUrl}/siret`);
   url.searchParams.set("q", query);
@@ -85,7 +90,7 @@ function toEtablissement({
   adresseEtablissement: adresse,
   periodesEtablissement: [periode],
 }: SireneEtablissement): Etablissement {
-  const codeNaf = periode.activitePrincipaleEtablissement;
+  const codeNaf = periode?.activitePrincipaleEtablissement ?? null;
 
   return {
     siret,
@@ -93,7 +98,7 @@ function toEtablissement({
     denomination:
       uniteLegale.denominationUniteLegale ??
       [uniteLegale.prenomUsuelUniteLegale, uniteLegale.nomUniteLegale].filter(Boolean).join(" "),
-    enseigne: periode.enseigne1Etablissement,
+    enseigne: periode?.enseigne1Etablissement ?? null,
     adresse: [
       adresse.numeroVoieEtablissement,
       adresse.typeVoieEtablissement,

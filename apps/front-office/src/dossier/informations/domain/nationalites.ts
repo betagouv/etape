@@ -1,3 +1,5 @@
+import { normalizeForSearch } from "@etape/utils/text";
+
 export interface Nationalite {
   label: string;
   code: string;
@@ -205,15 +207,11 @@ export const NATIONALITES: readonly Nationalite[] = [
 
 const NATIONALITE_BY_LABEL = new Map(NATIONALITES.map((n) => [n.label, n]));
 
-function normalize(text: string): string {
-  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
-
 export function findNationalites(query: string): readonly Nationalite[] {
   const trimmed = query.trim();
   if (!trimmed) return NATIONALITES;
-  const normalized = normalize(trimmed);
-  return NATIONALITES.filter((n) => normalize(n.label).includes(normalized));
+  const normalized = normalizeForSearch(trimmed);
+  return NATIONALITES.filter((n) => normalizeForSearch(n.label).includes(normalized));
 }
 
 export function findNationaliteByLabel(label: string): Nationalite | undefined {

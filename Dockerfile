@@ -30,6 +30,7 @@ COPY packages/eslint-config/package.json packages/eslint-config/
 COPY packages/prettier-config/package.json packages/prettier-config/
 COPY packages/session/package.json packages/session/
 COPY packages/ui/package.json packages/ui/
+COPY packages/utils/package.json packages/utils/
 
 RUN pnpm install --frozen-lockfile
 
@@ -47,7 +48,7 @@ RUN node scripts/assemble-static.mjs /srv/static
 
 # `pnpm deploy` sort l'API du monorepo : son `package.json` et ses seules
 # dépendances de production, d'après le verrou, dans un dossier autonome.
-# Depuis `build` : il y copie le `dist/` compilé de `packages/api-contract`.
+# Depuis `build` : il y copie les `dist/` compilés de `packages/api-contract` et `packages/utils`.
 FROM build AS api-deps
 WORKDIR /app
 RUN pnpm --filter @etape/api deploy --prod /srv/api

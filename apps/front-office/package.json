@@ -17,6 +17,7 @@
     "@etape/api-contract": "workspace:*",
     "@etape/session": "workspace:*",
     "@etape/ui": "workspace:*",
+    "@etape/utils": "workspace:*",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@hookform/resolvers": "^6.0.2",

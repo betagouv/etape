@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@etape/api-contract": "workspace:*",
+    "@etape/utils": "workspace:*",
     "@nestjs/common": "^12.3.3",
     "@nestjs/config": "^12.1.0",
     "@nestjs/core": "^12.3.3",

@@ -15,6 +15,7 @@ Monorepo Turborepo. **Quel workspace sert à quoi, pour qui, et où faire quoi :
 | `packages/ui`                                        | Design system unique (shadcn/ui + tokens)                                   |
 | `packages/api-client`                                | Couche HTTP des SPA (axios, `ApiError`, `QueryClient`)                      |
 | `packages/api-contract`                              | Contrats de route zod partagés front/API                                    |
+| `packages/utils`                                     | Fonctions pures partagées API/fronts (normalisation de texte)               |
 | `packages/eslint-config`, `packages/prettier-config` | Configuration partagée                                                      |
 
 L'authentification passe par **Keycloak, lancé par Docker avec sa propre base** (`docker compose up -d`), distincte de la base applicative de `apps/api` : voir `docs/cartographie.md`, section 5.
