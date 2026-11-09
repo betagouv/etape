@@ -6,7 +6,12 @@ export function stripDiacritics(text: string): string {
   return text.normalize("NFD").replace(/\p{Mn}/gu, "");
 }
 
-/** Sans accent ni majuscule, pour comparer une saisie à un libellé : « Côte d'Azur » → « cote d'azur ». */
+// NFD ne décompose ni les ligatures ni l'apostrophe typographique (saisie par défaut sur macOS et iOS).
+const SEARCH_EQUIVALENTS: Record<string, string> = { œ: "oe", æ: "ae", "’": "'" };
+
+/** Sans accent, majuscule, ligature ni apostrophe typographique : « Gros Œuvre d’Azur » → « gros oeuvre d'azur ». */
 export function normalizeForSearch(text: string): string {
-  return stripDiacritics(text).toLowerCase();
+  return stripDiacritics(text)
+    .toLowerCase()
+    .replace(/[œæ’]/g, (character) => SEARCH_EQUIVALENTS[character]);
 }

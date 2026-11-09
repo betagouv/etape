@@ -11,7 +11,12 @@ import {
 const BOULANGERIE = { code: "10.71C", libelle: "Boulangerie et boulangerie-pâtisserie" };
 const PATISSERIE = { code: "10.71D", libelle: "Pâtisserie" };
 const HYPERMARCHES = { code: "47.11F", libelle: "Hypermarchés" };
-const SECTEURS = [BOULANGERIE, PATISSERIE, HYPERMARCHES];
+const GROS_OEUVRE = {
+  code: "43.99C",
+  libelle: "Travaux de maçonnerie générale et gros œuvre de bâtiment",
+};
+const AGRUMES = { code: "46.31Z", libelle: "Commerce de gros de fruits et légumes, d'agrumes" };
+const SECTEURS = [BOULANGERIE, PATISSERIE, HYPERMARCHES, GROS_OEUVRE, AGRUMES];
 
 describe("findSecteursActivite", () => {
   it("trouve un code APE écrit sans point, comme sur le bulletin de salaire", () => {
@@ -28,6 +33,16 @@ describe("findSecteursActivite", () => {
 
   it("ne renvoie rien pour une saisie vide", () => {
     expect(findSecteursActivite(SECTEURS, "  ")).toEqual([]);
+  });
+});
+
+describe("findSecteursActivite — ligatures et apostrophe", () => {
+  it("trouve « gros œuvre » avec « gros oeuvre »", () => {
+    expect(findSecteursActivite(SECTEURS, "gros oeuvre")).toEqual([GROS_OEUVRE]);
+  });
+
+  it("trouve « d'agrumes » avec l'apostrophe typographique « d’agrumes »", () => {
+    expect(findSecteursActivite(SECTEURS, "d’agrumes")).toEqual([AGRUMES]);
   });
 });
 

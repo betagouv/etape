@@ -24,4 +24,10 @@ describe("normalizeForSearch", () => {
   it("donne le même résultat pour une saisie décomposée (NFD)", () => {
     expect(normalizeForSearch("CO\u0302TE")).toBe("cote");
   });
+
+  it("remplace les ligatures et l'apostrophe typographique", () => {
+    expect(normalizeForSearch("Gros Œuvre, cœur, Ærium, d’agrumes")).toBe(
+      "gros oeuvre, coeur, aerium, d'agrumes",
+    );
+  });
 });
