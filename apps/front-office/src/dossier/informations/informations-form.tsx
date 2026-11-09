@@ -309,6 +309,7 @@ export function InformationsForm({
                     {...field}
                     {...attributes}
                     type="tel"
+                    autoComplete="tel-national"
                     onChange={(e) => field.onChange(formatTelephone(e.target.value))}
                   />
                 </InputGroup>

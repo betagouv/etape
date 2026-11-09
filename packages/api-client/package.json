@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@etape/api-contract": "workspace:*",
-    "@tanstack/react-query": "^5.105.0",
+    "@tanstack/react-query": "^5.106.1",
     "axios": "^1.21.0"
   },
   "devDependencies": {
@@ -23,6 +23,6 @@
     "@types/node": "^24.13.6",
     "eslint": "^9",
     "typescript": "^5",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
