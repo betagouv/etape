@@ -66,19 +66,20 @@ export function EmployeurSearch({
   );
 
   return (
-    <Field data-invalid={isInvalid}>
+    <Field
+      data-invalid={isInvalid}
+      // On ne quitte le champ qu'en sortant de tout le groupe : la liste reste ouverte pour son bouton,
+      // et « Relancer la recherche » ne déclenche pas la validation.
+      onBlur={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget)) return;
+        search.close();
+        onBlur();
+      }}
+    >
       <FieldLabel htmlFor={EMPLOYEUR_FIELD_ID} required>
         {SITUATION_PROFESSIONNELLE_FIELD_LABEL.employeur}
       </FieldLabel>
-      {/* La liste reste ouverte tant que le focus est dans le champ ou dans la liste : le bouton de l'alerte doit rester atteignable. */}
-      <div
-        className="relative"
-        onBlur={(event) => {
-          if (event.currentTarget.contains(event.relatedTarget)) return;
-          search.close();
-          onBlur();
-        }}
-      >
+      <div className="relative">
         <InputGroup>
           <InputGroupAddon>
             <SearchIcon aria-hidden="true" />
