@@ -4,6 +4,7 @@ import {
   ComboboxHeader,
   ComboboxList,
   ComboboxOption,
+  ComboboxOptionDescription,
 } from "@etape/ui/components/combobox";
 import { StatusRegion } from "@etape/ui/components/status-region";
 import { ExternalLink, FilePenLine, RefreshCw, Search, X } from "lucide-react";
@@ -200,11 +201,7 @@ function AdresseSearch(props: {
         )}
         <Combobox variant="popup" hidden={!search.isOpen} className="absolute z-10 mt-2">
           <ComboboxHeader aria-hidden>{resultsLabel(search.results.length, i18n)}</ComboboxHeader>
-          <ComboboxList
-            id={SUGGESTIONS_ID}
-            aria-label={msgStr("etapeAdresseLabel")}
-            className="p-0"
-          >
+          <ComboboxList id={SUGGESTIONS_ID} aria-label={msgStr("etapeAdresseLabel")}>
             {search.results.map((adresse, index) => (
               <ComboboxOption
                 key={`${adresse.voie}-${adresse.codeCommune}`}
@@ -214,10 +211,10 @@ function AdresseSearch(props: {
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => search.choose(adresse)}
               >
-                <span className="text-foreground block text-sm">{adresse.voie}</span>
-                <span className="text-muted-foreground block text-sm">
+                <span className="block">{adresse.voie}</span>
+                <ComboboxOptionDescription>
                   {adresse.codePostal} {adresse.commune}
-                </span>
+                </ComboboxOptionDescription>
               </ComboboxOption>
             ))}
           </ComboboxList>

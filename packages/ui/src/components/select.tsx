@@ -24,7 +24,7 @@ function SelectTrigger({
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  /** `form` : champ des formulaires de connexion et d'inscription (Figma FRONT-OFFICE), 44px sur fond `background`, aligné sur leurs champs texte. */
+  /** `form` : champ des formulaires de connexion et d'inscription (Figma FRONT-OFFICE, « 01. SIGN-UP »), 44px sur fond `background`, aligné sur leurs champs texte. */
   size?: "sm" | "default" | "form";
 }) {
   return (
