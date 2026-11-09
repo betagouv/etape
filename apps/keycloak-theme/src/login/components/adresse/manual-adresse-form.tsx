@@ -105,11 +105,12 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
             <SelectTrigger
               id={MANUAL_FIELD_ID.COMMUNE}
               aria-required
-              className="bg-background w-full rounded-lg text-sm shadow-none data-[size=default]:h-11"
+              size="form"
+              className="w-full"
             >
               <SelectValue />
             </SelectTrigger>
-            <SelectContent position="popper" className="rounded-lg">
+            <SelectContent position="popper" size="form">
               {communes.map((commune) => (
                 <SelectItem key={commune.code} value={commune.code}>
                   {commune.nom}

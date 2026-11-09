@@ -1,5 +1,10 @@
 import { Button } from "@etape/ui/components/button";
-import { ComboboxList, ComboboxOption } from "@etape/ui/components/combobox";
+import {
+  Combobox,
+  ComboboxHeader,
+  ComboboxList,
+  ComboboxOption,
+} from "@etape/ui/components/combobox";
 import { StatusRegion } from "@etape/ui/components/status-region";
 import { ExternalLink, FilePenLine, RefreshCw, Search, X } from "lucide-react";
 
@@ -193,13 +198,8 @@ function AdresseSearch(props: {
             <ManualButton onClick={field.switchToManual} i18n={i18n} />
           </div>
         )}
-        <div
-          hidden={!search.isOpen}
-          className="bg-popover border-border absolute z-10 mt-2 w-full overflow-hidden rounded-lg border shadow-md"
-        >
-          <p aria-hidden className="text-muted-foreground border-border border-b p-3 text-sm">
-            {resultsLabel(search.results.length, i18n)}
-          </p>
+        <Combobox variant="popup" hidden={!search.isOpen} className="absolute z-10 mt-2">
+          <ComboboxHeader aria-hidden>{resultsLabel(search.results.length, i18n)}</ComboboxHeader>
           <ComboboxList
             id={SUGGESTIONS_ID}
             aria-label={msgStr("etapeAdresseLabel")}
@@ -210,7 +210,7 @@ function AdresseSearch(props: {
                 key={`${adresse.voie}-${adresse.codeCommune}`}
                 id={optionId(index)}
                 active={index === search.activeIndex}
-                className="border-border rounded-none border-b px-3 py-2 last:border-b-0"
+                variant="separated"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => search.choose(adresse)}
               >
@@ -221,7 +221,7 @@ function AdresseSearch(props: {
               </ComboboxOption>
             ))}
           </ComboboxList>
-        </div>
+        </Combobox>
       </div>
       <SearchAnnouncement status={search.status} count={search.results.length} i18n={i18n} />
     </Field>

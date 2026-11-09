@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { CheckIcon, SearchIcon } from "lucide-react";
 
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
@@ -21,14 +22,36 @@ import { cn } from "@etape/ui/lib/utils";
  * Écart au kit : l'option active porte un anneau, le fond `accent` seul ne marque pas assez le focus.
  */
 
-function Combobox({ className, ...props }: React.ComponentProps<"div">) {
+const comboboxVariants = cva("bg-popover text-popover-foreground flex w-full flex-col border", {
+  variants: {
+    variant: {
+      inline: "rounded-xl p-1",
+      // Panneau ouvert sous le champ de recherche d'adresse (Figma FRONT-OFFICE, « 01. SIGN-UP ») :
+      // l'appelant le positionne.
+      popup: "overflow-hidden rounded-lg shadow-md",
+    },
+  },
+  defaultVariants: {
+    variant: "inline",
+  },
+});
+
+function Combobox({
+  className,
+  variant,
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof comboboxVariants>) {
   return (
-    <div
-      data-slot="combobox"
-      className={cn(
-        "bg-popover text-popover-foreground flex w-full flex-col rounded-xl border p-1",
-        className,
-      )}
+    <div data-slot="combobox" className={cn(comboboxVariants({ variant }), className)} {...props} />
+  );
+}
+
+/** Ligne d'en-tête du panneau, par exemple le nombre de résultats. */
+function ComboboxHeader({ className, ...props }: React.ComponentProps<"p">) {
+  return (
+    <p
+      data-slot="combobox-header"
+      className={cn("text-muted-foreground border-b p-3 text-sm", className)}
       {...props}
     />
   );
@@ -74,28 +97,46 @@ function ComboboxList({ className, ...props }: React.ComponentProps<"ul">) {
   );
 }
 
+const comboboxOptionVariants = cva(
+  [
+    "hover:bg-accent hover:text-accent-foreground flex min-h-11 cursor-pointer items-center gap-2 text-sm select-none md:min-h-8",
+    "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground data-[active=true]:ring-ring data-[active=true]:ring-2 data-[active=true]:ring-inset",
+  ],
+  {
+    variants: {
+      variant: {
+        default: "rounded-sm px-2 py-1.5",
+        // Options sur deux lignes séparées par un filet, dans une liste collée aux bords du
+        // panneau (`ComboboxList` sans marge) : suggestions d'adresse, Figma « 01. SIGN-UP ».
+        separated: "rounded-none border-b px-3 py-2 last:border-b-0",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
 function ComboboxOption({
   className,
+  variant,
   selected = false,
   active = false,
   children,
   ...props
-}: React.ComponentProps<"li"> & {
-  selected?: boolean;
-  /** Option désignée au clavier (`aria-activedescendant` du champ). */
-  active?: boolean;
-}) {
+}: React.ComponentProps<"li"> &
+  VariantProps<typeof comboboxOptionVariants> & {
+    selected?: boolean;
+    /** Option désignée au clavier (`aria-activedescendant` du champ). */
+    active?: boolean;
+  }) {
   return (
     <li
       data-slot="combobox-option"
       role="option"
       aria-selected={selected}
       data-active={active}
-      className={cn(
-        "hover:bg-accent hover:text-accent-foreground flex min-h-11 cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm select-none md:min-h-8",
-        "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground data-[active=true]:ring-ring data-[active=true]:ring-2 data-[active=true]:ring-inset",
-        className,
-      )}
+      className={cn(comboboxOptionVariants({ variant }), className)}
       {...props}
     >
       <span className="min-w-0 flex-1">{children}</span>
@@ -114,4 +155,4 @@ function ComboboxEmpty({ className, ...props }: React.ComponentProps<"p">) {
   );
 }
 
-export { Combobox, ComboboxInput, ComboboxList, ComboboxOption, ComboboxEmpty };
+export { Combobox, ComboboxHeader, ComboboxInput, ComboboxList, ComboboxOption, ComboboxEmpty };
