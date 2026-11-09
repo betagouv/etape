@@ -31,7 +31,7 @@ Les tests Vitest couvrent les fonctions pures de `domain/`, sans DOM.
 - `src/navigation/` — `router.ts` (contexte du routeur : `apiBaseUrl`, `httpClient`, `queryClient` ; `AppErrorScreen` par défaut) et `routes.tsx`, dont chaque route s'accroche à `sessionRootRoute`. Pas de routage par fichiers : `tsc -b` tourne avant Vite et ne trouverait pas `routeTree.gen.ts` (`stack-front.md`, décision 12).
 - `src/navigation/routes.tsx` — toutes les routes des maquettes, y compris celles dont l'écran n'est pas encore intégré (`PlaceholderScreen`).
 - `src/lib/clients.ts` — `httpClient` et `queryClient`, reliés par `createSessionClients` (`packages/api-client`) : un 401 expire la session.
-- `src/dossier/demo.ts` — données de la maquette, en attendant celles de l'API.
+- `src/dossier/dossier-volets-context.ts` — les formulaires des volets vivent sous `DossierScreen` ; les écrans de volet, rendus par l'`Outlet`, les lisent par `useDossierVolets`.
 
 ## Conventions
 
