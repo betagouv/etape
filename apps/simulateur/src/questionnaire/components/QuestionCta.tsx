@@ -51,7 +51,7 @@ export function QuestionCta({
         aria-disabled={nextDisabled || undefined}
         aria-describedby={nextDisabled ? NEXT_HINT_ID : undefined}
         onClick={onNext}
-        className="aria-disabled:hover:bg-primary flex-1 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 md:flex-none"
+        className="flex-1 md:flex-none"
       >
         {nextLabel}
       </Button>

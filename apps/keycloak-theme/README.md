@@ -3,10 +3,23 @@
 Thème Keycloak d'ETAPE — écrans de connexion et gabarits d'email, écrits en
 React avec [Keycloakify](https://keycloakify.dev).
 
-Les écrans suivent les maquettes `login-proposition-2` du Figma _Dépôt de
-dossier_. Ils réutilisent les variables de `@etape/ui` — couleurs, rayons,
-échelle typographique — plutôt que de les recopier : ce qui bouge dans le design
-system se propage ici au prochain build.
+La connexion suit la section « 00. SIGN-IN » du Figma _FRONT-OFFICE_ (écrans 01
+à 06, ticket Notion 191) ; les autres écrans suivent encore les maquettes
+`login-proposition-2` du Figma _Dépôt de dossier_. Ils réutilisent les variables
+de `@etape/ui` — couleurs, rayons, échelle typographique — plutôt que de les
+recopier : ce qui bouge dans le design system se propage ici au prochain build.
+
+## Cadre commun
+
+`src/login/Template.tsx` porte ce que tous les écrans partagent :
+
+- à gauche, l'illustration aux jumelles sur fond `--surface-warm`, masquée sous
+  `lg` ;
+- en haut à droite, l'emplacement `accountSwitchNode`, que chaque écran remplit
+  ou non (la connexion y met « Créer mon espace ») ;
+- le logo Transitions Pro (`components/logo.tsx`) au-dessus du titre ;
+- en bas, le pied de page « Besoin d'aide ? » vers `support@etape.com`
+  (`components/support-footer.tsx`).
 
 ## Installer et lancer
 
@@ -55,8 +68,8 @@ d'ETAPE, porté par `html/template.ftl`.
 
 ## Connexion et inscription sont deux pages, et c'est imposé
 
-Le pied de formulaire porte un lien — « Pas encore de compte ? Créer un compte
-usager » — et non un onglet. Ce n'est pas un choix esthétique.
+La connexion porte un lien en haut à droite — « Vous n'avez pas encore d'espace ?
+Créer mon espace » — et non un onglet. Ce n'est pas un choix esthétique.
 
 Keycloak ne suit qu'une étape courante par session d'authentification et
 régénère son `session_code` à chaque changement. Échanger les formulaires côté
@@ -80,6 +93,67 @@ les mêmes classes que le gabarit React (`.kc-split`, `.kc-illustration`,
 Une transition de vue entre documents a été tentée pour aller plus loin ; elle ne
 démarre pas de façon fiable dans ce contexte et a été retirée plutôt que laissée
 à moitié fonctionnelle.
+
+## Formulaire de connexion : erreurs et envoi incomplet
+
+L'adresse est contrôlée à la sortie du champ, mais pas quand cette sortie vient
+d'un appui sur un lien ou un bouton : l'erreur en s'insérant décalerait la page,
+et le clic tomberait à côté de sa cible. L'appui se repère par `mousedown`, qui
+précède la sortie du champ dans tous les navigateurs ; `:active` n'offre pas cette
+garantie. L'envoi contrôle de toute façon le format.
+
+Un envoi incomplet (Entrée, ou clic sur le bouton grisé) reste bloqué : le focus
+part sur le premier champ vide et une région `role="status"` dit quoi faire. Le
+bouton porte le même texte en `aria-describedby`.
+
+## Vérification d'adresse : deux écrans pour une seule page
+
+Keycloak affiche `login-verify-email.ftl` dans deux cas : juste après une
+inscription, et quand un compte pas encore activé se connecte. Rien dans le
+contexte transmis au thème ne permet de les distinguer — la note
+`NEW_USER_REGISTERED` reste dans la session d'authentification, l'URL est la
+même `required-action?execution=VERIFY_EMAIL`.
+
+Le thème retient donc, dans le `sessionStorage` de l'onglet, le dernier
+formulaire envoyé (`src/login/components/submitted-form.ts`) :
+
+- **connexion** → écran 05 de la maquette : « Votre espace n'est pas encore
+  activé », alerte rouge, bouton de renvoi ;
+- **inscription, ou rien de retenu** (stockage refusé, arrivée par
+  FranceConnect) → « Confirmez votre adresse », l'écran neutre d'avant la
+  maquette, qui convient aux deux cas.
+
+L'écran de connexion efface la marque à son affichage : un essai raté suivi
+d'une arrivée par FranceConnect ne garde pas « connexion ».
+
+Une vérification demandée par l'application (`kc_action=VERIFY_EMAIL`, soit
+`isAppInitiatedAction` dans le contexte) passe aussi par l'écran neutre : une
+session est déjà ouverte, et la marque « connexion » peut être restée dans
+l'onglet. Un compte déjà vérifié ne voit jamais cette page : Keycloak valide
+l'action sans l'afficher.
+
+## Remplissage automatique de Chrome
+
+« Se connecter » reste grisé tant que les deux champs sont vides. Quand Chrome
+remplit un mot de passe enregistré au chargement, il n'émet aucun événement et
+cache la valeur au code (`input.value` vaut `""`) jusqu'au premier geste de la
+personne. À ce geste, il émet de vrais événements `input` et `change`.
+
+Le seul signal au chargement est la pseudo-classe `:-webkit-autofill`.
+`src/styles/theme.css` y attache une animation sans effet visible
+(`etape-autofill`), dont `useLoginForm` écoute le début pour tenir le champ pour
+rempli. Sa durée est de 1 ms : à 0 s, l'événement `animationstart` ne part pas
+sur cette page, alors qu'il part sur une page minimale.
+
+Les champs ne sont pas contrôlés, et cela compte : un champ avec `value` serait
+réécrit par React au rendu suivant, donc vidé si le navigateur l'a rempli sans
+événement. Le hook ne retient qu'un booléen par champ, et l'envoi relit
+`FormData`.
+
+Vérifié dans Chrome avec un vrai mot de passe enregistré dans un profil
+temporaire (ajouté par `chrome.passwordsPrivate`), sur la page en contexte
+simulé et non dans un vrai Keycloak. `Autofill.trigger`, du protocole DevTools,
+ne convient pas à ce test : il émet des événements de saisie dès le remplissage.
 
 ## Case « Je ne suis pas un robot »
 

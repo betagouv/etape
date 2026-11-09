@@ -125,7 +125,6 @@ export function SessionDialog({
                 ref={actionRef}
                 aria-disabled={action.isBusy}
                 aria-busy={action.isBusy}
-                className="aria-busy:cursor-progress"
                 onClick={() => {
                   if (action.isBusy) return;
                   action.onClick();
