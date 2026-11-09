@@ -17,7 +17,8 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
 
   const isExpiredLink =
     message.summary === msgStr("expiredActionTokenNoSessionMessage") ||
-    message.summary === msgStr("expiredActionTokenSessionExistsMessage");
+    message.summary === msgStr("expiredActionTokenSessionExistsMessage") ||
+    message.summary === msgStr("expiredActionMessage");
 
   const resetCredentialsUrl = isExpiredLink ? url.loginResetCredentialsUrl : undefined;
 
