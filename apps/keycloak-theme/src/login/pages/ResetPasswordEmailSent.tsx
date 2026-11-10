@@ -1,7 +1,9 @@
 import { Button } from "@etape/ui/components/button";
+import { InsetPanel, INSET_PANEL_VARIANT } from "@etape/ui/components/inset-panel";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { CreateAccountSwitch, InlineAction } from "../components/prose";
+import { RESET_EMAIL_ACTION } from "../components/reset-email-action";
 import { SUPPORT_EMAIL } from "../components/support-footer";
 import { useResendCountdown } from "../hooks/use-resend-countdown";
 import type { EtapePageProps } from "./PageProps";
@@ -44,13 +46,15 @@ export default function ResetPasswordEmailSent(
       classes={classes}
       headerNode={msg("etapeResetEmailSentTitle")}
       displayMessage={false}
-      accountSwitchNode={
-        <CreateAccountSwitch
-          isAllowed={realm.registrationAllowed}
-          href={url.registrationUrl}
-          i18n={i18n}
-        />
-      }
+      slots={{
+        accountSwitch: (
+          <CreateAccountSwitch
+            isAllowed={realm.registrationAllowed}
+            href={url.registrationUrl}
+            i18n={i18n}
+          />
+        ),
+      }}
     >
       <div className="flex flex-col gap-6">
         <p className="text-accent-foreground text-base">{msg("etapeResetEmailSentBody")}</p>
@@ -60,48 +64,53 @@ export default function ResetPasswordEmailSent(
           </p>
         )}
 
-        <section
-          aria-labelledby={EMAIL_NOT_RECEIVED_TITLE_ID}
-          className="bg-secondary flex flex-col gap-3 rounded-md px-4 py-3"
-        >
-          <h2
-            id={EMAIL_NOT_RECEIVED_TITLE_ID}
-            className="text-accent-foreground text-base font-medium"
-          >
-            {msg("etapeEmailNotReceivedTitle")}
-          </h2>
-          <p className="text-muted-foreground text-sm">{msg("etapeEmailNotReceivedHint")}</p>
-          <form
-            action={url.loginAction}
-            method="post"
-            onSubmit={resend.submit}
-            className="flex flex-wrap items-center gap-2"
-          >
-            <Button
-              type="submit"
-              name="resend"
-              value="true"
-              size="lg"
-              aria-disabled={!resend.isAvailable || resend.isSubmitting}
-              aria-busy={resend.isSubmitting}
-              aria-describedby={resend.isAvailable ? undefined : RESEND_COUNTDOWN_ID}
+        <section aria-labelledby={EMAIL_NOT_RECEIVED_TITLE_ID}>
+          <InsetPanel variant={INSET_PANEL_VARIANT.PLAIN}>
+            <h2
+              id={EMAIL_NOT_RECEIVED_TITLE_ID}
+              className="text-accent-foreground text-base font-medium"
             >
-              {msg("etapeResendEmail")}
-            </Button>
-            {!resend.isAvailable && (
-              <p id={RESEND_COUNTDOWN_ID} className="text-foreground text-sm">
-                {msg("etapeResendAvailableIn")}{" "}
-                <span className="text-primary">{resend.remainingLabel}</span>
-              </p>
-            )}
-          </form>
-          <StatusRegion message={resend.announcement} />
+              {msg("etapeEmailNotReceivedTitle")}
+            </h2>
+            <p className="text-muted-foreground text-sm">{msg("etapeEmailNotReceivedHint")}</p>
+            <form
+              action={url.loginAction}
+              method="post"
+              onSubmit={resend.submit}
+              className="flex flex-wrap items-center gap-2"
+            >
+              <Button
+                type="submit"
+                name={RESET_EMAIL_ACTION.RESEND}
+                value="true"
+                size="lg"
+                aria-disabled={!resend.isAvailable || resend.isSubmitting}
+                aria-busy={resend.isSubmitting}
+                aria-describedby={resend.isAvailable ? undefined : RESEND_COUNTDOWN_ID}
+              >
+                {msg("etapeResendEmail")}
+              </Button>
+              {!resend.isAvailable && (
+                <p id={RESEND_COUNTDOWN_ID} className="text-foreground text-sm">
+                  {msg("etapeResendAvailableIn")}{" "}
+                  <span className="text-primary">{resend.remainingLabel}</span>
+                </p>
+              )}
+            </form>
+            <StatusRegion message={resend.announcement} />
+          </InsetPanel>
         </section>
 
         <div className="flex flex-col gap-3">
           <form action={url.loginAction} method="post">
             <InlineAction question={msg("etapeWrongEmail")}>
-              <Button type="submit" name="edit-email" value="true" variant="link" size="inline">
+              <Button
+                type="submit"
+                name={RESET_EMAIL_ACTION.EDIT_EMAIL}
+                value="true"
+                variant="link"
+                size="inline"
+              >
                 {msg("etapeEditEmail")}
               </Button>
             </InlineAction>

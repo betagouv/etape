@@ -19,7 +19,7 @@ export default function LoginPageExpired(
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("pageExpiredTitle")}
-      subtitle={msg("etapePageExpiredSubtitle")}
+      slots={{ subtitle: msg("etapePageExpiredSubtitle") }}
     >
       <Prose>
         <p id="instruction1">{msg("pageExpiredMsg1")}</p>

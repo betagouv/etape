@@ -238,14 +238,16 @@ export default function Register(props: RegisterProps) {
       documentTitle={msgStr("etapeRegisterTitle")}
       headerNode={<span className="text-primary">{msg("etapeRegisterTitle")}</span>}
       displayMessage={messagesPerField.exists("global")}
-      accountSwitchNode={
-        <HeaderAccountSwitch
-          question={msg("etapeAlreadyAccount")}
-          href={url.loginUrl}
-          label={msg("doLogIn")}
-        />
-      }
-      footerNote={msg("etapeRegisterCepNote")}
+      slots={{
+        accountSwitch: (
+          <HeaderAccountSwitch
+            question={msg("etapeAlreadyAccount")}
+            href={url.loginUrl}
+            label={msg("doLogIn")}
+          />
+        ),
+        footerNote: msg("etapeRegisterCepNote"),
+      }}
       socialProvidersNode={
         isOnInformations ? (
           <SocialProviders

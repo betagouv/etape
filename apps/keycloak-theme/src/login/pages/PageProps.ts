@@ -8,8 +8,9 @@ import type Template from "../Template";
  * générique.
  *
  * Keycloakify type `Template` de façon volontairement large pour que n'importe
- * quel gabarit convienne. Le nôtre accepte une propriété de plus — `subtitle` —
- * et sans ce resserrement, TypeScript la refuserait dans les pages.
+ * quel gabarit convienne. Le nôtre accepte une propriété de plus — `slots`, qui
+ * regroupe les emplacements propres à ETAPE — et sans ce resserrement,
+ * TypeScript la refuserait dans les pages.
  */
 export type EtapePageProps<NarrowedKcContext> = Omit<
   PageProps<NarrowedKcContext, I18n>,

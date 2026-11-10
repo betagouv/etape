@@ -15,10 +15,11 @@ recopier : ce qui bouge dans le design system se propage ici au prochain build.
 
 - à gauche, l'illustration aux jumelles sur fond `--surface-warm`, masquée sous
   `lg` ;
-- en haut à droite, l'emplacement `accountSwitchNode`, que chaque écran remplit
-  ou non (la connexion et le mot de passe oublié y mettent « Créer mon espace ») ;
-- au-dessus du logo, l'emplacement `backLinkNode` (« Retour à la connexion » de
-  l'écran 07) ;
+- en haut à droite, l'emplacement `slots.accountSwitch`, que chaque écran
+  remplit ou non (la connexion et le mot de passe oublié y mettent « Créer mon
+  espace ») ;
+- au-dessus du logo, l'emplacement `slots.backLink` (« Retour à la connexion »
+  de l'écran 07) ;
 - le logo Transitions Pro (`components/logo.tsx`) au-dessus du titre ;
 - en bas, le pied de page « Besoin d'aide ? » vers `contact.etape@certif-pro.fr`
   (`components/support-footer.tsx`).
