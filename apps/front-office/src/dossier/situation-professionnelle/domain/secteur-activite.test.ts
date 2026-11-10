@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   findSecteurActiviteByCode,
+  findSecteurAnnouncement,
   findSecteurBlurOutcome,
+  findSecteurEmptyMessage,
   findSecteursActivite,
   formatSecteurActivite,
+  NO_SECTEUR_MESSAGE,
   SECTEUR_BLUR_OUTCOME,
+  SECTEURS_ERROR_MESSAGE,
+  SECTEURS_LOADING_MESSAGE,
 } from "./secteur-activite";
 
 const BOULANGERIE = { code: "10.71C", libelle: "Boulangerie et boulangerie-pâtisserie" };
@@ -102,5 +107,47 @@ describe("findSecteurBlurOutcome", () => {
     expect(findSecteurBlurOutcome(SECTEURS, "  ", true)).toEqual({
       outcome: SECTEUR_BLUR_OUTCOME.CLEAR,
     });
+  });
+});
+
+describe("findSecteurEmptyMessage", () => {
+  it("dit que la liste charge tant que la nomenclature n'est pas arrivée", () => {
+    expect(findSecteurEmptyMessage(true, false)).toBe(SECTEURS_LOADING_MESSAGE);
+  });
+
+  it("dit que la liste est indisponible quand son chargement a échoué", () => {
+    expect(findSecteurEmptyMessage(false, true)).toBe(SECTEURS_ERROR_MESSAGE);
+  });
+
+  it("dit qu'aucun secteur ne correspond quand la nomenclature est là", () => {
+    expect(findSecteurEmptyMessage(false, false)).toBe(NO_SECTEUR_MESSAGE);
+  });
+});
+
+describe("findSecteurAnnouncement", () => {
+  const MORE = "120 secteurs correspondent : précisez votre recherche pour voir les autres.";
+
+  it("n'annonce rien tant que la liste est fermée", () => {
+    expect(findSecteurAnnouncement(false, 3, NO_SECTEUR_MESSAGE, "")).toBe("");
+  });
+
+  it("annonce le message de la liste quand elle n'a aucune option", () => {
+    expect(findSecteurAnnouncement(true, 0, NO_SECTEUR_MESSAGE, "")).toBe(NO_SECTEUR_MESSAGE);
+    expect(findSecteurAnnouncement(true, 0, SECTEURS_LOADING_MESSAGE, "")).toBe(
+      SECTEURS_LOADING_MESSAGE,
+    );
+  });
+
+  it("annonce le nombre de secteurs affichés, au singulier comme au pluriel", () => {
+    expect(findSecteurAnnouncement(true, 1, NO_SECTEUR_MESSAGE, "")).toBe(
+      "1 secteur d’activité trouvé",
+    );
+    expect(findSecteurAnnouncement(true, 2, NO_SECTEUR_MESSAGE, "")).toBe(
+      "2 secteurs d’activité trouvés",
+    );
+  });
+
+  it("annonce l'invitation à préciser à la place du nombre quand la liste est tronquée", () => {
+    expect(findSecteurAnnouncement(true, 50, NO_SECTEUR_MESSAGE, MORE)).toBe(MORE);
   });
 });

@@ -11,6 +11,12 @@ import { httpClient } from "@/lib/clients";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
 import {
+  findSearchAnnouncement,
+  findSearchStatus,
+  SEARCH_STATUS,
+  type SearchStatus,
+} from "../domain/employeur-search";
+import {
   formatEtablissementCount,
   hasMoreEtablissements,
   MORE_ETABLISSEMENTS_MESSAGE,
@@ -26,21 +32,6 @@ export const EMPLOYEUR_FIELD_ID = "employeur";
 export function employeurOptionId({ siret }: Etablissement): string {
   return `${EMPLOYEUR_FIELD_ID}-option-${siret}`;
 }
-
-export const SEARCH_STATUS = {
-  IDLE: "idle",
-  RESULTS: "results",
-  NO_RESULT: "no-result",
-  ERROR: "error",
-  /** « Relancer la recherche » : l'alerte d'erreur reste affichée pendant le nouvel appel. */
-  RETRYING: "retrying",
-} as const;
-
-export type SearchStatus = (typeof SEARCH_STATUS)[keyof typeof SEARCH_STATUS];
-
-export const NO_RESULT_TITLE = "Aucun établissement ne correspond à cette recherche";
-export const SEARCH_ERROR_TITLE = "La recherche d’entreprises ne répond pas pour le moment";
-const RETRYING_ANNOUNCEMENT = "Nouvelle recherche en cours…";
 
 export interface EmployeurSearchInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -75,18 +66,6 @@ async function fetchEtablissements(search: string): Promise<SearchEtablissements
   return searchEtablissements.response.parse(response.data);
 }
 
-function findStatus(
-  isSearching: boolean,
-  hasFailed: boolean,
-  isFetching: boolean,
-  count?: number,
-): SearchStatus {
-  if (!isSearching) return SEARCH_STATUS.IDLE;
-  if (hasFailed) return isFetching ? SEARCH_STATUS.RETRYING : SEARCH_STATUS.ERROR;
-  if (count === undefined) return SEARCH_STATUS.IDLE;
-  return count === 0 ? SEARCH_STATUS.NO_RESULT : SEARCH_STATUS.RESULTS;
-}
-
 /** Recherche de l'employeur dans Sirene, au fil de la saisie. */
 export function useEmployeurSearch(
   onSelect: (etablissement: Etablissement) => void,
@@ -113,7 +92,7 @@ export function useEmployeurSearch(
   // Pas `isError` : une requête qui n'a jamais abouti repasse en chargement pendant la relance, et l'alerte disparaîtrait avec le focus.
   const hasFailed = query.errorUpdatedAt > query.dataUpdatedAt;
   const count = query.data?.etablissementCount;
-  const status = findStatus(isSearching, hasFailed, query.isFetching, count);
+  const status = findSearchStatus(isSearching, hasFailed, query.isFetching, count);
   const etablissements = (status === SEARCH_STATUS.RESULTS && query.data?.etablissements) || [];
   const resultLabel =
     query.data === undefined
@@ -133,14 +112,6 @@ export function useEmployeurSearch(
 
   const navigation = useListboxNavigation(etablissements, employeurOptionId, select);
 
-  const announcements: Record<SearchStatus, string> = {
-    [SEARCH_STATUS.IDLE]: "",
-    [SEARCH_STATUS.RESULTS]: [resultLabel, moreMessage].filter(Boolean).join(" "),
-    [SEARCH_STATUS.NO_RESULT]: NO_RESULT_TITLE,
-    [SEARCH_STATUS.ERROR]: SEARCH_ERROR_TITLE,
-    [SEARCH_STATUS.RETRYING]: RETRYING_ANNOUNCEMENT,
-  };
-
   const isPopupOpen =
     isOpen && (status === SEARCH_STATUS.RESULTS || status === SEARCH_STATUS.NO_RESULT);
 
@@ -152,7 +123,7 @@ export function useEmployeurSearch(
     moreMessage,
     etablissements,
     active: navigation.active,
-    announcement: announcements[status],
+    announcement: findSearchAnnouncement(status, resultLabel, moreMessage),
     inputHandlers: {
       onChange: (event) => {
         setSearchText(event.target.value);

@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getSecteursActivite, type SecteurActivite } from "@etape/api-contract";
 
 import { httpClient } from "@/lib/clients";
-import { selectPlural, type PluralForms } from "@/lib/plural";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
 import {
+  findSecteurAnnouncement,
   findSecteurBlurOutcome,
+  findSecteurEmptyMessage,
   findSecteursActivite,
   formatSecteurActivite,
   SECTEUR_BLUR_OUTCOME,
@@ -21,36 +22,11 @@ export function secteurActiviteOptionId({ code }: SecteurActivite): string {
   return `${SECTEUR_ACTIVITE_FIELD_ID}-option-${code}`;
 }
 
-export const NO_SECTEUR_MESSAGE = "Aucun secteur d’activité ne correspond.";
-export const SECTEURS_ERROR_MESSAGE = "La liste des secteurs d’activité est indisponible.";
-export const SECTEURS_LOADING_MESSAGE = "Chargement des secteurs d’activité…";
-
 /** Une lettre en retient des centaines sur 732 : au-delà, on invite à préciser la recherche. */
 const SECTEURS_DISPLAY_LIMIT = 50;
 
 /** La liste se filtre à chaque frappe : on n'annonce que le nombre où la saisie s'arrête. */
 const ANNOUNCEMENT_DELAY_MS = 300;
-
-const SECTEUR_FOUND_LABELS: PluralForms<string> = {
-  one: "secteur d’activité trouvé",
-  other: "secteurs d’activité trouvés",
-};
-
-function findEmptyMessage(isPending: boolean, isError: boolean): string {
-  if (isPending) return SECTEURS_LOADING_MESSAGE;
-  return isError ? SECTEURS_ERROR_MESSAGE : NO_SECTEUR_MESSAGE;
-}
-
-function findAnnouncement(
-  isListOpen: boolean,
-  secteurCount: number,
-  emptyMessage: string,
-  moreMessage: string,
-): string {
-  if (!isListOpen) return "";
-  if (secteurCount === 0) return emptyMessage;
-  return moreMessage || `${secteurCount} ${selectPlural(secteurCount, SECTEUR_FOUND_LABELS)}`;
-}
 
 export interface SecteurActiviteInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -108,13 +84,13 @@ export function useSecteurActiviteSearch(
   const navigation = useListboxNavigation(secteurs, secteurActiviteOptionId, select);
 
   const isListOpen = isOpen && Boolean(searchText?.trim());
-  const emptyMessage = findEmptyMessage(query.isPending, query.isError);
+  const emptyMessage = findSecteurEmptyMessage(query.isPending, query.isError);
   const moreMessage =
     matches.length > secteurs.length
       ? `${matches.length} secteurs correspondent : précisez votre recherche pour voir les autres.`
       : "";
   const announcement = useDebouncedValue(
-    findAnnouncement(isListOpen, secteurs.length, emptyMessage, moreMessage),
+    findSecteurAnnouncement(isListOpen, secteurs.length, emptyMessage, moreMessage),
     ANNOUNCEMENT_DELAY_MS,
   );
 

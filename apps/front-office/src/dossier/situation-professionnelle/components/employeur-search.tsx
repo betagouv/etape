@@ -24,13 +24,11 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/componen
 import { Separator } from "@etape/ui/components/separator";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
+import { NO_RESULT_TITLE, SEARCH_ERROR_TITLE, SEARCH_STATUS } from "../domain/employeur-search";
 import { formatSiret } from "../domain/format-siret";
 import {
   EMPLOYEUR_FIELD_ID,
   employeurOptionId,
-  NO_RESULT_TITLE,
-  SEARCH_ERROR_TITLE,
-  SEARCH_STATUS,
   type UseEmployeurSearchResult,
 } from "../hooks/use-employeur-search";
 import { SITUATION_PROFESSIONNELLE_FIELD_LABEL } from "../schema";

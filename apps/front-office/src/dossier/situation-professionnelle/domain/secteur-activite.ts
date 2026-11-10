@@ -1,6 +1,17 @@
 import type { SecteurActivite } from "@etape/api-contract";
 import { normalizeForSearch } from "@etape/utils/text";
 
+import { selectPlural, type PluralForms } from "@/lib/plural";
+
+export const NO_SECTEUR_MESSAGE = "Aucun secteur d’activité ne correspond.";
+export const SECTEURS_ERROR_MESSAGE = "La liste des secteurs d’activité est indisponible.";
+export const SECTEURS_LOADING_MESSAGE = "Chargement des secteurs d’activité…";
+
+const SECTEUR_FOUND_LABELS: PluralForms<string> = {
+  one: "secteur d’activité trouvé",
+  other: "secteurs d’activité trouvés",
+};
+
 /** Sans casse, accents, points ni espaces : `10.71C`, `1071c` et `10 71C` se valent. */
 function normalizeCode(text: string): string {
   return normalizeForSearch(text).replace(/[.\s]/g, "");
@@ -64,4 +75,22 @@ export function findSecteurBlurOutcome(
   const secteur = findSecteurActiviteByCode(secteurs, searchText);
   if (secteur) return { outcome: SECTEUR_BLUR_OUTCOME.SELECT, secteur };
   return { outcome: hasSelection ? SECTEUR_BLUR_OUTCOME.RESTORE : SECTEUR_BLUR_OUTCOME.KEEP_TEXT };
+}
+
+/** Ce que dit la liste quand elle n'a aucune option : chargement, liste indisponible, ou aucun secteur trouvé. */
+export function findSecteurEmptyMessage(isPending: boolean, isError: boolean): string {
+  if (isPending) return SECTEURS_LOADING_MESSAGE;
+  return isError ? SECTEURS_ERROR_MESSAGE : NO_SECTEUR_MESSAGE;
+}
+
+/** Ce qu'annonce la région `role="status"` : rien tant que la liste est fermée, sinon ce que la liste affiche. */
+export function findSecteurAnnouncement(
+  isListOpen: boolean,
+  secteurCount: number,
+  emptyMessage: string,
+  moreMessage: string,
+): string {
+  if (!isListOpen) return "";
+  if (secteurCount === 0) return emptyMessage;
+  return moreMessage || `${secteurCount} ${selectPlural(secteurCount, SECTEUR_FOUND_LABELS)}`;
 }
