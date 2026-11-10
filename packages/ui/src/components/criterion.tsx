@@ -4,6 +4,7 @@ import { Check, X, type LucideIcon } from "lucide-react";
 
 import { cn } from "@etape/ui/lib/utils";
 
+/** États d'un `Criterion`. */
 const CRITERION_STATUS = {
   MET: "met",
   UNMET: "unmet",
@@ -35,17 +36,14 @@ const CRITERION_ICON: Record<CriterionStatus, LucideIcon> = {
   [CRITERION_STATUS.UNMET]: X,
 };
 
-function Criterion({
-  status,
-  statusLabel,
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"li"> & {
+interface CriterionProps extends React.ComponentProps<"li"> {
   status: CriterionStatus;
   /** Lu après le libellé par les lecteurs d'écran, la pastille étant décorative. */
   statusLabel: string;
-}) {
+}
+
+/** Une ligne d'une liste de critères : pastille d'état, libellé, état lu en clair. */
+function Criterion({ status, statusLabel, className, children, ...props }: CriterionProps) {
   const Icon = CRITERION_ICON[status];
 
   return (
@@ -61,9 +59,11 @@ function Criterion({
       <span data-slot="criterion-label" className={criterionLabelVariants({ status })}>
         {children}
       </span>
-      <span className="sr-only">{statusLabel}</span>
+      <span data-slot="criterion-status" className="sr-only">
+        {statusLabel}
+      </span>
     </li>
   );
 }
 
-export { Criterion, CRITERION_STATUS, type CriterionStatus };
+export { Criterion, CRITERION_STATUS, type CriterionProps, type CriterionStatus };

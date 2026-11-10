@@ -10,10 +10,7 @@ import { getPasswordRules, PASSWORD_MIN_LENGTH } from "./password-rules";
 
 export const PASSWORD_RULES_ID = "password-rules";
 
-const RULE_STATUS_LABEL: Record<
-  CriterionStatus,
-  "etapePasswordRuleMet" | "etapePasswordRuleUnmet"
-> = {
+const RULE_STATUS_LABEL: Record<CriterionStatus, Parameters<I18n["msgStr"]>[0]> = {
   [CRITERION_STATUS.MET]: "etapePasswordRuleMet",
   [CRITERION_STATUS.UNMET]: "etapePasswordRuleUnmet",
 };
@@ -244,11 +241,7 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
   const rules = getPasswordRules(value, minLength);
 
   return (
-    <InsetPanel
-      id={PASSWORD_RULES_ID}
-      variant={INSET_PANEL_VARIANT.PLAIN}
-      className="gap-2 px-3 py-2"
-    >
+    <InsetPanel id={PASSWORD_RULES_ID} variant={INSET_PANEL_VARIANT.COMPACT}>
       <p className="text-foreground text-sm">{msgStr("etapePasswordRulesTitle")}</p>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
         {rules.map(({ messageKey, isSatisfied }) => {
