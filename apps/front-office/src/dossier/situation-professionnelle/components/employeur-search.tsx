@@ -49,6 +49,7 @@ export interface EmployeurSearchProps {
   onManualEntry: () => void;
 }
 
+/** Le champ de recherche de l'employeur dans Sirene, sa liste de résultats et ses alertes. */
 export function EmployeurSearch({
   search,
   fieldRef,

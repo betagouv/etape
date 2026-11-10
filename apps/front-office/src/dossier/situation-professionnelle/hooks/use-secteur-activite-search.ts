@@ -16,6 +16,7 @@ import {
 /** Le résumé d'erreurs mène à `#secteurActivite`. */
 export const SECTEUR_ACTIVITE_FIELD_ID = "secteurActivite";
 
+/** L'id de l'option d'un secteur, que désigne l'`aria-activedescendant` du champ. */
 export function secteurActiviteOptionId({ code }: SecteurActivite): string {
   return `${SECTEUR_ACTIVITE_FIELD_ID}-option-${code}`;
 }

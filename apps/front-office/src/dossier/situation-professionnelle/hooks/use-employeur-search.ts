@@ -22,6 +22,7 @@ const SEARCH_DELAY_MS = 300;
 /** Le résumé d'erreurs mène à `#employeur`. */
 export const EMPLOYEUR_FIELD_ID = "employeur";
 
+/** L'id de l'option d'un établissement, que désigne l'`aria-activedescendant` du champ. */
 export function employeurOptionId({ siret }: Etablissement): string {
   return `${EMPLOYEUR_FIELD_ID}-option-${siret}`;
 }

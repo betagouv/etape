@@ -9,6 +9,7 @@ const ETABLISSEMENT_FOUND_LABELS: PluralForms<string> = {
 export const MORE_ETABLISSEMENTS_MESSAGE =
   "Précisez votre recherche pour voir les autres établissements.";
 
+/** Vrai quand Sirene compte plus d'établissements que la liste n'en affiche. */
 export function hasMoreEtablissements(shownCount: number, totalCount: number): boolean {
   return shownCount < totalCount;
 }

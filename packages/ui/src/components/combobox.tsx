@@ -154,6 +154,7 @@ function ComboboxOption({
   );
 }
 
+/** Titre d'une option à plusieurs lignes, au-dessus de ses `ComboboxOptionDetail`. */
 function ComboboxOptionTitle({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span

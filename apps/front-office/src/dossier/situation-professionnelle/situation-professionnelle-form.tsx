@@ -41,6 +41,7 @@ function computeDateDemissionCalendar(today: Date): DateFieldCalendar {
   return { defaultMonth: today, endMonth: today, disabled: { after: today } };
 }
 
+/** Le volet « Ma situation professionnelle » : l'emploi occupé, puis la démission. */
 export function SituationProfessionnelleForm({
   formId,
   onSubmitValid,

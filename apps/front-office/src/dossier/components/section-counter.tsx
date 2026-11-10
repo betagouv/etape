@@ -52,6 +52,7 @@ export interface SectionCounterProps {
   progress: SectionProgress;
 }
 
+/** Champs restants ou erreurs d'une section du volet ; rien quand elle est complète. */
 export function SectionCounter({ progress }: SectionCounterProps) {
   const statut = getCounterStatut(progress);
   if (statut === null) return null;

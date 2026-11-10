@@ -120,6 +120,7 @@ function CardDetails({ className, ...props }: React.ComponentProps<"dl">) {
   );
 }
 
+/** Une ligne de `CardDetails` : le libellé à gauche, la valeur à droite. */
 function CardDetail({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -130,6 +131,7 @@ function CardDetail({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/** Le libellé d'une ligne, qu'une icône peut précéder. */
 function CardDetailLabel({ className, ...props }: React.ComponentProps<"dt">) {
   return (
     <dt
@@ -140,6 +142,7 @@ function CardDetailLabel({ className, ...props }: React.ComponentProps<"dt">) {
   );
 }
 
+/** La valeur d'une ligne, alignée à droite. */
 function CardDetailValue({ className, ...props }: React.ComponentProps<"dd">) {
   return <dd data-slot="card-detail-value" className={cn("text-right", className)} {...props} />;
 }
