@@ -9,7 +9,7 @@ import {
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   type SituationProfessionnelleFormData,
 } from "../schema";
-import { SecteurActiviteInput } from "./secteur-activite-input";
+import { SecteurActiviteField } from "./secteur-activite-field";
 
 export interface EmployeurManualFieldsProps {
   control: Control<SituationProfessionnelleFormData>;
@@ -53,14 +53,7 @@ export function EmployeurManualFields({
           name="secteurActivite"
           control={control}
           render={({ field, fieldState }) => (
-            <SecteurActiviteInput
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              fieldRef={field.ref}
-              isInvalid={fieldState.invalid}
-              error={fieldState.error}
-            />
+            <SecteurActiviteField field={field} error={fieldState.error} />
           )}
         />
       </div>

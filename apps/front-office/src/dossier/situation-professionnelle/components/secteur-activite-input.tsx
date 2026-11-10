@@ -12,7 +12,7 @@ import { formatSecteurActivite } from "../domain/secteur-activite";
 import {
   SECTEUR_ACTIVITE_FIELD_ID,
   secteurActiviteOptionId,
-  useSecteurActiviteSearch,
+  type UseSecteurActiviteSearchResult,
 } from "../hooks/use-secteur-activite-search";
 import { SITUATION_PROFESSIONNELLE_FIELD_LABEL } from "../schema";
 
@@ -21,23 +21,22 @@ const ERROR_ID = `${SECTEUR_ACTIVITE_FIELD_ID}-error`;
 const LIST_ID = `${SECTEUR_ACTIVITE_FIELD_ID}-list`;
 
 export interface SecteurActiviteInputProps {
+  search: UseSecteurActiviteSearchResult;
   value: string;
-  onChange: (code: string) => void;
-  onBlur: () => void;
   fieldRef: React.Ref<HTMLInputElement>;
-  isInvalid: boolean;
+  onBlur: () => void;
   error?: { message?: string };
 }
 
+/** Le champ du secteur d'activité et sa liste de suggestions. */
 export function SecteurActiviteInput({
+  search,
   value,
-  onChange,
-  onBlur,
   fieldRef,
-  isInvalid,
+  onBlur,
   error,
 }: SecteurActiviteInputProps) {
-  const search = useSecteurActiviteSearch(value, onChange);
+  const isInvalid = error !== undefined;
 
   return (
     <Field data-invalid={isInvalid}>
