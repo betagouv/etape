@@ -10,6 +10,7 @@ const INSET_PANEL_VARIANT = {
   COMPACT: "compact",
 } as const;
 
+/** Apparence d'un `InsetPanel`. */
 type InsetPanelVariant = (typeof INSET_PANEL_VARIANT)[keyof typeof INSET_PANEL_VARIANT];
 
 const insetPanelVariants = cva("bg-secondary flex flex-col", {
@@ -31,6 +32,7 @@ const IS_INDENTED: Record<InsetPanelVariant, boolean> = {
   [INSET_PANEL_VARIANT.COMPACT]: false,
 };
 
+/** Props d'`InsetPanel` : celles d'un `<div>`, plus l'apparence. */
 interface InsetPanelProps extends React.ComponentProps<"div"> {
   variant?: InsetPanelVariant;
 }

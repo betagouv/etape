@@ -5,12 +5,13 @@ import { Check, X, type LucideIcon } from "lucide-react";
 import { cn } from "@etape/ui/lib/utils";
 
 /** États d'un `Criterion`. */
-const CRITERION_STATUS = {
+export const CRITERION_STATUS = {
   MET: "met",
   UNMET: "unmet",
 } as const;
 
-type CriterionStatus = (typeof CRITERION_STATUS)[keyof typeof CRITERION_STATUS];
+/** État d'un `Criterion` : critère satisfait ou non. */
+export type CriterionStatus = (typeof CRITERION_STATUS)[keyof typeof CRITERION_STATUS];
 
 // Critères du mot de passe (Figma FRONT-OFFICE, écran 10) : pastille cochée ou barrée.
 const criterionMarkVariants = cva("flex shrink-0 rounded-full p-1 [&_svg]:size-2.5", {
@@ -36,14 +37,15 @@ const CRITERION_ICON: Record<CriterionStatus, LucideIcon> = {
   [CRITERION_STATUS.UNMET]: X,
 };
 
-interface CriterionProps extends React.ComponentProps<"li"> {
+/** Props de `Criterion` : celles d'un `<li>`, plus l'état et sa lecture. */
+export interface CriterionProps extends React.ComponentProps<"li"> {
   status: CriterionStatus;
   /** Lu après le libellé par les lecteurs d'écran, la pastille étant décorative. */
   statusLabel: string;
 }
 
 /** Une ligne d'une liste de critères : pastille d'état, libellé, état lu en clair. */
-function Criterion({ status, statusLabel, className, children, ...props }: CriterionProps) {
+export function Criterion({ status, statusLabel, className, children, ...props }: CriterionProps) {
   const Icon = CRITERION_ICON[status];
 
   return (
@@ -65,5 +67,3 @@ function Criterion({ status, statusLabel, className, children, ...props }: Crite
     </li>
   );
 }
-
-export { Criterion, CRITERION_STATUS, type CriterionProps, type CriterionStatus };
