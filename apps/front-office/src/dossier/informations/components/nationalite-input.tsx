@@ -71,9 +71,9 @@ export function NationaliteInput({
               aria-labelledby={`${LABEL_ID} ${VALUE_ID}`}
               aria-invalid={isInvalid || undefined}
               aria-describedby={isInvalid ? ERROR_ID : undefined}
-              data-placeholder={value ? undefined : ""}
+              data-placeholder={search.selected ? undefined : ""}
             >
-              <span id={VALUE_ID}>{value || "Sélectionner"}</span>
+              <span id={VALUE_ID}>{search.selected?.label ?? "Sélectionner"}</span>
             </InputGroupTrigger>
           </PopoverTrigger>
           <InputGroupAddon align="inline-end">
@@ -115,7 +115,7 @@ export function NationaliteInput({
                 <ComboboxGroup label="Suggestion">
                   <ComboboxOption
                     id={nationaliteOptionId(suggestion)}
-                    selected={suggestion.label === value}
+                    selected={suggestion.code === value}
                     active={suggestion === search.active}
                     onClick={() => search.select(suggestion)}
                   >
@@ -129,7 +129,7 @@ export function NationaliteInput({
                     <ComboboxOption
                       key={nationalite.code}
                       id={nationaliteOptionId(nationalite)}
-                      selected={nationalite.label === value}
+                      selected={nationalite.code === value}
                       active={nationalite === search.active}
                       onClick={() => search.select(nationalite)}
                     >

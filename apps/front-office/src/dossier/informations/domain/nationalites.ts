@@ -2,10 +2,12 @@ import { normalizeForSearch } from "@etape/utils/text";
 
 export interface Nationalite {
   label: string;
+  /** Les deux lettres du pays, en minuscules : la valeur enregistrée, et le nom de son drapeau. */
   code: string;
 }
 
-export const SUGGESTION_NATIONALITE = "Française";
+/** Le code de la nationalité proposée en tête de liste. */
+export const SUGGESTION_NATIONALITE = "fr";
 
 export const NO_NATIONALITE_MESSAGE = "Aucune nationalité ne correspond.";
 
@@ -207,7 +209,7 @@ export const NATIONALITES: readonly Nationalite[] = [
   { label: "Zimbabwéenne", code: "zw" },
 ];
 
-const NATIONALITE_BY_LABEL = new Map(NATIONALITES.map((n) => [n.label, n]));
+const NATIONALITE_BY_CODE = new Map(NATIONALITES.map((n) => [n.code, n]));
 
 /** Les nationalités dont le libellé contient la recherche, sans casse ni accents ; toutes si elle est vide. */
 export function findNationalites(query: string): readonly Nationalite[] {
@@ -217,9 +219,9 @@ export function findNationalites(query: string): readonly Nationalite[] {
   return NATIONALITES.filter((n) => normalizeForSearch(n.label).includes(normalized));
 }
 
-/** La nationalité qui porte ce libellé, sinon `undefined`. */
-export function findNationaliteByLabel(label: string): Nationalite | undefined {
-  return NATIONALITE_BY_LABEL.get(label);
+/** La nationalité qui porte ce code, sinon `undefined`. */
+export function findNationaliteByCode(code: string): Nationalite | undefined {
+  return NATIONALITE_BY_CODE.get(code);
 }
 
 export interface NationaliteGroups {
@@ -230,7 +232,7 @@ export interface NationaliteGroups {
 
 /** Met la suggestion à part des autres nationalités : la liste l'affiche en tête, dans son propre groupe. */
 export function splitSuggestion(nationalites: readonly Nationalite[]): NationaliteGroups {
-  const suggestion = nationalites.find(({ label }) => label === SUGGESTION_NATIONALITE) ?? null;
+  const suggestion = nationalites.find(({ code }) => code === SUGGESTION_NATIONALITE) ?? null;
   return {
     suggestion,
     nationalites: suggestion

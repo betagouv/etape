@@ -3,7 +3,7 @@ import { useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { useListboxNavigation } from "@etape/ui/hooks/use-listbox-navigation";
 
 import {
-  findNationaliteByLabel,
+  findNationaliteByCode,
   findNationalites,
   splitSuggestion,
   type Nationalite,
@@ -25,7 +25,7 @@ export interface NationaliteSearchInputHandlers {
 export interface UseNationaliteSearchResult {
   searchText: string;
   isListOpen: boolean;
-  /** La nationalité choisie, pour le drapeau du champ. */
+  /** La nationalité choisie, pour le drapeau et le texte du champ. */
   selected: Nationalite | undefined;
   /** La nationalité proposée en tête de liste, quand la recherche la retient. */
   suggestion: Nationalite | null;
@@ -37,10 +37,10 @@ export interface UseNationaliteSearchResult {
   setListOpen: (isOpen: boolean) => void;
 }
 
-/** Choix d'une nationalité dans une liste que filtre la recherche. La valeur est le libellé. */
+/** Choix d'une nationalité dans une liste que filtre la recherche. La valeur est le code. */
 export function useNationaliteSearch(
-  label: string,
-  onChange: (label: string) => void,
+  code: string,
+  onChange: (code: string) => void,
 ): UseNationaliteSearchResult {
   const [searchText, setSearchText] = useState("");
   const [isListOpen, setOpen] = useState(false);
@@ -62,14 +62,14 @@ export function useNationaliteSearch(
   }
 
   function select(nationalite: Nationalite): void {
-    onChange(nationalite.label);
+    onChange(nationalite.code);
     setListOpen(false);
   }
 
   return {
     searchText,
     isListOpen,
-    selected: findNationaliteByLabel(label),
+    selected: findNationaliteByCode(code),
     suggestion,
     nationalites,
     active: navigation.active,

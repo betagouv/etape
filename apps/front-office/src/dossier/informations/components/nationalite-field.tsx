@@ -4,7 +4,7 @@ import { NationaliteInput } from "./nationalite-input";
 /** Ce que fournit le `field` d'un `Controller` de react-hook-form. */
 export interface NationaliteFieldControl {
   value: string;
-  onChange: (label: string) => void;
+  onChange: (code: string) => void;
   onBlur: () => void;
   ref: React.Ref<HTMLButtonElement>;
 }

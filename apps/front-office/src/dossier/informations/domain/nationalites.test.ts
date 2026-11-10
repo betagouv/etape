@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { findNationalites, splitSuggestion } from "./nationalites";
+import {
+  findNationaliteByCode,
+  findNationalites,
+  NATIONALITES,
+  splitSuggestion,
+} from "./nationalites";
+
+describe("NATIONALITES", () => {
+  it("n'a pas deux nationalités du même code : c'est la valeur enregistrée", () => {
+    const codes = NATIONALITES.map((n) => n.code);
+
+    expect(new Set(codes).size).toBe(codes.length);
+  });
+});
 
 describe("findNationalites", () => {
   it("ignore les espaces autour de la recherche", () => {
@@ -13,6 +26,17 @@ describe("findNationalites", () => {
       "Équatoguinéenne",
       "Équatorienne",
     ]);
+  });
+});
+
+describe("findNationaliteByCode", () => {
+  it("retrouve la nationalité du code enregistré", () => {
+    expect(findNationaliteByCode("fr")?.label).toBe("Française");
+  });
+
+  it("ne trouve rien pour un code vide ou inconnu", () => {
+    expect(findNationaliteByCode("")).toBeUndefined();
+    expect(findNationaliteByCode("zz")).toBeUndefined();
   });
 });
 

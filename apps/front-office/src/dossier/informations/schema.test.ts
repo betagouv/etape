@@ -13,7 +13,7 @@ function findCleNirMessages(data: Record<string, string | undefined>): string[] 
 const VALIDES = {
   civilite: "madame",
   dateNaissance: "15/01/1990",
-  nationalite: "Française",
+  nationalite: "fr",
   nir: "1 85 05 78 006 084",
   cleNir: "91",
   telephone: "06 12 34 56 78",
