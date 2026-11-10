@@ -16,9 +16,9 @@ import { StatusRegion } from "@etape/ui/components/status-region";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { DateField, type DateFieldCalendar } from "../components/date-field";
+import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { EmployeurField } from "./components/employeur-field";
-import type { UseSituationProfessionnelleFormResult } from "./hooks/use-situation-professionnelle-form";
 import {
   DEMISSION,
   DEMISSION_LABEL,
@@ -29,7 +29,6 @@ import {
 
 export interface SituationProfessionnelleFormProps {
   formId: string;
-  situationProfessionnelle: UseSituationProfessionnelleFormResult;
   onSubmitValid: (data: SituationProfessionnelleFormData) => void;
 }
 
@@ -44,10 +43,10 @@ function computeDateDemissionCalendar(today: Date): DateFieldCalendar {
 
 export function SituationProfessionnelleForm({
   formId,
-  situationProfessionnelle,
   onSubmitValid,
 }: SituationProfessionnelleFormProps) {
-  const { form, sections, voletErrors, errorAnnouncement } = situationProfessionnelle;
+  const { form, sections, voletErrors, errorAnnouncement } =
+    useDossierVolets().situationProfessionnelle;
   const { submitCount } = form.formState;
   const demission = useWatch({ control: form.control, name: "demission" });
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);

@@ -18,7 +18,7 @@ export function VoletScreen() {
   const navigate = useNavigate();
   const headingRef = useVoletHeadingFocus(voletId);
   const position = findVoletPosition(VOLETS_DOSSIER, voletId);
-  const { informations, situationProfessionnelle, voletProgress } = useDossierVolets();
+  const { informations, voletProgress } = useDossierVolets();
 
   if (!position) return <NotFoundScreen />;
 
@@ -57,7 +57,6 @@ export function VoletScreen() {
       ) : isSituationProfessionnelle ? (
         <SituationProfessionnelleForm
           formId={VOLET_ID.SITUATION_PROFESSIONNELLE}
-          situationProfessionnelle={situationProfessionnelle}
           onSubmitValid={goToNextVolet}
         />
       ) : (
