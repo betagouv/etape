@@ -7,6 +7,8 @@ export interface Nationalite {
 
 export const SUGGESTION_NATIONALITE = "Française";
 
+export const NO_NATIONALITE_MESSAGE = "Aucune nationalité ne correspond.";
+
 export const NATIONALITES: readonly Nationalite[] = [
   { label: "Afghane", code: "af" },
   { label: "Albanaise", code: "al" },
@@ -207,6 +209,7 @@ export const NATIONALITES: readonly Nationalite[] = [
 
 const NATIONALITE_BY_LABEL = new Map(NATIONALITES.map((n) => [n.label, n]));
 
+/** Les nationalités dont le libellé contient la recherche, sans casse ni accents ; toutes si elle est vide. */
 export function findNationalites(query: string): readonly Nationalite[] {
   const trimmed = query.trim();
   if (!trimmed) return NATIONALITES;
@@ -214,8 +217,26 @@ export function findNationalites(query: string): readonly Nationalite[] {
   return NATIONALITES.filter((n) => normalizeForSearch(n.label).includes(normalized));
 }
 
+/** La nationalité qui porte ce libellé, sinon `undefined`. */
 export function findNationaliteByLabel(label: string): Nationalite | undefined {
   return NATIONALITE_BY_LABEL.get(label);
+}
+
+export interface NationaliteGroups {
+  /** La nationalité proposée en tête de liste, quand la recherche la retient. */
+  suggestion: Nationalite | null;
+  nationalites: readonly Nationalite[];
+}
+
+/** Met la suggestion à part des autres nationalités : la liste l'affiche en tête, dans son propre groupe. */
+export function splitSuggestion(nationalites: readonly Nationalite[]): NationaliteGroups {
+  const suggestion = nationalites.find(({ label }) => label === SUGGESTION_NATIONALITE) ?? null;
+  return {
+    suggestion,
+    nationalites: suggestion
+      ? nationalites.filter((nationalite) => nationalite !== suggestion)
+      : nationalites,
+  };
 }
 
 /*
@@ -228,6 +249,7 @@ const FLAG_URLS = import.meta.glob<string>("/node_modules/circle-flags/flags/*.s
   eager: true,
 });
 
+/** L'adresse du drapeau d'un pays, par son code à deux lettres ; vide si le drapeau manque. */
 export function flagUrl(code: string): string {
   return FLAG_URLS[`/node_modules/circle-flags/flags/${code}.svg`] ?? "";
 }

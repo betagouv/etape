@@ -2,11 +2,19 @@ import { useState, type ChangeEvent, type KeyboardEvent } from "react";
 
 import { useListboxNavigation } from "@etape/ui/hooks/use-listbox-navigation";
 
-import { findNationalites, SUGGESTION_NATIONALITE, type Nationalite } from "../domain/nationalites";
+import {
+  findNationaliteByLabel,
+  findNationalites,
+  splitSuggestion,
+  type Nationalite,
+} from "../domain/nationalites";
 
-interface UseNationaliteSearchOptions {
-  idPrefix: string;
-  onSelect: (value: string) => void;
+/** Le résumé d'erreurs mène à `#nationalite`. */
+export const NATIONALITE_FIELD_ID = "nationalite";
+
+/** L'id de l'option d'une nationalité, que désigne l'`aria-activedescendant` de la recherche. */
+export function nationaliteOptionId({ code }: Nationalite): string {
+  return `${NATIONALITE_FIELD_ID}-option-${code}`;
 }
 
 export interface NationaliteSearchInputHandlers {
@@ -16,67 +24,63 @@ export interface NationaliteSearchInputHandlers {
 
 export interface UseNationaliteSearchResult {
   searchText: string;
+  isListOpen: boolean;
+  /** La nationalité choisie, pour le drapeau du champ. */
+  selected: Nationalite | undefined;
+  /** La nationalité proposée en tête de liste, quand la recherche la retient. */
   suggestion: Nationalite | null;
   nationalites: readonly Nationalite[];
-  activeValue: string | null;
-  optionId: (label: string) => string;
+  active: Nationalite | null;
   inputHandlers: NationaliteSearchInputHandlers;
-  select: (label: string) => void;
-  reset: () => void;
+  select: (nationalite: Nationalite) => void;
+  /** Ouvre ou ferme la liste ; à la fermeture, la recherche repart de zéro. */
+  setListOpen: (isOpen: boolean) => void;
 }
 
-export function useNationaliteSearch({
-  idPrefix,
-  onSelect,
-}: UseNationaliteSearchOptions): UseNationaliteSearchResult {
+/** Choix d'une nationalité dans une liste que filtre la recherche. La valeur est le libellé. */
+export function useNationaliteSearch(
+  label: string,
+  onChange: (label: string) => void,
+): UseNationaliteSearchResult {
   const [searchText, setSearchText] = useState("");
+  const [isListOpen, setOpen] = useState(false);
 
-  const filtered = findNationalites(searchText);
-
-  const suggestionEntry = filtered.find((n) => n.label === SUGGESTION_NATIONALITE);
-  const suggestion = suggestionEntry ?? null;
-  const nationalites = suggestion
-    ? filtered.filter((n) => n.label !== SUGGESTION_NATIONALITE)
-    : filtered;
-
-  const allItems = suggestion ? [suggestion, ...nationalites] : [...nationalites];
-
-  const optionId = (label: string): string =>
-    `${idPrefix}-option-${label.toLowerCase().replace(/\s+/g, "-")}`;
+  const { suggestion, nationalites } = splitSuggestion(findNationalites(searchText));
 
   const navigation = useListboxNavigation({
-    items: allItems,
-    optionId: (nationalite) => optionId(nationalite.label),
-    onSelect: (nationalite) => select(nationalite.label),
+    items: suggestion ? [suggestion, ...nationalites] : nationalites,
+    optionId: nationaliteOptionId,
+    isOpen: isListOpen,
+    onSelect: (nationalite) => select(nationalite),
   });
 
-  function select(label: string): void {
-    onSelect(label);
+  function setListOpen(isOpen: boolean): void {
+    setOpen(isOpen);
+    if (isOpen) return;
     setSearchText("");
     navigation.reset();
   }
 
-  function reset(): void {
-    setSearchText("");
-    navigation.reset();
-  }
-
-  function handleChange(event: ChangeEvent<HTMLInputElement>): void {
-    setSearchText(event.target.value);
-    navigation.reset();
+  function select(nationalite: Nationalite): void {
+    onChange(nationalite.label);
+    setListOpen(false);
   }
 
   return {
     searchText,
+    isListOpen,
+    selected: findNationaliteByLabel(label),
     suggestion,
     nationalites,
-    activeValue: navigation.active?.label ?? null,
-    optionId,
+    active: navigation.active,
     inputHandlers: {
-      onChange: handleChange,
+      onChange: (event) => {
+        setSearchText(event.target.value);
+        navigation.reset();
+      },
       onKeyDown: navigation.onKeyDown,
     },
     select,
-    reset,
+    setListOpen,
   };
 }

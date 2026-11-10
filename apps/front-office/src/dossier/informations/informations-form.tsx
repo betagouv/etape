@@ -27,7 +27,7 @@ import { ACCOUNT_PATH } from "@/navigation/paths";
 import { DateField, type DateFieldCalendar } from "../components/date-field";
 import { PrefilledFieldDescription } from "./components/prefilled-field-description";
 import { computeDateNaissanceBounds } from "./domain/date-naissance";
-import { NationaliteInput } from "./components/nationalite-input";
+import { NationaliteField } from "./components/nationalite-field";
 import { formatCleNir } from "./domain/format-cle-nir";
 import { formatNir } from "./domain/format-nir";
 import { formatTelephone } from "./domain/format-telephone";
@@ -179,14 +179,7 @@ export function InformationsForm({ formId, notice, onSubmitValid }: Informations
               name="nationalite"
               control={form.control}
               render={({ field, fieldState }) => (
-                <NationaliteInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  fieldRef={field.ref}
-                  isInvalid={fieldState.invalid}
-                  error={fieldState.error}
-                />
+                <NationaliteField field={field} error={fieldState.error} />
               )}
             />
 
