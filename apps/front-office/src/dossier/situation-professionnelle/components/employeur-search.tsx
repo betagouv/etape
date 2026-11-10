@@ -16,6 +16,8 @@ import {
   ComboboxGroup,
   ComboboxList,
   ComboboxOption,
+  ComboboxOptionDetail,
+  ComboboxOptionTitle,
 } from "@etape/ui/components/combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/components/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
@@ -150,12 +152,18 @@ export function EmployeurSearch({
                     onClick={() => search.select(etablissement)}
                   >
                     <span className="flex flex-col gap-1 py-1">
-                      <span className="text-base font-medium">{etablissement.denomination}</span>
+                      <ComboboxOptionTitle>{etablissement.denomination}</ComboboxOptionTitle>
                       {etablissement.enseigne && (
-                        <Detail label="Enseigne" value={etablissement.enseigne} />
+                        <ComboboxOptionDetail label="Enseigne">
+                          {etablissement.enseigne}
+                        </ComboboxOptionDetail>
                       )}
-                      <Detail label="Adresse" value={etablissement.adresse} />
-                      <Detail label="SIRET" value={formatSiret(etablissement.siret)} />
+                      <ComboboxOptionDetail label="Adresse">
+                        {etablissement.adresse}
+                      </ComboboxOptionDetail>
+                      <ComboboxOptionDetail label="SIRET">
+                        {formatSiret(etablissement.siret)}
+                      </ComboboxOptionDetail>
                     </span>
                   </ComboboxOption>
                 </Fragment>
@@ -200,13 +208,5 @@ export function EmployeurSearch({
       )}
       <StatusRegion message={search.announcement} />
     </Field>
-  );
-}
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="text-muted-foreground text-sm">
-      {label} : <span className="text-foreground">{value}</span>
-    </span>
   );
 }

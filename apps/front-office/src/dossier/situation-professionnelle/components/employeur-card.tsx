@@ -9,12 +9,20 @@ import {
 } from "lucide-react";
 
 import { Button } from "@etape/ui/components/button";
-import { Card } from "@etape/ui/components/card";
+import {
+  Card,
+  CardDescription,
+  CardDetail,
+  CardDetailLabel,
+  CardDetails,
+  CardDetailValue,
+  CardTitle,
+} from "@etape/ui/components/card";
 import { Separator } from "@etape/ui/components/separator";
 
 import { formatSiret } from "../domain/format-siret";
 
-interface Ligne {
+interface Row {
   Icon: LucideIcon;
   label: string;
   value: string | null;
@@ -29,7 +37,7 @@ export interface EmployeurCardProps {
 
 /** L'établissement choisi, tel que Sirene le décrit. */
 export function EmployeurCard({ etablissement, isFocusRequested, onChange }: EmployeurCardProps) {
-  const lignes: Ligne[] = [
+  const rows: Row[] = [
     { Icon: SignpostIcon, label: "Enseigne", value: etablissement.enseigne },
     { Icon: MapPinnedIcon, label: "Adresse", value: etablissement.adresse },
     { Icon: FileDigitIcon, label: "SIRET", value: formatSiret(etablissement.siret) },
@@ -43,7 +51,9 @@ export function EmployeurCard({ etablissement, isFocusRequested, onChange }: Emp
   return (
     <Card variant="secondary">
       <div className="flex items-center justify-between gap-4">
-        <h4 className="text-primary text-base font-semibold">{etablissement.denomination}</h4>
+        <CardTitle asChild>
+          <h4>{etablissement.denomination}</h4>
+        </CardTitle>
         <Button
           type="button"
           variant="outline"
@@ -56,23 +66,21 @@ export function EmployeurCard({ etablissement, isFocusRequested, onChange }: Emp
         </Button>
       </div>
       <Separator />
-      <dl className="flex flex-col gap-3 text-sm">
-        {lignes
+      <CardDetails>
+        {rows
           .filter(({ value }) => value !== null)
           .map(({ Icon, label, value }) => (
-            <div key={label} className="flex items-center justify-between gap-4">
-              <dt className="text-primary flex items-center gap-2">
-                <Icon aria-hidden="true" className="size-4" />
+            <CardDetail key={label}>
+              <CardDetailLabel>
+                <Icon aria-hidden="true" />
                 {label}
-              </dt>
-              <dd className="text-right">{value}</dd>
-            </div>
+              </CardDetailLabel>
+              <CardDetailValue>{value}</CardDetailValue>
+            </CardDetail>
           ))}
-      </dl>
+      </CardDetails>
       <Separator />
-      <p className="text-muted-foreground text-sm">
-        Informations issues du répertoire Sirene de l’Insee
-      </p>
+      <CardDescription>Informations issues du répertoire Sirene de l’Insee</CardDescription>
     </Card>
   );
 }
