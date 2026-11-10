@@ -7,9 +7,10 @@ import {
   type SearchEtablissementsResponse,
 } from "@etape/api-contract";
 
+import { useListboxNavigation } from "@etape/ui/hooks/use-listbox-navigation";
+
 import { httpClient } from "@/lib/clients";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
-import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
 import {
   findSearchAnnouncement,
   findSearchStatus,
@@ -110,10 +111,16 @@ export function useEmployeurSearch(
     setOpen(false);
   }
 
-  const navigation = useListboxNavigation(etablissements, employeurOptionId, select);
-
   const isPopupOpen =
     isOpen && (status === SEARCH_STATUS.RESULTS || status === SEARCH_STATUS.NO_RESULT);
+
+  const navigation = useListboxNavigation({
+    items: etablissements,
+    optionId: employeurOptionId,
+    isOpen: isPopupOpen,
+    onSelect: select,
+    onEscape: () => setOpen(false),
+  });
 
   return {
     searchText,
@@ -130,15 +137,7 @@ export function useEmployeurSearch(
         setOpen(true);
         navigation.reset();
       },
-      onKeyDown: (event) => {
-        if (event.key === "Escape") {
-          setOpen(false);
-          navigation.reset();
-        } else if (isPopupOpen) {
-          // Liste fermée : ni flèche ni Entrée ne désignent une option masquée.
-          navigation.onKeyDown(event);
-        }
-      },
+      onKeyDown: navigation.onKeyDown,
       onFocus: () => setOpen(true),
     },
     select,

@@ -2,9 +2,10 @@ import { useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getSecteursActivite, type SecteurActivite } from "@etape/api-contract";
 
+import { useListboxNavigation } from "@etape/ui/hooks/use-listbox-navigation";
+
 import { httpClient } from "@/lib/clients";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
-import { useListboxNavigation } from "../../hooks/use-listbox-navigation";
 import {
   findSecteurAnnouncement,
   findSecteurBlurOutcome,
@@ -81,9 +82,18 @@ export function useSecteurActiviteSearch(
     setOpen(false);
   }
 
-  const navigation = useListboxNavigation(secteurs, secteurActiviteOptionId, select);
-
   const isListOpen = isOpen && Boolean(searchText?.trim());
+
+  const navigation = useListboxNavigation({
+    items: secteurs,
+    optionId: secteurActiviteOptionId,
+    isOpen: isListOpen,
+    onSelect: select,
+    onEscape: () => {
+      setOpen(false);
+      if (selected) setSearchText(null);
+    },
+  });
   const emptyMessage = findSecteurEmptyMessage(query.isPending, query.isError);
   const moreMessage =
     matches.length > secteurs.length
@@ -109,16 +119,7 @@ export function useSecteurActiviteSearch(
         setOpen(true);
         navigation.reset();
       },
-      onKeyDown: (event) => {
-        if (event.key === "Escape") {
-          setOpen(false);
-          navigation.reset();
-          if (selected) setSearchText(null);
-        } else if (isListOpen) {
-          // Liste fermée : ni flèche ni Entrée ne désignent une option masquée.
-          navigation.onKeyDown(event);
-        }
-      },
+      onKeyDown: navigation.onKeyDown,
       onFocus: () => setOpen(true),
       onBlur: () => {
         setOpen(false);
