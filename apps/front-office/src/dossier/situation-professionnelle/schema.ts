@@ -100,8 +100,7 @@ export const SITUATION_PROFESSIONNELLE_FIELD_LABEL: Record<
   secteurActivite: "Secteur d’activité",
   adresse: "Adresse",
   intitulePoste: "Intitulé de votre poste",
-  // La légende pose la question ; l'annonce, lue après coup, n'a besoin que du sujet.
-  demission: "Démission",
+  demission: "Avez-vous déjà remis votre démission à votre employeur ?",
   dateDemission: "Date de votre démission",
 };
 

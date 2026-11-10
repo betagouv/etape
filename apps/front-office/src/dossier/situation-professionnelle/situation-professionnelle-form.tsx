@@ -34,6 +34,7 @@ export interface SituationProfessionnelleFormProps {
 
 // Le résumé d'erreurs mène à `#demission` : l'id est porté par le groupe, pas par un bouton radio.
 const DEMISSION_FIELD_ID = "demission";
+const DEMISSION_LEGEND_ID = `${DEMISSION_FIELD_ID}-legend`;
 const DEMISSION_ERROR_ID = `${DEMISSION_FIELD_ID}-error`;
 
 // Les jours à venir ne se choisissent pas (maquette 11).
@@ -90,8 +91,8 @@ export function SituationProfessionnelleForm({
           </FormSectionHeader>
 
           <FieldSet>
-            <FieldLegend variant="label" required>
-              Avez-vous déjà remis votre démission à votre employeur ?
+            <FieldLegend id={DEMISSION_LEGEND_ID} variant="label" required>
+              {SITUATION_PROFESSIONNELLE_FIELD_LABEL.demission}
             </FieldLegend>
             <Controller
               name="demission"
@@ -111,6 +112,9 @@ export function SituationProfessionnelleForm({
                       if (!event.currentTarget.contains(event.relatedTarget)) field.onBlur();
                     }}
                     className="flex gap-5"
+                    required
+                    // La légende nomme le `fieldset`, pas le `radiogroup` de Radix.
+                    aria-labelledby={DEMISSION_LEGEND_ID}
                     aria-invalid={fieldState.invalid}
                     aria-describedby={fieldState.invalid ? DEMISSION_ERROR_ID : undefined}
                   >
@@ -119,6 +123,7 @@ export function SituationProfessionnelleForm({
                         <RadioGroupItem
                           value={value}
                           id={`${DEMISSION_FIELD_ID}-${value}`}
+                          aria-invalid={fieldState.invalid}
                           // Un seul élément peut porter le ref du champ : le premier bouton radio.
                           ref={index === 0 ? field.ref : undefined}
                         />
