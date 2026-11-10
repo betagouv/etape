@@ -12,7 +12,8 @@ const cardVariants = cva("flex flex-col py-6", {
       outline: "bg-card text-card-foreground gap-4 rounded-xl border",
       panel: "bg-card text-card-foreground gap-5 rounded-2xl border px-5",
       /** Récapitulatif dans un formulaire, `front-office-form-card` de la maquette FRONT-OFFICE. */
-      secondary: "bg-secondary text-card-foreground gap-3 rounded-xl border px-4 py-3",
+      secondary:
+        "bg-secondary text-card-foreground gap-3 rounded-xl border px-4 py-3 [&_[data-slot=card-title]]:text-primary [&_[data-slot=card-title]]:text-base [&_[data-slot=card-title]]:leading-6",
       // Les enfants passent sur fond `primary` : le `muted-foreground` de
       // `CardDescription` y tomberait à 2:1, le filet `border` y trancherait.
       primary:
@@ -58,9 +59,15 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+function CardTitle({
+  className,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"div"> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot.Root : "div";
+
   return (
-    <div
+    <Comp
       data-slot="card-title"
       className={cn("leading-none font-semibold", className)}
       {...props}
@@ -102,6 +109,41 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/** Liste « libellé / valeur » : un `CardDetail` par ligne, avec son `CardDetailLabel` et son `CardDetailValue`. */
+function CardDetails({ className, ...props }: React.ComponentProps<"dl">) {
+  return (
+    <dl
+      data-slot="card-details"
+      className={cn("flex flex-col gap-3 text-sm", className)}
+      {...props}
+    />
+  );
+}
+
+function CardDetail({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-detail"
+      className={cn("flex items-center justify-between gap-4", className)}
+      {...props}
+    />
+  );
+}
+
+function CardDetailLabel({ className, ...props }: React.ComponentProps<"dt">) {
+  return (
+    <dt
+      data-slot="card-detail-label"
+      className={cn("text-primary flex items-center gap-2 [&>svg]:size-4", className)}
+      {...props}
+    />
+  );
+}
+
+function CardDetailValue({ className, ...props }: React.ComponentProps<"dd">) {
+  return <dd data-slot="card-detail-value" className={cn("text-right", className)} {...props} />;
+}
+
 export {
   Card,
   CardHeader,
@@ -110,5 +152,9 @@ export {
   CardAction,
   CardDescription,
   CardContent,
+  CardDetails,
+  CardDetail,
+  CardDetailLabel,
+  CardDetailValue,
   cardVariants,
 };
