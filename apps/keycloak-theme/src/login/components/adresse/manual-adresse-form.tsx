@@ -8,7 +8,7 @@ import {
 } from "@etape/ui/components/select";
 import { StatusRegion } from "@etape/ui/components/status-region";
 import { RefreshCw } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import {
   COMMUNES_STATUS,
@@ -19,11 +19,15 @@ import {
 import type { I18n } from "../../i18n";
 import { Alert, MESSAGE_TYPE } from "../alert";
 import { Field, FieldError, TextInput } from "../form";
-import type { ManualAdresseFields } from "./adresse";
 
 const CODE_POSTAL_MAX_LENGTH = 5;
 
-export default function ManualAdresseForm(props: { manual: UseManualAdresseResult; i18n: I18n }) {
+export interface ManualAdresseFormProps {
+  manual: UseManualAdresseResult;
+  i18n: I18n;
+}
+
+export default function ManualAdresseForm(props: ManualAdresseFormProps) {
   const { manual, i18n } = props;
   const { fields, communes, communesStatus, codeCommune } = manual;
   const { msg, msgStr } = i18n;
@@ -43,31 +47,31 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
       <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
         <ManualTextField
           id={MANUAL_FIELD_ID.NUMERO_VOIE}
-          field="numeroVoie"
           label={msg("etapeAdresseNumeroVoie")}
-          manual={manual}
-          autoFocus
+          value={fields.numeroVoie}
+          onChange={(value) => manual.changeField("numeroVoie", value)}
+          inputProps={{ autoFocus: true }}
         />
         <ManualTextField
           id={MANUAL_FIELD_ID.TYPE_VOIE}
-          field="typeVoie"
           label={msg("etapeAdresseTypeVoie")}
-          manual={manual}
+          value={fields.typeVoie}
+          onChange={(value) => manual.changeField("typeVoie", value)}
           required
         />
         <ManualTextField
           id={MANUAL_FIELD_ID.NOM_VOIE}
-          field="nomVoie"
           label={msg("etapeAdresseNomVoie")}
-          manual={manual}
+          value={fields.nomVoie}
+          onChange={(value) => manual.changeField("nomVoie", value)}
           required
         />
         <ManualTextField
           id={MANUAL_FIELD_ID.COMPLEMENT}
-          field="complement"
           label={msg("etapeAdresseComplement")}
-          manual={manual}
-          autoComplete="address-line2"
+          value={fields.complement}
+          onChange={(value) => manual.changeField("complement", value)}
+          inputProps={{ autoComplete: "address-line2" }}
         />
         <Field
           id={MANUAL_FIELD_ID.CODE_POSTAL}
@@ -149,25 +153,24 @@ export default function ManualAdresseForm(props: { manual: UseManualAdresseResul
 
 function ManualTextField(props: {
   id: string;
-  field: keyof ManualAdresseFields;
   label: ReactNode;
-  manual: UseManualAdresseResult;
+  value: string;
+  onChange: (value: string) => void;
   required?: boolean;
-  autoComplete?: string;
-  autoFocus?: boolean;
+  inputProps?: Pick<ComponentProps<"input">, "autoComplete" | "autoFocus">;
 }) {
-  const { id, field, label, manual, required = false, autoComplete = "off", autoFocus } = props;
+  const { id, label, value, onChange, required = false, inputProps } = props;
 
   return (
     <Field id={id} label={label} required={required}>
       <TextInput
         id={id}
         type="text"
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
+        autoComplete="off"
+        {...inputProps}
         aria-required={required}
-        value={manual.fields[field]}
-        onChange={(event) => manual.changeField(field, event.target.value)}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
       />
     </Field>
   );

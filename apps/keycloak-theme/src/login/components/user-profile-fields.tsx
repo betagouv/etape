@@ -1,10 +1,10 @@
 import { Criterion, CRITERION_STATUS, type CriterionStatus } from "@etape/ui/components/criterion";
 import { InsetPanel, INSET_PANEL_VARIANT } from "@etape/ui/components/inset-panel";
 import type { FormAction, FormFieldState } from "keycloakify/login/lib/useUserProfileForm";
-import type { ChangeEvent, ReactNode } from "react";
+import type { ChangeEvent, ComponentProps, ReactNode } from "react";
 
 import type { I18n } from "../i18n";
-import { Field, FieldError, PasswordInput, TextInput } from "./form";
+import { Field, FieldError, fieldHintId, PasswordInput, TextInput } from "./form";
 import { getPasswordRules, PASSWORD_MIN_LENGTH } from "./password-rules";
 import { useActionPress } from "../hooks/use-action-press";
 
@@ -30,10 +30,9 @@ export function UserProfileField(props: {
   i18n: I18n;
   hint?: ReactNode;
   addon?: ReactNode;
-  autoFocus?: boolean;
-  onFocus?: () => void;
+  inputProps?: Pick<ComponentProps<"input">, "autoFocus" | "onFocus">;
 }) {
-  const { fieldState, dispatchFormAction, i18n, hint, addon, autoFocus, onFocus } = props;
+  const { fieldState, dispatchFormAction, i18n, hint, addon, inputProps } = props;
   const { attribute, displayableErrors, valueOrValues } = fieldState;
   const { advancedMsg, advancedMsgStr } = i18n;
 
@@ -65,13 +64,12 @@ export function UserProfileField(props: {
         : advancedMsgStr(attribute.annotations.inputTypePlaceholder),
     onChange: (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value),
     onBlur,
-    onFocus,
-    autoFocus,
+    ...inputProps,
     invalid: isInvalid,
     "aria-required": attribute.required,
     "aria-describedby": joinIds(
       isInvalid ? `input-error-${attribute.name}` : undefined,
-      hint !== undefined ? `${attribute.name}-hint` : undefined,
+      hint !== undefined ? fieldHintId(attribute.name) : undefined,
       addon !== undefined ? PASSWORD_RULES_ID : undefined,
     ),
   };

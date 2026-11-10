@@ -1,4 +1,4 @@
-import type { Adresse, Commune } from "./adresse";
+import { type Adresse, type Commune, isAdresseComplete } from "./adresse";
 
 const ADRESSE_SEARCH_URL = "https://data.geopf.fr/geocodage/search";
 const COMMUNES_URL = "https://geo.api.gouv.fr/communes";
@@ -48,12 +48,7 @@ export function parseAdresses(payload: unknown): Adresse[] {
       codeCommune: asString(properties.citycode),
     };
 
-    return adresse.voie !== "" &&
-      adresse.codePostal !== "" &&
-      adresse.commune !== "" &&
-      adresse.codeCommune !== ""
-      ? [adresse]
-      : [];
+    return isAdresseComplete(adresse) ? [adresse] : [];
   });
 }
 

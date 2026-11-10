@@ -34,6 +34,15 @@ export function isCodePostalComplete(codePostal: string): boolean {
   return CODE_POSTAL_PATTERN.test(codePostal);
 }
 
+export function isAdresseComplete(adresse: Adresse): boolean {
+  return (
+    adresse.voie !== "" &&
+    adresse.codePostal !== "" &&
+    adresse.commune !== "" &&
+    adresse.codeCommune !== ""
+  );
+}
+
 export function formatAdresse(adresse: Adresse): string {
   return [adresse.voie, adresse.complement, adresse.codePostal, adresse.commune]
     .filter((part) => part !== "")

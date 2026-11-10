@@ -72,6 +72,8 @@ export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFor
     [REGISTER_STEP.CREDENTIALS]: isInformationsComplete && isCredentialsComplete,
   };
 
+  // Dérivé pendant le rendu : une étape devenue complète oublie la tentative ratée,
+  // pour que l'annonce « incomplet » ne revienne pas si on la vide ensuite.
   if (hasIncompleteAttempt && isStepComplete[step]) setHasIncompleteAttempt(false);
 
   const isSubmitBlocked = !isStepComplete[REGISTER_STEP.CREDENTIALS] || isSubmitting;

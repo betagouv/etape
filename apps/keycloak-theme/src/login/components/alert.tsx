@@ -41,10 +41,11 @@ export function Alert(props: {
   type: MessageType;
   summary: string;
   id?: string;
+  summaryId?: string;
   isLive?: boolean;
   children?: ReactNode;
 }) {
-  const { type, summary, id, isLive = true, children } = props;
+  const { type, summary, id, summaryId, isLive = true, children } = props;
   const Icon = ICON_BY_MESSAGE_TYPE[type];
 
   return (
@@ -56,6 +57,7 @@ export function Alert(props: {
       <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col gap-2 text-sm">
         <span
+          id={summaryId}
           className="font-medium"
           dangerouslySetInnerHTML={{
             __html: kcSanitize(summary),

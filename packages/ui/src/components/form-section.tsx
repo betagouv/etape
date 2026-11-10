@@ -1,4 +1,6 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "radix-ui";
 
 import { cn } from "@etape/ui/lib/utils";
 
@@ -25,11 +27,34 @@ function FormSectionHeader({ className, ...props }: React.ComponentProps<"div">)
   );
 }
 
-function FormSectionTitle({ className, ...props }: React.ComponentProps<"h3">) {
+const formSectionTitleVariants = cva("font-semibold", {
+  variants: {
+    size: {
+      // La hauteur de ligne suit la taille : `tailwind-merge` l'efface sinon.
+      default: "text-lg leading-none",
+      // Sections de l'inscription (Figma FRONT-OFFICE, « 01. SIGN-UP ») : titre de 16 px.
+      sm: "text-base leading-none",
+    },
+  },
+  defaultVariants: {
+    size: "default",
+  },
+});
+
+/** Titre d'une `FormSection` ; `asChild` en change le niveau (`h2` sous le `h1` d'une page). */
+function FormSectionTitle({
+  className,
+  size,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"h3"> &
+  VariantProps<typeof formSectionTitleVariants> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot.Root : "h3";
+
   return (
-    <h3
+    <Comp
       data-slot="form-section-title"
-      className={cn("text-lg leading-none font-semibold", className)}
+      className={cn(formSectionTitleVariants({ size }), className)}
       {...props}
     />
   );

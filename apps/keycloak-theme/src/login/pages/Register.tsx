@@ -1,10 +1,11 @@
 import { Button } from "@etape/ui/components/button";
+import { FormSection, FormSectionTitle } from "@etape/ui/components/form-section";
 import { StatusRegion } from "@etape/ui/components/status-region";
 import { useUserProfileForm } from "keycloakify/login/lib/useUserProfileForm";
 import { ArrowRight, CircleArrowLeft } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
-import { type Adresse, ADRESSE_ATTRIBUTE } from "../components/adresse/adresse";
+import { type Adresse, ADRESSE_ATTRIBUTE, isAdresseComplete } from "../components/adresse/adresse";
 import { AdresseField } from "../components/adresse/adresse-field";
 import { AltchaField } from "../components/altcha/altcha-field";
 import { isEmailFormatValid } from "../components/email-format";
@@ -68,13 +69,7 @@ function readInitialAdresse(attributes: RegisterKcContext["profile"]["attributes
     codeCommune: read(ADRESSE_ATTRIBUTE.CODE_COMMUNE),
   };
 
-  const isComplete =
-    adresse.voie !== "" &&
-    adresse.codePostal !== "" &&
-    adresse.commune !== "" &&
-    adresse.codeCommune !== "";
-
-  return isComplete ? adresse : null;
+  return isAdresseComplete(adresse) ? adresse : null;
 }
 
 export default function Register(props: RegisterProps) {
@@ -223,8 +218,8 @@ export default function Register(props: RegisterProps) {
         fieldState={fieldState}
         dispatchFormAction={dispatchFormAction}
         i18n={i18n}
-        autoFocus={invalidFieldName === name}
         {...extra}
+        inputProps={{ autoFocus: invalidFieldName === name, ...extra?.inputProps }}
       />
     );
   };
@@ -288,15 +283,15 @@ export default function Register(props: RegisterProps) {
           <StatusRegion message={stepAnnouncement} />
 
           <div hidden={!isOnInformations} className="flex flex-col gap-5">
-            <section className="flex flex-col gap-4">
-              <SectionTitle>{msg("etapeRegisterInformations")}</SectionTitle>
+            <FormSection className="gap-4">
+              <RegisterSectionTitle>{msg("etapeRegisterInformations")}</RegisterSectionTitle>
               <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
                 {profileField(USER_PROFILE_ATTRIBUTE.FIRST_NAME)}
                 {profileField(USER_PROFILE_ATTRIBUTE.LAST_NAME)}
               </div>
-            </section>
-            <section className="flex flex-col gap-4">
-              <SectionTitle>{msg("etapeRegisterResidence")}</SectionTitle>
+            </FormSection>
+            <FormSection className="gap-4">
+              <RegisterSectionTitle>{msg("etapeRegisterResidence")}</RegisterSectionTitle>
               <AdresseField
                 field={adresseField}
                 serverError={adresseServerError}
@@ -305,17 +300,17 @@ export default function Register(props: RegisterProps) {
                 }
                 i18n={i18n}
               />
-            </section>
+            </FormSection>
           </div>
 
-          <div hidden={isOnInformations} className="flex flex-col gap-4">
-            <SectionTitle>{msg("etapeRegisterCredentials")}</SectionTitle>
+          <FormSection hidden={isOnInformations} className="gap-4">
+            <RegisterSectionTitle>{msg("etapeRegisterCredentials")}</RegisterSectionTitle>
             {profileField(USER_PROFILE_ATTRIBUTE.EMAIL, { hint: msg("etapeRegisterEmailHint") })}
             {profileField(USER_PROFILE_ATTRIBUTE.PASSWORD, {
-              onFocus: () => setIsPasswordFocused(true),
+              inputProps: { onFocus: () => setIsPasswordFocused(true) },
               addon: isPasswordFocused ? <PasswordRules value={password} i18n={i18n} /> : undefined,
             })}
-          </div>
+          </FormSection>
         </div>
 
         <div hidden={isOnInformations} className="flex flex-col gap-6">
@@ -417,8 +412,12 @@ export default function Register(props: RegisterProps) {
   );
 }
 
-function SectionTitle(props: { children: ReactNode }) {
-  return <h2 className="text-foreground text-base leading-none font-semibold">{props.children}</h2>;
+function RegisterSectionTitle(props: { children: ReactNode }) {
+  return (
+    <FormSectionTitle size="sm" asChild>
+      <h2>{props.children}</h2>
+    </FormSectionTitle>
+  );
 }
 
 function LegalLink(props: { href: string | undefined; children: ReactNode }) {

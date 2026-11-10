@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { buildManualAdresse, formatAdresse, isCodePostalComplete } from "./adresse";
+import {
+  buildManualAdresse,
+  formatAdresse,
+  isAdresseComplete,
+  isCodePostalComplete,
+} from "./adresse";
 import { parseAdresses, parseCommunes } from "./adresse-api";
 
 const FIELDS = {
@@ -14,6 +19,27 @@ const FIELDS = {
 const AILLAS = { nom: "Aillas", code: "33002" };
 
 const banFeature = (properties: Record<string, unknown>) => ({ properties });
+
+describe("isAdresseComplete", () => {
+  const COMPLETE = {
+    voie: "15 Rue Victor Hugo",
+    complement: "",
+    codePostal: "33124",
+    commune: "Aillas",
+    codeCommune: "33002",
+  };
+
+  it("accepte une adresse sans complément", () => {
+    expect(isAdresseComplete(COMPLETE)).toBe(true);
+  });
+
+  it.each(["voie", "codePostal", "commune", "codeCommune"] as const)(
+    "refuse une adresse sans %s",
+    (key) => {
+      expect(isAdresseComplete({ ...COMPLETE, [key]: "" })).toBe(false);
+    },
+  );
+});
 
 describe("buildManualAdresse", () => {
   it("assemble la voie et reprend la commune choisie", () => {

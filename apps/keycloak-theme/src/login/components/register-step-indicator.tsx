@@ -1,4 +1,5 @@
 import { Progress } from "@etape/ui/components/progress";
+import { sectionCaptionVariants } from "@etape/ui/components/section";
 
 import type { RegisterStep } from "../hooks/use-register-form";
 import type { I18n } from "../i18n";
@@ -17,7 +18,7 @@ export function RegisterStepIndicator(props: {
 
   return (
     <div className="flex flex-col gap-2">
-      <p id={LABEL_ID} className="text-muted-foreground text-sm leading-none font-medium uppercase">
+      <p id={LABEL_ID} className={sectionCaptionVariants({ variant: "step" })}>
         {i18n.msg("etapeRegisterStep", String(step), String(STEP_COUNT))}
       </p>
       <Progress aria-labelledby={LABEL_ID} value={completedSteps * PROGRESS_PER_STEP} />

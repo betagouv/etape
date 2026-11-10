@@ -13,7 +13,7 @@ import { ADRESSE_SEARCH_STATUS, type AdresseSearchStatus } from "../../hooks/use
 import { ADRESSE_SEARCH_INPUT_ID, type UseAdresseFieldResult } from "../../hooks/use-adresse-field";
 import type { I18n } from "../../i18n";
 import { Alert, MESSAGE_TYPE } from "../alert";
-import { Field, FieldError, TextInput } from "../form";
+import { Field, FieldError, fieldHintId, TextInput } from "../form";
 import { ADRESSE_ATTRIBUTE } from "./adresse";
 import { ManualAdresseLoader } from "./manual-adresse-loader";
 import { type RegionCode, REGIONS, TRANSITIONS_PRO_CONTACTS_URL } from "./region";
@@ -35,7 +35,9 @@ export function AdresseField(props: {
   return (
     <div className="flex flex-col gap-4">
       {isManual ? (
-        <ManualAdresseLoader manual={manual} i18n={i18n} />
+        <ManualAdresseLoader i18n={i18n}>
+          {(ManualAdresseForm) => <ManualAdresseForm manual={manual} i18n={i18n} />}
+        </ManualAdresseLoader>
       ) : (
         <AdresseSearch
           field={field}
@@ -167,8 +169,8 @@ function AdresseSearch(props: {
           aria-required
           aria-describedby={
             serverError === undefined
-              ? `${ADRESSE_SEARCH_INPUT_ID}-hint`
-              : `${ADRESSE_SEARCH_INPUT_ID}-hint input-error-adresse`
+              ? fieldHintId(ADRESSE_SEARCH_INPUT_ID)
+              : `${fieldHintId(ADRESSE_SEARCH_INPUT_ID)} input-error-adresse`
           }
           autoComplete="off"
           autoFocus={shouldFocusOnMount}
