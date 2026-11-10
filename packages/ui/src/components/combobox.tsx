@@ -145,7 +145,7 @@ const comboboxOptionVariants = cva(
         default: "rounded-md py-1 pr-8 pl-1.5",
         // Options sur deux lignes séparées par un filet, dans un `Combobox` `popup` :
         // suggestions d'adresse, Figma « 01. SIGN-UP ».
-        separated: "rounded-none border-b px-3 py-2 last:border-b-0",
+        separated: "rounded-none border-b px-3 py-2 last:border-b-0 aria-selected:pe-8",
       },
     },
     defaultVariants: {

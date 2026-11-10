@@ -32,19 +32,24 @@ const ROLE_BY_MESSAGE_TYPE: Record<MessageType, "alert" | "status"> = {
   [MESSAGE_TYPE.INFO]: "status",
 };
 
+/** Props d'`Alert`. */
+export interface AlertProps {
+  type: MessageType;
+  summary: string;
+  id?: string;
+  /** Pour relier le résumé à un bouton de l'encart par `aria-describedby`. */
+  summaryId?: string;
+  /** `false` quand une région toujours montée annonce déjà le message. */
+  isLive?: boolean;
+  children?: ReactNode;
+}
+
 /**
  * Bandeau de message global de Keycloak (échec de connexion, email envoyé…).
  *
  * `summary` arrive en HTML depuis Keycloak, d'où `kcSanitize`.
  */
-export function Alert(props: {
-  type: MessageType;
-  summary: string;
-  id?: string;
-  summaryId?: string;
-  isLive?: boolean;
-  children?: ReactNode;
-}) {
+export function Alert(props: AlertProps) {
   const { type, summary, id, summaryId, isLive = true, children } = props;
   const Icon = ICON_BY_MESSAGE_TYPE[type];
 

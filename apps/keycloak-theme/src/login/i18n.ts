@@ -115,6 +115,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeFranceConnectSignInWith: "S'identifier avec",
       etapeFranceConnectAbout: "Qu'est-ce que FranceConnect ?",
       etapeFranceConnectAboutTitle: "Qu'est-ce que FranceConnect ? — nouvelle fenêtre",
+      etapeNewWindow: "(nouvelle fenêtre)",
 
       etapeBackToLogin: "Retour à la connexion",
       etapeResetPasswordTitle: "Réinitialiser votre mot de passe",
@@ -271,6 +272,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeFranceConnectSignInWith: "S'identifier avec",
       etapeFranceConnectAbout: "Qu'est-ce que FranceConnect ?",
       etapeFranceConnectAboutTitle: "Qu'est-ce que FranceConnect ? — new window",
+      etapeNewWindow: "(new window)",
 
       etapeBackToLogin: "Back to sign in",
       etapeResetPasswordTitle: "Reset your password",

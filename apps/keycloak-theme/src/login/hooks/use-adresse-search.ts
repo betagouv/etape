@@ -2,6 +2,7 @@ import { type ChangeEvent, type KeyboardEvent, useEffect, useRef, useState } fro
 
 import { type Adresse, formatAdresse } from "../components/adresse/adresse";
 import { findAdresses, MIN_QUERY_LENGTH, toSearchQuery } from "../components/adresse/adresse-api";
+import { createDebouncedRequest } from "./debounced-request";
 
 /** États de la recherche d'adresse. */
 export const ADRESSE_SEARCH_STATUS = {
@@ -42,38 +43,34 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
   const [text, setText] = useState(initial === null ? "" : formatAdresse(initial));
   const [chosen, setChosen] = useState(initial);
   const [query, setQuery] = useState(NO_QUERY);
-  const [attempt, setAttempt] = useState(0);
   const [results, setResults] = useState<readonly Adresse[]>([]);
   const [status, setStatus] = useState<AdresseSearchStatus>(ADRESSE_SEARCH_STATUS.IDLE);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(NO_ACTIVE);
   const isFieldFocused = useRef(false);
+  const [request] = useState(createDebouncedRequest);
 
-  useEffect(() => {
-    if (query === NO_QUERY) return;
+  useEffect(() => request.cancel, [request]);
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      findAdresses(query, controller.signal)
+  const search = (nextQuery: string): void => {
+    setStatus(ADRESSE_SEARCH_STATUS.SEARCHING);
+    request.run((signal) => {
+      findAdresses(nextQuery, signal)
         .then((found) => {
+          if (signal.aborted) return;
           setResults(found);
           setStatus(found.length === 0 ? ADRESSE_SEARCH_STATUS.EMPTY : ADRESSE_SEARCH_STATUS.FOUND);
           setActiveIndex(NO_ACTIVE);
           setIsOpen(found.length !== 0 && isFieldFocused.current);
         })
         .catch(() => {
-          if (controller.signal.aborted) return;
+          if (signal.aborted) return;
           setResults([]);
           setStatus(ADRESSE_SEARCH_STATUS.UNAVAILABLE);
           setIsOpen(false);
         });
     }, DEBOUNCE_MS);
-
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [query, attempt]);
+  };
 
   const close = (): void => {
     setIsOpen(false);
@@ -81,6 +78,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
   };
 
   const reset = (): void => {
+    request.cancel();
     setQuery(NO_QUERY);
     setResults([]);
     setStatus(ADRESSE_SEARCH_STATUS.IDLE);
@@ -113,10 +111,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
       setText("");
       reset();
     },
-    retry: () => {
-      setStatus(ADRESSE_SEARCH_STATUS.SEARCHING);
-      setAttempt((current) => current + 1);
-    },
+    retry: () => search(query),
     changeText: (event) => {
       const value = event.target.value;
       const nextQuery = toSearchQuery(value);
@@ -129,8 +124,8 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
         return;
       }
       if (nextQuery === query) return;
-      setStatus(ADRESSE_SEARCH_STATUS.SEARCHING);
       setQuery(nextQuery);
+      search(nextQuery);
     },
     handleKeyDown: (event) => {
       const last = results.length - 1;

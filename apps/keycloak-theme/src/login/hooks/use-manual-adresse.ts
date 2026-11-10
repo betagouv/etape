@@ -9,6 +9,10 @@ import {
   toCodePostal,
 } from "../components/adresse/adresse";
 import { findCommunes } from "../components/adresse/adresse-api";
+import { createDebouncedRequest } from "./debounced-request";
+
+const NO_DELAY_MS = 0;
+const SINGLE_COMMUNE = 1;
 
 /** États du chargement des communes d'un code postal. */
 export const COMMUNES_STATUS = {
@@ -76,27 +80,30 @@ export function useManualAdresse(): UseManualAdresseResult {
   const [communes, setCommunes] = useState<readonly Commune[]>([]);
   const [communesStatus, setCommunesStatus] = useState<CommunesStatus>(COMMUNES_STATUS.IDLE);
   const [codeCommune, setCodeCommune] = useState("");
-  const [attempt, setAttempt] = useState(0);
+  const [request] = useState(createDebouncedRequest);
 
-  const { codePostal } = fields;
+  useEffect(() => request.cancel, [request]);
 
-  useEffect(() => {
-    if (!isCodePostalComplete(codePostal)) return;
-
-    const controller = new AbortController();
-    findCommunes(codePostal, controller.signal)
-      .then((found) => {
-        setCommunes(found);
-        setCommunesStatus(COMMUNES_STATUS.READY);
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return;
-        setCommunes([]);
-        setCommunesStatus(COMMUNES_STATUS.UNAVAILABLE);
-      });
-
-    return () => controller.abort();
-  }, [codePostal, attempt]);
+  const loadCommunes = (codePostal: string): void => {
+    setCommunesStatus(COMMUNES_STATUS.LOADING);
+    request.run((signal) => {
+      findCommunes(codePostal, signal)
+        .then((found) => {
+          if (signal.aborted) return;
+          setCommunes(found);
+          setCommunesStatus(COMMUNES_STATUS.READY);
+          const [onlyCommune] = found;
+          if (found.length === SINGLE_COMMUNE && onlyCommune !== undefined) {
+            setCodeCommune(onlyCommune.code);
+          }
+        })
+        .catch(() => {
+          if (signal.aborted) return;
+          setCommunes([]);
+          setCommunesStatus(COMMUNES_STATUS.UNAVAILABLE);
+        });
+    }, NO_DELAY_MS);
+  };
 
   const commune = communes.find((candidate) => candidate.code === codeCommune);
 
@@ -113,14 +120,14 @@ export function useManualAdresse(): UseManualAdresseResult {
       setFields((current) => ({ ...current, codePostal: value }));
       setCodeCommune("");
       setCommunes([]);
-      setCommunesStatus(
-        isCodePostalComplete(value) ? COMMUNES_STATUS.LOADING : COMMUNES_STATUS.IDLE,
-      );
+      if (isCodePostalComplete(value)) {
+        loadCommunes(value);
+        return;
+      }
+      request.cancel();
+      setCommunesStatus(COMMUNES_STATUS.IDLE);
     },
     changeCodeCommune: setCodeCommune,
-    retryCommunes: () => {
-      setCommunesStatus(COMMUNES_STATUS.LOADING);
-      setAttempt((current) => current + 1);
-    },
+    retryCommunes: () => loadCommunes(fields.codePostal),
   };
 }

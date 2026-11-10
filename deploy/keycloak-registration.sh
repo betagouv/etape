@@ -8,7 +8,8 @@
 # sur un écran non dessiné. C'est l'écran d'inscription qui les exige.
 #
 # Les options de `region` sont la liste des régions pilotes : le thème la lit
-# dans le profil, Keycloak refuse toute autre valeur.
+# dans le profil, Keycloak refuse toute autre valeur non vide. Une valeur vide
+# passe : c'est encore l'écran qui l'exige.
 #
 # Ce script est la seule description du profil : `update users/profile` le
 # remplace en entier à chaque démarrage. Un attribut ajouté depuis la console est
@@ -21,6 +22,8 @@ REALM=${REALM:-etape}
 
 REGISTRATION_FLOW=etape-registration
 TERMS_PROVIDER=registration-terms-and-conditions
+# Même place que dans `etape-realm.json` : avant la case ALTCHA.
+TERMS_PRIORITY=60
 
 urlencode() {
   echo "${1// /%20}"
@@ -32,6 +35,22 @@ execution_of() {
     | { grep -F ",$1," || true; } | cut -d, -f1,3
 }
 
+if [ -z "$(execution_of "$TERMS_PROVIDER")" ]; then
+  $KCADM create "authentication/flows/$(urlencode "${REGISTRATION_FLOW} registration form")/executions/execution" \
+    -r "$REALM" -s "provider=${TERMS_PROVIDER}"
+fi
+
+# Sans cette action active, Keycloak vérifie la case mais n'enregistre pas la date
+# d'acceptation (`terms_and_conditions`). Pas `defaultAction` : elle ne doit rien
+# redemander aux comptes existants.
+$KCADM update authentication/required-actions/TERMS_AND_CONDITIONS -r "$REALM" \
+  -s enabled=true -s defaultAction=false
+
+TERMS_EXECUTION=$(execution_of "$TERMS_PROVIDER")
+$KCADM update "authentication/flows/$(urlencode "$REGISTRATION_FLOW")/executions" -r "$REALM" \
+  -b "{\"id\": \"${TERMS_EXECUTION%%,*}\", \"requirement\": \"REQUIRED\", \"priority\": ${TERMS_PRIORITY}}"
+
+# En dernier : si une étape du flow échoue, le profil reste celui d'avant.
 $KCADM update users/profile -r "$REALM" -n -f - <<'JSON'
 {
   "attributes": [
@@ -122,20 +141,5 @@ $KCADM update users/profile -r "$REALM" -n -f - <<'JSON'
   ]
 }
 JSON
-
-if [ -z "$(execution_of "$TERMS_PROVIDER")" ]; then
-  $KCADM create "authentication/flows/$(urlencode "${REGISTRATION_FLOW} registration form")/executions/execution" \
-    -r "$REALM" -s "provider=${TERMS_PROVIDER}"
-fi
-
-# Sans cette action active, Keycloak vérifie la case mais n'enregistre pas la date
-# d'acceptation (`terms_and_conditions`). Pas `defaultAction` : elle ne doit rien
-# redemander aux comptes existants.
-$KCADM update authentication/required-actions/TERMS_AND_CONDITIONS -r "$REALM" \
-  -s enabled=true -s defaultAction=false
-
-TERMS_EXECUTION=$(execution_of "$TERMS_PROVIDER")
-$KCADM update "authentication/flows/$(urlencode "$REGISTRATION_FLOW")/executions" -r "$REALM" \
-  -b "{\"id\": \"${TERMS_EXECUTION%%,*}\", \"requirement\": \"REQUIRED\", \"priority\": ${TERMS_EXECUTION##*,}}"
 
 echo "→ ${REALM} — inscription : adresse dans le profil, conditions générales exigées"

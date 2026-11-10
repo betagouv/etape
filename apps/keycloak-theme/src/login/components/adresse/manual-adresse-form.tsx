@@ -150,14 +150,16 @@ export default function ManualAdresseForm(props: ManualAdresseFormProps) {
   );
 }
 
-function ManualTextField(props: {
+interface ManualTextFieldProps {
   id: string;
   label: ReactNode;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
   inputProps?: Pick<ComponentProps<"input">, "autoComplete" | "autoFocus">;
-}) {
+}
+
+function ManualTextField(props: ManualTextFieldProps) {
   const { id, label, value, onChange, required = false, inputProps } = props;
 
   return (

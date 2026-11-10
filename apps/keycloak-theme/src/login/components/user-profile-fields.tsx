@@ -109,7 +109,15 @@ export function UserProfileField(props: UserProfileFieldProps) {
   );
 }
 
-export function PasswordRules(props: { value: string; i18n: I18n; minLength?: number }) {
+/** Props de `PasswordRules`. */
+export interface PasswordRulesProps {
+  value: string;
+  i18n: I18n;
+  minLength?: number;
+}
+
+/** Critères du mot de passe, cochés au fil de la saisie. */
+export function PasswordRules(props: PasswordRulesProps) {
   const { value, i18n, minLength = PASSWORD_MIN_LENGTH } = props;
   const { msgStr } = i18n;
 

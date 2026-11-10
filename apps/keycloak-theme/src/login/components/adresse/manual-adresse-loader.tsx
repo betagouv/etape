@@ -13,10 +13,12 @@ const LOAD_FAILED_HINT_ID = "manual-adresse-load-failed-hint";
 // et après un déploiement le fichier n'existe plus sous ce nom. Seul un rechargement le retrouve.
 const ManualAdresseForm = lazy(() => import("./manual-adresse-form"));
 
-class LoadFailureBoundary extends Component<
-  { fallback: ReactNode; children: ReactNode },
-  { hasFailed: boolean }
-> {
+interface LoadFailureBoundaryProps {
+  fallback: ReactNode;
+  children: ReactNode;
+}
+
+class LoadFailureBoundary extends Component<LoadFailureBoundaryProps, { hasFailed: boolean }> {
   override state = { hasFailed: false };
 
   static getDerivedStateFromError() {

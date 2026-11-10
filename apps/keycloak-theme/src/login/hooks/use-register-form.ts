@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
+import { USER_PROFILE_ATTRIBUTE } from "../components/user-profile-fields";
 import { useSubmitting } from "./use-submitting";
 
 /** Étapes de l'inscription. */
@@ -14,8 +15,8 @@ export const REGISTER_STEP = {
 export type RegisterStep = (typeof REGISTER_STEP)[keyof typeof REGISTER_STEP];
 
 const FIRST_FIELD_ID_BY_STEP: Record<RegisterStep, string> = {
-  [REGISTER_STEP.INFORMATIONS]: "firstName",
-  [REGISTER_STEP.CREDENTIALS]: "email",
+  [REGISTER_STEP.INFORMATIONS]: USER_PROFILE_ATTRIBUTE.FIRST_NAME,
+  [REGISTER_STEP.CREDENTIALS]: USER_PROFILE_ATTRIBUTE.EMAIL,
 };
 
 interface UseRegisterFormOptions {

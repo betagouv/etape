@@ -16,6 +16,7 @@ import { getPasswordRules } from "../components/password-rules";
 import { HeaderAccountSwitch } from "../components/prose";
 import { toRegistrationPageUrl } from "../components/registration-page";
 import { RegisterStepIndicator } from "../components/register-step-indicator";
+import { TITLE_TONE } from "../components/title-tone";
 import {
   PasswordRules,
   USER_PROFILE_ATTRIBUTE,
@@ -56,9 +57,9 @@ const STEP_ANNOUNCEMENT_KEY = {
 
 type RegisterKcContext = Extract<KcContext, { pageId: "register.ftl" }>;
 
-type RegisterProps = EtapePageProps<RegisterKcContext> & {
+interface RegisterProps extends EtapePageProps<RegisterKcContext> {
   doMakeUserConfirmPassword: boolean;
-};
+}
 
 function readInitialAdresse(attributes: RegisterKcContext["profile"]["attributesByName"]) {
   const read = (name: string): string => attributes[name]?.value ?? "";
@@ -233,7 +234,7 @@ export default function Register(props: RegisterProps) {
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       documentTitle={msgStr("etapeRegisterTitle")}
-      headerNode={<span className="text-primary">{msg("etapeRegisterTitle")}</span>}
+      headerNode={msg("etapeRegisterTitle")}
       displayMessage={messagesPerField.exists("global")}
       slots={{
         accountSwitch: (
@@ -244,6 +245,7 @@ export default function Register(props: RegisterProps) {
           />
         ),
         footerNote: msg("etapeRegisterCepNote"),
+        titleTone: TITLE_TONE.ACCENT,
       }}
       socialProvidersNode={
         isOnInformations ? (
@@ -326,9 +328,14 @@ export default function Register(props: RegisterProps) {
               label={
                 <>
                   {msg("etapeTermsAccept")}{" "}
-                  <LegalLink href={LEGAL_DOCUMENT_URL.CGU}>{msg("etapeTermsCgu")}</LegalLink>{" "}
+                  <LegalLink href={LEGAL_DOCUMENT_URL.CGU} newWindowLabel={msg("etapeNewWindow")}>
+                    {msg("etapeTermsCgu")}
+                  </LegalLink>{" "}
                   {msg("etapeTermsAnd")}{" "}
-                  <LegalLink href={LEGAL_DOCUMENT_URL.CGI}>{msg("etapeTermsCgi")}</LegalLink>.
+                  <LegalLink href={LEGAL_DOCUMENT_URL.CGI} newWindowLabel={msg("etapeNewWindow")}>
+                    {msg("etapeTermsCgi")}
+                  </LegalLink>
+                  .
                 </>
               }
               aria-describedby={
@@ -339,7 +346,10 @@ export default function Register(props: RegisterProps) {
             />
             <p id="terms-privacy-notice" className="text-muted-foreground ms-7 text-xs">
               {msg("etapeTermsPrivacyNotice")}{" "}
-              <LegalLink href={LEGAL_DOCUMENT_URL.CONFIDENTIALITE}>
+              <LegalLink
+                href={LEGAL_DOCUMENT_URL.CONFIDENTIALITE}
+                newWindowLabel={msg("etapeNewWindow")}
+              >
                 {msg("etapeTermsPrivacyLink")}
               </LegalLink>
               .
@@ -415,7 +425,11 @@ export default function Register(props: RegisterProps) {
   );
 }
 
-function RegisterSectionTitle(props: { children: ReactNode }) {
+interface RegisterSectionTitleProps {
+  children: ReactNode;
+}
+
+function RegisterSectionTitle(props: RegisterSectionTitleProps) {
   return (
     <FormSectionTitle size="sm" asChild>
       <h2>{props.children}</h2>
@@ -423,13 +437,20 @@ function RegisterSectionTitle(props: { children: ReactNode }) {
   );
 }
 
-function LegalLink(props: { href: string | undefined; children: ReactNode }) {
-  const { href, children } = props;
+interface LegalLinkProps {
+  href: string | undefined;
+  newWindowLabel: ReactNode;
+  children: ReactNode;
+}
+
+function LegalLink(props: LegalLinkProps) {
+  const { href, newWindowLabel, children } = props;
   if (href === undefined) return <>{children}</>;
 
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="underline">
       {children}
+      <span className="sr-only"> {newWindowLabel}</span>
     </a>
   );
 }

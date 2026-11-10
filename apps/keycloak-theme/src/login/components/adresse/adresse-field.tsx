@@ -99,11 +99,21 @@ export function AdresseField(props: AdresseFieldProps) {
   );
 }
 
-function HiddenAdresseAttribute(props: { name: string; value: string | undefined }) {
+interface HiddenAdresseAttributeProps {
+  name: string;
+  value: string | undefined;
+}
+
+function HiddenAdresseAttribute(props: HiddenAdresseAttributeProps) {
   return <input type="hidden" name={props.name} value={props.value ?? ""} />;
 }
 
-function ManualButton(props: { onClick: () => void; i18n: I18n }) {
+interface ManualButtonProps {
+  onClick: () => void;
+  i18n: I18n;
+}
+
+function ManualButton(props: ManualButtonProps) {
   return (
     <Button type="button" variant="outline" onClick={props.onClick}>
       <FilePenLine aria-hidden />
@@ -112,7 +122,12 @@ function ManualButton(props: { onClick: () => void; i18n: I18n }) {
   );
 }
 
-function HorsRegionAlert(props: { region: RegionCode | undefined; i18n: I18n }) {
+interface HorsRegionAlertProps {
+  region: RegionCode | undefined;
+  i18n: I18n;
+}
+
+function HorsRegionAlert(props: HorsRegionAlertProps) {
   const { region, i18n } = props;
   const details = region === undefined ? undefined : REGIONS[region];
 
@@ -136,6 +151,7 @@ function HorsRegionAlert(props: { region: RegionCode | undefined; i18n: I18n }) 
           {details === undefined
             ? i18n.msg("etapeAdresseHorsRegionUnknownLink")
             : i18n.msg("etapeAdresseHorsRegionLink", details.nom)}
+          <span className="sr-only"> {i18n.msg("etapeNewWindow")}</span>
           <ExternalLink aria-hidden />
         </a>
       </Button>
@@ -143,12 +159,9 @@ function HorsRegionAlert(props: { region: RegionCode | undefined; i18n: I18n }) 
   );
 }
 
-function AdresseSearch(props: {
-  field: UseAdresseFieldResult;
-  serverError: string | undefined;
-  shouldFocusOnMount: boolean;
-  i18n: I18n;
-}) {
+type AdresseSearchProps = Omit<AdresseFieldProps, "reloadUrl">;
+
+function AdresseSearch(props: AdresseSearchProps) {
   const { field, serverError, shouldFocusOnMount, i18n } = props;
   const { search } = field;
   const { msg, msgStr } = i18n;
@@ -244,7 +257,13 @@ function resultsLabel(count: number, i18n: I18n): string {
     : i18n.msgStr("etapeAdresseResultsMany", String(count));
 }
 
-function SearchAnnouncement(props: { status: AdresseSearchStatus; count: number; i18n: I18n }) {
+interface SearchAnnouncementProps {
+  status: AdresseSearchStatus;
+  count: number;
+  i18n: I18n;
+}
+
+function SearchAnnouncement(props: SearchAnnouncementProps) {
   const { status, count, i18n } = props;
 
   const ANNOUNCEMENTS: Record<AdresseSearchStatus, string> = {
