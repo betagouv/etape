@@ -75,7 +75,7 @@ export default function Register(props: RegisterProps) {
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("etapeRegisterTitle")}
-      subtitle={msg("etapeRegisterSubtitle")}
+      slots={{ subtitle: msg("etapeRegisterSubtitle") }}
       displayMessage={messagesPerField.exists("global")}
       socialProvidersNode={
         <SocialProviders

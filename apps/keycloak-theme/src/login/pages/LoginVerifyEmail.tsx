@@ -62,7 +62,7 @@ function ActivationEmailSent(props: LoginVerifyEmailProps) {
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("emailVerifyTitle")}
-      subtitle={msg("etapeVerifyEmailSubtitle")}
+      slots={{ subtitle: msg("etapeVerifyEmailSubtitle") }}
     >
       <div className="flex flex-col gap-4">
         <span className="bg-secondary text-primary flex size-12 items-center justify-center rounded-full">

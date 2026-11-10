@@ -1,26 +1,21 @@
-import { cn } from "@etape/ui/lib/utils";
+import { Criterion, CRITERION_STATUS, type CriterionStatus } from "@etape/ui/components/criterion";
+import { InsetPanel, INSET_PANEL_VARIANT } from "@etape/ui/components/inset-panel";
 import type { FormAction, FormFieldState } from "keycloakify/login/lib/useUserProfileForm";
-import { Check, Mail, User, X } from "lucide-react";
+import { Mail, User } from "lucide-react";
 import type { ChangeEvent, ComponentType, ReactNode } from "react";
 
 import type { I18n } from "../i18n";
 import { Field, FieldError, PasswordInput, TextInput } from "./form";
-import {
-  getPasswordRules,
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_RULE_MESSAGE_KEY,
-  type PasswordRuleMessageKey,
-} from "./password-rules";
+import { getPasswordRules, PASSWORD_MIN_LENGTH } from "./password-rules";
 
 export const PASSWORD_RULES_ID = "password-rules";
 
-/** Largeurs des critères dans la maquette : trois sur la première ligne, deux sur la seconde. */
-const RULE_WIDTH: Record<PasswordRuleMessageKey, string> = {
-  [PASSWORD_RULE_MESSAGE_KEY.LENGTH]: "w-40",
-  [PASSWORD_RULE_MESSAGE_KEY.UPPER]: "w-45",
-  [PASSWORD_RULE_MESSAGE_KEY.LOWER]: "w-45",
-  [PASSWORD_RULE_MESSAGE_KEY.DIGIT]: "w-40",
-  [PASSWORD_RULE_MESSAGE_KEY.SPECIAL]: "",
+const RULE_STATUS_LABEL: Record<
+  CriterionStatus,
+  "etapePasswordRuleMet" | "etapePasswordRuleUnmet"
+> = {
+  [CRITERION_STATUS.MET]: "etapePasswordRuleMet",
+  [CRITERION_STATUS.UNMET]: "etapePasswordRuleUnmet",
 };
 
 type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
@@ -249,33 +244,27 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
   const rules = getPasswordRules(value, minLength);
 
   return (
-    <div id={PASSWORD_RULES_ID} className="bg-secondary flex flex-col gap-2 rounded-md px-3 py-2">
+    <InsetPanel
+      id={PASSWORD_RULES_ID}
+      variant={INSET_PANEL_VARIANT.PLAIN}
+      className="gap-2 px-3 py-2"
+    >
       <p className="text-foreground text-sm">{msgStr("etapePasswordRulesTitle")}</p>
-      <ul className="flex flex-wrap gap-2">
-        {rules.map(({ messageKey, isSatisfied }) => (
-          <li
-            key={messageKey}
-            className={cn("flex items-center gap-1.5 text-sm", RULE_WIDTH[messageKey])}
-          >
-            <span
-              aria-hidden
-              className={cn(
-                "flex shrink-0 rounded-full p-1",
-                isSatisfied ? "bg-success-border text-success" : "bg-divider text-muted-foreground",
-              )}
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
+        {rules.map(({ messageKey, isSatisfied }) => {
+          const status = isSatisfied ? CRITERION_STATUS.MET : CRITERION_STATUS.UNMET;
+          return (
+            <Criterion
+              key={messageKey}
+              status={status}
+              statusLabel={msgStr(RULE_STATUS_LABEL[status])}
             >
-              {isSatisfied ? <Check className="size-2.5" /> : <X className="size-2.5" />}
-            </span>
-            <span className={isSatisfied ? "text-success" : "text-muted-foreground"}>
               {msgStr(messageKey)}
-            </span>
-            <span className="sr-only">
-              {msgStr(isSatisfied ? "etapePasswordRuleMet" : "etapePasswordRuleUnmet")}
-            </span>
-          </li>
-        ))}
+            </Criterion>
+          );
+        })}
       </ul>
-    </div>
+    </InsetPanel>
   );
 }
 

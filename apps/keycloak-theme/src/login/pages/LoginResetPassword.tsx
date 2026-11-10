@@ -24,7 +24,7 @@ export default function LoginResetPassword(
     shouldCheckEmailFormat: realm.loginWithEmailAllowed && realm.registrationEmailAsUsername,
   });
 
-  const hasError = messagesPerField.existsError("username");
+  const hasError = messagesPerField.existsError(RESET_PASSWORD_FIELD.USERNAME);
   const hasUsernameError = form.hasEmailFormatError || hasError;
   const hasAltchaError = messagesPerField.existsError("altcha");
   const shouldFocusAltcha = hasAltchaError && altchaChallenge !== undefined;
@@ -43,14 +43,16 @@ export default function LoginResetPassword(
       classes={classes}
       headerNode={msg("etapeResetPasswordTitle")}
       displayMessage={!hasError && !hasAltchaError}
-      backLinkNode={<BackLink href={url.loginUrl} label={msg("etapeBackToLogin")} />}
-      accountSwitchNode={
-        <CreateAccountSwitch
-          isAllowed={realm.registrationAllowed}
-          href={url.registrationUrl}
-          i18n={i18n}
-        />
-      }
+      slots={{
+        backLink: <BackLink href={url.loginUrl} label={msg("etapeBackToLogin")} />,
+        accountSwitch: (
+          <CreateAccountSwitch
+            isAllowed={realm.registrationAllowed}
+            href={url.registrationUrl}
+            i18n={i18n}
+          />
+        ),
+      }}
     >
       <div className="flex flex-col gap-6">
         <p className="text-accent-foreground text-base">{msg("etapeResetPasswordSubtitle")}</p>
@@ -71,7 +73,10 @@ export default function LoginResetPassword(
               form.hasEmailFormatError ? (
                 <FieldError id={USERNAME_ERROR_ID} message={msgStr("etapeEmailFormatInvalid")} />
               ) : hasError ? (
-                <FieldError id={USERNAME_ERROR_ID} message={messagesPerField.get("username")} />
+                <FieldError
+                  id={USERNAME_ERROR_ID}
+                  message={messagesPerField.get(RESET_PASSWORD_FIELD.USERNAME)}
+                />
               ) : undefined
             }
           >

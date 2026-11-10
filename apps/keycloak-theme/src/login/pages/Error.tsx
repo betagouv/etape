@@ -1,7 +1,7 @@
 import { Button } from "@etape/ui/components/button";
 import { kcSanitize } from "keycloakify/lib/kcSanitize";
 
-import { isActionTokenPage } from "../components/action-token-page";
+import { isUsedActionLink } from "../components/action-token-page";
 import { Prose } from "../components/prose";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
@@ -16,9 +16,11 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
   // rendu ne dit rien au typage, et obligeait à réaffirmer l'existence en dessous.
   const backToApplicationUrl = skipLink ? undefined : client?.baseUrl;
 
-  const isUsedLink =
-    message.summary === msgStr("expiredActionMessage") &&
-    isActionTokenPage(window.location.pathname);
+  const isUsedLink = isUsedActionLink({
+    summary: message.summary,
+    pathname: window.location.pathname,
+    expiredActionSummary: msgStr("expiredActionMessage"),
+  });
 
   const isExpiredLink =
     message.summary === msgStr("expiredActionTokenNoSessionMessage") ||
@@ -37,7 +39,7 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
       classes={classes}
       displayMessage={false}
       headerNode={isExpiredLink ? msg("etapeExpiredLinkTitle") : msg("errorTitle")}
-      subtitle={isExpiredLink ? undefined : msg("etapeErrorSubtitle")}
+      slots={{ subtitle: isExpiredLink ? undefined : msg("etapeErrorSubtitle") }}
     >
       <div id="kc-error-message" className="flex flex-col gap-8">
         <Prose>

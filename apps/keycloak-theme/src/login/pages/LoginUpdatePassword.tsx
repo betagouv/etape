@@ -51,13 +51,15 @@ export default function LoginUpdatePassword(
       classes={classes}
       headerNode={msg("etapeUpdatePasswordTitle")}
       displayMessage={!hasFieldError && !isMessageShownInPlace}
-      accountSwitchNode={
-        <CreateAccountSwitch
-          isAllowed={realm.registrationAllowed}
-          href={url.registrationUrl}
-          i18n={i18n}
-        />
-      }
+      slots={{
+        accountSwitch: (
+          <CreateAccountSwitch
+            isAllowed={realm.registrationAllowed}
+            href={url.registrationUrl}
+            i18n={i18n}
+          />
+        ),
+      }}
     >
       <form
         id="kc-passwd-update-form"

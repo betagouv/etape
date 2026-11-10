@@ -9,11 +9,16 @@ import { SupportFooter } from "./components/support-footer";
 import type { I18n } from "./i18n";
 import type { KcContext } from "./KcContext";
 
-type Props = TemplateProps<KcContext, I18n> & {
-  /** Phrase d'accroche sous le titre. Propre à ETAPE, donc absente des pages non dessinées. */
+/** Emplacements propres à ETAPE, regroupés pour ne pas allonger le contrat de Keycloakify. */
+export interface TemplateSlots {
+  /** Phrase d'accroche sous le titre, absente des pages non dessinées. */
   subtitle?: ReactNode;
-  accountSwitchNode?: ReactNode;
-  backLinkNode?: ReactNode;
+  accountSwitch?: ReactNode;
+  backLink?: ReactNode;
+}
+
+type Props = TemplateProps<KcContext, I18n> & {
+  slots?: TemplateSlots;
 };
 
 /**
@@ -30,9 +35,7 @@ export default function Template(props: Props) {
     displayInfo = false,
     displayMessage = true,
     headerNode,
-    subtitle,
-    accountSwitchNode = null,
-    backLinkNode = null,
+    slots = {},
     socialProvidersNode = null,
     infoNode = null,
     documentTitle,
@@ -92,11 +95,11 @@ export default function Template(props: Props) {
                 )}
               </nav>
             )}
-            {accountSwitchNode}
+            {slots.accountSwitch ?? null}
           </div>
 
           <div className="flex flex-col gap-6">
-            {backLinkNode}
+            {slots.backLink ?? null}
             <Logo />
 
             <header className="flex flex-col gap-3">
@@ -124,8 +127,8 @@ export default function Template(props: Props) {
                   {headerNode}
                 </h1>
               )}
-              {subtitle !== undefined && (
-                <p className="text-content-secondary text-base">{subtitle}</p>
+              {slots.subtitle !== undefined && (
+                <p className="text-content-secondary text-base">{slots.subtitle}</p>
               )}
             </header>
 
