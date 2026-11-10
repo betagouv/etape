@@ -72,7 +72,6 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
           search={search}
           fieldRef={field.ref}
           onBlur={field.onBlur}
-          isInvalid={fieldState.invalid}
           error={fieldState.error}
           isFocusRequested={isFocusRequested}
           onManualEntry={() => switchMode(EMPLOYEUR_ENTRY_MODE.MANUAL)}

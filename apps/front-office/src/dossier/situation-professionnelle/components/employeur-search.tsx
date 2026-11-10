@@ -43,7 +43,6 @@ export interface EmployeurSearchProps {
   search: UseEmployeurSearchResult;
   fieldRef: React.Ref<HTMLInputElement>;
   onBlur: () => void;
-  isInvalid: boolean;
   error?: { message?: string };
   /** Vrai après « Changer l'entreprise » ou un retour de la saisie manuelle : le focus revient au champ. */
   isFocusRequested: boolean;
@@ -54,11 +53,11 @@ export function EmployeurSearch({
   search,
   fieldRef,
   onBlur,
-  isInvalid,
   error,
   isFocusRequested,
   onManualEntry,
 }: EmployeurSearchProps) {
+  const isInvalid = error !== undefined;
   const isRetrying = search.status === SEARCH_STATUS.RETRYING;
   const manualEntryButton = (
     <Button type="button" variant="outline" size="sm" onClick={onManualEntry}>
