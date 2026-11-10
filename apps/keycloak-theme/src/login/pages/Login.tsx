@@ -70,15 +70,15 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
       classes={classes}
       headerNode={msg("etapeLoginTitle")}
       displayMessage={!hasCredentialsError}
-      accountSwitchNode={
-        isRegistrationAllowed && (
+      slots={{
+        accountSwitch: isRegistrationAllowed && (
           <HeaderAccountSwitch
             question={msg("etapeNoAccount")}
             href={url.registrationUrl}
             label={msg("etapeCreateAccount")}
           />
-        )
-      }
+        ),
+      }}
       socialProvidersNode={
         <SocialProviders
           providers={social?.providers}

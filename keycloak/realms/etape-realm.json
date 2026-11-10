@@ -149,7 +149,7 @@
           "priority": 10
         },
         {
-          "authenticator": "reset-credential-email",
+          "authenticator": "etape-reset-credential-email",
           "authenticatorFlow": false,
           "requirement": "REQUIRED",
           "priority": 20

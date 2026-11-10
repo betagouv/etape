@@ -4,7 +4,6 @@ import {
   type FocusEvent,
   type FormEvent,
   useEffect,
-  useRef,
   useState,
 } from "react";
 
@@ -14,6 +13,8 @@ import {
   rememberSubmittedForm,
   SUBMITTED_FORM,
 } from "../components/submitted-form";
+import { useActionPress } from "./use-action-press";
+import { useSubmitting } from "./use-submitting";
 
 export const LOGIN_FIELD = {
   USERNAME: "username",
@@ -23,7 +24,6 @@ export const LOGIN_FIELD = {
 export type LoginField = (typeof LOGIN_FIELD)[keyof typeof LOGIN_FIELD];
 
 const AUTOFILL_ANIMATION = "etape-autofill";
-const ACTION_SELECTOR = "a, button";
 
 interface UseLoginFormOptions {
   initialUsername: string;
@@ -50,29 +50,13 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
     [LOGIN_FIELD.USERNAME]: initialUsername.trim() !== "",
     [LOGIN_FIELD.PASSWORD]: false,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isSubmitting, startSubmitting } = useSubmitting();
   const [hasEmailFormatError, setHasEmailFormatError] = useState(false);
   const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
-  const isActionPressed = useRef(false);
+  const isActionPressed = useActionPress();
 
   useEffect(() => {
     forgetSubmittedForm();
-  }, []);
-
-  useEffect(() => {
-    const press = (event: MouseEvent): void => {
-      isActionPressed.current =
-        event.target instanceof Element && event.target.closest(ACTION_SELECTOR) !== null;
-    };
-    const release = (): void => {
-      isActionPressed.current = false;
-    };
-    document.addEventListener("mousedown", press, true);
-    document.addEventListener("mouseup", release, true);
-    return () => {
-      document.removeEventListener("mousedown", press, true);
-      document.removeEventListener("mouseup", release, true);
-    };
   }, []);
 
   const isFilled = (hasUsername: boolean, hasPassword: boolean): boolean =>
@@ -139,7 +123,7 @@ export function useLoginForm(options: UseLoginFormOptions): UseLoginFormResult {
         return;
       }
       rememberSubmittedForm(SUBMITTED_FORM.LOGIN);
-      setIsSubmitting(true);
+      startSubmitting();
     },
   };
 }
