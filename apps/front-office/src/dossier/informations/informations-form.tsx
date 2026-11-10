@@ -31,9 +31,9 @@ import { NationaliteInput } from "./components/nationalite-input";
 import { formatCleNir } from "./domain/format-cle-nir";
 import { formatNir } from "./domain/format-nir";
 import { formatTelephone } from "./domain/format-telephone";
-import type { UseInformationsFormResult } from "./hooks/use-informations-form";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
+import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
 import type { VoletNoticeContent } from "../domain/volets";
@@ -55,18 +55,8 @@ function computeDateNaissanceCalendar(today: Date): DateFieldCalendar {
   };
 }
 
-export interface InformationsPrefilledValues {
-  nom: string;
-  prenom: string;
-  email: string;
-  adresse: string;
-}
-
 export interface InformationsFormProps {
   formId: string;
-  informations: UseInformationsFormResult;
-  prefilledValues: InformationsPrefilledValues;
-  supportEmail: string;
   notice?: VoletNoticeContent;
   onSubmitValid: (data: InformationsFormData) => void;
 }
@@ -76,15 +66,9 @@ const CIVILITE_FIELD_ID = "civilite";
 const CIVILITE_LEGEND_ID = `${CIVILITE_FIELD_ID}-legend`;
 const CIVILITE_ERROR_ID = `${CIVILITE_FIELD_ID}-error`;
 
-export function InformationsForm({
-  formId,
-  informations,
-  prefilledValues,
-  supportEmail,
-  notice,
-  onSubmitValid,
-}: InformationsFormProps) {
-  const { form, sections, voletErrors, errorAnnouncement } = informations;
+export function InformationsForm({ formId, notice, onSubmitValid }: InformationsFormProps) {
+  const { form, sections, voletErrors, errorAnnouncement, prefilledValues } =
+    useDossierVolets().informations;
   const { submitCount } = form.formState;
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
 
@@ -162,7 +146,7 @@ export function InformationsForm({
                 readOnly
                 aria-describedby="nom-description"
               />
-              <PrefilledFieldDescription id="nom-description" email={supportEmail} />
+              <PrefilledFieldDescription id="nom-description" />
             </Field>
 
             <Field data-disabled>
@@ -173,7 +157,7 @@ export function InformationsForm({
                 readOnly
                 aria-describedby="prenom-description"
               />
-              <PrefilledFieldDescription id="prenom-description" email={supportEmail} />
+              <PrefilledFieldDescription id="prenom-description" />
             </Field>
 
             <Controller
@@ -292,7 +276,7 @@ export function InformationsForm({
                   aria-describedby="email-description"
                 />
               </InputGroup>
-              <PrefilledFieldDescription id="email-description" email={supportEmail} />
+              <PrefilledFieldDescription id="email-description" />
             </Field>
 
             <FormField

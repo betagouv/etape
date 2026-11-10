@@ -21,8 +21,17 @@ import {
   type InformationsSection,
 } from "../schema";
 
+export interface InformationsPrefilledValues {
+  nom: string;
+  prenom: string;
+  email: string;
+  adresse: string;
+}
+
 export interface UseInformationsFormResult {
   form: UseFormReturn<InformationsFormData>;
+  /** Repris de l'inscription et du profil : affichés, jamais saisis ici. */
+  prefilledValues: InformationsPrefilledValues;
   progress: VoletProgress;
   sections: Record<InformationsSection, SectionProgress>;
   voletErrors: VoletError[];
@@ -31,6 +40,14 @@ export interface UseInformationsFormResult {
 }
 
 const ALL_REQUIRED_FIELDS = Object.values(INFORMATIONS_SECTION_FIELDS).flat();
+
+// Nom, prénom, e-mail, adresse : en attendant l'API.
+const PREFILLED_VALUES: InformationsPrefilledValues = {
+  nom: "",
+  prenom: "",
+  email: "",
+  adresse: "",
+};
 
 const VOLET_LABEL = VOLETS_DOSSIER.find(({ id }) => id === VOLET_ID.INFORMATIONS)?.label ?? "";
 
@@ -112,6 +129,7 @@ export function useInformationsForm(): UseInformationsFormResult {
 
   return {
     form,
+    prefilledValues: PREFILLED_VALUES,
     progress: computeProgress(filledFields, errors),
     sections,
     voletErrors,

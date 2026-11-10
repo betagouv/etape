@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { VOLET_PATH, VOLET_ROUTE_ID } from "@/navigation/paths";
 import { VOLET_ID } from "../domain/volet-id";
 import { findVoletPosition } from "../domain/volets";
-import { SUPPORT_EMAIL, VOLETS_DOSSIER } from "../domain/volets-dossier";
+import { VOLETS_DOSSIER } from "../domain/volets-dossier";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useVoletHeadingFocus } from "../hooks/use-volet-heading-focus";
 import { InformationsForm } from "../informations/informations-form";
@@ -18,7 +18,7 @@ export function VoletScreen() {
   const navigate = useNavigate();
   const headingRef = useVoletHeadingFocus(voletId);
   const position = findVoletPosition(VOLETS_DOSSIER, voletId);
-  const { informations, voletProgress } = useDossierVolets();
+  const { voletProgress } = useDossierVolets();
 
   if (!position) return <NotFoundScreen />;
 
@@ -47,10 +47,6 @@ export function VoletScreen() {
       {isInformations ? (
         <InformationsForm
           formId={VOLET_ID.INFORMATIONS}
-          informations={informations}
-          // Nom, prénom, e-mail, adresse : en attendant l'API.
-          prefilledValues={{ nom: "", prenom: "", email: "", adresse: "" }}
-          supportEmail={SUPPORT_EMAIL}
           notice={position.current.notice}
           onSubmitValid={goToNextVolet}
         />
