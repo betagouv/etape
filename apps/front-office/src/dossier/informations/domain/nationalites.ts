@@ -1,5 +1,7 @@
 import { normalizeForSearch } from "@etape/utils/text";
 
+import { selectPlural, type PluralForms } from "@/lib/plural";
+
 export interface Nationalite {
   label: string;
   /** Les deux lettres du pays, en minuscules : la valeur enregistrée, et le nom de son drapeau. */
@@ -10,6 +12,11 @@ export interface Nationalite {
 export const SUGGESTION_NATIONALITE = "fr";
 
 export const NO_NATIONALITE_MESSAGE = "Aucune nationalité ne correspond.";
+
+const NATIONALITE_FOUND_LABELS: PluralForms<string> = {
+  one: "nationalité trouvée",
+  other: "nationalités trouvées",
+};
 
 export const NATIONALITES: readonly Nationalite[] = [
   { label: "Afghane", code: "af" },
@@ -239,6 +246,20 @@ export function splitSuggestion(nationalites: readonly Nationalite[]): Nationali
       ? nationalites.filter((nationalite) => nationalite !== suggestion)
       : nationalites,
   };
+}
+
+/**
+ * Ce qu'annonce la région `role="status"` : rien tant que la liste est fermée ou que rien
+ * n'est recherché, sinon ce que la liste affiche.
+ */
+export function findNationaliteAnnouncement(
+  isListOpen: boolean,
+  searchText: string,
+  nationaliteCount: number,
+): string {
+  if (!isListOpen || searchText.trim() === "") return "";
+  if (nationaliteCount === 0) return NO_NATIONALITE_MESSAGE;
+  return `${nationaliteCount} ${selectPlural(nationaliteCount, NATIONALITE_FOUND_LABELS)}`;
 }
 
 /*

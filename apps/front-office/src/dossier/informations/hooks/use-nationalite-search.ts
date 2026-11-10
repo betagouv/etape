@@ -2,7 +2,9 @@ import { useState, type ChangeEvent, type KeyboardEvent } from "react";
 
 import { useListboxNavigation } from "@etape/ui/hooks/use-listbox-navigation";
 
+import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import {
+  findNationaliteAnnouncement,
   findNationaliteByCode,
   findNationalites,
   splitSuggestion,
@@ -17,6 +19,9 @@ export function nationaliteOptionId({ code }: Nationalite): string {
   return `${NATIONALITE_FIELD_ID}-option-${code}`;
 }
 
+/** La liste se filtre à chaque frappe : on n'annonce que le nombre où la saisie s'arrête. */
+const ANNOUNCEMENT_DELAY_MS = 300;
+
 export interface NationaliteSearchInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
@@ -30,6 +35,8 @@ export interface UseNationaliteSearchResult {
   /** La nationalité proposée en tête de liste, quand la recherche la retient. */
   suggestion: Nationalite | null;
   nationalites: readonly Nationalite[];
+  /** Pour la région `role="status"` : vide tant que la liste est fermée ou que rien n'est recherché. */
+  announcement: string;
   active: Nationalite | null;
   inputHandlers: NationaliteSearchInputHandlers;
   select: (nationalite: Nationalite) => void;
@@ -46,13 +53,18 @@ export function useNationaliteSearch(
   const [isListOpen, setOpen] = useState(false);
 
   const { suggestion, nationalites } = splitSuggestion(findNationalites(searchText));
+  const options = suggestion ? [suggestion, ...nationalites] : nationalites;
 
   const navigation = useListboxNavigation({
-    items: suggestion ? [suggestion, ...nationalites] : nationalites,
+    items: options,
     optionId: nationaliteOptionId,
     isOpen: isListOpen,
     onSelect: (nationalite) => select(nationalite),
   });
+  const announcement = useDebouncedValue(
+    findNationaliteAnnouncement(isListOpen, searchText, options.length),
+    ANNOUNCEMENT_DELAY_MS,
+  );
 
   function setListOpen(isOpen: boolean): void {
     setOpen(isOpen);
@@ -72,6 +84,7 @@ export function useNationaliteSearch(
     selected: findNationaliteByCode(code),
     suggestion,
     nationalites,
+    announcement,
     active: navigation.active,
     inputHandlers: {
       onChange: (event) => {

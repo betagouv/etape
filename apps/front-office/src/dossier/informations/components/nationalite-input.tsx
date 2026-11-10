@@ -12,6 +12,7 @@ import {
 } from "@etape/ui/components/combobox";
 import { InputGroup, InputGroupAddon, InputGroupTrigger } from "@etape/ui/components/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
+import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { flagUrl, NO_NATIONALITE_MESSAGE } from "../domain/nationalites";
 import {
@@ -147,6 +148,7 @@ export function NationaliteInput({
         </PopoverContent>
       </Popover>
       {isInvalid && <FieldError id={ERROR_ID} errors={[error]} />}
+      <StatusRegion message={search.announcement} />
     </Field>
   );
 }

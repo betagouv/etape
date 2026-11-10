@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  findNationaliteAnnouncement,
   findNationaliteByCode,
   findNationalites,
   NATIONALITES,
+  NO_NATIONALITE_MESSAGE,
   splitSuggestion,
 } from "./nationalites";
 
@@ -54,5 +56,25 @@ describe("splitSuggestion", () => {
     const found = findNationalites("EQUATO");
 
     expect(splitSuggestion(found)).toEqual({ suggestion: null, nationalites: found });
+  });
+});
+
+describe("findNationaliteAnnouncement", () => {
+  it("n'annonce rien tant que la liste est fermée", () => {
+    expect(findNationaliteAnnouncement(false, "fra", 1)).toBe("");
+  });
+
+  it("n'annonce rien tant que rien n'est recherché : la liste entière s'affiche", () => {
+    expect(findNationaliteAnnouncement(true, "", 195)).toBe("");
+    expect(findNationaliteAnnouncement(true, "  ", 195)).toBe("");
+  });
+
+  it("annonce qu'aucune nationalité ne correspond", () => {
+    expect(findNationaliteAnnouncement(true, "zzz", 0)).toBe(NO_NATIONALITE_MESSAGE);
+  });
+
+  it("annonce le nombre de nationalités affichées, au singulier comme au pluriel", () => {
+    expect(findNationaliteAnnouncement(true, "fra", 1)).toBe("1 nationalité trouvée");
+    expect(findNationaliteAnnouncement(true, "an", 12)).toBe("12 nationalités trouvées");
   });
 });
