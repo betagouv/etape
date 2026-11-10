@@ -100,7 +100,7 @@ export function SituationProfessionnelleForm({
                 <>
                   <RadioGroup
                     id={DEMISSION_FIELD_ID}
-                    value={field.value}
+                    value={field.value ?? ""}
                     onValueChange={(value) => {
                       field.onChange(value);
                       // Après « non », la date n'est plus demandée : son erreur ne doit pas rester au résumé.

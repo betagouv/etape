@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch, type DeepPartial, type UseFormReturn } from "react-hook-form";
+import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import type { FieldErrors } from "../../domain/field-error-announcement";
 import {
@@ -11,12 +11,13 @@ import { VOLET_ID } from "../../domain/volet-id";
 import { VOLETS_DOSSIER } from "../../domain/volets-dossier";
 import type { VoletError } from "../../domain/volet-errors";
 import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcement";
+import { countFilled, countInvalid } from "../domain/count-fields";
+import { findRequiredFields, type RequiredFields } from "../domain/required-fields";
 import {
   EMPLOYEUR_ENTRY_MODE,
-  findSectionFields,
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
+  SITUATION_PROFESSIONNELLE_SECTION,
   situationProfessionnelleSchema,
-  type Demission,
   type SituationProfessionnelleFormData,
   type SituationProfessionnelleSection,
 } from "../schema";
@@ -33,27 +34,16 @@ export interface UseSituationProfessionnelleFormResult {
 const VOLET_LABEL =
   VOLETS_DOSSIER.find(({ id }) => id === VOLET_ID.SITUATION_PROFESSIONNELLE)?.label ?? "";
 
-type SituationProfessionnelleValues = DeepPartial<SituationProfessionnelleFormData>;
-
-function findRequiredFields(
-  values: SituationProfessionnelleValues,
-): (keyof SituationProfessionnelleFormData)[] {
-  return Object.values(
-    findSectionFields(values.employeurEntryMode ?? EMPLOYEUR_ENTRY_MODE.SEARCH, values.demission),
-  ).flat();
-}
-
 function computeProgress(
-  values: SituationProfessionnelleValues,
+  { allFields, filledFields }: RequiredFields,
   errors: FieldErrors,
 ): VoletProgress {
-  const requiredFields = findRequiredFields(values);
-  const filledFieldCount = requiredFields.filter((name) => Boolean(values[name])).length;
+  const filledFieldCount = countFilled(filledFields, allFields);
   return {
-    requiredFieldCount: requiredFields.length,
+    requiredFieldCount: allFields.length,
     filledFieldCount,
-    remainingFieldCount: requiredFields.length - filledFieldCount,
-    errorCount: requiredFields.filter((name) => errors[name] !== undefined).length,
+    remainingFieldCount: allFields.length - filledFieldCount,
+    errorCount: countInvalid(errors, allFields),
   };
 }
 
@@ -61,7 +51,10 @@ function describeVoletStatut(
   values: SituationProfessionnelleFormData,
   errors: FieldErrors,
 ): string {
-  return formatStatutVoletAnnouncement(VOLET_LABEL, computeProgress(values, errors));
+  return formatStatutVoletAnnouncement(
+    VOLET_LABEL,
+    computeProgress(findRequiredFields(values), errors),
+  );
 }
 
 /** Le formulaire « Ma situation professionnelle » et ce qui s'en déduit pendant le rendu. */
@@ -78,48 +71,50 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
       secteurActivite: "",
       adresse: "",
       intitulePoste: "",
-      demission: "" as Demission,
+      demission: undefined,
       dateDemission: "",
     },
     // Le focus revient au résumé d'erreurs de l'écran, pas au premier champ fautif.
     shouldFocusError: false,
   });
 
-  const values = useWatch({ control: form.control });
-  const { errors } = form.formState;
-  const sectionFields = findSectionFields(
-    values.employeurEntryMode ?? EMPLOYEUR_ENTRY_MODE.SEARCH,
-    values.demission,
-  );
-  const requiredFields = findRequiredFields(values);
-
-  const countFilled = (fields: readonly (keyof SituationProfessionnelleFormData)[]): number =>
-    fields.filter((name) => Boolean(values[name])).length;
-
-  const sections = Object.fromEntries(
-    Object.entries(sectionFields).map(([section, fields]) => [
-      section,
-      {
-        remainingFieldCount: fields.length - countFilled(fields),
-        errorCount: fields.filter((name) => errors[name] !== undefined).length,
-      },
-    ]),
-  ) as Record<SituationProfessionnelleSection, SectionProgress>;
-
   const errorAnnouncement = useFieldErrorAnnouncement(
     form,
     SITUATION_PROFESSIONNELLE_FIELD_LABEL,
     describeVoletStatut,
   );
+  // Le formulaire vit dans `DossierScreen` : surveiller les valeurs elles-mêmes re-rendrait
+  // tout le dossier à chaque frappe ; les champs exigés ne changent qu'avec le mode de saisie
+  // et la réponse sur la démission, les champs remplis qu'au passage de vide à rempli.
+  const requiredFields = useWatch({ control: form.control, compute: findRequiredFields });
+  const { errors } = form.formState;
+
+  const computeSectionProgress = (section: SituationProfessionnelleSection): SectionProgress => {
+    const fields = requiredFields.sectionFields[section];
+    return {
+      remainingFieldCount: fields.length - countFilled(requiredFields.filledFields, fields),
+      errorCount: countInvalid(errors, fields),
+    };
+  };
+
+  // Un littéral plutôt qu'un `Object.fromEntries` casté : une section ajoutée sans compteur ne compile pas.
+  const sections: Record<SituationProfessionnelleSection, SectionProgress> = {
+    [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: computeSectionProgress(
+      SITUATION_PROFESSIONNELLE_SECTION.EMPLOI,
+    ),
+    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]: computeSectionProgress(
+      SITUATION_PROFESSIONNELLE_SECTION.DEMISSION,
+    ),
+  };
 
   // Dans l'ordre de la page : zod place les erreurs de `superRefine` après celles des champs.
-  const voletErrors: VoletError[] = requiredFields
+  const voletErrors: VoletError[] = requiredFields.allFields
     .filter((name) => errors[name] !== undefined)
     .map((fieldId) => ({ fieldId, message: errors[fieldId]?.message ?? "" }));
 
   return {
     form,
-    progress: computeProgress(values, errors),
+    progress: computeProgress(requiredFields, errors),
     sections,
     voletErrors,
     errorAnnouncement,

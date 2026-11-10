@@ -86,7 +86,8 @@ export const situationProfessionnelleSchema = z
 
 export type SituationProfessionnelleFormData = z.infer<typeof situationProfessionnelleSchema>;
 
-type SituationProfessionnelleFieldName = keyof SituationProfessionnelleFormData;
+/** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
+export type SituationProfessionnelleFieldName = keyof SituationProfessionnelleFormData;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
 export const SITUATION_PROFESSIONNELLE_FIELD_LABEL: Record<

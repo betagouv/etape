@@ -29,6 +29,13 @@ describe("situationProfessionnelleSchema", () => {
       "employeur",
     ]);
   });
+
+  it("demande la réponse sur la démission quand elle n'est pas choisie", () => {
+    const issues = situationProfessionnelleSchema.safeParse(EMPTY_FORM).error?.issues ?? [];
+    expect(
+      issues.filter((issue) => issue.path[0] === "demission").map((issue) => issue.message),
+    ).toEqual(["Veuillez indiquer si vous avez remis votre démission."]);
+  });
 });
 
 describe("findSectionFields", () => {
