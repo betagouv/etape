@@ -105,10 +105,10 @@ export function useInformationsForm(): UseInformationsFormResult {
     [INFORMATIONS_SECTION.CONTACT]: computeSectionProgress(INFORMATIONS_SECTION.CONTACT),
   };
 
-  const voletErrors: VoletError[] = Object.entries(errors).map(([fieldId, error]) => ({
-    fieldId,
-    message: error?.message ?? "",
-  }));
+  // Dans l'ordre de la page : zod place les erreurs de `superRefine` après celles des champs.
+  const voletErrors: VoletError[] = ALL_REQUIRED_FIELDS.filter(
+    (name) => errors[name] !== undefined,
+  ).map((fieldId) => ({ fieldId, message: errors[fieldId]?.message ?? "" }));
 
   return {
     form,
