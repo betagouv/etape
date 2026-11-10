@@ -5,6 +5,7 @@ import {
   formatAdresse,
   isAdresseComplete,
   isCodePostalComplete,
+  toCodePostal,
 } from "./adresse";
 import { parseAdresses, parseCommunes } from "./adresse-api";
 
@@ -19,6 +20,19 @@ const FIELDS = {
 const AILLAS = { nom: "Aillas", code: "33002" };
 
 const banFeature = (properties: Record<string, unknown>) => ({ properties });
+
+describe("toCodePostal", () => {
+  it.each([
+    ["86000", "86000"],
+    [" 86000", "86000"],
+    ["86 000", "86000"],
+    ["860001", "86000"],
+    ["8600a", "8600"],
+    ["", ""],
+  ])("réduit %j à %j", (input, expected) => {
+    expect(toCodePostal(input)).toBe(expected);
+  });
+});
 
 describe("isAdresseComplete", () => {
   const COMPLETE = {

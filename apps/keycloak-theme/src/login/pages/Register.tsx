@@ -14,11 +14,13 @@ import { SocialProviders } from "../components/franceconnect";
 import { LEGAL_DOCUMENT_URL } from "../components/legal-documents";
 import { getPasswordRules } from "../components/password-rules";
 import { HeaderAccountSwitch } from "../components/prose";
+import { toRegistrationPageUrl } from "../components/registration-page";
 import { RegisterStepIndicator } from "../components/register-step-indicator";
 import {
   PasswordRules,
   USER_PROFILE_ATTRIBUTE,
   UserProfileField,
+  type UserProfileFieldProps,
 } from "../components/user-profile-fields";
 import { useAdresseField } from "../hooks/use-adresse-field";
 import { REGISTER_STEP, type RegisterStep, useRegisterForm } from "../hooks/use-register-form";
@@ -210,7 +212,7 @@ export default function Register(props: RegisterProps) {
       ? msgStr(STEP_ANNOUNCEMENT_KEY[form.step])
       : "";
 
-  const profileField = (name: string, extra?: Partial<Parameters<typeof UserProfileField>[0]>) => {
+  const profileField = (name: string, extra?: Partial<UserProfileFieldProps>) => {
     const fieldState = fieldStates.get(name);
     if (fieldState === undefined) return null;
     return (
@@ -298,6 +300,7 @@ export default function Register(props: RegisterProps) {
                 shouldFocusOnMount={
                   adresseServerError !== undefined && invalidFieldName === undefined
                 }
+                reloadUrl={toRegistrationPageUrl(url.registrationAction)}
                 i18n={i18n}
               />
             </FormSection>

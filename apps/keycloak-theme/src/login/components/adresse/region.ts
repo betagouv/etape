@@ -1,5 +1,7 @@
+/** Annuaire des Transitions Pro, quand la région de l'adresse est inconnue. */
 export const TRANSITIONS_PRO_CONTACTS_URL = "https://www.transitionspro.fr/contacts-en-region/";
 
+/** Régions par code INSEE, avec le site de leur Transitions Pro. */
 export const REGIONS = {
   "84": { nom: "Auvergne-Rhône-Alpes", transitionsProUrl: "https://www.transitionspro-ara.fr" },
   "27": { nom: "Bourgogne-Franche-Comté", transitionsProUrl: "https://www.transitionspro-bfc.fr" },
@@ -24,6 +26,7 @@ export const REGIONS = {
   },
 } as const;
 
+/** Code INSEE d'une région. */
 export type RegionCode = keyof typeof REGIONS;
 
 const DEPARTEMENTS_BY_REGION: Record<RegionCode, readonly string[]> = {
@@ -58,11 +61,13 @@ const REGION_BY_DEPARTEMENT = new Map<string, RegionCode>(
 
 const OUTRE_MER_PREFIX = "97";
 
+/** Région d'une commune, déduite du département que porte son code INSEE. */
 export function findRegionByCodeCommune(codeCommune: string): RegionCode | undefined {
   const departementLength = codeCommune.startsWith(OUTRE_MER_PREFIX) ? 3 : 2;
   return REGION_BY_DEPARTEMENT.get(codeCommune.slice(0, departementLength));
 }
 
+/** Vrai pour une région pilote ; une liste vide ouvre l'inscription partout. */
 export function isRegionPilote(
   region: RegionCode | undefined,
   regionsPilotes: readonly string[],

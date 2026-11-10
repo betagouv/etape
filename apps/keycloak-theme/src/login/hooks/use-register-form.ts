@@ -2,12 +2,15 @@ import { type FormEvent, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
+import { useSubmitting } from "./use-submitting";
 
+/** Étapes de l'inscription. */
 export const REGISTER_STEP = {
   INFORMATIONS: 1,
   CREDENTIALS: 2,
 } as const;
 
+/** Étape de l'inscription. */
 export type RegisterStep = (typeof REGISTER_STEP)[keyof typeof REGISTER_STEP];
 
 const FIRST_FIELD_ID_BY_STEP: Record<RegisterStep, string> = {
@@ -23,6 +26,7 @@ interface UseRegisterFormOptions {
   onIncomplete: (fieldId: string) => void;
 }
 
+/** État du formulaire d'inscription en deux étapes. */
 export interface UseRegisterFormResult {
   step: RegisterStep;
   hasStepChanged: boolean;
@@ -35,6 +39,7 @@ export interface UseRegisterFormResult {
   submit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
+/** Passage d'une étape à l'autre, refus d'une étape incomplète et garde contre la double soumission. */
 export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFormResult {
   const {
     initialStep,
@@ -46,7 +51,7 @@ export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFor
 
   const [step, setStep] = useState(initialStep);
   const [hasStepChanged, setHasStepChanged] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isSubmitting, startSubmitting } = useSubmitting();
   const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
 
   const goTo = (nextStep: RegisterStep): void => {
@@ -99,7 +104,7 @@ export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFor
         if (!isSubmitting) signalIncomplete();
         return;
       }
-      setIsSubmitting(true);
+      startSubmitting();
       rememberSubmittedForm(SUBMITTED_FORM.REGISTRATION);
     },
   };

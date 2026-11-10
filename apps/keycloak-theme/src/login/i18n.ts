@@ -86,6 +86,9 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeAdresseRetry: "Relancer la recherche",
       etapeAdresseManualLoading: "Chargement du formulaire…",
       etapeAdresseManualLoadFailed: "Le formulaire de saisie n'a pas pu se charger.",
+      etapeAdresseManualLoadFailedHint:
+        "Rechargez la page pour réessayer : votre prénom et votre nom seront à saisir de nouveau.",
+      etapeAdresseManualReload: "Recharger la page",
       etapeAdresseHorsRegionTitle:
         "Cette adresse n'est pas située dans une région présente sur ce portail",
       etapeAdresseHorsRegionHint:
@@ -242,6 +245,9 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeAdresseRetry: "Retry the search",
       etapeAdresseManualLoading: "Loading the form…",
       etapeAdresseManualLoadFailed: "The entry form could not be loaded.",
+      etapeAdresseManualLoadFailedHint:
+        "Reload the page to try again: you will need to enter your first and last name again.",
+      etapeAdresseManualReload: "Reload the page",
       etapeAdresseHorsRegionTitle: "This address is not in a region covered by this portal",
       etapeAdresseHorsRegionHint:
         "Your file falls under Transitions Pro {0}: please apply on its website.",

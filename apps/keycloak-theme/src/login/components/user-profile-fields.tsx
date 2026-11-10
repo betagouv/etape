@@ -15,6 +15,7 @@ const RULE_STATUS_LABEL: Record<CriterionStatus, Parameters<I18n["msgStr"]>[0]> 
   [CRITERION_STATUS.UNMET]: "etapePasswordRuleUnmet",
 };
 
+/** Attributs Keycloak du profil que l'inscription lit par leur nom. */
 export const USER_PROFILE_ATTRIBUTE = {
   EMAIL: "email",
   FIRST_NAME: "firstName",
@@ -24,14 +25,19 @@ export const USER_PROFILE_ATTRIBUTE = {
   PASSWORD_CONFIRM: "password-confirm",
 } as const;
 
-export function UserProfileField(props: {
+/** Props de `UserProfileField`. */
+export interface UserProfileFieldProps {
   fieldState: FormFieldState;
   dispatchFormAction: (action: FormAction) => void;
   i18n: I18n;
   hint?: ReactNode;
+  /** Affiché sous le champ, relié par `aria-describedby` (règles du mot de passe). */
   addon?: ReactNode;
   inputProps?: Pick<ComponentProps<"input">, "autoFocus" | "onFocus">;
-}) {
+}
+
+/** Un attribut du profil Keycloak, rendu en champ texte ou mot de passe. */
+export function UserProfileField(props: UserProfileFieldProps) {
   const { fieldState, dispatchFormAction, i18n, hint, addon, inputProps } = props;
   const { attribute, displayableErrors, valueOrValues } = fieldState;
   const { advancedMsg, advancedMsgStr } = i18n;

@@ -4,7 +4,15 @@ import type { I18n } from "../i18n";
 
 export const SUPPORT_EMAIL = "contact.etape@certif-pro.fr";
 
-export function SupportFooter(props: { i18n: I18n; note?: ReactNode }) {
+/** Props de `SupportFooter`. */
+export interface SupportFooterProps {
+  i18n: I18n;
+  /** Mention propre à la page, sous le contact du support. */
+  note?: ReactNode;
+}
+
+/** Pied de page commun : contact du support, puis la mention de la page. */
+export function SupportFooter(props: SupportFooterProps) {
   const { msg } = props.i18n;
 
   return (

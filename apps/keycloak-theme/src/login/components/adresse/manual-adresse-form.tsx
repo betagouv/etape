@@ -20,13 +20,13 @@ import type { I18n } from "../../i18n";
 import { Alert, MESSAGE_TYPE } from "../alert";
 import { Field, FieldError, TextInput } from "../form";
 
-const CODE_POSTAL_MAX_LENGTH = 5;
-
+/** Props de `ManualAdresseForm`. */
 export interface ManualAdresseFormProps {
   manual: UseManualAdresseResult;
   i18n: I18n;
 }
 
+/** Saisie manuelle de l'adresse, chargée à la demande par `ManualAdresseLoader`. */
 export default function ManualAdresseForm(props: ManualAdresseFormProps) {
   const { manual, i18n } = props;
   const { fields, communes, communesStatus, codeCommune } = manual;
@@ -91,7 +91,6 @@ export default function ManualAdresseForm(props: ManualAdresseFormProps) {
             type="text"
             inputMode="numeric"
             autoComplete="postal-code"
-            maxLength={CODE_POSTAL_MAX_LENGTH}
             aria-required
             invalid={isCodePostalUnknown}
             aria-describedby={isCodePostalUnknown ? "input-error-code-postal" : undefined}

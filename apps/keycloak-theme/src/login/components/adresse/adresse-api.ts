@@ -7,6 +7,7 @@ const SUGGESTION_LIMIT = "5";
 const MAX_QUERY_LENGTH = 200;
 const LEADING_SYMBOLS = /^[^\p{L}\p{N}]+/u;
 
+/** En dessous, l'API Adresse refuse la recherche. */
 export const MIN_QUERY_LENGTH = 3;
 const COMMUNE_TYPE = "municipality";
 
@@ -31,6 +32,7 @@ async function fetchJson(url: URL, signal: AbortSignal): Promise<unknown> {
   }
 }
 
+/** Adresses complètes d'une réponse de l'API Adresse ; les communes seules sont écartées. */
 export function parseAdresses(payload: unknown): Adresse[] {
   if (!isRecord(payload) || !Array.isArray(payload.features)) {
     throw new Error("Réponse inattendue de la recherche d'adresse");
@@ -52,6 +54,7 @@ export function parseAdresses(payload: unknown): Adresse[] {
   });
 }
 
+/** Communes d'une réponse de `geo.api.gouv.fr`. */
 export function parseCommunes(payload: unknown): Commune[] {
   if (!Array.isArray(payload)) throw new Error("Réponse inattendue de la liste des communes");
 
@@ -63,10 +66,12 @@ export function parseCommunes(payload: unknown): Commune[] {
   });
 }
 
+/** Texte saisi nettoyé pour l'API Adresse, qui refuse une requête ouverte par un symbole. */
 export function toSearchQuery(text: string): string {
   return text.trim().replace(LEADING_SYMBOLS, "").slice(0, MAX_QUERY_LENGTH);
 }
 
+/** Suggestions d'adresse pour le texte saisi. */
 export async function findAdresses(query: string, signal: AbortSignal): Promise<Adresse[]> {
   const q = toSearchQuery(query);
   if (q.length < MIN_QUERY_LENGTH) return [];
@@ -82,6 +87,7 @@ export async function findAdresses(query: string, signal: AbortSignal): Promise<
   return parseAdresses(await fetchJson(url, signal));
 }
 
+/** Communes couvertes par un code postal. */
 export async function findCommunes(codePostal: string, signal: AbortSignal): Promise<Commune[]> {
   const url = new URL(COMMUNES_URL);
   url.search = new URLSearchParams({ codePostal, fields: "nom,code" }).toString();

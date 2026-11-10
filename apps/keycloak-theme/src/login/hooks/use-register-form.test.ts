@@ -151,6 +151,20 @@ describe("useRegisterForm", () => {
     expect(result.current.isStepIncomplete).toBe(false);
   });
 
+  it("débloque l'envoi quand le navigateur restaure la page depuis l'historique", () => {
+    const { result } = render(REGISTER_STEP.CREDENTIALS, true, true);
+
+    act(() => result.current.submit(submitEvent().event));
+    expect(result.current.isSubmitBlocked).toBe(true);
+
+    act(() => {
+      window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+    });
+
+    expect(result.current.isSubmitting).toBe(false);
+    expect(result.current.isSubmitBlocked).toBe(false);
+  });
+
   it("revient à l'étape 1", () => {
     const { result } = render(REGISTER_STEP.CREDENTIALS, true, true);
 

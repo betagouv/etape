@@ -6,9 +6,11 @@ import {
   type Commune,
   isCodePostalComplete,
   type ManualAdresseFields,
+  toCodePostal,
 } from "../components/adresse/adresse";
 import { findCommunes } from "../components/adresse/adresse-api";
 
+/** États du chargement des communes d'un code postal. */
 export const COMMUNES_STATUS = {
   IDLE: "idle",
   LOADING: "loading",
@@ -16,8 +18,10 @@ export const COMMUNES_STATUS = {
   UNAVAILABLE: "unavailable",
 } as const;
 
+/** État du chargement des communes. */
 export type CommunesStatus = (typeof COMMUNES_STATUS)[keyof typeof COMMUNES_STATUS];
 
+/** Identifiants des champs de la saisie manuelle, cibles du focus. */
 export const MANUAL_FIELD_ID = {
   NUMERO_VOIE: "adresse-numero-voie",
   TYPE_VOIE: "adresse-type-voie",
@@ -27,6 +31,7 @@ export const MANUAL_FIELD_ID = {
   COMMUNE: "adresse-commune",
 } as const;
 
+/** Identifiant d'un champ de la saisie manuelle. */
 export type ManualFieldId = (typeof MANUAL_FIELD_ID)[keyof typeof MANUAL_FIELD_ID];
 
 const EMPTY_FIELDS: ManualAdresseFields = {
@@ -37,6 +42,7 @@ const EMPTY_FIELDS: ManualAdresseFields = {
   codePostal: "",
 };
 
+/** Premier champ à compléter, dans l'ordre de l'écran. */
 export function findFirstMissingField(
   fields: ManualAdresseFields,
   communes: readonly Commune[],
@@ -50,6 +56,7 @@ export function findFirstMissingField(
   return isCommuneChosen ? undefined : MANUAL_FIELD_ID.COMMUNE;
 }
 
+/** État de la saisie manuelle de l'adresse. */
 export interface UseManualAdresseResult {
   fields: ManualAdresseFields;
   communes: readonly Commune[];
@@ -63,6 +70,7 @@ export interface UseManualAdresseResult {
   retryCommunes: () => void;
 }
 
+/** Saisie manuelle : charge les communes du code postal et assemble l'adresse. */
 export function useManualAdresse(): UseManualAdresseResult {
   const [fields, setFields] = useState(EMPTY_FIELDS);
   const [communes, setCommunes] = useState<readonly Commune[]>([]);
@@ -100,7 +108,8 @@ export function useManualAdresse(): UseManualAdresseResult {
     adresse: buildManualAdresse(fields, commune),
     firstMissingFieldId: findFirstMissingField(fields, communes, commune !== undefined),
     changeField: (field, value) => setFields((current) => ({ ...current, [field]: value })),
-    changeCodePostal: (value) => {
+    changeCodePostal: (input) => {
+      const value = toCodePostal(input);
       setFields((current) => ({ ...current, codePostal: value }));
       setCodeCommune("");
       setCommunes([]);

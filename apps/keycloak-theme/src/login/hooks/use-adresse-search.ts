@@ -1,8 +1,9 @@
 import { type ChangeEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { type Adresse, formatAdresse } from "../components/adresse/adresse";
-import { findAdresses, MIN_QUERY_LENGTH } from "../components/adresse/adresse-api";
+import { findAdresses, MIN_QUERY_LENGTH, toSearchQuery } from "../components/adresse/adresse-api";
 
+/** États de la recherche d'adresse. */
 export const ADRESSE_SEARCH_STATUS = {
   IDLE: "idle",
   SEARCHING: "searching",
@@ -11,6 +12,7 @@ export const ADRESSE_SEARCH_STATUS = {
   UNAVAILABLE: "unavailable",
 } as const;
 
+/** État de la recherche d'adresse. */
 export type AdresseSearchStatus =
   (typeof ADRESSE_SEARCH_STATUS)[keyof typeof ADRESSE_SEARCH_STATUS];
 
@@ -18,6 +20,7 @@ const DEBOUNCE_MS = 250;
 const NO_ACTIVE = -1;
 const NO_QUERY = "";
 
+/** État de la recherche d'adresse et ses gestionnaires d'événements. */
 export interface UseAdresseSearchResult {
   text: string;
   chosen: Adresse | null;
@@ -34,6 +37,7 @@ export interface UseAdresseSearchResult {
   handleKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
 }
 
+/** Recherche d'adresse avec suggestions, annulée à chaque nouvelle saisie. */
 export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResult {
   const [text, setText] = useState(initial === null ? "" : formatAdresse(initial));
   const [chosen, setChosen] = useState(initial);
@@ -115,7 +119,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
     },
     changeText: (event) => {
       const value = event.target.value;
-      const nextQuery = value.trim();
+      const nextQuery = toSearchQuery(value);
       setChosen(null);
       setText(value);
       setActiveIndex(NO_ACTIVE);

@@ -23,19 +23,25 @@ const SINGLE_RESULT = 1;
 
 const optionId = (index: number): string => `${SUGGESTIONS_ID}-${index}`;
 
-export function AdresseField(props: {
+/** Props d'`AdresseField`. */
+export interface AdresseFieldProps {
   field: UseAdresseFieldResult;
   serverError: string | undefined;
   shouldFocusOnMount: boolean;
+  /** Page d'inscription à recharger si la saisie manuelle ne se charge pas. */
+  reloadUrl: string;
   i18n: I18n;
-}) {
-  const { field, serverError, shouldFocusOnMount, i18n } = props;
+}
+
+/** Adresse de résidence : recherche dans la Base Adresse Nationale, ou saisie manuelle en repli. */
+export function AdresseField(props: AdresseFieldProps) {
+  const { field, serverError, shouldFocusOnMount, reloadUrl, i18n } = props;
   const { adresse, region, isManual, isHorsRegion, search, manual, switchToManual } = field;
 
   return (
     <div className="flex flex-col gap-4">
       {isManual ? (
-        <ManualAdresseLoader i18n={i18n}>
+        <ManualAdresseLoader reloadUrl={reloadUrl} i18n={i18n}>
           {(ManualAdresseForm) => <ManualAdresseForm manual={manual} i18n={i18n} />}
         </ManualAdresseLoader>
       ) : (
@@ -78,6 +84,7 @@ export function AdresseField(props: {
       )}
 
       {isHorsRegion && <HorsRegionAlert region={region} i18n={i18n} />}
+      <StatusRegion message={isHorsRegion ? i18n.msgStr("etapeAdresseHorsRegionTitle") : ""} />
 
       <HiddenAdresseAttribute name={ADRESSE_ATTRIBUTE.ADRESSE} value={adresse?.voie} />
       <HiddenAdresseAttribute
@@ -110,7 +117,11 @@ function HorsRegionAlert(props: { region: RegionCode | undefined; i18n: I18n }) 
   const details = region === undefined ? undefined : REGIONS[region];
 
   return (
-    <Alert type={MESSAGE_TYPE.ERROR} summary={i18n.msgStr("etapeAdresseHorsRegionTitle")}>
+    <Alert
+      type={MESSAGE_TYPE.ERROR}
+      summary={i18n.msgStr("etapeAdresseHorsRegionTitle")}
+      isLive={false}
+    >
       <p className="text-foreground">
         {details === undefined
           ? i18n.msg("etapeAdresseHorsRegionUnknownHint")

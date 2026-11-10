@@ -13,8 +13,10 @@ import {
   type UseManualAdresseResult,
 } from "./use-manual-adresse";
 
+/** Champ de recherche, cible du focus quand l'adresse manque. */
 export const ADRESSE_SEARCH_INPUT_ID = "adresse-search";
 
+/** État du champ adresse, en recherche ou en saisie manuelle. */
 export interface UseAdresseFieldResult {
   isManual: boolean;
   search: UseAdresseSearchResult;
@@ -31,6 +33,7 @@ export interface UseAdresseFieldResult {
 
 const focusSearchInput = (): void => document.getElementById(ADRESSE_SEARCH_INPUT_ID)?.focus();
 
+/** Champ adresse : choisit entre recherche et saisie manuelle, et vérifie la région pilote. */
 export function useAdresseField(
   initial: Adresse | null,
   regionsPilotes: readonly string[],
