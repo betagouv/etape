@@ -1,22 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch, type FieldErrors, type UseFormReturn } from "react-hook-form";
+import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
-import {
-  formatStatutVoletAnnouncement,
-  type SectionProgress,
-  type VoletProgress,
-} from "../../domain/statut-volet";
+import type { SectionProgress, VoletProgress } from "../../domain/statut-volet";
 import { VOLET_ID } from "../../domain/volet-id";
+import { computeSectionProgress, computeVoletProgress } from "../../domain/volet-progress";
 import { VOLETS_DOSSIER } from "../../domain/volets-dossier";
-import type { VoletError } from "../../domain/volet-errors";
+import { listVoletErrors, type VoletError } from "../../domain/volet-errors";
 import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcement";
-import { countFilled, countInvalid, listFilledFields } from "../domain/count-fields";
+import { findRequiredFields } from "../domain/required-fields";
 import {
   INFORMATIONS_FIELD_LABEL,
   INFORMATIONS_SECTION,
-  INFORMATIONS_SECTION_FIELDS,
   informationsSchema,
-  type InformationsFieldName,
   type InformationsFormData,
   type InformationsSection,
 } from "../schema";
@@ -39,8 +34,6 @@ export interface UseInformationsFormResult {
   errorAnnouncement: string;
 }
 
-const ALL_REQUIRED_FIELDS = Object.values(INFORMATIONS_SECTION_FIELDS).flat();
-
 // Nom, prénom, e-mail, adresse : en attendant l'API.
 const PREFILLED_VALUES: InformationsPrefilledValues = {
   nom: "",
@@ -50,29 +43,6 @@ const PREFILLED_VALUES: InformationsPrefilledValues = {
 };
 
 const VOLET_LABEL = VOLETS_DOSSIER.find(({ id }) => id === VOLET_ID.INFORMATIONS)?.label ?? "";
-
-function computeProgress(
-  filledFields: readonly InformationsFieldName[],
-  errors: FieldErrors<InformationsFormData>,
-): VoletProgress {
-  const filledFieldCount = countFilled(filledFields, ALL_REQUIRED_FIELDS);
-  return {
-    requiredFieldCount: ALL_REQUIRED_FIELDS.length,
-    filledFieldCount,
-    remainingFieldCount: ALL_REQUIRED_FIELDS.length - filledFieldCount,
-    errorCount: Object.keys(errors).length,
-  };
-}
-
-function describeVoletStatut(
-  values: InformationsFormData,
-  errors: FieldErrors<InformationsFormData>,
-): string {
-  return formatStatutVoletAnnouncement(
-    VOLET_LABEL,
-    computeProgress(listFilledFields(values, ALL_REQUIRED_FIELDS), errors),
-  );
-}
 
 /**
  * Le formulaire « Mes informations » et ce qui s'en déduit pendant le rendu : avancement
@@ -98,41 +68,33 @@ export function useInformationsForm(): UseInformationsFormResult {
   const errorAnnouncement = useFieldErrorAnnouncement(
     form,
     INFORMATIONS_FIELD_LABEL,
-    describeVoletStatut,
+    VOLET_LABEL,
+    findRequiredFields,
   );
   // Le formulaire vit dans `DossierScreen` : surveiller les valeurs elles-mêmes re-rendrait
-  // tout le dossier à chaque frappe ; la liste des champs remplis ne change que de vide à rempli.
-  const filledFields = useWatch({
-    control: form.control,
-    compute: (values) => listFilledFields(values, ALL_REQUIRED_FIELDS),
-  });
+  // tout le dossier à chaque frappe ; les champs remplis ne changent qu'au passage de vide à rempli.
+  const requiredFields = useWatch({ control: form.control, compute: findRequiredFields });
   const { errors } = form.formState;
 
-  const computeSectionProgress = (section: InformationsSection): SectionProgress => {
-    const fields = INFORMATIONS_SECTION_FIELDS[section];
-    return {
-      remainingFieldCount: fields.length - countFilled(filledFields, fields),
-      errorCount: countInvalid(errors, fields),
-    };
-  };
+  const findSectionProgress = (section: InformationsSection): SectionProgress =>
+    computeSectionProgress(
+      requiredFields.sectionFields[section],
+      requiredFields.filledFields,
+      errors,
+    );
 
   // Un littéral plutôt qu'un `Object.fromEntries` casté : une section ajoutée sans compteur ne compile pas.
   const sections: Record<InformationsSection, SectionProgress> = {
-    [INFORMATIONS_SECTION.IDENTITE]: computeSectionProgress(INFORMATIONS_SECTION.IDENTITE),
-    [INFORMATIONS_SECTION.CONTACT]: computeSectionProgress(INFORMATIONS_SECTION.CONTACT),
+    [INFORMATIONS_SECTION.IDENTITE]: findSectionProgress(INFORMATIONS_SECTION.IDENTITE),
+    [INFORMATIONS_SECTION.CONTACT]: findSectionProgress(INFORMATIONS_SECTION.CONTACT),
   };
-
-  // Dans l'ordre de la page : zod place les erreurs de `superRefine` après celles des champs.
-  const voletErrors: VoletError[] = ALL_REQUIRED_FIELDS.filter(
-    (name) => errors[name] !== undefined,
-  ).map((fieldId) => ({ fieldId, message: errors[fieldId]?.message ?? "" }));
 
   return {
     form,
     prefilledValues: PREFILLED_VALUES,
-    progress: computeProgress(filledFields, errors),
+    progress: computeVoletProgress(requiredFields.allFields, requiredFields.filledFields, errors),
     sections,
-    voletErrors,
+    voletErrors: listVoletErrors(requiredFields.allFields, errors),
     errorAnnouncement,
   };
 }
