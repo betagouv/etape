@@ -5,6 +5,7 @@ import { flushSync } from "react-dom";
 
 import { KEY } from "@etape/ui/lib/keys";
 
+/** Les options de la liste, l'`id` de chacune dans la page, et ce que déclenchent Entrée et Échap. */
 export interface UseListboxNavigationOptions<T> {
   items: readonly T[];
   optionId: (item: T) => string;
@@ -14,6 +15,7 @@ export interface UseListboxNavigationOptions<T> {
   onEscape?: () => void;
 }
 
+/** L'option désignée au clavier, le gestionnaire à poser sur le champ, et sa remise à zéro. */
 export interface UseListboxNavigationResult<T> {
   /** L'option désignée au clavier, pour `aria-activedescendant`. */
   active: T | null;
