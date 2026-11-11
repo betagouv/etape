@@ -28,8 +28,11 @@ const SEGMENT_SEPARATOR = /&&|\|\||[;|\n()`]/;
 
 const QUOTED = /'[^']*'|"(?:\\.|[^"\\])*"/g;
 
-/** Ce qui, dans une chaîne entre guillemets, ferait sinon changer de mot ou de commande. */
-const QUOTED_BREAKS = /[\s;|&]/g;
+/**
+ * Ce qui, dans une chaîne entre guillemets, ferait sinon changer de mot ou de
+ * commande : tout ce que `SEGMENT_SEPARATOR` reconnaît, plus les espaces et `$`.
+ */
+const QUOTED_BREAKS = /[\s;|&()`$]/g;
 
 const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
 

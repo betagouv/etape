@@ -32,6 +32,10 @@ describe("findHookBypass", () => {
     "(git push --no-verify)",
     "echo $(git push --no-verify)",
     "git branch | xargs git push --no-verify",
+    // Parenthèses et backticks dans le message : ils ne coupent pas la commande.
+    'git commit -m "Corrige (bug)" --no-verify',
+    'git commit -m "Corrige `x`" --no-verify',
+    'git commit -m "Coût en $(euros)" --no-verify',
   ];
 
   const allowed = [
@@ -52,6 +56,7 @@ describe("findHookBypass", () => {
     'grep -n "Avant chaque push\\|HUSKY=0 git push" AGENTS.md',
     'git commit -m "Corrige le tri -n des listes"',
     "git commit -m 'Documente --no-verify'",
+    'git commit -m "Corrige (bug) et `x`"',
     "",
   ];
 
