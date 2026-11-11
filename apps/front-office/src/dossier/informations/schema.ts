@@ -1,18 +1,12 @@
 import { z } from "zod";
 
-import { parseFieldDate } from "../domain/field-date";
-import { AGE_MAXIMUM, AGE_MINIMUM, computeDateNaissanceBounds } from "./domain/date-naissance";
+import {
+  AGE_MAXIMUM,
+  AGE_MINIMUM,
+  isAgeMaximumRespected,
+  isAgeMinimumRespected,
+} from "./domain/date-naissance";
 import { isCleNirValid, NIR_PATTERN } from "./domain/validate-nir";
-
-function isAgeMinimumRespected(value: string): boolean {
-  const date = parseFieldDate(value);
-  return date !== undefined && date <= computeDateNaissanceBounds(new Date()).max;
-}
-
-function isAgeMaximumRespected(value: string): boolean {
-  const date = parseFieldDate(value);
-  return date !== undefined && date >= computeDateNaissanceBounds(new Date()).min;
-}
 
 export const CIVILITE = {
   MADAME: "madame",
@@ -34,8 +28,14 @@ const baseInformationsSchema = z.object({
     .string()
     .min(1, "Veuillez indiquer votre date de naissance.")
     .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Le format attendu est JJ/MM/AAAA.")
-    .refine(isAgeMinimumRespected, `Vous devez avoir au moins ${AGE_MINIMUM} ans.`)
-    .refine(isAgeMaximumRespected, `Vous devez avoir moins de ${AGE_MAXIMUM} ans.`),
+    .refine(
+      (value) => isAgeMinimumRespected(value, new Date()),
+      `Vous devez avoir au moins ${AGE_MINIMUM} ans.`,
+    )
+    .refine(
+      (value) => isAgeMaximumRespected(value, new Date()),
+      `Vous devez avoir moins de ${AGE_MAXIMUM} ans.`,
+    ),
   nationalite: z.string().min(1, "Veuillez choisir une nationalité."),
   nir: z
     .string()

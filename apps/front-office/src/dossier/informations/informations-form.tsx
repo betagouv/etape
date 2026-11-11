@@ -25,9 +25,8 @@ import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { ACCOUNT_PATH } from "@/navigation/paths";
 import { DateField } from "../components/date-field";
-import type { DateFieldCalendar } from "../domain/field-date";
 import { PrefilledFieldDescription } from "./components/prefilled-field-description";
-import { computeDateNaissanceBounds } from "./domain/date-naissance";
+import { computeDateNaissanceCalendar } from "./domain/date-naissance";
 import { NationaliteField } from "./components/nationalite-field";
 import { formatCleNir } from "./domain/format-cle-nir";
 import { formatNir } from "./domain/format-nir";
@@ -45,16 +44,6 @@ import {
   INFORMATIONS_SECTION,
   type InformationsFormData,
 } from "./schema";
-
-function computeDateNaissanceCalendar(today: Date): DateFieldCalendar {
-  const { min, max } = computeDateNaissanceBounds(today);
-  return {
-    defaultMonth: new Date(1990, 0),
-    startMonth: min,
-    endMonth: max,
-    disabled: { before: min, after: max },
-  };
-}
 
 export interface InformationsFormProps {
   formId: string;
