@@ -3,7 +3,7 @@ import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import type { SectionProgress, VoletProgress } from "../../domain/statut-volet";
 import { VOLET_ID } from "../../domain/volet-id";
-import { computeSectionProgress, computeVoletProgress } from "../../domain/volet-progress";
+import { computeSectionsProgress, computeVoletProgress } from "../../domain/volet-progress";
 import { VOLETS_DOSSIER } from "../../domain/volets-dossier";
 import { listVoletErrors, type VoletError } from "../../domain/volet-errors";
 import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcement";
@@ -11,7 +11,6 @@ import { findRequiredFields } from "../domain/required-fields";
 import {
   EMPLOYEUR_ENTRY_MODE,
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
-  SITUATION_PROFESSIONNELLE_SECTION,
   situationProfessionnelleSchema,
   type SituationProfessionnelleFormData,
   type SituationProfessionnelleSection,
@@ -62,27 +61,14 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
   const requiredFields = useWatch({ control: form.control, compute: findRequiredFields });
   const { errors } = form.formState;
 
-  const findSectionProgress = (section: SituationProfessionnelleSection): SectionProgress =>
-    computeSectionProgress(
-      requiredFields.sectionFields[section],
-      requiredFields.filledFields,
-      errors,
-    );
-
-  // Un littéral plutôt qu'un `Object.fromEntries` casté : une section ajoutée sans compteur ne compile pas.
-  const sections: Record<SituationProfessionnelleSection, SectionProgress> = {
-    [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: findSectionProgress(
-      SITUATION_PROFESSIONNELLE_SECTION.EMPLOI,
-    ),
-    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]: findSectionProgress(
-      SITUATION_PROFESSIONNELLE_SECTION.DEMISSION,
-    ),
-  };
-
   return {
     form,
     progress: computeVoletProgress(requiredFields.allFields, requiredFields.filledFields, errors),
-    sections,
+    sections: computeSectionsProgress(
+      requiredFields.sectionFields,
+      requiredFields.filledFields,
+      errors,
+    ),
     voletErrors: listVoletErrors(requiredFields.allFields, errors),
     errorAnnouncement,
   };

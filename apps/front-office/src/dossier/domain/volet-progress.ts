@@ -50,7 +50,7 @@ export function computeVoletProgress(
 }
 
 /** Avancement d'une section sur ses champs : restants et en erreur. */
-export function computeSectionProgress(
+function computeSectionProgress(
   fields: readonly string[],
   filledFields: readonly string[],
   errors: FieldErrors,
@@ -59,6 +59,22 @@ export function computeSectionProgress(
     remainingFieldCount: fields.length - countFilled(filledFields, fields),
     errorCount: countInvalid(errors, fields),
   };
+}
+
+/** Avancement de chaque section d'un volet, sur ses champs : restants et en erreur. */
+export function computeSectionsProgress<TSection extends string>(
+  sectionFields: Record<TSection, readonly string[]>,
+  filledFields: readonly string[],
+  errors: FieldErrors,
+): Record<TSection, SectionProgress> {
+  // `Object.entries` perd le type des clés, le cast le rend : `sectionFields` porte toutes
+  // les sections, donc le résultat aussi.
+  return Object.fromEntries(
+    Object.entries<readonly string[]>(sectionFields).map(([section, fields]) => [
+      section,
+      computeSectionProgress(fields, filledFields, errors),
+    ]),
+  ) as Record<TSection, SectionProgress>;
 }
 
 /** Le statut d'un volet tel qu'il s'annonce : « Mes informations : 1 erreur à corriger et 4 champs restants. » */

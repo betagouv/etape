@@ -3,14 +3,13 @@ import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import type { SectionProgress, VoletProgress } from "../../domain/statut-volet";
 import { VOLET_ID } from "../../domain/volet-id";
-import { computeSectionProgress, computeVoletProgress } from "../../domain/volet-progress";
+import { computeSectionsProgress, computeVoletProgress } from "../../domain/volet-progress";
 import { VOLETS_DOSSIER } from "../../domain/volets-dossier";
 import { listVoletErrors, type VoletError } from "../../domain/volet-errors";
 import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcement";
 import { findRequiredFields } from "../domain/required-fields";
 import {
   INFORMATIONS_FIELD_LABEL,
-  INFORMATIONS_SECTION,
   informationsSchema,
   type InformationsFormData,
   type InformationsSection,
@@ -76,24 +75,15 @@ export function useInformationsForm(): UseInformationsFormResult {
   const requiredFields = useWatch({ control: form.control, compute: findRequiredFields });
   const { errors } = form.formState;
 
-  const findSectionProgress = (section: InformationsSection): SectionProgress =>
-    computeSectionProgress(
-      requiredFields.sectionFields[section],
-      requiredFields.filledFields,
-      errors,
-    );
-
-  // Un littéral plutôt qu'un `Object.fromEntries` casté : une section ajoutée sans compteur ne compile pas.
-  const sections: Record<InformationsSection, SectionProgress> = {
-    [INFORMATIONS_SECTION.IDENTITE]: findSectionProgress(INFORMATIONS_SECTION.IDENTITE),
-    [INFORMATIONS_SECTION.CONTACT]: findSectionProgress(INFORMATIONS_SECTION.CONTACT),
-  };
-
   return {
     form,
     prefilledValues: PREFILLED_VALUES,
     progress: computeVoletProgress(requiredFields.allFields, requiredFields.filledFields, errors),
-    sections,
+    sections: computeSectionsProgress(
+      requiredFields.sectionFields,
+      requiredFields.filledFields,
+      errors,
+    ),
     voletErrors: listVoletErrors(requiredFields.allFields, errors),
     errorAnnouncement,
   };
