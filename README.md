@@ -88,7 +88,7 @@ Variables d'environnement, identifiants FranceConnect et vérifications :
 
 ## Travailler avec Claude Code
 
-Les conventions du projet sont portées par des règles et des skills versionnés — voir [`docs/conventions/outillage-agent.md`](./docs/conventions/outillage-agent.md). Chaque workspace a un `AGENTS.md` (importé par son `CLAUDE.md`) qui oriente les agents, et [`docs/cartographie.md`](./docs/cartographie.md) en est la vue d'ensemble. Une seule manipulation est à faire sur ton poste.
+Les conventions du projet sont portées par des règles et des skills versionnés — voir [`docs/conventions/outillage-agent.md`](./docs/conventions/outillage-agent.md). Chaque workspace a un `AGENTS.md` (importé par son `CLAUDE.md`) qui oriente les agents, et [`docs/cartographie.md`](./docs/cartographie.md) en est la vue d'ensemble. Deux points sont à régler sur ton poste.
 
 **Activer le serveur MCP `shadcn`.** Il donne accès aux sources officielles des composants shadcn, ce dont le skill `composant-ui` a besoin pour ne pas les retaper de mémoire. Le dépôt le déclare (`.mcp.json`) et l'autorise (`.claude/settings.json`), mais ton fichier personnel `.claude/settings.local.json` — non versionné — peut le désactiver :
 
@@ -97,5 +97,7 @@ Les conventions du projet sont portées par des règles et des skills versionné
 ```
 
 Retire l'entrée `"shadcn"` de ce tableau. Sans cela, le serveur reste muet et le skill échoue sans dire pourquoi.
+
+**Review IA avant chaque push.** `git push` lance le typecheck des workspaces touchés, puis une review IA des seuls commits qui partent. Elle passe par **ton abonnement Claude**, jamais par une clé d'API : il faut que `claude` soit installé et connecté (`claude`, puis `/login`). Sans cela, la review est sautée avec un avertissement et le push passe. Pendant la phase d'observation, elle affiche ses constats sans jamais bloquer. `pnpm run ai-review` la lance à la demande, `pnpm run ai-review:last` réaffiche le dernier rapport. Détail, niveaux et échappatoires : [`docs/conventions/outillage-agent.md`](./docs/conventions/outillage-agent.md#review-ia-en-pre-push).
 
 > Cette section a vocation à rejoindre le `CONTRIBUTING.md` prévu par l'issue #6.
