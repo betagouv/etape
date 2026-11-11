@@ -41,6 +41,7 @@ import {
   findSkipReason,
   formatMarkdown,
   formatReport,
+  isSkipRequested,
   parseClaudeOutput,
   parsePushRefs,
   resolveBase,
@@ -319,10 +320,14 @@ async function main() {
     showLastReport();
     return 0;
   }
-  if (process.env.SKIP_AI_REVIEW) {
-    warn("SKIP_AI_REVIEW — review sautée (consigné).");
+  const skipValue = process.env.SKIP_AI_REVIEW;
+  if (isSkipRequested(skipValue)) {
+    warn("SKIP_AI_REVIEW=1 — review sautée (consigné).");
     appendJournal({ skipped: "SKIP_AI_REVIEW" });
     return 0;
+  }
+  if (skipValue) {
+    warn(`SKIP_AI_REVIEW=${skipValue} ignoré : seule la valeur 1 saute la review.`);
   }
 
   let exitCode = 0;

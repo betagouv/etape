@@ -198,13 +198,13 @@ Le reviewer ne corrige rien : il rapporte, le développeur décide.
 
 **Commandes et échappatoires :**
 
-| Commande                    | Effet                                                              |
-| --------------------------- | ------------------------------------------------------------------ |
-| `pnpm run ai-review`        | Relit à la demande ce que le prochain push enverrait               |
-| `pnpm run ai-review:last`   | Réaffiche le dernier rapport, pour traiter les constats après coup |
-| `ETAPE_REVIEW_MODE=block`   | Phase 2 : un `critical` refuse le push                             |
-| `SKIP_AI_REVIEW=1 git push` | Saute la review ; consigné dans le journal                         |
-| `HUSKY=0 git push`          | Saute tous les hooks ; à réserver aux urgences                     |
+| Commande                    | Effet                                                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `pnpm run ai-review`        | Relit à la demande ce que le prochain push enverrait                                                        |
+| `pnpm run ai-review:last`   | Réaffiche le dernier rapport, pour traiter les constats après coup                                          |
+| `ETAPE_REVIEW_MODE=block`   | Phase 2 : un `critical` refuse le push                                                                      |
+| `SKIP_AI_REVIEW=1 git push` | Saute la review ; consigné dans le journal. Seule la valeur `1` compte : `0` ou `false` la laissent tourner |
+| `HUSKY=0 git push`          | Saute tous les hooks ; à réserver aux urgences                                                              |
 
 **Où voir le rapport.** Pousser depuis un terminal l'affiche directement. Depuis un IDE, la sortie d'un hook qui réussit reste dans le journal Git, et en mode `report` le push réussit toujours. Trois relais :
 

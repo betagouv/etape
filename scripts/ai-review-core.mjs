@@ -67,6 +67,21 @@ export const DIFF_EXCLUDES = [
   ":(exclude)apps/api/src/generated",
 ];
 
+/**
+ * Seule valeur de `SKIP_AI_REVIEW` qui saute la review. Tester la variable comme
+ * vraie dès qu'elle a une valeur ferait sauter la review à `SKIP_AI_REVIEW=0`,
+ * précisément quand on veut la garder.
+ */
+export const SKIP_REVIEW_VALUE = "1";
+
+/**
+ * @param {string | undefined} value `process.env.SKIP_AI_REVIEW`
+ * @returns {boolean}
+ */
+export function isSkipRequested(value) {
+  return value === SKIP_REVIEW_VALUE;
+}
+
 /** Au-delà, la review coûterait trop cher et durerait trop pour un hook : on la saute. */
 export const MAX_DIFF_LINES = 4000;
 

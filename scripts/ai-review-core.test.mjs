@@ -14,6 +14,7 @@ import {
   findSkipReason,
   formatMarkdown,
   formatReport,
+  isSkipRequested,
   parseClaudeOutput,
   parsePushRefs,
   resolveBase,
@@ -337,4 +338,13 @@ describe("buildNotification", () => {
     );
     assert.match(notification?.message ?? "", /pnpm run ai-review:last/);
   });
+});
+
+describe("isSkipRequested", () => {
+  it("SKIP_AI_REVIEW=1 saute la review", () => assert.equal(isSkipRequested("1"), true));
+
+  for (const value of [undefined, "", "0", "false", "true", "yes", " 1"]) {
+    it(`SKIP_AI_REVIEW=${JSON.stringify(value)} ne la saute pas`, () =>
+      assert.equal(isSkipRequested(value), false));
+  }
 });
