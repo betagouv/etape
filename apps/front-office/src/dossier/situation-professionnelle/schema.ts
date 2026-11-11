@@ -33,67 +33,70 @@ const REQUIRED_MESSAGES = {
   dateDemission: "Veuillez choisir la date de votre démission.",
 } as const;
 
+const baseSituationProfessionnelleSchema = z.object({
+  employeurEntryMode: z.enum(EMPLOYEUR_ENTRY_MODE),
+  employeur: EtablissementSchema.nullable(),
+  denomination: z.string().trim(),
+  siret: z.string(),
+  secteurActivite: z.string(),
+  adresse: z.string().trim(),
+  intitulePoste: z.string().trim().min(1, "Veuillez saisir l’intitulé de votre poste."),
+  demission: z.enum(DEMISSION, "Veuillez indiquer si vous avez remis votre démission."),
+  dateDemission: z.string(),
+});
+
 /** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */
-const REFINED_FIELDS: ReadonlySet<string> = new Set([
-  "employeurEntryMode",
-  "employeur",
-  "denomination",
-  "siret",
-  "secteurActivite",
-  "adresse",
-  "dateDemission",
-]);
+const refinedFieldsSchema = baseSituationProfessionnelleSchema.pick({
+  employeurEntryMode: true,
+  employeur: true,
+  denomination: true,
+  siret: true,
+  secteurActivite: true,
+  adresse: true,
+  dateDemission: true,
+});
 
-export const situationProfessionnelleSchema = z
-  .object({
-    employeurEntryMode: z.enum(EMPLOYEUR_ENTRY_MODE),
-    employeur: EtablissementSchema.nullable(),
-    denomination: z.string().trim(),
-    siret: z.string(),
-    secteurActivite: z.string(),
-    adresse: z.string().trim(),
-    intitulePoste: z.string().trim().min(1, "Veuillez saisir l’intitulé de votre poste."),
-    demission: z.enum(DEMISSION, "Veuillez indiquer si vous avez remis votre démission."),
-    dateDemission: z.string(),
-  })
-  // Seuls les champs du mode en cours sont exigés.
-  .superRefine(
-    (data, ctx) => {
-      const require = (path: keyof typeof REQUIRED_MESSAGES, isFilled: boolean): void => {
-        if (!isFilled)
-          ctx.addIssue({ code: "custom", path: [path], message: REQUIRED_MESSAGES[path] });
-      };
+// Seuls les champs du mode en cours sont exigés.
+export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema.superRefine(
+  (data, ctx) => {
+    const require = (path: keyof typeof REQUIRED_MESSAGES, isFilled: boolean): void => {
+      if (!isFilled)
+        ctx.addIssue({ code: "custom", path: [path], message: REQUIRED_MESSAGES[path] });
+    };
 
-      if (data.demission === DEMISSION.OUI) {
-        require("dateDemission", data.dateDemission !== "");
-        if (isDateDemissionInFuture(data.dateDemission, new Date())) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["dateDemission"],
-            message: "La date de votre démission ne peut pas être dans le futur.",
-          });
-        }
-      }
-
-      if (data.employeurEntryMode === EMPLOYEUR_ENTRY_MODE.SEARCH) {
-        require("employeur", data.employeur !== null);
-        return;
-      }
-
-      require("denomination", data.denomination !== "");
-      if (!SIRET_PATTERN.test(data.siret.replace(/\s/g, ""))) {
+    if (data.demission === DEMISSION.OUI) {
+      require("dateDemission", data.dateDemission !== "");
+      if (isDateDemissionInFuture(data.dateDemission, new Date())) {
         ctx.addIssue({
           code: "custom",
-          path: ["siret"],
-          message: "Le numéro SIRET doit comporter 14 chiffres.",
+          path: ["dateDemission"],
+          message: "La date de votre démission ne peut pas être dans le futur.",
         });
       }
-      require("secteurActivite", data.secteurActivite !== "");
-      require("adresse", data.adresse !== "");
-    },
-    // Sans cela, zod saute ce contrôle dès qu'un autre champ est en erreur : l'employeur n'apparaîtrait qu'au second envoi.
-    { when: ({ issues }) => issues.every(({ path = [] }) => !REFINED_FIELDS.has(String(path[0]))) },
-  );
+    }
+
+    if (data.employeurEntryMode === EMPLOYEUR_ENTRY_MODE.SEARCH) {
+      require("employeur", data.employeur !== null);
+      return;
+    }
+
+    require("denomination", data.denomination !== "");
+    if (!SIRET_PATTERN.test(data.siret.replace(/\s/g, ""))) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["siret"],
+        message: "Le numéro SIRET doit comporter 14 chiffres.",
+      });
+    }
+    require("secteurActivite", data.secteurActivite !== "");
+    require("adresse", data.adresse !== "");
+  },
+  {
+    // Sans `when`, zod saute ce contrôle dès qu'un champ est rejeté d'emblée : l'employeur
+    // n'apparaîtrait qu'au second envoi.
+    when: ({ value }) => refinedFieldsSchema.safeParse(value).success,
+  },
+);
 
 export type SituationProfessionnelleFormData = z.infer<typeof situationProfessionnelleSchema>;
 

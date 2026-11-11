@@ -55,28 +55,30 @@ const baseInformationsSchema = z.object({
     .regex(/^0[1-79]/, "Le numéro doit être un téléphone français (fixe ou mobile)."),
 });
 
-const nirCleSchema = baseInformationsSchema.pick({ nir: true, cleNir: true });
+/** Les champs que lit le contrôle de la clé : il ne s'exécute que s'ils sont valides. */
+const refinedFieldsSchema = baseInformationsSchema.pick({ nir: true, cleNir: true });
 
 export const informationsSchema = baseInformationsSchema.superRefine(
   (data, ctx) => {
     if (!isCleNirValid(data.nir, data.cleNir)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
+        path: ["cleNir"],
         message:
           "La clé ne correspond pas au numéro : vérifiez les 2 derniers chiffres de votre carte Vitale.",
-        path: ["cleNir"],
       });
     }
   },
   {
     // Sans `when`, zod saute ce contrôle dès qu'un champ est rejeté d'emblée : une civilité
     // vide suffisait à laisser passer une clé fausse.
-    when: ({ value }) => nirCleSchema.safeParse(value).success,
+    when: ({ value }) => refinedFieldsSchema.safeParse(value).success,
   },
 );
 
 export type InformationsFormData = z.infer<typeof informationsSchema>;
 
+/** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
 export type InformationsFieldName = keyof InformationsFormData;
 
 /** Libellés des champs, partagés par le formulaire et l'annonce de leurs erreurs. */
