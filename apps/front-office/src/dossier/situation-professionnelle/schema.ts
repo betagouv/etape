@@ -1,6 +1,8 @@
 import { EtablissementSchema } from "@etape/api-contract";
 import { z } from "zod";
 
+import { isDateDemissionInFuture } from "./domain/date-demission";
+
 export const DEMISSION = {
   OUI: "oui",
   NON: "non",
@@ -62,7 +64,16 @@ export const situationProfessionnelleSchema = z
           ctx.addIssue({ code: "custom", path: [path], message: REQUIRED_MESSAGES[path] });
       };
 
-      if (data.demission === DEMISSION.OUI) require("dateDemission", data.dateDemission !== "");
+      if (data.demission === DEMISSION.OUI) {
+        require("dateDemission", data.dateDemission !== "");
+        if (isDateDemissionInFuture(data.dateDemission, new Date())) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["dateDemission"],
+            message: "La date de votre démission ne peut pas être dans le futur.",
+          });
+        }
+      }
 
       if (data.employeurEntryMode === EMPLOYEUR_ENTRY_MODE.SEARCH) {
         require("employeur", data.employeur !== null);

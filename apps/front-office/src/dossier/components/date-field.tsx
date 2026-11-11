@@ -6,15 +6,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/compo
 import { InputGroup, InputGroupAddon, InputGroupTrigger } from "@etape/ui/components/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 
-import { formatFieldDate, parseFieldDate } from "../domain/field-date";
-
-/** Les bornes du calendrier, pour qu'il ne propose aucune date que le schéma refuserait. */
-export interface DateFieldCalendar {
-  defaultMonth: Date;
-  startMonth?: Date;
-  endMonth: Date;
-  disabled: React.ComponentProps<typeof Calendar>["disabled"];
-}
+import { formatFieldDate, parseFieldDate, type DateFieldCalendar } from "../domain/field-date";
 
 /** Ce que fournit le `field` d'un `Controller` de react-hook-form. */
 export interface DateFieldControl {

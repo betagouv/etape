@@ -15,10 +15,11 @@ import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
-import { DateField, type DateFieldCalendar } from "../components/date-field";
+import { DateField } from "../components/date-field";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { EmployeurField } from "./components/employeur-field";
+import { computeDateDemissionCalendar } from "./domain/date-demission";
 import {
   DEMISSION,
   DEMISSION_LABEL,
@@ -36,11 +37,6 @@ export interface SituationProfessionnelleFormProps {
 const DEMISSION_FIELD_ID = "demission";
 const DEMISSION_LEGEND_ID = `${DEMISSION_FIELD_ID}-legend`;
 const DEMISSION_ERROR_ID = `${DEMISSION_FIELD_ID}-error`;
-
-// Les jours à venir ne se choisissent pas (maquette 11).
-function computeDateDemissionCalendar(today: Date): DateFieldCalendar {
-  return { defaultMonth: today, endMonth: today, disabled: { after: today } };
-}
 
 /** Le volet « Ma situation professionnelle » : l'emploi occupé, puis la démission. */
 export function SituationProfessionnelleForm({

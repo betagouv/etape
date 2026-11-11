@@ -24,7 +24,8 @@ import { Separator } from "@etape/ui/components/separator";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { ACCOUNT_PATH } from "@/navigation/paths";
-import { DateField, type DateFieldCalendar } from "../components/date-field";
+import { DateField } from "../components/date-field";
+import type { DateFieldCalendar } from "../domain/field-date";
 import { PrefilledFieldDescription } from "./components/prefilled-field-description";
 import { computeDateNaissanceBounds } from "./domain/date-naissance";
 import { NationaliteField } from "./components/nationalite-field";

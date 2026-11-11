@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEMISSION,
@@ -6,6 +6,11 @@ import {
   findSectionFields,
   situationProfessionnelleSchema,
 } from "./schema";
+
+function findDateDemissionMessages(data: Record<string, unknown>): string[] {
+  const issues = situationProfessionnelleSchema.safeParse(data).error?.issues ?? [];
+  return issues.filter((issue) => issue.path[0] === "dateDemission").map((issue) => issue.message);
+}
 
 const EMPTY_FORM = {
   employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
@@ -35,6 +40,46 @@ describe("situationProfessionnelleSchema", () => {
     expect(
       issues.filter((issue) => issue.path[0] === "demission").map((issue) => issue.message),
     ).toEqual(["Veuillez indiquer si vous avez remis votre démission."]);
+  });
+});
+
+describe("situationProfessionnelleSchema, date de démission", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: new Date(2026, 10, 11, 15) });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("refuse une date à venir après un « oui »", () => {
+    expect(
+      findDateDemissionMessages({
+        ...EMPTY_FORM,
+        demission: DEMISSION.OUI,
+        dateDemission: "12/11/2026",
+      }),
+    ).toEqual(["La date de votre démission ne peut pas être dans le futur."]);
+  });
+
+  it("accepte la date du jour", () => {
+    expect(
+      findDateDemissionMessages({
+        ...EMPTY_FORM,
+        demission: DEMISSION.OUI,
+        dateDemission: "11/11/2026",
+      }),
+    ).toEqual([]);
+  });
+
+  it("ne contrôle pas la date après un « non »", () => {
+    expect(
+      findDateDemissionMessages({
+        ...EMPTY_FORM,
+        demission: DEMISSION.NON,
+        dateDemission: "12/11/2026",
+      }),
+    ).toEqual([]);
   });
 });
 

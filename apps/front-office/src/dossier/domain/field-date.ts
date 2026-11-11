@@ -4,6 +4,14 @@ import { format, parse } from "date-fns";
 const FIELD_DATE_FORMAT = "dd/MM/yyyy";
 const REFERENCE_DATE = new Date(0);
 
+/** Les bornes du calendrier, pour qu'il ne propose aucune date que le schéma refuserait. */
+export interface DateFieldCalendar {
+  defaultMonth: Date;
+  startMonth?: Date;
+  endMonth: Date;
+  disabled: { before?: Date; after: Date };
+}
+
 /** La date saisie au format jj/mm/aaaa, `undefined` si elle est vide ou invalide. */
 export function parseFieldDate(value: string): Date | undefined {
   if (!value) return undefined;
