@@ -143,8 +143,8 @@ affiche les deux logos, un F5 ne casse pas, et la console ne montre aucune 404 (
 Pour tester l'assemblage en local, sans déployer :
 
 ```bash
-npx turbo run build && node scripts/assemble-static.mjs
-npx serve dist/preview
+pnpm exec turbo run build && node scripts/assemble-static.mjs
+pnpm dlx serve dist/preview
 ```
 
 ### Quand ça ne marche pas

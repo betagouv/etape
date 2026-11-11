@@ -1,20 +1,33 @@
 import { Button } from "@etape/ui/components/button";
-import { Mail } from "lucide-react";
 
-import { Field, FieldError, TextInput } from "../components/form";
-import { BackToLogin } from "../components/prose";
+import { AltchaField } from "../components/altcha/altcha-field";
+import { Field, FieldError, fieldHintId, TextInput } from "../components/form";
+import { BackLink, CreateAccountSwitch } from "../components/prose";
+import { RESET_PASSWORD_FIELD, useResetPasswordForm } from "../hooks/use-reset-password-form";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
+
+const USERNAME_ERROR_ID = "input-error-username";
+const USERNAME_HINT_ID = fieldHintId(RESET_PASSWORD_FIELD.USERNAME);
 
 export default function LoginResetPassword(
   props: EtapePageProps<Extract<KcContext, { pageId: "login-reset-password.ftl" }>>,
 ) {
   const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
 
-  const { url, realm, auth, messagesPerField } = kcContext;
-  const { msg } = i18n;
+  const { url, realm, auth, login, messagesPerField, altchaChallenge, altchaUnavailable } =
+    kcContext;
+  const { msg, msgStr } = i18n;
 
-  const hasError = messagesPerField.existsError("username");
+  const form = useResetPasswordForm({
+    initialUsername: auth.attemptedUsername ?? login?.username ?? "",
+    shouldCheckEmailFormat: realm.loginWithEmailAllowed && realm.registrationEmailAsUsername,
+  });
+
+  const hasError = messagesPerField.existsError(RESET_PASSWORD_FIELD.USERNAME);
+  const hasUsernameError = form.hasEmailFormatError || hasError;
+  const hasAltchaError = messagesPerField.existsError("altcha");
+  const shouldFocusAltcha = hasAltchaError && altchaChallenge !== undefined;
 
   const usernameLabel = !realm.loginWithEmailAllowed
     ? msg("username")
@@ -29,46 +42,74 @@ export default function LoginResetPassword(
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("etapeResetPasswordTitle")}
-      subtitle={msg("etapeResetPasswordSubtitle")}
-      displayMessage={!hasError}
-    >
-      <form
-        id="kc-reset-password-form"
-        action={url.loginAction}
-        method="post"
-        className="flex flex-col gap-8"
-      >
-        <Field
-          id="username"
-          label={usernameLabel}
-          required
-          error={
-            hasError ? (
-              <FieldError id="input-error-username" message={messagesPerField.get("username")} />
-            ) : undefined
-          }
-        >
-          <TextInput
-            id="username"
-            name="username"
-            type="text"
-            icon={Mail}
-            autoFocus
-            autoComplete="username"
-            aria-required
-            aria-describedby={hasError ? "input-error-username" : undefined}
-            defaultValue={auth.attemptedUsername ?? ""}
-            invalid={hasError}
+      displayMessage={!hasError && !hasAltchaError}
+      slots={{
+        backLink: <BackLink href={url.loginUrl} label={msg("etapeBackToLogin")} />,
+        accountSwitch: (
+          <CreateAccountSwitch
+            isAllowed={realm.registrationAllowed}
+            href={url.registrationUrl}
+            i18n={i18n}
           />
-        </Field>
+        ),
+      }}
+    >
+      <div className="flex flex-col gap-6">
+        <p className="text-accent-foreground text-base">{msg("etapeResetPasswordSubtitle")}</p>
 
-        <div className="flex flex-col gap-4">
-          <Button type="submit" size="xl" className="w-full rounded-lg">
+        <form
+          id="kc-reset-password-form"
+          action={url.loginAction}
+          method="post"
+          onSubmit={form.submit}
+          className="flex flex-col gap-6"
+        >
+          <Field
+            id={RESET_PASSWORD_FIELD.USERNAME}
+            label={usernameLabel}
+            required
+            hint={msg("etapeResetPasswordFranceConnectHint")}
+            error={
+              form.hasEmailFormatError ? (
+                <FieldError id={USERNAME_ERROR_ID} message={msgStr("etapeEmailFormatInvalid")} />
+              ) : hasError ? (
+                <FieldError
+                  id={USERNAME_ERROR_ID}
+                  message={messagesPerField.get(RESET_PASSWORD_FIELD.USERNAME)}
+                />
+              ) : undefined
+            }
+          >
+            <TextInput
+              id={RESET_PASSWORD_FIELD.USERNAME}
+              name={RESET_PASSWORD_FIELD.USERNAME}
+              type="text"
+              inputMode={realm.registrationEmailAsUsername ? "email" : undefined}
+              autoFocus={!shouldFocusAltcha}
+              autoComplete="username"
+              aria-required
+              aria-describedby={
+                hasUsernameError ? `${USERNAME_HINT_ID} ${USERNAME_ERROR_ID}` : USERNAME_HINT_ID
+              }
+              value={form.username}
+              onChange={(event) => form.changeUsername(event.target.value)}
+              onBlur={form.checkEmailFormat}
+              invalid={hasUsernameError}
+            />
+          </Field>
+
+          <AltchaField
+            challenge={altchaChallenge}
+            isUnavailable={altchaUnavailable ?? false}
+            serverError={hasAltchaError ? messagesPerField.get("altcha") : undefined}
+            i18n={i18n}
+          />
+
+          <Button type="submit" size="form" className="w-full">
             {msg("etapeResetPasswordCta")}
           </Button>
-          <BackToLogin href={url.loginUrl} label={msg("backToLogin")} />
-        </div>
-      </form>
+        </form>
+      </div>
     </Template>
   );
 }

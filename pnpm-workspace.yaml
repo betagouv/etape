@@ -1,0 +1,16 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Scripts d'installation des dépendances : pnpm les bloque tous, sauf ceux
+# autorisés ici. Une dépendance qui en ajoute un fait échouer l'installation
+# tant qu'elle n'est pas tranchée dans cette liste.
+allowBuilds:
+  # Télécharge le schema-engine. Sans lui, `prisma migrate deploy` le chercherait
+  # au premier appel, en écrivant dans `node_modules` : refusé sous `USER node`.
+  "@prisma/engines": true
+  # Ne vérifie que les versions de Node et de TypeScript, sans rien installer.
+  prisma: false
+  # Ne télécharge le binaire natif que s'il manque : les dépendances
+  # optionnelles par plateforme le fournissent déjà.
+  unrs-resolver: false

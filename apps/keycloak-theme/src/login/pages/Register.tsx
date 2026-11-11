@@ -1,16 +1,17 @@
 import { Button } from "@etape/ui/components/button";
 import { useUserProfileForm } from "keycloakify/login/lib/useUserProfileForm";
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
+import { AltchaField } from "../components/altcha/altcha-field";
 import { CheckboxField, FieldError } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
 import { AccountSwitch } from "../components/prose";
+import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
 import { PasswordRules, UserProfileFields } from "../components/user-profile-fields";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
 const REGISTRATION_CONTEXT = "REGISTRATION";
-const RECAPTCHA_CALLBACK = "onSubmitRecaptcha";
 
 type RegisterProps = EtapePageProps<Extract<KcContext, { pageId: "register.ftl" }>> & {
   doMakeUserConfirmPassword: boolean;
@@ -19,17 +20,12 @@ type RegisterProps = EtapePageProps<Extract<KcContext, { pageId: "register.ftl" 
 export default function Register(props: RegisterProps) {
   const { kcContext, i18n, doUseDefaultCss, Template, classes, doMakeUserConfirmPassword } = props;
 
-  const {
-    url,
-    messagesPerField,
-    recaptchaRequired,
-    recaptchaVisible,
-    recaptchaSiteKey,
-    recaptchaAction,
-    termsAcceptanceRequired,
-  } = kcContext;
+  const { url, messagesPerField, termsAcceptanceRequired, altchaChallenge, altchaUnavailable } =
+    kcContext;
 
   const { msg, msgStr } = i18n;
+
+  const hasAltchaError = messagesPerField.existsError("altcha");
 
   /*
    * Keycloak sert bien ces deux valeurs sur `register.ftl`, mais les types de
@@ -69,18 +65,6 @@ export default function Register(props: RegisterProps) {
 
   const [areTermsAccepted, setAreTermsAccepted] = useState(false);
 
-  useLayoutEffect(() => {
-    // Le reCAPTCHA invisible rappelle une fonction globale : elle doit exister
-    // avant que son script ne s'exécute, d'où le `useLayoutEffect`.
-    (window as unknown as Record<string, unknown>)[RECAPTCHA_CALLBACK] = () => {
-      (document.getElementById("kc-register-form") as HTMLFormElement | null)?.requestSubmit();
-    };
-
-    return () => {
-      delete (window as unknown as Record<string, unknown>)[RECAPTCHA_CALLBACK];
-    };
-  }, []);
-
   const isSubmitDisabled =
     !formState.isFormSubmittable || (termsAcceptanceRequired && !areTermsAccepted);
 
@@ -91,7 +75,7 @@ export default function Register(props: RegisterProps) {
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("etapeRegisterTitle")}
-      subtitle={msg("etapeRegisterSubtitle")}
+      slots={{ subtitle: msg("etapeRegisterSubtitle") }}
       displayMessage={messagesPerField.exists("global")}
       socialProvidersNode={
         <SocialProviders
@@ -105,6 +89,7 @@ export default function Register(props: RegisterProps) {
         id="kc-register-form"
         action={url.registrationAction}
         method="post"
+        onSubmit={() => rememberSubmittedForm(SUBMITTED_FORM.REGISTRATION)}
         className="flex flex-col gap-8"
       >
         <UserProfileFields
@@ -138,42 +123,20 @@ export default function Register(props: RegisterProps) {
           </div>
         )}
 
-        {recaptchaRequired && (recaptchaVisible || recaptchaAction === undefined) && (
-          <div
-            className="g-recaptcha"
-            data-size="compact"
-            data-sitekey={recaptchaSiteKey}
-            data-action={recaptchaAction}
-          />
-        )}
+        <AltchaField
+          challenge={altchaChallenge}
+          isUnavailable={altchaUnavailable ?? false}
+          serverError={hasAltchaError ? messagesPerField.get("altcha") : undefined}
+          i18n={i18n}
+        />
 
         <div className="flex flex-col gap-4">
-          {recaptchaRequired && !recaptchaVisible && recaptchaAction !== undefined ? (
-            <Button
-              type="submit"
-              size="xl"
-              className="g-recaptcha w-full rounded-lg"
-              data-sitekey={recaptchaSiteKey}
-              data-callback={RECAPTCHA_CALLBACK}
-              data-action={recaptchaAction}
-            >
-              {msg("doRegister")}
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              size="xl"
-              disabled={isSubmitDisabled}
-              className="w-full rounded-lg"
-            >
-              {msg("doRegister")}
-            </Button>
-          )}
+          <Button type="submit" size="xl" disabled={isSubmitDisabled} className="w-full rounded-lg">
+            {msg("doRegister")}
+          </Button>
 
           {!termsAcceptanceRequired && (
-            <p className="text-body-sm text-muted-foreground text-center">
-              {msg("etapeRegisterTerms")}
-            </p>
+            <p className="text-muted-foreground text-center text-sm">{msg("etapeRegisterTerms")}</p>
           )}
 
           <AccountSwitch

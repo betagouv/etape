@@ -4,6 +4,7 @@
 // entrée ici, pas du JSX.
 
 import type { FlagSet } from "./flags";
+import type { MonthValue } from "./month";
 
 /** Types de champs supportés. À étendre au fil des questions. */
 export type FieldType = "radio" | "checkbox" | "month" | "number" | "region" | "toggle";
@@ -30,8 +31,9 @@ export interface Option {
 
 /**
  * Valeur stockée pour un champ donné dans la map des réponses.
- * `string` couvre les choix uniques, la région (code INSEE) et le mois
- * (`YYYY-MM-01`) ; `string[]` les choix multiples ; `boolean` les cases.
+ * `string` couvre les choix uniques, la région (code INSEE une fois choisie,
+ * texte saisi tant qu'il ne désigne aucune région) et le mois (`YYYY-MM-01`) ;
+ * `string[]` les choix multiples ; `boolean` les cases.
  */
 export type AnswerValue = string | string[] | boolean | null;
 
@@ -67,17 +69,17 @@ interface BaseField {
    * champ s'ouvre, dans le MÊME écran. Absent = champ de premier niveau.
    * Une liste quand la même précision se pose sous plusieurs options (l'arrêt
    * de travail, demandé aux salarié·es, aux agents et aux indépendant·es).
-   * Le rendu correspondant arrive à l'étape 5 ; le moteur, lui, traite un
-   * champ `sub` comme n'importe quel autre champ conditionnel.
+   * Le moteur traite un champ `sub` comme n'importe quel autre champ
+   * conditionnel ; seul le rendu le distingue.
    */
   sub?: string | string[];
+  /** Rendu en retrait, encart partagé par les `inset` consécutifs ; l'existence dépend de `visibleWhen`. */
+  inset?: boolean;
 }
 
 export interface RadioField extends BaseField {
   type: "radio";
   options: Option[];
-  /** Disposition des options. Défaut : "vertical". */
-  orientation?: "horizontal" | "vertical";
 }
 
 export interface CheckboxField extends BaseField {
@@ -92,8 +94,9 @@ export interface CheckboxField extends BaseField {
  */
 export interface MonthField extends BaseField {
   type: "month";
-  /** Année la plus ancienne proposée à la saisie. */
   minYear?: number;
+  /** Phrase affichée sous le champ quand la date est valide (Q4). */
+  describeValue?: (value: MonthValue) => string;
 }
 
 /** Entier positif saisi au clavier (ex. un nombre d'années). */
@@ -105,9 +108,16 @@ export interface NumberField extends BaseField {
   placeholder?: string;
   /** Unité affichée après le champ (« ans »). Décorative : `aria-hidden`. */
   suffix?: string;
+  /** Lecture de la valeur au récapitulatif, unité accordée (« 1 an »). */
+  formatValue?: (value: number) => string;
 }
 
-/** Région administrative, choisie dans la liste fermée de `domain/regions.ts`. */
+/**
+ * Région administrative, cherchée par son nom dans la liste fermée de
+ * `domain/regions.ts`. Le texte saisi est conservé tant qu'il ne désigne aucune
+ * région : c'est la validation qui le déclare invalide, comme la saisie brute
+ * d'un mois.
+ */
 export interface RegionField extends BaseField {
   type: "region";
   placeholder?: string;
@@ -121,6 +131,8 @@ export interface ToggleField extends BaseField {
   type: "toggle";
   /** Libellé de la case elle-même : obligatoire, c'est le seul texte du champ. */
   label: string;
+  /** Lu au récapitulatif seulement cochée, quand la case répond à la place d'un autre champ (Q5). */
+  summary?: string;
 }
 
 export type Field =
@@ -140,6 +152,8 @@ export interface Question {
   title: string;
   /** Sous-titre / consigne optionnel (ex. "Choix unique."). */
   subtitle?: string;
+  /** Mention lue avec le sous-titre comme description du titre. */
+  notice?: string;
   fields: Field[];
   /**
    * Applicabilité : la question n'est posée que si ce prédicat passe. Absente,
@@ -167,20 +181,14 @@ export interface Question {
   outcome?: (flags: FlagSet) => string | null;
 }
 
-/** Action (bouton) d'un écran terminal. */
-export interface OutcomeAction {
-  label: string;
-  href: string;
-  variant: "primary" | "secondary";
-}
+export type TextPart = string | { emphasis: string };
 
-/**
- * Écran terminal du flow (issue / dead-end) : titre + texte + actions.
- * Ce n'est PAS une question — pas de navbar/progression, la simulation s'arrête.
- */
+/** Écran terminal : on n'en sort qu'en corrigeant une réponse ou en recommençant. */
 export interface Outcome {
   id: string;
   title: string;
-  text?: string;
-  actions: OutcomeAction[];
+  text: readonly TextPart[];
+  /** Questions rappelées à l'écran pour corriger ce qui a fermé le parcours. */
+  causes: readonly string[];
+  advice?: string;
 }

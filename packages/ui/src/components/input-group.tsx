@@ -1,0 +1,129 @@
+"use client";
+
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { Input } from "@etape/ui/components/input";
+import { cn } from "@etape/ui/lib/utils";
+
+/*
+ * Le cadre est porté par le groupe ; le champ, sans bordure, s'y fond. Focus et
+ * erreur se lisent sur le champ (`:focus-visible`, `aria-invalid`) et
+ * s'affichent sur le cadre.
+ */
+const inputGroupVariants = cva(
+  [
+    "group/input-group border-input bg-background dark:bg-input/30 relative flex w-full min-w-0 items-center border shadow-xs transition-[color,box-shadow] outline-none",
+    "has-[>[data-align=inline-start]]:[&>:is(input,button)]:pl-1.5",
+    "has-[>[data-align=inline-end]]:[&>:is(input,button)]:pr-1.5",
+    "has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot=input-group-control]:focus-visible]:ring-[3px]",
+    "has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40 has-[[data-slot][aria-invalid=true]]:ring-[3px]",
+  ],
+  {
+    variants: {
+      size: {
+        default: "h-8 rounded-lg",
+        lg: "h-12 rounded-lg [&>input]:px-4",
+        responsive: "h-11 rounded-lg md:h-8",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  },
+);
+
+function InputGroup({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof inputGroupVariants>) {
+  return (
+    <div
+      data-slot="input-group"
+      data-size={size}
+      className={cn(inputGroupVariants({ size }), className)}
+      {...props}
+    />
+  );
+}
+
+const inputGroupAddonVariants = cva(
+  "text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none group-has-[button[data-slot=input-group-control]]/input-group:cursor-pointer [&>svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      align: {
+        "inline-start": "order-first pl-2.5 group-data-[size=lg]/input-group:pl-4",
+        "inline-end": "order-last pr-2.5 group-data-[size=lg]/input-group:pr-4",
+      },
+    },
+    defaultVariants: {
+      align: "inline-start",
+    },
+  },
+);
+
+/**
+ * Complément affiché dans le cadre. Un clic dessus donne le focus au champ,
+ * comme un clic sur le reste du cadre ; devant un déclencheur, il l'active.
+ */
+function InputGroupAddon({
+  className,
+  align = "inline-start",
+  onClick,
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
+  return (
+    <div
+      data-slot="input-group-addon"
+      data-align={align}
+      className={cn(inputGroupAddonVariants({ align }), className)}
+      onClick={(event) => {
+        const control = event.currentTarget.parentElement?.querySelector<HTMLElement>(
+          "[data-slot=input-group-control]",
+        );
+        control?.focus();
+        if (control instanceof HTMLButtonElement) control.click();
+        onClick?.(event);
+      }}
+      {...props}
+    />
+  );
+}
+
+function InputGroupInput({ className, ...props }: React.ComponentProps<"input">) {
+  return (
+    <Input
+      data-slot="input-group-control"
+      className={cn(
+        "h-full flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 aria-invalid:ring-0 dark:bg-transparent",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/**
+ * Bouton qui tient lieu de champ dans le cadre (date, choix dans une liste) : même
+ * cadre, même focus, valeur ou placeholder (`data-placeholder` quand il n'y a pas de
+ * valeur). C'est l'`InputGroup` du kit, dont le contenu s'ouvre au clic.
+ */
+function InputGroupTrigger({ className, ...props }: React.ComponentProps<"button">) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "data-[placeholder]:text-muted-foreground flex h-full min-w-0 flex-1 items-center gap-2 bg-transparent px-2.5 text-left text-sm outline-none group-data-[size=lg]/input-group:px-4 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "[&>span]:truncate",
+        className,
+      )}
+      {...props}
+      // Après les props : un `PopoverTrigger asChild` pose son propre `data-slot`, et le cadre
+      // (anneau de focus, clic sur le complément) ne reconnaît le contrôle que par celui-ci.
+      data-slot="input-group-control"
+    />
+  );
+}
+
+export { InputGroup, InputGroupAddon, InputGroupInput, InputGroupTrigger };

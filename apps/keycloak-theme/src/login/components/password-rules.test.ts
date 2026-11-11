@@ -37,6 +37,19 @@ describe("getPasswordRules", () => {
     expect(unmetRules("Mot De Passe 2026")).toEqual([]);
   });
 
+  it.each([
+    ["Abcdefghijk1²", []],
+    ["Abcdefghijk1½", []],
+    ["abcdefghijk1!Ⓐ", []],
+    ["AAAAAAAAAAª1!", []],
+    ["Abcdefghijk1Ⅻ", []],
+    ["abcdefghij1!𝐀", [PASSWORD_RULE_MESSAGE_KEY.UPPER]],
+    ["ABCDEFGHIJ1!𝐚", [PASSWORD_RULE_MESSAGE_KEY.LOWER]],
+    ["Abcdefghijk𝟏!", [PASSWORD_RULE_MESSAGE_KEY.DIGIT]],
+  ])("juge « %s » caractère par caractère, comme Keycloak", (value, expected) => {
+    expect(unmetRules(value)).toEqual(expected);
+  });
+
   it("respecte une longueur minimale fournie", () => {
     expect(getPasswordRules("Ab1!", 4).every((rule) => rule.isSatisfied)).toBe(true);
   });

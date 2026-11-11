@@ -1,5 +1,7 @@
+import { Criterion, CRITERION_STATUS, type CriterionStatus } from "@etape/ui/components/criterion";
+import { InsetPanel, INSET_PANEL_VARIANT } from "@etape/ui/components/inset-panel";
 import type { FormAction, FormFieldState } from "keycloakify/login/lib/useUserProfileForm";
-import { Check, Circle, Mail, User } from "lucide-react";
+import { Mail, User } from "lucide-react";
 import type { ChangeEvent, ComponentType, ReactNode } from "react";
 
 import type { I18n } from "../i18n";
@@ -7,6 +9,11 @@ import { Field, FieldError, PasswordInput, TextInput } from "./form";
 import { getPasswordRules, PASSWORD_MIN_LENGTH } from "./password-rules";
 
 export const PASSWORD_RULES_ID = "password-rules";
+
+const RULE_STATUS_LABEL: Record<CriterionStatus, Parameters<I18n["msgStr"]>[0]> = {
+  [CRITERION_STATUS.MET]: "etapePasswordRuleMet",
+  [CRITERION_STATUS.UNMET]: "etapePasswordRuleUnmet",
+};
 
 type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 
@@ -234,26 +241,23 @@ export function PasswordRules(props: { value: string; i18n: I18n; minLength?: nu
   const rules = getPasswordRules(value, minLength);
 
   return (
-    <div id={PASSWORD_RULES_ID} className="flex flex-col gap-1">
-      <p className="text-body-sm text-muted-foreground">{msgStr("etapePasswordRulesTitle")}</p>
-      <ul className="flex flex-col gap-1">
-        {rules.map(({ messageKey, isSatisfied }) => (
-          <li key={messageKey} className="text-body-sm flex items-center gap-2">
-            {isSatisfied ? (
-              <Check aria-hidden className="text-success size-4 shrink-0" />
-            ) : (
-              <Circle aria-hidden className="text-muted-foreground size-4 shrink-0" />
-            )}
-            <span className={isSatisfied ? "text-success" : "text-muted-foreground"}>
+    <InsetPanel id={PASSWORD_RULES_ID} variant={INSET_PANEL_VARIANT.COMPACT}>
+      <p className="text-foreground text-sm">{msgStr("etapePasswordRulesTitle")}</p>
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
+        {rules.map(({ messageKey, isSatisfied }) => {
+          const status = isSatisfied ? CRITERION_STATUS.MET : CRITERION_STATUS.UNMET;
+          return (
+            <Criterion
+              key={messageKey}
+              status={status}
+              statusLabel={msgStr(RULE_STATUS_LABEL[status])}
+            >
               {msgStr(messageKey)}
-            </span>
-            <span className="sr-only">
-              {msgStr(isSatisfied ? "etapePasswordRuleMet" : "etapePasswordRuleUnmet")}
-            </span>
-          </li>
-        ))}
+            </Criterion>
+          );
+        })}
       </ul>
-    </div>
+    </InsetPanel>
   );
 }
 

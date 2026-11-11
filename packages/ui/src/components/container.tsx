@@ -23,6 +23,7 @@ import { cn } from "@etape/ui/lib/utils";
  *   en-tête                  1440 − 2 × `Padding/5XL` (96)  = 1248
  *   sections et pied de page 1440 − 2 × `Padding/6XL` (128) = 1184
  *   bandes teal              1440 − 2 × `Padding/8XL` (256) =  928
+ *   front-office             1440 − 2 × `spacing/40` (160)  = 1120
  *
  * `max-width` s'appliquant à la boîte de bordure, chaque palier vaut « contenu
  * + 2 gouttières de 32px » : c'est ce décalage qui fait qu'à 1440 la marge
@@ -36,6 +37,8 @@ const containerVariants = cva("mx-auto w-full px-4 sm:px-6 lg:px-8", {
       sm: "max-w-2xl",
       /** 928 de contenu — sections en `Padding/8XL`. */
       md: "max-w-[62rem]",
+      /** 1120 de contenu — front-office, en `spacing/40`. */
+      app: "max-w-[74rem]",
       /** 1184 de contenu — sections et pied de page, en `Padding/6XL`. */
       lg: "max-w-[78rem]",
       /** 1248 de contenu — en-tête seul, en `Padding/5XL`. */

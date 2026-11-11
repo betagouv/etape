@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
  *
  * `SiteFooter` ne prend aucune prop : son contenu vient de `@/lib/footer`.
  * Même réserve que pour les autres associations — l'URL cible une instance et
- * doit être régénérée via `npm run figma:create` avant publication.
+ * doit être régénérée via `pnpm run figma:create` avant publication.
  */
 figma.connect(SiteFooter, "<SIMULATEUR_V2>?node-id=3504-44774", {
   example: () => <SiteFooter />,

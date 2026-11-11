@@ -1,7 +1,9 @@
 @import "@etape/ui/globals.css";
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/bricolage-grotesque";
 
-/* Les apps Next posent `--font-geist` via `next/font` ; ici, Fontsource. */
+/* Les apps Next posent ces variables via `next/font` ; ici, Fontsource. */
 :root {
   --font-geist: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-bricolage: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
 }

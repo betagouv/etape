@@ -10,7 +10,8 @@ import { FrontGuard } from "./front.guard.js";
 import { OidcService } from "./oidc.service.js";
 import { SessionGuard } from "./session/session.guard.js";
 import { SessionService } from "./session/session.service.js";
-import { PrismaSessionStore, SessionStore } from "./session/session.store.js";
+import { PrismaSessionRepository } from "./session/session.prisma-repository.js";
+import { SessionRepository } from "./session/session.repository.js";
 
 /**
  * Le reste de l'application ne dépend que de `SessionService` et `SessionGuard`,
@@ -31,7 +32,7 @@ import { PrismaSessionStore, SessionStore } from "./session/session.store.js";
     OidcService,
     SessionService,
     SessionGuard,
-    { provide: SessionStore, useClass: PrismaSessionStore },
+    { provide: SessionRepository, useClass: PrismaSessionRepository },
   ],
   exports: [FRONT_CONFIGS, FrontGuard, CsrfGuard, SessionService, SessionGuard],
 })

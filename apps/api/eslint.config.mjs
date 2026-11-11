@@ -58,13 +58,4 @@ export default defineConfig([
     files: ["src/account/account.service.ts"],
     rules: { "no-restricted-imports": "off" },
   },
-  {
-    // Revue de la PR #77 : SessionStore devient SessionRepository, en deux
-    // fichiers, et son double de test FakeSessionRepository.
-    files: ["src/auth/session/session.store.ts", "src/auth/session/session.service.test.ts"],
-    rules: {
-      "no-restricted-imports": "off",
-      "no-restricted-syntax": ["error", NO_ENUM_RESTRICTION],
-    },
-  },
 ]);

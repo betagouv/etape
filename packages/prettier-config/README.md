@@ -19,6 +19,6 @@ Dans le `package.json` du projet :
 Le formatage se lance depuis la racine du monorepo :
 
 ```bash
-npm run format        # écrit les corrections
-npm run format:check  # vérifie sans modifier (utile en CI)
+pnpm run format        # écrit les corrections
+pnpm run format:check  # vérifie sans modifier (utile en CI)
 ```

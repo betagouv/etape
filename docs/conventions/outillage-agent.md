@@ -21,16 +21,17 @@ Les conventions du projet sont écrites dans `docs/conventions/`. Ce document di
 
 ## Où vit chaque convention
 
-| Convention       | Document              | Niveau 1 — bloquant                                                                                                  | Niveau 2 — règle                  | Niveau 3 — procédure       |
-| ---------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------- | -------------------------- |
-| Nommage FR/EN    | `nommage.md`          | —                                                                                                                    | —                                 | Skill `convention-nommage` |
-| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax`                                       | `.claude/rules/typescript.md`     | —                          |
-| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**                                               | `.claude/rules/accessibilite.md`  | —                          |
-| Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`                                         | `.claude/rules/react.md`          | Sous-agent `revue-front`   |
-| Design system    | `react.md` §4         | —                                                                                                                    | `.claude/rules/design-system.md`  | Skill `composant-ui`       |
-| Stack front      | `stack-front.md`      | —                                                                                                                    | `.claude/rules/react.md` (renvoi) | —                          |
-| Architecture API | `architecture-api.md` | `no-restricted-imports` (Prisma hors repository), `no-restricted-syntax` (nom et fichier du repository) — `apps/api` | `.claude/rules/api.md`            | Sous-agent `revue-api`     |
-| Méthode de revue | —                     | —                                                                                                                    | —                                 | Skill `review-pr`          |
+| Convention       | Document              | Niveau 1 — bloquant                                                                                                  | Niveau 2 — règle                        | Niveau 3 — procédure       |
+| ---------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------------------- |
+| Nommage FR/EN    | `nommage.md`          | —                                                                                                                    | —                                       | Skill `convention-nommage` |
+| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax`                                       | `.claude/rules/typescript.md`           | —                          |
+| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**                                               | `.claude/rules/accessibilite.md`        | —                          |
+| Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`                                         | `.claude/rules/react.md`                | Sous-agent `revue-front`   |
+| Design system    | `react.md` §4         | —                                                                                                                    | `.claude/rules/design-system.md`        | Skill `composant-ui`       |
+| Stack front      | `stack-front.md`      | —                                                                                                                    | `.claude/rules/react.md` (renvoi)       | —                          |
+| Architecture API | `architecture-api.md` | `no-restricted-imports` (Prisma hors repository), `no-restricted-syntax` (nom et fichier du repository) — `apps/api` | `.claude/rules/api.md`                  | Sous-agent `revue-api`     |
+| Méthode de revue | —                     | —                                                                                                                    | —                                       | Skill `review-pr`          |
+| Cartographie     | `../cartographie.md`  | `pnpm run check:workspace-map` (CI)                                                                                  | `AGENTS.md` / `CLAUDE.md` par workspace | —                          |
 
 ## Ce que le lint impose déjà, et qu'on n'avait pas mesuré
 
@@ -47,7 +48,7 @@ Ce qui manquait, et que cette PR change :
 
 **Ce que ce durcissement a coûté, mesuré sur tout le dépôt** : deux corrections, aucune régression. Un type de retour manquant sur `registerPdfFonts`, hérité de la PR #49. Et un `onKeyDown` posé sur un élément non interactif dans `main-nav.tsx` : la règle avait raison sur le fond, puisque la touche Échap ne refermait le menu que si le focus était resté dans le panneau — l'écouteur a rejoint le `document`, à côté du `pointerdown` qui s'y trouvait déjà.
 
-> **Leçon d'outillage, apprise en se trompant.** La première mesure, faite avec `turbo run lint`, avait conclu « aucune violation » : c'était un résultat servi par le **cache** de turbo, calculé avant le changement de configuration. Une vérification de ce genre se fait avec `--force`, ou en appelant le workspace directement (`npm run lint --workspace=@etape/site`). Un cache qui répond « tout va bien » est un piège d'autant plus efficace qu'il est rapide.
+> **Leçon d'outillage, apprise en se trompant.** La première mesure, faite avec `turbo run lint`, avait conclu « aucune violation » : c'était un résultat servi par le **cache** de turbo, calculé avant le changement de configuration. Une vérification de ce genre se fait avec `--force`, ou en appelant le workspace directement (`pnpm --filter @etape/site run lint`). Un cache qui répond « tout va bien » est un piège d'autant plus efficace qu'il est rapide.
 
 **Pourquoi pas le preset `jsx-a11y` complet** : le plugin n'est pas une dépendance déclarée de `@etape/eslint-config`, il arrive par `eslint-config-next`. Activer ses règles **par leur nom** fonctionne dans `nextConfig`, car le plugin y est déjà enregistré ; importer son preset exigerait de le déclarer en dépendance directe. **L'arbitrage a tranché pour la liste explicite** : plus lisible, sans nouvelle dépendance, et chaque règle activée l'est parce qu'on a su dire ce qu'elle attrape.
 
@@ -91,21 +92,23 @@ Référence complète : `docs/conventions/react.md`, section 4.
 
 Une règle sans `paths` serait chargée à chaque session ; avec `paths`, elle ne l'est qu'à la lecture d'un fichier correspondant. C'est ce qui permet d'en avoir cinq sans alourdir chaque conversation.
 
+Les `AGENTS.md` par workspace suivent la même logique, à l'échelle d'un dossier : Claude Code charge le `CLAUDE.md` d'un workspace (réduit à `@AGENTS.md`) dès qu'il lit un de ses fichiers, et les autres agents lisent les `AGENTS.md` de façon hiérarchique. Ils disent à quoi sert le workspace, ce qui va ailleurs et quels pièges l'attendent ; ils renvoient aux conventions sans les recopier. Leur présence est vérifiée en CI par `scripts/check-workspace-map.mjs`, avec la [cartographie](../cartographie.md) qui en est la source.
+
 ### Skills et sous-agent
 
 - **`convention-nommage`** — vérifie un identifiant contre le glossaire. Existant.
 - **`review-pr`** — méthode de revue : suivi des constats précédents, niveaux, suggestions vérifiées, rien de posté sans validation. Existant.
 - **`composant-ui`** — procédure d'ajout ou d'extension d'un composant : chercher l'existant, récupérer la source officielle par le MCP `shadcn`, étendre par variante, brancher les tokens, vérifier le focus. Nouveau.
-- **`revue-front`** (sous-agent, lecture seule) — audite un diff contre `react.md` : logique dans les composants, props, `className` d'apparence, primitives réécrites. Appelé par `review-pr`. Nouveau.
+- **`revue-front`** (sous-agent, lecture seule) — audite un diff contre `react.md` : logique dans les composants, props, `className` d'apparence, primitives réécrites ; puis contre le skill `vercel-react-best-practices` : rendus inutiles, poids ajouté au bundle (mesuré par un build comparé à `main`). Appelé par `review-pr`. Nouveau.
 - **`revue-api`** (sous-agent, lecture seule) — audite un diff de `apps/api` contre `architecture-api.md` : couches, repository (nom, fichiers, aucune règle métier), frontière HTTP, journaux. Relit en entier chaque fichier touché, pas seulement les lignes modifiées. Appelé par `review-pr`, sur le modèle de `revue-front` (issue #82).
 
 ### Automatisations
 
-- **`lint-staged`** ne lançait que Prettier ; il lance désormais aussi `eslint --fix` sur les `.ts` et `.tsx`, **une entrée par workspace** (`npm run lint --workspace=@etape/… -- --fix`). Le détour par npm n'est pas cosmétique : lint-staged exécute ses commandes depuis la racine, où ESLint ne trouve aucune configuration, puisque chaque app et chaque package a la sienne. Passer par le workspace place le répertoire de travail au bon endroit. **C'est le garde-fou qui compte** : il s'applique à tout le monde, à chaque commit.
+- **`lint-staged`** ne lançait que Prettier ; il lance désormais aussi `eslint --fix` sur les `.ts` et `.tsx`, **une entrée par workspace** (`pnpm --filter @etape/… run lint --fix`). Le détour par pnpm n'est pas cosmétique : lint-staged exécute ses commandes depuis la racine, où ESLint ne trouve aucune configuration, puisque chaque app et chaque package a la sienne. Passer par le workspace place le répertoire de travail au bon endroit. **C'est le garde-fou qui compte** : il s'applique à tout le monde, à chaque commit.
 - **Hook `PostToolUse`** (`.claude/settings.json`) : après chaque écriture d'un `.ts`/`.tsx` par l'agent, `.claude/hooks/eslint-fix.sh` corrige ce qui est corrigeable. Il ne remplace pas `lint-staged` ; il évite simplement de laisser des écarts derrière soi en cours de session. **L'arbitrage a décidé de le garder** — c'était le point le plus discutable de la PR, puisque `lint-staged` suffirait et couvre tout le monde. Les deux coexistent donc, avec des rôles distincts : le hook travaille pendant la session, `lint-staged` est le garde-fou du commit. Si le hook devient gênant, c'est lui qu'on retire, pas `lint-staged`.
-- **Permissions** : les commandes de vérification déjà utilisées en boucle (`npm run lint`, `typecheck`, `format:check`, `gh pr view`) sont autorisées d'avance, pour ne plus interrompre une session pour les valider une à une.
+- **Permissions** : les commandes de vérification déjà utilisées en boucle (`pnpm run lint`, `typecheck`, `format:check`, `gh pr view`) sont autorisées d'avance, pour ne plus interrompre une session pour les valider une à une.
 
-<details><summary><strong>Exemple — pourquoi <code>lint-staged</code> passe par npm, et pas directement par <code>eslint</code></strong></summary>
+<details><summary><strong>Exemple — pourquoi <code>lint-staged</code> passe par pnpm, et pas directement par <code>eslint</code></strong></summary>
 
 La version évidente **ne fonctionne pas** :
 
@@ -122,12 +125,12 @@ ESLint couldn't find an eslint.config.(js|mjs|cjs) file.
 La version qui fonctionne place le répertoire de travail dans le workspace :
 
 ```json
-"apps/simulateur/**/*.{ts,tsx}": "npm run lint --workspace=@etape/simulateur -- --fix",
-"apps/site/**/*.{ts,tsx}": "npm run lint --workspace=@etape/site -- --fix",
-"packages/ui/**/*.{ts,tsx}": "npm run lint --workspace=@etape/ui -- --fix"
+"apps/simulateur/**/*.{ts,tsx}": "pnpm --filter @etape/simulateur run lint --fix",
+"apps/site/**/*.{ts,tsx}": "pnpm --filter @etape/site run lint --fix",
+"packages/ui/**/*.{ts,tsx}": "pnpm --filter @etape/ui run lint --fix"
 ```
 
-Une entrée par workspace. Les cinq y sont désormais, `apps/api` et `apps/keycloak-theme` compris — un workspace oublié ici est un workspace qui commite sans `eslint --fix`.
+Une entrée par workspace — les neuf qui ont un script `lint` y sont désormais, `apps/api`, `apps/keycloak-theme`, les deux apps Vite et les deux packages API compris. Un workspace oublié ici est un workspace qui commite sans `eslint --fix`.
 
 </details>
 
@@ -147,12 +150,12 @@ esac
 [ -f "$fichier" ] || exit 0
 
 cd "$(dirname "$fichier")" || exit 0
-npx --no-install eslint --fix "$fichier" >/dev/null 2>&1
+pnpm exec eslint --fix "$fichier" >/dev/null 2>&1
 
 exit 0
 ```
 
-Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour une erreur que `npm run lint` signalera de toute façon. Son seul rôle est d'éviter de laisser derrière soi des écarts que `--fix` sait régler.
+Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour une erreur que `pnpm run lint` signalera de toute façon. Son seul rôle est d'éviter de laisser derrière soi des écarts que `--fix` sait régler.
 
 </details>
 

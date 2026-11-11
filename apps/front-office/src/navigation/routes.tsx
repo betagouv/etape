@@ -1,60 +1,80 @@
-import {
-  buildLoginUrl,
-  checkStartupAccess,
-  createLoginAttempts,
-  createSessionQueryOptions,
-  STARTUP_PENDING_MESSAGE,
-} from "@etape/api-client";
-import { PendingScreen } from "@etape/ui/components/pending-screen";
-import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, createRoute, redirect } from "@tanstack/react-router";
-import type { AxiosInstance } from "axios";
+import { HOME_PATH, sessionRootRoute } from "@etape/session";
+import { createRoute, notFound, redirect } from "@tanstack/react-router";
 
-import { App } from "../App";
-import { API_BASE_URL } from "../lib/clients";
-import { AppErrorScreen, HOME_PATH, NotFoundScreen } from "./error-screens";
-import { RootLayout } from "./root-layout";
+import { AppLayout } from "@/components/app-layout";
+import { PlaceholderScreen } from "@/components/placeholder-screen";
+import { DossierScreen } from "@/dossier/components/dossier-screen";
+import { VoletScreen } from "@/dossier/components/volet-screen";
+import { isVoletId } from "@/dossier/domain/volets";
+import { VOLETS_DOSSIER } from "@/dossier/domain/volets-dossier";
+import { VOLET_PATH } from "./paths";
 
-/** Compte les départs vers la connexion, pour ne pas boucler (voir `login-attempts.ts`). */
-const loginAttempts = createLoginAttempts(() => window.sessionStorage);
-
-export interface RouterContext {
-  httpClient: AxiosInstance;
-  queryClient: QueryClient;
-}
-
-const rootRoute = createRootRouteWithContext<RouterContext>()({
-  // Garde de démarrage : toute l'app est derrière la connexion.
-  beforeLoad: async ({ context, location }) => {
-    const session = await context.queryClient.query(createSessionQueryOptions(context.httpClient));
-    const access = checkStartupAccess(
-      new URLSearchParams(location.searchStr),
-      session,
-      loginAttempts,
-    );
-
-    if (access.kind === "login-required") {
-      // Navigation pleine page : le formulaire de connexion est servi par
-      // Keycloak, via l'API, pas par cette app.
-      throw redirect({ href: buildLoginUrl(API_BASE_URL, location.href), reloadDocument: true });
-    }
-
-    return { access };
-  },
-  component: RootLayout,
-  pendingComponent: () => <PendingScreen message={STARTUP_PENDING_MESSAGE} />,
-  // La garde a échoué (l'API ne répond pas) ou `RootLayout` a planté : c'est
-  // la personne qui relance, pas une boucle. Les erreurs des écrans, elles,
-  // restent sous `RootLayout` (`defaultErrorComponent` du routeur).
-  errorComponent: AppErrorScreen,
-  // Une adresse inconnue : rendu dans l'`Outlet` de `RootLayout`.
-  notFoundComponent: NotFoundScreen,
+// Garde de démarrage, avis et dialogue d'expiration : communs aux deux fronts,
+// dans `@etape/session`.
+const appLayoutRoute = createRoute({
+  getParentRoute: () => sessionRootRoute,
+  id: "app",
+  component: AppLayout,
 });
 
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
+const homeRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
   path: HOME_PATH,
-  component: App,
+  component: () => <PlaceholderScreen title="Mes dossiers" />,
 });
 
-export const routeTree = rootRoute.addChildren([indexRoute]);
+const accountRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "profil",
+  component: () => <PlaceholderScreen title="Mon profil" />,
+});
+
+const nouveauDossierRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "nouveau-dossier",
+  component: () => <PlaceholderScreen title="Sélectionnez votre dispositif" />,
+});
+
+const typeProjetRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "nouveau-dossier/$dispositif",
+  component: () => <PlaceholderScreen title="Type de projet" />,
+});
+
+const dossierRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "dossiers/$dossierId",
+  component: DossierScreen,
+});
+
+const dossierIndexRoute = createRoute({
+  getParentRoute: () => dossierRoute,
+  path: "/",
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: VOLET_PATH, params: { ...params, voletId: VOLETS_DOSSIER[0].id } });
+  },
+});
+
+// Une seule route : la mise en page, et le focus avec, restent en place d'un volet à l'autre.
+const voletRoute = createRoute({
+  getParentRoute: () => dossierRoute,
+  path: "$voletId",
+  params: {
+    parse: ({ voletId }) => {
+      if (!isVoletId(voletId)) throw notFound();
+      return { voletId };
+    },
+    stringify: ({ voletId }) => ({ voletId }),
+  },
+  component: VoletScreen,
+});
+
+export const routeTree = sessionRootRoute.addChildren([
+  appLayoutRoute.addChildren([
+    homeRoute,
+    accountRoute,
+    nouveauDossierRoute,
+    typeProjetRoute,
+    dossierRoute.addChildren([dossierIndexRoute, voletRoute]),
+  ]),
+]);

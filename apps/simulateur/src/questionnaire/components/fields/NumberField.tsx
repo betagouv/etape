@@ -1,11 +1,10 @@
 "use client";
 
-import { Input } from "@etape/ui/components/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
 
 import type { NumberField as NumberFieldDef } from "../../domain/types";
 import { fieldErrorMark, joinIds } from "./aria";
 import { FieldError } from "./FieldError";
-import { FieldHeader } from "./FieldHeader";
 
 interface NumberFieldProps {
   field: NumberFieldDef;
@@ -13,7 +12,6 @@ interface NumberFieldProps {
   onChange: (value: string | null) => void;
   labelledBy?: string;
   describedBy?: string;
-  /** Message affiché sous le champ quand la saisie manque ou est hors bornes. */
   error?: string;
 }
 
@@ -36,22 +34,19 @@ export function NumberField({
 }: NumberFieldProps) {
   const maxLength = String(field.max ?? 99).length;
 
-  const labelId = field.label ? `${field.name}-label` : undefined;
   const hintId = field.hint ? `${field.name}-hint` : undefined;
   const inputId = field.name;
   const errorId = `${field.name}-error`;
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <FieldHeader
-        labelId={labelId}
-        label={field.label}
-        hintId={hintId}
-        hint={field.hint}
-        htmlFor={inputId}
-      />
-      <div className="flex items-center gap-2">
-        <Input
+      {field.label && (
+        <label htmlFor={inputId} className="text-foreground text-sm font-medium">
+          {field.label}
+        </label>
+      )}
+      <InputGroup size="lg">
+        <InputGroupInput
           id={inputId}
           type="text"
           inputMode="numeric"
@@ -69,14 +64,20 @@ export function NumberField({
           aria-describedby={joinIds(hintId, error ? errorId : undefined, describedBy)}
           aria-invalid={error ? true : undefined}
           {...fieldErrorMark(error)}
-          className="h-11 w-20 md:h-9"
         />
+        {/* L'unité est déjà dans le libellé (« Nombre d'années ») : la lire
+            après la valeur ferait doublon. */}
         {field.suffix && (
-          <span className="text-content-secondary text-sm leading-5" aria-hidden="true">
+          <InputGroupAddon align="inline-end" aria-hidden="true">
             {field.suffix}
-          </span>
+          </InputGroupAddon>
         )}
-      </div>
+      </InputGroup>
+      {field.hint && (
+        <p id={hintId} className="text-muted-foreground text-sm">
+          {field.hint}
+        </p>
+      )}
       <FieldError id={errorId} message={error} />
     </div>
   );

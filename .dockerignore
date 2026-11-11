@@ -17,6 +17,7 @@ node_modules
 **/out
 **/dist
 **/dist_keycloak
+keycloak/extensions/*/target
 
 # Générés par Keycloakify, et gitignorés. Les laisser entrer ferait dépendre
 # l'image de ce qui traîne sur le poste : le build passerait ici et échouerait

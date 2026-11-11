@@ -26,15 +26,24 @@ runs:
       uses: actions/setup-node@v7
       with:
         node-version-file: .nvmrc
-        cache: npm
+
+    # pnpm à la version du champ `packageManager`, installé par le npm du Node
+    # qu'on vient de poser. Pas de pnpm/action-setup, qui passe par le npm du
+    # Node embarqué par le runner, incomplet sur OPS01. Pas de cache : le
+    # runner est auto-hébergé, le store pnpm reste d'un job à l'autre. Le Node
+    # posé par setup-node l'est aussi : `corepack disable` retire un shim qu'un
+    # job précédent y aurait laissé, et sur lequel npm refuserait d'écrire.
+    - name: Setup pnpm
+      shell: bash
+      run: corepack disable pnpm && npm install -g "$(node -p "require('./package.json').packageManager")" && pnpm --version
 
     - name: Install (lockfile)
       shell: bash
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build
       shell: bash
-      run: npx turbo run build --filter=@etape/site --filter=@etape/simulateur
+      run: pnpm exec turbo run build --filter=@etape/site --filter=@etape/simulateur
 
     - name: Assemblage statique
       shell: bash

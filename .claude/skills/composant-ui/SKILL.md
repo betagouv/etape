@@ -49,7 +49,7 @@ Ce qui est interdit : passer depuis une app un `className` qui change couleur, f
 - Clavier : l'élément est atteignable, le focus est visible, l'ordre est naturel.
 - Lecteur d'écran : le nom accessible existe, un changement d'état est annoncé (`docs/conventions/accessibilite.md`).
 - Thème sombre : le composant utilise des tokens, donc il suit — le vérifier quand même.
-- `npm run lint` et `npm run typecheck`.
+- `pnpm run lint` et `pnpm run typecheck`.
 
 ## Ce que ce skill ne fait pas
 

@@ -18,8 +18,8 @@
 
 <!-- Cochez ce qui a été validé. -->
 
-- [ ] Build OK (`npm run build`)
-- [ ] Lint OK (`npm run lint`)
+- [ ] Build OK (`pnpm run build`)
+- [ ] Lint OK (`pnpm run lint`)
 - [ ] Conventions respectées (`docs/conventions/` : nommage, typage, accessibilité)
 - [ ] Responsive vérifié
 - [ ] Accessibilité (navigation clavier, focus visible)

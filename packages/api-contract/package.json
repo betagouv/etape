@@ -12,11 +12,12 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@etape/eslint-config": "*",
-    "@etape/prettier-config": "*",
+    "@etape/eslint-config": "workspace:*",
+    "@etape/prettier-config": "workspace:*",
+    "@types/node": "^24.13.6",
     "eslint": "^9",
     "typescript": "^5"
   }

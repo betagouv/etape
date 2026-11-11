@@ -1,25 +1,29 @@
 "use client";
 
-import * as React from "react";
+import { useRef, type KeyboardEvent, type RefObject } from "react";
+import { Alert, AlertTitle } from "@etape/ui/components/alert";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@etape/ui/components/select";
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  REGEXP_ONLY_DIGITS,
+} from "@etape/ui/components/input-otp";
 
 import {
-  currentMonth,
-  formatMonth,
-  MONTH_NAMES,
-  oldestSelectableYear,
+  formatMonthEntry,
+  MONTH_LENGTH,
+  MONTH_PROBLEM_PARTS,
+  monthEntryProblem,
+  oldestAcceptedYear,
   parseMonth,
+  readMonthEntry,
+  YEAR_LENGTH,
 } from "../../domain/month";
 import type { MonthField as MonthFieldDef } from "../../domain/types";
 import { fieldErrorGroupMark, joinIds } from "./aria";
 import { FieldError } from "./FieldError";
-import { FieldHeader } from "./FieldHeader";
+
+const NO_INVALID_PART = { year: false, month: false } as const;
 
 interface MonthYearFieldProps {
   field: MonthFieldDef;
@@ -27,31 +31,18 @@ interface MonthYearFieldProps {
   onChange: (value: string | null) => void;
   labelledBy?: string;
   describedBy?: string;
-  /** Message affiché sous les deux listes quand la date est incomplète. */
   error?: string;
 }
 
-/** Saisie en cours : l'un des deux selects peut encore être vide. */
-interface Draft {
-  month: string;
-  year: string;
-}
-
-const EMPTY: Draft = { month: "", year: "" };
-
-function toDraft(value: string | undefined): Draft {
-  const parsed = parseMonth(value);
-  return parsed ? { month: String(parsed.month), year: String(parsed.year) } : EMPTY;
-}
-
 /**
- * Mois et année, en deux listes déroulantes.
+ * La saisie est transmise BRUTE à chaque frappe (`formatMonthEntry`) : c'est la
+ * validation du domaine qui dit si elle est incomplète, impossible (mois 13) ou
+ * dans le futur, et le champ n'a qu'à afficher ce qu'elle décide.
  *
- * Deux selects plutôt qu'un calendrier : la précision demandée est le mois, et
- * une grille de jours ferait choisir une information qu'on jette. Surtout, une
- * date future devient IMPOSSIBLE à composer — l'année s'arrête à l'année en
- * cours, et sur celle-ci les mois s'arrêtent au mois en cours. La validation
- * refuse le futur de son côté, pour une valeur qui viendrait du stockage.
+ * L'année complète fait passer au mois (règle du ticket). Ce déplacement du
+ * focus est annoncé d'avance, dans la description de l'année, pour ne pas
+ * surprendre au lecteur d'écran (RGAA 7.4) ; un retour arrière dans le mois
+ * vide ramène à l'année.
  */
 export function MonthYearField({
   field,
@@ -61,115 +52,142 @@ export function MonthYearField({
   describedBy,
   error,
 }: MonthYearFieldProps) {
-  const now = currentMonth();
-  const minYear = field.minYear ?? oldestSelectableYear();
+  const entry = readMonthEntry(value);
+  const problem = monthEntryProblem(entry, field.minYear ?? oldestAcceptedYear());
+  const month = problem === null ? parseMonth(value) : null;
+  const description = month && field.describeValue ? field.describeValue(month) : "";
 
-  const years = React.useMemo(() => {
-    // Ordre décroissant : une entrée chez un employeur est plus souvent récente.
-    const list: number[] = [];
-    for (let year = now.year; year >= minYear; year--) list.push(year);
-    return list;
-  }, [now.year, minYear]);
+  // Seules les parties fautives passent en rouge : un mois à 13 n'accuse pas l'année.
+  const invalid = error && problem !== null ? MONTH_PROBLEM_PARTS[problem](entry) : NO_INVALID_PART;
 
-  const [draft, setDraft] = React.useState(() => toDraft(value));
+  const yearRef = useRef<HTMLInputElement>(null);
+  const monthRef = useRef<HTMLInputElement>(null);
 
-  // La valeur peut changer depuis l'extérieur (retour arrière, recommencer) :
-  // les deux selects suivent.
-  const [previousValue, setPreviousValue] = React.useState(value);
-  if (value !== previousValue) {
-    setPreviousValue(value);
-    const next = toDraft(value);
-    if (next.month !== draft.month || next.year !== draft.year) setDraft(next);
-  }
-
-  /** Dernier mois proposable pour une année : le mois en cours si c'est celle-ci. */
-  const lastMonthOf = (year: string) =>
-    Number(year) === now.year ? now.month : MONTH_NAMES.length;
-
-  function commit(next: Draft) {
-    setDraft(next);
-    const complete = next.month !== "" && next.year !== "";
-    onChange(complete ? formatMonth({ year: Number(next.year), month: Number(next.month) }) : null);
-  }
-
-  function selectYear(year: string) {
-    // Repasser sur l'année en cours peut rendre le mois déjà choisi impossible.
-    const tooLate = draft.month !== "" && Number(draft.month) > lastMonthOf(year);
-    commit({ year, month: tooLate ? "" : draft.month });
-  }
-
-  const labelId = field.label ? `${field.name}-label` : undefined;
-  const hintId = field.hint ? `${field.name}-hint` : undefined;
   const errorId = `${field.name}-error`;
-  const monthLabelId = `${field.name}-month-label`;
-  const monthTriggerId = `${field.name}-month`;
-  const yearLabelId = `${field.name}-year-label`;
-  const yearTriggerId = `${field.name}-year`;
+  const errorRef = error ? errorId : undefined;
+  const advanceHintId = `${field.name}-advance-hint`;
 
-  const triggerClassName = "h-11 w-full md:h-9";
-  const smallLabelClassName = "text-content-secondary text-sm leading-5";
+  function goToMonth() {
+    // Après le rendu de l'année complète : la sortie de l'année doit juger la
+    // saisie à jour, pas celle d'avant la dernière frappe.
+    requestAnimationFrame(() => monthRef.current?.focus());
+  }
+
+  function backToYear(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Backspace" || entry.month !== "") return;
+    event.preventDefault();
+    yearRef.current?.focus();
+  }
 
   return (
-    <div className="flex w-full flex-col gap-3">
-      <FieldHeader labelId={labelId} label={field.label} hintId={hintId} hint={field.hint} />
+    <div className="flex w-full flex-col">
       <div
         role="group"
-        aria-labelledby={labelId ?? labelledBy}
-        aria-describedby={joinIds(hintId, error ? errorId : undefined, describedBy)}
+        aria-labelledby={labelledBy}
+        aria-describedby={joinIds(describedBy, errorRef)}
         {...fieldErrorGroupMark(error)}
-        className="focus-visible:outline-ring flex w-full max-w-md gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
+        className="focus-visible:outline-ring flex flex-wrap gap-x-16 gap-y-6 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
       >
-        <div className="flex flex-1 flex-col gap-1">
-          <span id={yearLabelId} className={smallLabelClassName}>
-            Année
-          </span>
-          <Select value={draft.year} onValueChange={selectYear}>
-            <SelectTrigger
-              id={yearTriggerId}
-              aria-labelledby={joinIds(yearLabelId, yearTriggerId)}
-              aria-describedby={error ? errorId : undefined}
-              aria-invalid={error ? true : undefined}
-              className={triggerClassName}
-            >
-              <SelectValue placeholder="Choisir" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-1">
-          <span id={monthLabelId} className={smallLabelClassName}>
-            Mois
-          </span>
-          <Select value={draft.month} onValueChange={(month) => commit({ ...draft, month })}>
-            {/* Le nom accessible combine le libellé et la valeur choisie : le
-                bouton s'annonce « Mois, mars » plutôt que « Mois » seul. */}
-            <SelectTrigger
-              id={monthTriggerId}
-              aria-labelledby={joinIds(monthLabelId, monthTriggerId)}
-              aria-describedby={error ? errorId : undefined}
-              aria-invalid={error ? true : undefined}
-              className={triggerClassName}
-            >
-              <SelectValue placeholder="Choisir" />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTH_NAMES.slice(0, lastMonthOf(draft.year)).map((name, index) => (
-                <SelectItem key={name} value={String(index + 1)}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <DigitsPart
+          part={{
+            id: `${field.name}-year`,
+            label: "Année",
+            example: "1990",
+            placeholder: "AAAA",
+            length: YEAR_LENGTH,
+          }}
+          inputRef={yearRef}
+          value={entry.year}
+          onChange={(year) => onChange(formatMonthEntry({ ...entry, year }))}
+          navigation={{ onComplete: goToMonth }}
+          state={{ describedBy: joinIds(advanceHintId, errorRef), invalid: invalid.year }}
+        />
+        <DigitsPart
+          part={{
+            id: `${field.name}-month`,
+            label: "Mois",
+            example: "01",
+            placeholder: "MM",
+            length: MONTH_LENGTH,
+          }}
+          inputRef={monthRef}
+          value={entry.month}
+          onChange={(month) => onChange(formatMonthEntry({ ...entry, month }))}
+          navigation={{ onKeyDown: backToYear }}
+          state={{ describedBy: errorRef, invalid: invalid.month }}
+        />
+        <p id={advanceHintId} className="sr-only">
+          Le curseur passe au mois une fois l&apos;année saisie.
+        </p>
       </div>
+
+      {/* Toujours montée : l'ancienneté est annoncée à chaque correction. Marge sur l'encart, pas sur la région vide. */}
+      <div role="status">
+        {description && (
+          <Alert variant="emphasis" className="mt-6 md:mt-10">
+            <AlertTitle>{description}</AlertTitle>
+          </Alert>
+        )}
+      </div>
+
       <FieldError id={errorId} message={error} />
+    </div>
+  );
+}
+
+interface DigitsPartSpec {
+  id: string;
+  label: string;
+  example: string;
+  placeholder: string;
+  length: number;
+}
+
+interface DigitsPartProps {
+  part: DigitsPartSpec;
+  inputRef: RefObject<HTMLInputElement | null>;
+  value: string;
+  onChange: (value: string) => void;
+  navigation: {
+    onComplete?: () => void;
+    onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
+  };
+  state: { describedBy?: string; invalid: boolean };
+}
+
+function DigitsPart({ part, inputRef, value, onChange, navigation, state }: DigitsPartProps) {
+  const exampleId = `${part.id}-example`;
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={part.id} className="text-foreground text-sm font-medium">
+        {part.label}
+      </label>
+      <InputOTP
+        ref={inputRef}
+        id={part.id}
+        maxLength={part.length}
+        pattern={REGEXP_ONLY_DIGITS}
+        inputMode="numeric"
+        autoComplete="off"
+        // Pas de place réservée au badge d'un gestionnaire de mots de passe.
+        pushPasswordManagerStrategy="none"
+        placeholder={part.placeholder}
+        value={value}
+        onChange={onChange}
+        onComplete={navigation.onComplete}
+        onKeyDown={navigation.onKeyDown}
+        aria-describedby={joinIds(exampleId, state.describedBy)}
+        aria-invalid={state.invalid || undefined}
+      >
+        <InputOTPGroup>
+          {Array.from({ length: part.length }, (_, index) => (
+            <InputOTPSlot key={index} index={index} />
+          ))}
+        </InputOTPGroup>
+      </InputOTP>
+      <p id={exampleId} className="text-muted-foreground text-sm">
+        Exemple&nbsp;: {part.example}
+      </p>
     </div>
   );
 }

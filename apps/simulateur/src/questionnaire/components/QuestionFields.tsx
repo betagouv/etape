@@ -1,5 +1,9 @@
 "use client";
 
+import { Fragment } from "react";
+import { InsetPanel } from "@etape/ui/components/inset-panel";
+import { Separator } from "@etape/ui/components/separator";
+
 import { isFieldVisible, opensUnder } from "../domain/conditions";
 import type { Answers, AnswerValue, Field, Question } from "../domain/types";
 import { FieldRenderer } from "./FieldRenderer";
@@ -22,12 +26,8 @@ interface QuestionFieldsProps {
 }
 
 /**
- * Les champs d'une question.
- *
- * Une précision (`sub`) s'ouvre SOUS l'option qui la déclenche, dans le même
- * écran : le lien entre le choix et ce qu'il ouvre reste visible, plutôt que de
- * renvoyer l'utilisateur en bas de page. Les champs de premier niveau se
- * suivent normalement.
+ * Une précision (`sub`) s'ouvre sous l'option qui la déclenche : le lien entre
+ * le choix et ce qu'il ouvre reste visible.
  */
 export function QuestionFields({
   question,
@@ -83,21 +83,18 @@ export function QuestionFields({
                   <div
                     role="group"
                     aria-label={`Précisions : ${option?.label ?? ""}`}
-                    // Filet teal aligné sous le LIBELLÉ de l'option (ms-6 = la
-                    // puce de 16px + son écart de 8px), et remonté de 8px pour
-                    // se coller à elle : dans la colonne d'options espacée de
-                    // 24px, il reste ainsi plus proche de la réponse qu'il
-                    // précise que de la suivante. Repris du proto (`.sub`).
-                    className="border-secondary-selected ms-6 -mt-2 flex flex-col gap-5 border-s-2 ps-4 pt-4 pb-1"
+                    className="flex flex-col gap-3"
                   >
                     {opened.map((sub) => (
-                      <FieldRenderer
-                        key={sub.name}
-                        field={sub}
-                        answers={answers}
-                        setAnswer={setAnswer}
-                        error={errorOf(sub)}
-                      />
+                      <Fragment key={sub.name}>
+                        <Separator />
+                        <FieldRenderer
+                          field={sub}
+                          answers={answers}
+                          setAnswer={setAnswer}
+                          error={errorOf(sub)}
+                        />
+                      </Fragment>
                     ))}
                   </div>
                 );
@@ -110,7 +107,35 @@ export function QuestionFields({
 
   return (
     <InlineFieldErrorProvider value={inlineErrors}>
-      <div className="flex w-full flex-col gap-6 md:gap-8">{mainFields.map(renderField)}</div>
+      <div className="flex w-full flex-col gap-8">
+        {groupInsets(mainFields.filter((field) => isFieldVisible(field, answers))).map(
+          ({ anchor, insets }) =>
+            insets.length === 0 ? (
+              renderField(anchor)
+            ) : (
+              <div key={anchor.name} className="flex flex-col gap-2">
+                {renderField(anchor)}
+                <InsetPanel>{insets.map(renderField)}</InsetPanel>
+              </div>
+            ),
+        )}
+      </div>
     </InlineFieldErrorProvider>
   );
+}
+
+interface InsetGroup {
+  anchor: Field;
+  insets: Field[];
+}
+
+/** Groupe sur les champs VISIBLES : un même champ `inset` s'ouvre sous un ancrage différent selon la résidence. */
+function groupInsets(fields: Field[]): InsetGroup[] {
+  const groups: InsetGroup[] = [];
+  for (const field of fields) {
+    const previous = groups.at(-1);
+    if (field.inset && previous) previous.insets.push(field);
+    else groups.push({ anchor: field, insets: [] });
+  }
+  return groups;
 }

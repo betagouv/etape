@@ -18,10 +18,6 @@
  * 800 #115e59 · 900 #134e4a · 950 #12423e.
  *
  * Écarts au kit, chacun marqué « écart » sur sa ligne :
- * - `--muted` : le kit donne neutral-100 #f5f5f5, sur lequel son
- *   `muted-foreground` #737373 ne fait que 4,35:1, sous les 4,5:1 d'un texte
- *   courant (légendes des cartes, témoignages, récapitulatif). Remplacé par
- *   neutral-50 #fafafa : 4,54:1.
  * - `--secondary` : le kit donne teal-50 #f9faf9, qui ne se distingue pas du
  *   blanc — sections, tags, pastilles et survols disparaissaient. Remplacé
  *   par teal-100 #eef4f2.
@@ -48,30 +44,28 @@
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
+  --surface-warm: #f4f2ed; /* extension ETAPE : bandeau des en-têtes du front-office (taupe-200) */
+  --surface-warm-muted: #f9f9f6; /* extension ETAPE : étape active de la barre latérale du front-office (taupe-50) */
 
   /* Actions */
   --primary: #134e4a; /* base/primary (teal-900) */
   --primary-foreground: #fafafa; /* base/primary-foreground */
   --secondary: #eef4f2; /* écart : kit teal-50 #f9faf9 (teal-100) */
   --secondary-foreground: #134e4a; /* base/secondary-foreground (teal-900) */
-  --secondary-selected: #d3e2e0; /* extension ETAPE (teal-200) */
-  --muted: #fafafa; /* écart : kit neutral-100 #f5f5f5 (neutral-50) */
-  --muted-foreground: #737373; /* base/muted-foreground (neutral-500) */
+  --primary-subtle: #115e59; /* extension ETAPE : relief posé sur primary (teal-800) */
+  --muted: #f5f5f5; /* base/muted (neutral-100) */
+  --muted-foreground: #525252; /* base/muted-foreground (neutral-600) */
   --accent: #f5f5f5; /* base/accent (neutral-100) */
   --accent-foreground: #171717; /* base/accent-foreground */
   --destructive: #dc2626; /* base/destructive (red-600) */
   --destructive-foreground: #ffffff; /* écart : kit #fef2f2 */
 
   /* Bordures & focus */
-  --border: #d3e2e0; /* base/border (teal-200) */
+  --border: #92b5b2; /* base/border (teal-400) */
   --border-strong: #2b6f6b; /* extension ETAPE : bord marqué (teal-700) */
-  --border-hover: #115e59; /* extension ETAPE (teal-800) */
-  --border-active: #134e4a; /* extension ETAPE (teal-900) */
-  --border-disabled: #d3e2e0; /* extension ETAPE (teal-200) */
-  --divider: #d3e2e0; /* extension ETAPE (= border) */
+  --divider: #d3e2e0; /* extension ETAPE (teal-200) */
   --input: #8f8f8f; /* base/input (neutral-400) — 3,23:1 sur blanc */
   --ring: #2b6f6b; /* base/ring (teal-700) */
-  --ring-alpha: rgba(43, 111, 107, 0.5); /* ring à 50 % */
 
   /* Statuts — couleurs d'état du kit (collection « 2. Theme ») */
   --success: #166534; /* colors/succes (green-800) */
@@ -92,18 +86,17 @@
   --destructive-muted: #fef2f2; /* colors/error-dimmed (red-50) */
   --destructive-border: #fee2e2; /* colors/error-border (red-100) */
   --destructive-text: #991b1b; /* colors/error (red-800) — 8,31:1 sur blanc */
-  --destructive-border-alpha: rgba(220, 38, 38, 0.5); /* destructive à 50 % */
+
+  /* Tags de catégorie — extension ETAPE, sans couleur d'état équivalente */
+  --violet-muted: #f5f3ff; /* violet-50 */
+  --violet-text: #4c1d95; /* violet-900 — 10:1 sur violet-50 */
 
   /* Contenu — extensions ETAPE */
+  --content-strong: #262626; /* neutral-800 */
   --content-secondary: #404040; /* neutral-700 */
-  --content-accent: #134e4a; /* = primary (teal-900) */
-  --content-accent-hover: #12423e; /* teal-950 */
 
-  /* Overlays (identiques light & dark) */
+  /* Overlay (identique light & dark) */
   --overlay-black-60: rgba(0, 0, 0, 0.6);
-  --overlay-black-10: rgba(0, 0, 0, 0.1);
-  --overlay-white-70: rgba(255, 255, 255, 0.7);
-  --overlay-white-40: rgba(255, 255, 255, 0.4);
 
   /* Charts */
   --chart-1: #ea580c; /* base/chart-1 */
@@ -120,7 +113,7 @@
   --sidebar-accent: #f5f5f5;
   --sidebar-accent-foreground: #171717;
   --sidebar-border: #e5e5e5;
-  --sidebar-ring: #a3a3a3;
+  --sidebar-ring: #8f8f8f; /* base/sidebar-ring (neutral-400) */
 }
 
 /*
@@ -136,15 +129,17 @@
   --card-foreground: #fafafa;
   --popover: #262626;
   --popover-foreground: #fafafa;
+  --surface-warm: #171717; /* neutral-900 */
+  --surface-warm-muted: #262626; /* neutral-800 */
 
   /* Actions */
   --primary: #e5e5e5; /* base/primary */
   --primary-foreground: #171717;
   --secondary: #262626; /* base/secondary */
   --secondary-foreground: #fafafa;
-  --secondary-selected: #404040; /* extension ETAPE (neutral-700) */
+  --primary-subtle: #d4d4d4; /* neutral-300, relief posé sur primary */
   --muted: #262626; /* base/muted */
-  --muted-foreground: #a3a3a3; /* base/muted-foreground */
+  --muted-foreground: #8f8f8f; /* base/muted-foreground (neutral-400) */
   --accent: #404040; /* base/accent */
   --accent-foreground: #fafafa;
   --destructive: #f87171; /* base/destructive (red-400) */
@@ -153,13 +148,9 @@
   /* Bordures & focus */
   --border: rgba(255, 255, 255, 0.1); /* base/border */
   --border-strong: #737373; /* écart : bord des contrôles (neutral-500, 4,2:1) */
-  --border-hover: #a3a3a3; /* neutral-400 */
-  --border-active: #e5e5e5; /* = primary */
-  --border-disabled: rgba(255, 255, 255, 0.1);
   --divider: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.15); /* base/input */
   --ring: #737373; /* base/ring (neutral-500, 4,2:1) */
-  --ring-alpha: rgba(115, 115, 115, 0.5);
 
   /* Statuts */
   --success: #10b981; /* emerald-500 */
@@ -180,12 +171,14 @@
   --destructive-muted: #7f1d1d; /* red-900 */
   --destructive-border: #fca5a5; /* red-300 */
   --destructive-text: #fca5a5;
-  --destructive-border-alpha: rgba(252, 165, 165, 0.5);
+
+  /* Tags de catégorie */
+  --violet-muted: #4c1d95; /* violet-900 */
+  --violet-text: #c4b5fd; /* violet-300 */
 
   /* Contenu */
+  --content-strong: #e5e5e5; /* neutral-200 */
   --content-secondary: #d4d4d4; /* neutral-300 */
-  --content-accent: #e5e5e5; /* = primary */
-  --content-accent-hover: #fafafa;
 
   /* Charts */
   --chart-1: #1d4ed8; /* base/chart-1 */
@@ -213,7 +206,8 @@
  * 30/36 en Mobile et 36/40 en Desktop, sous le même nom. Les valeurs mobile
  * sont posées dans `:root`, redéfinies à `lg`, et exposées via `@theme inline`
  * — qui compile en `font-size: var(--type-heading-md)`, si bien que
- * `text-heading-md` bascule seul au breakpoint.
+ * `text-heading-md` bascule seul au breakpoint. Seul `heading-sm` est fixe : voir
+ * son écart ci-dessous.
  *
  * Un titre s'écrit `font-heading text-heading-md` : la taille porte interlignage,
  * graisse (600) et approche (-0.025em, soit les -0.5 à -1.5px du kit), mais
@@ -227,20 +221,15 @@
   --type-heading-lg-lh: 2.5rem; /* 40 */
   --type-heading-md: 1.875rem; /* heading-md 30 */
   --type-heading-md-lh: 2.25rem; /* 36 */
-  --type-heading-sm: 1.25rem; /* heading-sm 20 */
-  --type-heading-sm-lh: 1.75rem; /* 28 */
+  /* écart : kit 20/28 en Mobile. Les maquettes mobiles du simulateur posent
+     leurs titres à 24/32 — valeur Desktop retenue dans les deux modes, pour
+     toutes les apps. */
+  --type-heading-sm: 1.5rem; /* 24 */
+  --type-heading-sm-lh: 2rem; /* 32 */
   --type-body-lg: 1rem; /* Body/Large 16 */
   --type-body-lg-lh: 1.5rem; /* 24 */
   --type-label-lg: 0.875rem; /* Label/Large 14 */
   --type-label-lg-lh: 1.25rem; /* 20 */
-
-  /* Identiques dans les deux modes */
-  --type-body: 1rem; /* Body/Default 16 */
-  --type-body-lh: 1.5rem; /* 24 */
-  --type-body-sm: 0.875rem; /* Body/Compact & Label/Default 14 */
-  --type-body-sm-lh: 1.25rem; /* 20 */
-  --type-caption: 0.75rem; /* Caption/Default 12 */
-  --type-caption-lh: 1rem; /* 16 */
 }
 
 /*
@@ -255,8 +244,6 @@
     --type-heading-lg-lh: 3rem; /* 48 */
     --type-heading-md: 2.25rem; /* 36 */
     --type-heading-md-lh: 2.5rem; /* 40 */
-    --type-heading-sm: 1.5rem; /* 24 */
-    --type-heading-sm-lh: 2rem; /* 32 */
   }
 }
 
@@ -277,11 +264,13 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-surface-warm: var(--surface-warm);
+  --color-surface-warm-muted: var(--surface-warm-muted);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary-selected: var(--secondary-selected);
+  --color-primary-subtle: var(--primary-subtle);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -291,16 +280,11 @@
   --color-destructive-muted: var(--destructive-muted);
   --color-destructive-border: var(--destructive-border);
   --color-destructive-text: var(--destructive-text);
-  --color-destructive-border-alpha: var(--destructive-border-alpha);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
-  --color-border-hover: var(--border-hover);
-  --color-border-active: var(--border-active);
-  --color-border-disabled: var(--border-disabled);
   --color-divider: var(--divider);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ring-alpha: var(--ring-alpha);
 
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -317,15 +301,13 @@
   --color-info-muted: var(--info-muted);
   --color-info-border: var(--info-border);
   --color-info-text: var(--info-text);
+  --color-violet-muted: var(--violet-muted);
+  --color-violet-text: var(--violet-text);
 
+  --color-content-strong: var(--content-strong);
   --color-content-secondary: var(--content-secondary);
-  --color-content-accent: var(--content-accent);
-  --color-content-accent-hover: var(--content-accent-hover);
 
   --color-overlay-black-60: var(--overlay-black-60);
-  --color-overlay-black-10: var(--overlay-black-10);
-  --color-overlay-white-70: var(--overlay-white-70);
-  --color-overlay-white-40: var(--overlay-white-40);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -348,6 +330,9 @@
   --radius-md: calc(var(--radius) - 2px); /* 8px — radius/md */
   --radius-lg: var(--radius); /* 10px — radius/lg */
   --radius-xl: calc(var(--radius) + 4px); /* 14px — radius/xl */
+  --radius-2xl: calc(var(--radius) + 8px); /* 18px — radius/2xl */
+  --radius-3xl: calc(var(--radius) + 12px); /* 22px — radius/3xl */
+  --radius-4xl: calc(var(--radius) + 16px); /* 26px — radius/4xl */
   --radius-full: 9999px;
 
   /* Typographie */
@@ -365,6 +350,8 @@
    * police du système.
    */
   --font-heading: var(--font-bricolage, var(--font-geist, ui-sans-serif, system-ui, sans-serif));
+  /* Geist Mono (`font/font-mono` du kit), chargée par aucune app pour l'instant. */
+  --font-mono: var(--font-geist-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
 
   /* Styles de texte Figma — responsive par construction (cf. bloc ci-dessus) */
   --text-heading-xl: var(--type-heading-xl);
@@ -385,14 +372,23 @@
   --text-heading-sm--letter-spacing: -0.025em;
   --text-body-lg: var(--type-body-lg);
   --text-body-lg--line-height: var(--type-body-lg-lh);
-  --text-body: var(--type-body);
-  --text-body--line-height: var(--type-body-lh);
-  --text-body-sm: var(--type-body-sm);
-  --text-body-sm--line-height: var(--type-body-sm-lh);
   --text-label-lg: var(--type-label-lg);
   --text-label-lg--line-height: var(--type-label-lg-lh);
-  --text-caption: var(--type-caption);
-  --text-caption--line-height: var(--type-caption-lh);
+
+  /* Curseur d'`InputOTP`. */
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    50% {
+      opacity: 0;
+    }
+  }
 }
 
 @layer base {

@@ -8,10 +8,9 @@
 // Les traduire ici une fois évite que chaque règle du catalogue reparse les
 // réponses brutes.
 
-import { monthsSince, parseMonth } from "@/questionnaire/domain/month";
 import type { FlagSet } from "@/questionnaire/domain/flags";
 import { walkFlow } from "@/questionnaire/domain/flow";
-import { FIELD_DUREE_ACTIVITE, FIELD_ENTREE_EMPLOYEUR } from "@/questionnaire/domain/questions";
+import { readAncienneteMois, readDureeActivite } from "@/questionnaire/domain/questions";
 import { regionFromAnswers, type RegionCode } from "@/questionnaire/domain/regions";
 import type { Answers } from "@/questionnaire/domain/types";
 
@@ -25,27 +24,18 @@ export interface Profil {
    * question n'a pas été posée — sans employeur, il n'y a pas d'ancienneté.
    */
   ancienneteMois: number | null;
-  /** Durée totale d'activité déclarée, en années (Q5). `null` si non renseignée. */
+  /**
+   * Durée totale d'activité déclarée, en années (Q5) : 0 pour « moins d'un an ».
+   * `null` si non renseignée.
+   */
   activiteAnnees: number | null;
-}
-
-/** Nombre d'années saisi en Q5. La valeur est stockée telle que tapée. */
-function anneesSaisies(value: unknown): number | null {
-  if (typeof value !== "string" || !/^\d+$/.test(value)) return null;
-  return Number(value);
-}
-
-/** Ancienneté en mois d'après le mois d'entrée saisi en Q4. */
-function ancienneteEnMois(value: unknown): number | null {
-  const month = parseMonth(value);
-  return month ? monthsSince(month) : null;
 }
 
 export function buildProfil(answers: Answers): Profil {
   return {
     flags: walkFlow(answers).flags,
     region: regionFromAnswers(answers),
-    ancienneteMois: ancienneteEnMois(answers[FIELD_ENTREE_EMPLOYEUR]),
-    activiteAnnees: anneesSaisies(answers[FIELD_DUREE_ACTIVITE]),
+    ancienneteMois: readAncienneteMois(answers),
+    activiteAnnees: readDureeActivite(answers),
   };
 }

@@ -3,43 +3,61 @@
 Thème Keycloak d'ETAPE — écrans de connexion et gabarits d'email, écrits en
 React avec [Keycloakify](https://keycloakify.dev).
 
-Les écrans suivent les maquettes `login-proposition-2` du Figma _Dépôt de
-dossier_. Ils réutilisent les variables de `@etape/ui` — couleurs, rayons,
-échelle typographique — plutôt que de les recopier : ce qui bouge dans le design
-system se propage ici au prochain build.
+La connexion et le mot de passe oublié suivent la section « 00. SIGN-IN » du
+Figma _FRONT-OFFICE_ (écrans 01 à 06, ticket Notion 191 ; écrans 07 à 10, ticket 192) ; les autres écrans suivent encore les maquettes
+`login-proposition-2` du Figma _Dépôt de dossier_. Ils réutilisent les variables
+de `@etape/ui` — couleurs, rayons, échelle typographique — plutôt que de les
+recopier : ce qui bouge dans le design system se propage ici au prochain build.
+
+## Cadre commun
+
+`src/login/Template.tsx` porte ce que tous les écrans partagent :
+
+- à gauche, l'illustration aux jumelles sur fond `--surface-warm`, masquée sous
+  `lg` ;
+- en haut à droite, l'emplacement `slots.accountSwitch`, que chaque écran
+  remplit ou non (la connexion et le mot de passe oublié y mettent « Créer mon
+  espace ») ;
+- au-dessus du logo, l'emplacement `slots.backLink` (« Retour à la connexion »
+  de l'écran 07) ;
+- le logo Transitions Pro (`components/logo.tsx`) au-dessus du titre ;
+- en bas, le pied de page « Besoin d'aide ? » vers `support@etape.com`
+  (`components/support-footer.tsx`).
 
 ## Installer et lancer
 
 ```bash
 # Construit le bundle puis le JAR (dist_keycloak/etape-keycloak-theme.jar)
-npm run build
+pnpm run build
 
 # Voir le résultat dans le Keycloak du dépôt
-docker compose restart keycloak   # depuis la racine
+docker compose up -d keycloak-providers && docker compose restart keycloak   # depuis la racine
 
 # Linter
-npm run lint
+pnpm run lint
 ```
 
-Le `docker-compose.yml` de la racine monte le JAR dans `/opt/keycloak/providers`.
-Après un build, un `docker compose restart keycloak` suffit — inutile de
-recréer le conteneur.
+Le service `keycloak-providers` du `docker-compose.yml` racine recopie le JAR
+dans le volume d'extensions de Keycloak. Après un build, il faut le relancer
+avant de redémarrer Keycloak : un simple `docker compose restart keycloak`
+servirait l'ancien JAR.
 
-`npm run storybook` (`keycloakify start-keycloak`) démarre un Keycloak jetable
+`pnpm run storybook` (`keycloakify start-keycloak`) démarre un Keycloak jetable
 préchargé avec le realm du dépôt, pratique pour parcourir les écrans que le
 parcours normal atteint rarement.
 
 ## Ce que contient le thème
 
-| Écran                                                | Fichier                                   |
-| ---------------------------------------------------- | ----------------------------------------- |
-| Connexion                                            | `src/login/pages/Login.tsx`               |
-| Inscription                                          | `src/login/pages/Register.tsx`            |
-| Mot de passe oublié                                  | `src/login/pages/LoginResetPassword.tsx`  |
-| Nouveau mot de passe                                 | `src/login/pages/LoginUpdatePassword.tsx` |
-| Vérification d'adresse                               | `src/login/pages/LoginVerifyEmail.tsx`    |
-| Liaison de comptes (2 écrans)                        | `src/login/pages/LoginIdpLink*.tsx`       |
-| Session expirée · erreur · information · déconnexion | `src/login/pages/`                        |
+| Écran                                                | Fichier                                      |
+| ---------------------------------------------------- | -------------------------------------------- |
+| Connexion                                            | `src/login/pages/Login.tsx`                  |
+| Inscription                                          | `src/login/pages/Register.tsx`               |
+| Mot de passe oublié                                  | `src/login/pages/LoginResetPassword.tsx`     |
+| E-mail de réinitialisation envoyé                    | `src/login/pages/ResetPasswordEmailSent.tsx` |
+| Nouveau mot de passe                                 | `src/login/pages/LoginUpdatePassword.tsx`    |
+| Vérification d'adresse                               | `src/login/pages/LoginVerifyEmail.tsx`       |
+| Liaison de comptes (2 écrans)                        | `src/login/pages/LoginIdpLink*.tsx`          |
+| Session expirée · erreur · information · déconnexion | `src/login/pages/`                           |
 
 Les écrans non listés — double authentification, WebAuthn, consentement —
 tombent sur `DefaultPage` de Keycloakify. Ils héritent du gabarit d'ETAPE, mais
@@ -54,8 +72,8 @@ d'ETAPE, porté par `html/template.ftl`.
 
 ## Connexion et inscription sont deux pages, et c'est imposé
 
-Le pied de formulaire porte un lien — « Pas encore de compte ? Créer un compte
-usager » — et non un onglet. Ce n'est pas un choix esthétique.
+La connexion porte un lien en haut à droite — « Vous n'avez pas encore d'espace ?
+Créer mon espace » — et non un onglet. Ce n'est pas un choix esthétique.
 
 Keycloak ne suit qu'une étape courante par session d'authentification et
 régénère son `session_code` à chaque changement. Échanger les formulaires côté
@@ -79,6 +97,125 @@ les mêmes classes que le gabarit React (`.kc-split`, `.kc-illustration`,
 Une transition de vue entre documents a été tentée pour aller plus loin ; elle ne
 démarre pas de façon fiable dans ce contexte et a été retirée plutôt que laissée
 à moitié fonctionnelle.
+
+## Mot de passe oublié
+
+Keycloak n'a pas d'écran « Consultez votre boîte e-mail » : l'extension
+[`keycloak/extensions/reset-credentials`](../../keycloak/extensions/reset-credentials/README.md)
+rend `login-reset-password.ftl` avec l'attribut `etapeResetLinkSent`, et
+`KcPage.tsx` aiguille alors vers `ResetPasswordEmailSent.tsx` au lieu du
+formulaire de l'écran 07.
+
+- **Le compte à rebours** (`hooks/use-resend-countdown.ts`) part du délai que
+  donne le serveur (`etapeResendDelaySeconds`) et se cale sur l'heure de fin :
+  un onglet en arrière-plan ralentit les minuteries. Le serveur refuse de toute
+  façon un renvoi trop tôt ; le bouton reste focusable, en `aria-disabled`.
+- **Ce qui est annoncé** dans la région `role="status"` : le renvoi, une seconde
+  après le rechargement de la page (une région déjà remplie au chargement ne
+  serait pas lue), puis la fin du délai. Le décompte lui-même ne l'est pas : il
+  décrit le bouton (`aria-describedby`).
+- **L'écran 10 n'a qu'un champ** : `password-confirm`, qu'exige Keycloak, est
+  recopié en champ caché, et `logout-sessions` est envoyé d'office. Un refus du
+  serveur (historique, politique) s'affiche sous le champ, comme les erreurs de
+  la connexion. Un envoi bloqué avant le serveur affiche les critères, rend le
+  focus au champ et s'annonce. Les critères testent chaque caractère comme
+  Keycloak (`Character.isUpperCase`…), pour ne jamais bloquer un mot de passe
+  qu'il accepterait.
+- **L'écran 07 contrôle le format de l'adresse**, comme la connexion : sans
+  « @ », la personne arriverait sur « Consultez votre boîte e-mail » sans
+  qu'aucun e-mail ne parte.
+- **Un lien déjà utilisé ou remplacé par un renvoi** arrive sur `error.ftl` avec
+  `expiredActionMessage`. Keycloak renvoie aussi ce message pour un formulaire
+  renvoyé après un retour arrière (`SessionCodeChecks`) et à l'inscription
+  (`RegistrationUserCreation`) : `Error.tsx` n'y voit un lien expiré, avec
+  `etapeUsedLinkMessage`, que sur la page `/login-actions/action-token`. Le
+  message lui-même garde son texte Keycloak.
+
+## Formulaire de connexion : erreurs et envoi incomplet
+
+L'adresse est contrôlée à la sortie du champ, mais pas quand cette sortie vient
+d'un appui sur un lien ou un bouton : l'erreur en s'insérant décalerait la page,
+et le clic tomberait à côté de sa cible. L'appui se repère par `mousedown`, qui
+précède la sortie du champ dans tous les navigateurs ; `:active` n'offre pas cette
+garantie. L'envoi contrôle de toute façon le format.
+
+Un envoi incomplet (Entrée, ou clic sur le bouton grisé) reste bloqué : le focus
+part sur le premier champ vide et une région `role="status"` dit quoi faire. Le
+bouton porte le même texte en `aria-describedby`.
+
+## Vérification d'adresse : deux écrans pour une seule page
+
+Keycloak affiche `login-verify-email.ftl` dans deux cas : juste après une
+inscription, et quand un compte pas encore activé se connecte. Rien dans le
+contexte transmis au thème ne permet de les distinguer — la note
+`NEW_USER_REGISTERED` reste dans la session d'authentification, l'URL est la
+même `required-action?execution=VERIFY_EMAIL`.
+
+Le thème retient donc, dans le `sessionStorage` de l'onglet, le dernier
+formulaire envoyé (`src/login/components/submitted-form.ts`) :
+
+- **connexion** → écran 05 de la maquette : « Votre espace n'est pas encore
+  activé », alerte rouge, bouton de renvoi ;
+- **inscription, ou rien de retenu** (stockage refusé, arrivée par
+  FranceConnect) → « Confirmez votre adresse », l'écran neutre d'avant la
+  maquette, qui convient aux deux cas.
+
+L'écran de connexion efface la marque à son affichage : un essai raté suivi
+d'une arrivée par FranceConnect ne garde pas « connexion ».
+
+Une vérification demandée par l'application (`kc_action=VERIFY_EMAIL`, soit
+`isAppInitiatedAction` dans le contexte) passe aussi par l'écran neutre : une
+session est déjà ouverte, et la marque « connexion » peut être restée dans
+l'onglet. Un compte déjà vérifié ne voit jamais cette page : Keycloak valide
+l'action sans l'afficher.
+
+## Remplissage automatique de Chrome
+
+« Se connecter » reste grisé tant que les deux champs sont vides. Quand Chrome
+remplit un mot de passe enregistré au chargement, il n'émet aucun événement et
+cache la valeur au code (`input.value` vaut `""`) jusqu'au premier geste de la
+personne. À ce geste, il émet de vrais événements `input` et `change`.
+
+Le seul signal au chargement est la pseudo-classe `:-webkit-autofill`.
+`src/styles/theme.css` y attache une animation sans effet visible
+(`etape-autofill`), dont `useLoginForm` écoute le début pour tenir le champ pour
+rempli. Sa durée est de 1 ms : à 0 s, l'événement `animationstart` ne part pas
+sur cette page, alors qu'il part sur une page minimale.
+
+Les champs ne sont pas contrôlés, et cela compte : un champ avec `value` serait
+réécrit par React au rendu suivant, donc vidé si le navigateur l'a rempli sans
+événement. Le hook ne retient qu'un booléen par champ, et l'envoi relit
+`FormData`.
+
+Vérifié dans Chrome avec un vrai mot de passe enregistré dans un profil
+temporaire (ajouté par `chrome.passwordsPrivate`), sur la page en contexte
+simulé et non dans un vrai Keycloak. `Autofill.trigger`, du protocole DevTools,
+ne convient pas à ce test : il émet des événements de saisie dès le remplissage.
+
+## Case « Je ne suis pas un robot »
+
+`src/login/components/altcha/`, avec le hook `src/login/hooks/use-altcha-widget.ts`, affiche le widget ALTCHA sur l'inscription et
+le « mot de passe oublié », avec le défi que pose l'extension Keycloak
+(`altchaChallenge`, voir [`keycloak/extensions/altcha`](../../keycloak/extensions/altcha/README.md)).
+Le widget est empaqueté dans le thème : aucun script ne vient d'un CDN.
+
+Il a trois manques, que le composant compense :
+
+- **il n'annonce pas ses états** : « vérification en cours » et « vérifiée » sont
+  lus dans une région `role="status"` toujours montée ;
+- **il laisse le navigateur afficher sa bulle** quand la case n'est pas cochée :
+  l'événement `invalid` est intercepté, le message du thème s'affiche sous la
+  case et le focus y revient ;
+- **il garde la case obligatoire pendant le calcul**, alors qu'elle est
+  invisible : un envoi à ce moment affiche « patientez » sans déplacer le focus.
+
+Quand le serveur refuse la solution, la page revient avec le focus sur la case.
+Quand l'extension n'a pas pu créer de défi (`altchaUnavailable`), un message
+remplace la case.
+
+Les pages écrivent `messagesPerField.existsError("altcha")` en littéral, et pas
+au travers d'une constante : Keycloakify ne transmet que les erreurs des champs
+qu'il repère ainsi dans le code.
 
 ## Polices
 

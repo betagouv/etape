@@ -1,12 +1,17 @@
 "use client";
 
 import { Checkbox } from "@etape/ui/components/checkbox";
-import { Label } from "@etape/ui/components/label";
+import {
+  ChoiceCard,
+  ChoiceCardDescription,
+  ChoiceCardLabel,
+  ChoiceCardText,
+  ChoiceCardTitle,
+} from "@etape/ui/components/choice-card";
 
 import type { CheckboxField as CheckboxFieldDef, Option } from "../../domain/types";
 import { fieldErrorGroupMark, joinIds } from "./aria";
 import { FieldError } from "./FieldError";
-import { OptionRow } from "./OptionRow";
 
 interface CheckboxFieldProps {
   field: CheckboxFieldDef;
@@ -49,33 +54,31 @@ export function CheckboxField({
       aria-labelledby={labelledBy}
       aria-describedby={joinIds(error ? errorId : undefined, describedBy)}
       {...fieldErrorGroupMark(error)}
-      className="focus-visible:outline-ring flex w-full flex-col gap-6 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
+      className="focus-visible:outline-ring flex w-full flex-col gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
     >
       {field.options.map((option) => {
         const id = `${field.name}-${option.value}`;
         const labelId = `${id}-label`;
         const descId = option.description ? `${id}-description` : undefined;
+        const checked = value.includes(option.value);
         return (
-          <Label
-            key={option.value}
-            htmlFor={id}
-            className="min-h-11 w-full cursor-pointer items-start gap-2 md:min-h-0"
-          >
-            <Checkbox
-              id={id}
-              checked={value.includes(option.value)}
-              onCheckedChange={(state) => toggle(option, state === true)}
-              aria-labelledby={labelId}
-              aria-describedby={descId}
-              className="border-border-strong size-5"
-            />
-            <OptionRow
-              labelId={labelId}
-              descId={descId}
-              label={option.label}
-              description={option.description}
-            />
-          </Label>
+          <ChoiceCard key={option.value} selected={checked}>
+            <ChoiceCardLabel htmlFor={id}>
+              <Checkbox
+                id={id}
+                checked={checked}
+                onCheckedChange={(state) => toggle(option, state === true)}
+                aria-labelledby={labelId}
+                aria-describedby={descId}
+              />
+              <ChoiceCardText>
+                <ChoiceCardTitle id={labelId}>{option.label}</ChoiceCardTitle>
+                {option.description && (
+                  <ChoiceCardDescription id={descId}>{option.description}</ChoiceCardDescription>
+                )}
+              </ChoiceCardText>
+            </ChoiceCardLabel>
+          </ChoiceCard>
         );
       })}
       <FieldError id={errorId} message={error} />

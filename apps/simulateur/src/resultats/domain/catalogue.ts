@@ -12,8 +12,10 @@
 //
 // L'ordre de déclaration à l'intérieur de chaque catégorie est celui des
 // tableaux Gherkin, et c'est lui qui ordonne l'affichage (voir `selection.ts`).
-// Les dispositifs sont donc groupés par public — salarié·es, puis demandeur·euses
-// d'emploi, puis fonction publique — parce qu'aucun profil n'en croise deux.
+// Les dispositifs sont groupés par public — tous publics, salarié·es,
+// demandeur·euses d'emploi, fonction publique. Exception : le CPF et le C2P,
+// classés outils dans les tableaux et passés depuis en dispositifs ; le CPF
+// ouvre la catégorie, le C2P précède la PUR, qui en mobilise les droits.
 //
 // Les scénarios du ticket :
 //   S1/S2  salarié·e CDI (cadre / non-cadre) — le statut cadre ne change RIEN
@@ -24,8 +26,8 @@
 //   S8     agent·e de la fonction publique
 //   S9     sans emploi
 //   +      auto-entrepreneur·euse / chef·fe d'entreprise : absent des scénarios,
-//          arbitré avec la PO — CEP et les quatre outils ouverts à tous, aucun
-//          dispositif (pas d'employeur, donc ni OPCO ni Transitions Pro).
+//          arbitré avec la PO — CEP, les outils et le CPF ouverts à tous, aucun
+//          autre dispositif (pas d'employeur, donc ni OPCO ni Transitions Pro).
 //
 // Les liens sont ceux de la liste de la PO et ont été vérifiés (HTTP 200) au
 // moment de l'écriture.
@@ -71,9 +73,11 @@ const anciennete5Ans = (p: Profil) => activiteAnnees(p) >= 5;
 /**
  * Portail national du réseau CEP. Il oriente lui-même vers l'opérateur régional,
  * ce qui remplace la table des 18 portails Avenir Actifs qu'on servait avant.
- * Exporté parce que le pied de page des résultats renvoie au même endroit.
  */
-export const CEP_URL = "https://mon-cep.org/";
+const CEP_URL = "https://mon-cep.org/";
+
+/** Page CEP servie aux agents publics à la place du portail, à la demande de la PO. */
+const CEP_AGENT_PUBLIC_URL = "https://www.service-public.gouv.fr/particuliers/vosdroits/F32457";
 
 export const CATALOGUE: Resultat[] = [
   // ═══ INTERLOCUTEURS ═════════════════════════════════════════════════════
@@ -83,10 +87,11 @@ export const CATALOGUE: Resultat[] = [
     nom: "CEP régional",
     description:
       "Le conseiller en évolution professionnelle (CEP) vous accompagne gratuitement dans vos réflexions sur votre avenir professionnel. Il vous aide à faire le point sur votre situation, à construire votre projet et à identifier les solutions adaptées à vos objectifs.",
-    url: CEP_URL,
+    url: (p) => (agentPublic(p) ? CEP_AGENT_PUBLIC_URL : CEP_URL),
     // Absent du parcours demandeur d'emploi (S7) : France Travail y est
     // l'opérateur CEP, la carte ferait doublon et enverrait au mauvais guichet.
-    quand: (p) => salarie(p) || agentPublic(p) || sansEmploi(p) || independant(p),
+    // Absent aussi du parcours sans emploi (S9), à la demande de la PO.
+    quand: (p) => salarie(p) || agentPublic(p) || independant(p),
   },
   {
     id: "employeur",
@@ -117,7 +122,7 @@ export const CATALOGUE: Resultat[] = [
     description:
       "Que votre projet soit encore en réflexion ou déjà bien défini, Transitions Pro vous accompagne dans sa construction. Ses équipes peuvent vous aider à clarifier vos objectifs, comprendre les solutions mobilisables et identifier les financements adaptés à votre situation pour sécuriser votre évolution professionnelle.",
     // Réseau régionalisé : une association par région.
-    url: transitionsProUrl,
+    url: (p) => transitionsProUrl(p.region),
     // Absente du parcours intermittent (S6).
     quand: (p) => salarie(p) && (cdi(p) || cdd(p) || interim(p)),
   },
@@ -157,18 +162,6 @@ export const CATALOGUE: Resultat[] = [
 
   // ═══ OUTILS ═════════════════════════════════════════════════════════════
   {
-    id: "cpf",
-    categorie: "outil",
-    nom: "Compte personnel de formation (CPF)",
-    description:
-      "Utiliser les droits à la formation acquis au cours de votre carrière pour financer une formation, développer vos compétences ou préparer un nouveau projet professionnel.",
-    // La liste de la PO renvoie vers Service Public, qui a une page par statut
-    // (privé, FPE, FPT, demandeur d'emploi) : en attendant son arbitrage, le
-    // service lui-même, valable pour tous les statuts.
-    url: "https://www.moncompteformation.gouv.fr/espace-public/consulter-mes-droits-formation",
-    quand: () => true,
-  },
-  {
     id: "vae",
     categorie: "outil",
     nom: "Validation des acquis de l'expérience (VAE)",
@@ -198,16 +191,19 @@ export const CATALOGUE: Resultat[] = [
     // Proposée à tous les profils sauf aux intermittent·es du spectacle (S6).
     quand: (p) => !intermittent(p),
   },
+
+  // ═══ DISPOSITIFS — tous publics ═════════════════════════════════════════
   {
-    id: "c2p",
-    categorie: "outil",
-    nom: "Compte professionnel de prévention (C2P)",
+    id: "cpf",
+    categorie: "dispositif",
+    nom: "Compte personnel de formation (CPF)",
     description:
-      "Mobiliser les droits acquis au titre de certains facteurs de pénibilité pour financer une formation ou préparer une évolution professionnelle vers un emploi moins exposé.",
-    url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F15504",
-    // Salarié·es du privé seulement (S1 à S6) : le C2P n'existe pas dans la
-    // fonction publique.
-    quand: salarie,
+      "Utiliser les droits à la formation acquis au cours de votre carrière pour financer une formation, développer vos compétences ou préparer un nouveau projet professionnel.",
+    // La liste de la PO renvoie vers Service Public, qui a une page par statut
+    // (privé, FPE, FPT, demandeur d'emploi) : en attendant son arbitrage, le
+    // service lui-même, valable pour tous les statuts.
+    url: "https://www.moncompteformation.gouv.fr/espace-public/consulter-mes-droits-formation",
+    quand: () => true,
   },
 
   // ═══ DISPOSITIFS — salarié·es (S1 à S6) ═════════════════════════════════
@@ -231,6 +227,17 @@ export const CATALOGUE: Resultat[] = [
     // intermittence, dont les règles d'accès sont propres à leur branche (S5, S6).
     quand: (p) =>
       salarie(p) && (interim(p) || intermittent(p) || (cdiOuCdd(p) && ancienneteePtp(p))),
+  },
+  {
+    id: "c2p",
+    categorie: "dispositif",
+    nom: "Compte professionnel de prévention (C2P)",
+    description:
+      "Mobiliser les droits acquis au titre de certains facteurs de pénibilité pour financer une formation ou préparer une évolution professionnelle vers un emploi moins exposé.",
+    url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F15504",
+    // Salarié·es du privé seulement (S1 à S6) : le C2P n'existe pas dans la
+    // fonction publique.
+    quand: salarie,
   },
   {
     id: "pur",
@@ -291,7 +298,7 @@ export const CATALOGUE: Resultat[] = [
     description:
       "Accéder à une formation prise en charge par votre Région pour développer vos compétences, préparer une reconversion ou faciliter votre retour à l'emploi.",
     // Réseau régionalisé : chaque Région a sa propre offre de formation.
-    url: conseilRegionalUrl,
+    url: (p) => conseilRegionalUrl(p.region),
     quand: demandeurEmploi,
   },
   {

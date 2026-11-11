@@ -10,7 +10,7 @@ import { SiteHeader } from "@/components/site-header";
  * simple montage du composant, tel qu'il apparaît dans `app/layout.tsx`.
  *
  * Même réserve que pour `nav-link.figma.tsx` : l'URL cible une instance et doit
- * être régénérée via `npm run figma:create` avant publication.
+ * être régénérée via `pnpm run figma:create` avant publication.
  */
 figma.connect(SiteHeader, "<SIMULATEUR_V2>?node-id=3504-44656", {
   example: () => <SiteHeader />,

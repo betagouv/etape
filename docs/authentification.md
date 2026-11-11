@@ -58,12 +58,13 @@ n'écrit donc rien en base. Les routes du parcours sont limitées à 30 appels p
 minute et par IP, les autres à 300 (`@nestjs/throttler`). Le détail du schéma
 est dans [donnees.md](donnees.md).
 
-| Route                    | Rôle                                                                 |
-| ------------------------ | -------------------------------------------------------------------- |
-| `GET /api/auth/login`    | Démarre le parcours, redirige vers Keycloak                          |
-| `GET /api/auth/callback` | Échange le code, crée le compte, ouvre la session                    |
-| `GET /api/auth/logout`   | Ferme la session et propage la déconnexion                           |
-| `GET /api/auth/session`  | État de connexion : `{ session }`, `null` si personne n'est connecté |
+| Route                            | Rôle                                                                                         |
+| -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `GET /api/auth/login`            | Démarre le parcours, redirige vers Keycloak                                                  |
+| `GET /api/auth/callback`         | Échange le code, crée le compte, ouvre la session                                            |
+| `GET /api/auth/logout`           | Ferme la session et propage la déconnexion                                                   |
+| `GET /api/auth/session`          | État de connexion : `{ session }`, `null` si personne n'est connecté ; ne prolonge rien      |
+| `POST /api/auth/session/refresh` | Signale une activité, repousse la fin d'inactivité, renvoie `{ session }` ; 401 sans session |
 
 Une navigation vers `login`, `callback` ou `logout` ne reçoit jamais d'erreur
 brute : l'échec renvoie au front avec son motif, `?login=<motif>` ou
@@ -252,6 +253,60 @@ sauter l'étape de vérification.
   affiche pendant la saisie. Modifier l'un sans l'autre annonce une règle que le
   serveur n'applique pas, ou fait échouer un formulaire qui paraît complet.
 
+### Protection contre les robots : ALTCHA
+
+L'inscription et le « mot de passe oublié » exigent une case « Je ne suis pas un
+robot » [ALTCHA](https://altcha.org) : le navigateur résout une preuve de
+travail, Keycloak la vérifie. Aucune énigme à résoudre, aucun cookie, aucun
+service tiers. Il remplace reCAPTCHA, que la CNIL soumet au consentement et dont
+les défis en images posent problème d'accessibilité. CaptchEtat (habilitation
+PISTE, énigme visuelle ou sonore) et Friendly Captcha (payant) ont été écartés.
+
+C'est l'extension maison [`keycloak/extensions/altcha`](../keycloak/extensions/altcha/README.md)
+qui porte les deux étapes :
+
+| Flow                      | Étape                                                                    | Remplace                        |
+| ------------------------- | ------------------------------------------------------------------------ | ------------------------------- |
+| `etape-registration`      | `etape-altcha-registration`, dernière action du formulaire d'inscription | —                               |
+| `etape-reset-credentials` | `etape-altcha-reset-credentials`                                         | `reset-credentials-choose-user` |
+
+Ce qu'il faut savoir avant d'y toucher :
+
+- **Rien à configurer.** Les défis sont signés avec un secret dérivé de la clé
+  HMAC du realm (HS512), que Keycloak génère, conserve et fait tourner ; le
+  défi porte l'identifiant de la clé qui l'a signé. Il vit le temps de la page
+  de connexion (`accessCodeLifespanLogin`, 10 minutes) et chaque solution ne
+  sert qu'une fois (`SingleUseObjectProvider`).
+- **Un échec masque les autres erreurs** du formulaire d'inscription, comme le
+  faisait reCAPTCHA : sans solution valide, « un compte existe déjà avec cette
+  adresse » ne s'affiche jamais, et un robot ne peut pas sonder les adresses
+  inscrites.
+- **Un échec au « mot de passe oublié » ne compte pas contre le compte visé.**
+  L'étape renvoie le formulaire sans noter l'adresse saisie comme tentative :
+  sans cela, la détection de force brute compterait l'échec contre ce compte,
+  et un robot pourrait verrouiller celui d'un tiers.
+- **FranceConnect n'est pas concerné** : la première connexion passe par
+  `first broker login`, pas par l'inscription.
+- **Un réglage invalide est ignoré** : les valeurs par défaut s'appliquent et
+  Keycloak l'écrit dans ses journaux. Keycloak ne permet pas de valider la
+  configuration d'une étape au moment où on la saisit.
+- **Si le défi ne peut pas être créé**, la page affiche « Le contrôle de sécurité
+  est momentanément indisponible » à la place de la case ; l'envoi reste refusé.
+- **Sans l'extension, l'inscription répond 500** au lieu de s'ouvrir sans
+  protection : les flows la référencent.
+
+Les deux realms sont protégés. Le front-office reçoit les deux flows par son
+fichier de realm sur une base neuve, et par `deploy/keycloak-altcha.sh` sur une
+base existante. Le back-office, dont l'inscription reste fermée, les reçoit du
+même script : seul son « mot de passe oublié » s'en sert. `keycloak-init.sh` le
+lance pour les deux realms en déploiement, le service `keycloak-init` en local.
+
+Sur une base existante, le script retire aussi reCAPTCHA : de la copie du flow
+d'inscription, où il serait resté exigé sans plus être affiché, et du flow natif,
+avec sa clé secrète. Ce dernier retrait n'a lieu qu'une fois le realm basculé sur
+les flows ALTCHA : si un appel échoue avant, le flow natif garde reCAPTCHA exigé
+et l'inscription échoue fermée au lieu de s'ouvrir sans contrôle.
+
 ## Thème
 
 Les écrans de connexion ne sont pas soumis au DSFR, mais le thème Keycloak par
@@ -282,8 +337,15 @@ produit. Deux points méritent d'être connus :
 ## Mot de passe oublié
 
 Le parcours est celui de Keycloak — `reset-credentials` — habillé par le thème.
-Rien n'est réimplémenté : le lien reçu par email porte un jeton d'action signé,
-que Keycloak vérifie et consomme.
+Le lien reçu par email porte un jeton d'action signé, que Keycloak vérifie et
+consomme. Seul l'envoi est remplacé, par l'extension maison
+[`keycloak/extensions/reset-credentials`](../keycloak/extensions/reset-credentials/README.md) :
+Keycloak revenait à la page de connexion sans proposer de renvoi, là où les
+maquettes demandent un écran « Consultez votre boîte e-mail » avec un renvoi
+possible au bout de 2 minutes. Chaque nouvel envoi révoque le lien précédent du
+compte, d'où qu'il ait été demandé, et un compte
+FranceConnect sans mot de passe ne reçoit rien : son mot de passe est chez
+FranceConnect.
 
 Ce qu'il a fallu régler pour qu'il tienne debout :
 
@@ -318,20 +380,23 @@ la même source : Keycloakify recopie les traductions du thème dans le paquet d
 messages dont le serveur se sert. C'est aussi pourquoi ces deux libellés-là sont
 écrits sans apostrophe, `MessageFormat` la doublant d'un côté et pas de l'autre.
 
-**L'existence d'un compte n'est pas divulguée.** Keycloak affiche le même message
-que l'adresse soit connue ou non, et n'envoie rien dans le second cas ; le
-libellé repris dans le thème dit « si un compte existe pour cette adresse » et se
-garde d'en dire plus.
+**L'existence d'un compte n'est pas divulguée.** L'écran « e-mail envoyé » est
+le même que l'adresse soit connue ou non, compte à rebours compris, et rien
+n'est envoyé dans le second cas ; il dit « si un espace est associé à l'adresse
+saisie » et se garde d'en dire plus. Le compte est détaché de la session avant
+l'affichage : le contexte de la page trahirait sinon qu'il existe.
 
 ## La session dans front-office et back-office
 
 Les deux apps sont entièrement derrière la connexion. La logique partagée vit
 dans `@etape/api-client` (clients HTTP et de cache, garde de démarrage
 `checkStartupAccess` et son compteur, textes, `useSessionExpired`) et les vues dans
-`@etape/ui` (écrans d'attente et d'avis, dialogue). Le branchement, lui, est
-copié à l'identique dans chaque app, parce qu'il dépend de son routeur et de sa
-configuration : la route racine qui porte la garde (`navigation/routes.tsx`),
-l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
+`@etape/ui` (écrans d'attente et d'avis, dialogue). Le branchement, qui les
+relie au routeur, vit dans `@etape/session` : la route racine qui porte la garde
+(`sessionRootRoute`), l'aiguillage `SessionLayout` et les écrans d'erreur. Un
+mécanisme de sécurité n'existe ainsi qu'en un exemplaire, et un correctif ne
+peut pas n'atteindre qu'une app. Chaque app n'y ajoute que ses routes, son
+routeur — qui reçoit `apiBaseUrl`, lue dans son `.env` — et l'amorçage.
 
 - **Au démarrage**, une garde `beforeLoad` sur la route racine lit
   `/api/auth/session`. Personne n'est connecté : navigation pleine page vers
@@ -340,9 +405,11 @@ l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
   sans redirection — sauf un ancien échec de connexion quand la session est
   valide (favori, bouton Précédent) ; l'échec d'une déconnexion s'affiche
   toujours, la limite de débit pouvant l'avoir refusée. L'API ne répond pas
-  (délai de 10 s par requête, trois relances, même si la connexion tombe
-  pendant la vérification) : un écran « service indisponible », relancé par un
-  clic. Une autre erreur, comme une réponse hors contrat, affiche « Une erreur
+  (délai de 4 s par lecture, deux relances, soit 15 s au plus, même si la
+  connexion tombe pendant la vérification) : un écran « service indisponible »,
+  relancé par un clic. Ce délai ne vaut que pour les appels de session : un
+  délai commun couperait l'envoi d'une pièce justificative sur une connexion
+  lente. Une autre erreur, comme une réponse hors contrat, affiche « Une erreur
   inattendue est survenue ».
 - **Si le cookie de session n'est pas conservé** (cookies bloqués, cookie
   `Secure` servi en `http`), on reviendrait de la connexion sans session, que
@@ -360,13 +427,70 @@ l'aiguillage `RootLayout`, le routeur et l'amorçage, soit environ 130 lignes.
   qui a été chargé pendant la session et retire l'écran affiché — sur un poste
   partagé, rien ne doit rester lisible derrière le dialogue, et un écran monté
   garde ses données même cache vidé —, vide la session et ouvre le dialogue
-  « Session expirée » (`SessionExpiredDialog`). Rien ne le ferme, ni Échap ni un
+  « Session expirée » (`SessionDialog`). Rien ne le ferme, ni Échap ni un
   clic dehors ; « Se reconnecter » mène au formulaire et ramène sur la page en
   cours, ancre comprise. Si la personne quitte la page, par le bouton Précédent
   par exemple, la garde ne trouve plus de session et la redirige vers le
-  formulaire. Plusieurs 401 simultanés n'ouvrent qu'un dialogue.
+  formulaire. Plusieurs 401 simultanés n'ouvrent qu'un dialogue. « Se
+  reconnecter » est un lien : il quitte l'app.
+- **La session prend fin** après une période sans activité ou à sa durée
+  maximale, comptée depuis la connexion et que l'activité ne repousse jamais.
+  Les deux délais dépendent du front (`SESSION_POLICY_BY_FRONT`, côté API) :
+  30 minutes et 10 heures pour le front-office ; 1 heure et 12 heures,
+  provisoires, pour le back-office, dont les délais ne sont pas encore
+  arbitrés. Aucune app ne les écrit en dur : `GET /api/auth/session` renvoie la
+  règle et le temps restant avant chaque fin (`expiry`), en durées plutôt
+  qu'en dates, pour ne pas dépendre de l'horloge du poste.
+  - **Est une activité** : toute requête authentifiée (`SessionGuard`), et,
+    côté front, un mouvement du pointeur, une touche, un défilement, un retour
+    en arrière ou l'affichage d'une page, signalés par
+    `POST /api/auth/session/refresh` au plus une fois par minute — l'API
+    n'écrit pas plus souvent. La lecture de session n'en est pas une : le front
+    relit l'échéance sans la repousser.
+  - **Deux minutes avant la fin**, le front relit l'échéance — un autre onglet a
+    pu la prolonger —, puis avertit. Avant la fin d'inactivité : « Êtes-vous
+    toujours là ? » et un seul bouton, « Oui », qui prolonge ; pendant ce
+    dialogue, bouger la souris ne compte pas, seul « Oui » prolonge (WCAG
+    2.2.1). Si « Oui » n'aboutit pas (réseau), le dialogue reste ouvert et le
+    dit ; une fois fermé, le focus revient là où il était. Avant la durée
+    maximale, que rien ne repousse : « Votre session se termine bientôt »,
+    avec « Continuer », qui reçoit le focus et l'écarte, comme Échap, le temps
+    de finir une saisie, et « Se reconnecter », qui ouvre une session neuve.
+    Écarté, l'avertissement ne déplace pas l'échéance.
+  - **Sans réponse**, le front relit encore l'échéance et, la session finie,
+    l'expire comme sur un 401 : dialogue « Session expirée », avec la cause
+    quand elle est connue (« Votre session a expiré après 30 minutes
+    d'inactivité », « … a atteint sa durée maximale de 10 heures »). Une fin
+    sans cause plausible — déconnexion dans un autre onglet — garde le message
+    générique. Si cette relecture échoue (réseau), elle est retentée toutes
+    les 15 secondes : la page n'est vidée que sur la réponse du serveur — un
+    autre onglet a pu prolonger la session —, mais elle l'est dès le retour du
+    réseau.
+  - Côté API, c'est `SessionService` qui juge une session finie
+    (`isSessionExpired`) et la supprime dès qu'il la constate ; le repository
+    rend la ligne telle quelle. Les sessions expirées sont aussi purgées à
+    chaque connexion (`deleteExpiredSessions`).
+  - Le minuteur est relu au retour sur l'onglet : le navigateur le ralentit en
+    arrière-plan et le suspend en veille. Pendant l'avertissement, l'échéance
+    est relue à chaque retour : un autre onglet a pu la repousser.
+  - Prolongation et relecture peuvent revenir dans le désordre : une réponse
+    dont la fin d'inactivité précède celle déjà connue est écartée, et
+    l'avertissement suit la session gardée.
+  - Derrière un avis de démarrage (une déconnexion refusée par la limite de
+    débit, par exemple), rien n'est suivi : l'activité ne doit pas prolonger
+    une session que la personne voulait fermer. Dans tous les cas, c'est l'API qui
+    refuse une session finie.
+  - Le realm de chaque front reprend les mêmes délais (`ssoSessionIdleTimeout`,
+    `ssoSessionMaxLifespan`, réappliqués par `deploy/keycloak-init.sh`) :
+    Keycloak ne voit pas l'activité dans l'app, et sa propre session finit
+    souvent avant celle de l'app. Se reconnecter redemande alors le mot de
+    passe, ce que veut la durée maximale.
+- **Une région `role="status"`**, montée une fois au-dessus du routeur
+  (`SessionApp`), annonce l'attente au démarrage, les avis et la prolongation
+  par « Oui ». Les dialogues n'y passent pas : le focus déplacé dans
+  l'`alertdialog` les annonce déjà.
 - **Une erreur dans un écran** affiche « Une erreur inattendue est survenue » à
-  sa place, sous `RootLayout` : le dialogue « Session expirée » reste
+  sa place, sous `SessionLayout` : le dialogue « Session expirée » reste
   disponible. Une adresse inconnue affiche « Page introuvable ».
 
 `PublicSession` porte un `claims` non typé, et `identity-claims.ts` en retire la
@@ -389,7 +513,12 @@ En local, le proxy de Vite doit donc garder `Host` intact (forme objet, sans
 ```bash
 # Le thème d'abord : `keycloak-providers` recopie le JAR qu'il produit. Sans
 # lui Keycloak démarre quand même, mais avec ses écrans par défaut.
-npm run build -- --filter=@etape/keycloak-theme
+pnpm run build --filter=@etape/keycloak-theme
+
+# Les extensions ensuite, recopiées de même. Sans elles, l'inscription et le
+# « mot de passe oublié » répondent 500.
+mvn -f keycloak/extensions/altcha/pom.xml package
+mvn -f keycloak/extensions/reset-credentials/pom.xml package
 
 # Les `.env` — à la racine, et dans apps/api, apps/front-office et
 # apps/back-office — se récupèrent dans le coffre-fort de l'équipe. Les
@@ -402,14 +531,35 @@ npm run build -- --filter=@etape/keycloak-theme
 docker compose up -d
 
 # Crée les tables de la base applicative. À rejouer après chaque migration.
-npm run db:migrate --workspace=@etape/api
+pnpm --filter @etape/api run db:migrate
 
-npm run dev            # site, simulateur, front-office, back-office et API
-npm run test           # tests de l'API, du thème, d'ui et d'api-client (Vitest)
+pnpm run dev            # site, simulateur, front-office, back-office et API
+pnpm run test           # tests de l'API, du thème, d'ui et d'api-client (Vitest)
 ```
 
-Après modification du thème, `npm run build -- --filter=@etape/keycloak-theme`
-puis `docker compose up -d keycloak-providers && docker compose restart keycloak` :
+`pnpm run dev:stack` fait tout cela en une commande :
+
+1. il demande quelles apps lancer, toutes cochées par défaut (`--all` saute la
+   question). Un front coché ajoute l'API ; sans l'API, ni Docker ni migrations ;
+2. il vérifie, avant tout lancement, les `.env` des apps retenues contre leurs
+   `.env.example`, l'égalité des secrets `etape-api` entre le `.env` racine et
+   `apps/api/.env`, les ports libres, Docker, la version de Node et l'installation
+   des dépendances. Chaque constat dit quoi faire ; un ✗ annule le lancement ;
+3. il lance `docker compose up -d`, les migrations déjà écrites (`db:deploy`), puis
+   les apps, et affiche quand elles répondent un tableau de leurs adresses, avec
+   celles de la base et de la console Keycloak et leurs identifiants ; ✗ marque
+   ce qui ne répond pas. Ce qui a été lancé sans être coché dit pourquoi
+   (« requise par… »). Entrée rafraîchit le tableau.
+
+Le serveur de `@etape/keycloak-theme` n'est pas proposé : sans port fixé, il
+prendrait le 5173 du front-office. Pas de `docker compose up --wait` :
+`keycloak-providers` et `keycloak-init` s'arrêtent une fois leur travail fait, ce
+que `--wait` compte comme un échec. Pour créer une migration, `db:migrate` reste
+nécessaire.
+
+Après modification du thème, `pnpm run build --filter=@etape/keycloak-theme`, ou
+d'une extension, `mvn -f keycloak/extensions/<extension>/pom.xml package`, puis
+`docker compose up -d keycloak-providers && docker compose restart keycloak` :
 c'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions, un
 simple redémarrage de Keycloak servirait l'ancien.
 
@@ -435,6 +585,62 @@ pas, et Keycloak en tire un au sort à l'import. `keycloak-init` le remplace
 ensuite par celui du `.env` à la racine (`FRONT_OFFICE_KEYCLOAK_CLIENT_SECRET`,
 `BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`), qui doit être le même que dans
 `apps/api/.env`. Les autres environnements reçoivent le leur par `kcadm`.
+
+### Session de test avec les PO : `pnpm run dev:tunnel`
+
+Pour faire tester la connexion sans environnement hébergé : le front-office, le
+back-office et Keycloak du poste du dev reçoivent chacun une URL publique
+(Cloudflare Quick Tunnels, sans compte), que le PO ouvre depuis son propre poste.
+Prérequis : `brew install cloudflared`, et le thème construit (sans lui, le PO
+voit les écrans par défaut de Keycloak).
+
+La commande fait les mêmes vérifications que `dev:stack`, puis :
+
+1. construit le front-office, le back-office et l'API — servis ensuite par
+   `start` (`vite preview`, `node dist/main.js`) : le serveur de dev de Vite, qui
+   sert des centaines de modules un à un, est trop lent à travers un tunnel ;
+2. démarre la garde de Keycloak (`scripts/keycloak-gate.mjs`, en loopback sur un
+   port libre tiré au lancement) et ouvre les trois tunnels ;
+3. rejoue `keycloak-init` avec ces URL : chaque realm ETAPE reçoit l'URL publique
+   de Keycloak (`frontendUrl`), et ses adresses de retour celles de son front.
+   Keycloak n'est pas recréé, et le realm `master` comme la console
+   d'administration restent sur `localhost` ;
+4. lance les apps avec les URL du tunnel (`FRONT_OFFICE_BASE_URL`, `KEYCLOAK_URL`,
+   etc.) à la place de celles de `apps/api/.env`, qui n'est pas modifié ;
+5. sonde chaque service **par son URL publique**, puis affiche un tableau en deux
+   sections, « Pour les PO » et « Pour toi », et copie dans le presse-papier le
+   message à leur transmettre — sans le mot de passe du compte de test, qui se
+   transmet à part. Entrée rafraîchit le tableau, `c` puis Entrée recopie le
+   message.
+
+Ctrl+C ferme les tunnels et rejoue `keycloak-init` sans leurs URL : les realms
+reviennent sur `localhost`.
+
+**Pourquoi une garde devant Keycloak.** Le tunnel rendrait joignable depuis
+Internet la console d'administration, qui répond à `admin` / `admin` en local, et
+le realm `master`, qui délivre les jetons d'administration. La garde applique les
+règles de `deploy/nginx-auth.conf` : tout est refusé par défaut (404), seuls
+passent `/realms/etape/`, `/realms/etape-back-office/` et `/resources/`, et les
+chemins ambigus (`..`, `%2e`, `%2f`, `;`, `//`) sont refusés plutôt que
+normalisés. Un refus s'affiche dans le terminal (⛔, avec l'heure) : un chemin
+légitime bloqué se voit tout de suite. `/favicon.ico` et `/robots.txt`, que les
+navigateurs demandent d'office, sont refusés sans être signalés. La console reste sur `http://localhost:8080`.
+
+**Limites.**
+
+- Les URL changent à chaque session ; le poste du dev doit rester allumé.
+- FranceConnect n'est pas testable : son URL de retour doit être déclarée chez
+  FranceConnect, ce qu'une URL tirée au sort ne permet pas. Il faudra un tunnel
+  nommé sur un domaine stable.
+- Les PO travaillent sur la base locale du dev : aucune donnée réelle.
+- Toutes les requêtes arrivent de `127.0.0.1` : la limitation de débit de l'API
+  met tous les PO dans le même compteur.
+
+**À vérifier en début de session**, depuis un téléphone en 4G (vraiment hors du
+réseau du dev) : connexion au front-office avec le thème ETAPE, connexion au
+back-office, isolation des deux (connecté à l'un, pas à l'autre), déconnexion,
+lien profond protégé suivi du retour sur la bonne page — et
+`curl -i https://<url-keycloak>/admin/`, qui doit répondre 404.
 
 ### Les emails, en local aussi
 
@@ -505,16 +711,14 @@ c'est ce que comprennent les clients de messagerie.
       avant le premier écran du back-office qui affiche des données. Le realm
       séparé ferme la porte aux bénéficiaires ; les rôles régleront les droits
       au sein du back-office
-- [ ] Session inactive : expiration après 30 minutes sans activité (appel à
-      l'API, mouvement, saisie), limite absolue ramenée de 12 h à 10 h, même
-      règle pour les bénéficiaires et les instructeurs ; avertissement avant
-      l'expiration et prolongation (WCAG 2.2.1). Demande une migration (dernière
-      activité) ; la route de prolongation passera par la garde CSRF, déjà en
-      place. À cette occasion : réserver le délai de 10 s à la lecture de
-      session (global, il couperait l'envoi d'une pièce justificative) et
-      raccourcir l'attente au démarrage (jusqu'à 47 s aujourd'hui) ; annoncer
-      l'avertissement, l'attente et l'écran d'erreur dans une même région
-      `role="status"` toujours montée ; faire de « Se reconnecter » un lien
+- [x] Session inactive : fin après une période sans activité et à une durée
+      maximale, par front ; avertissement deux minutes avant (« Oui » ou « Se
+      reconnecter ») ; cause de la fin dans le dialogue ; délai réservé aux
+      appels de session et attente au démarrage ramenée à 15 s ; région
+      `role="status"` commune ; « Se reconnecter » en lien
+- [ ] Arbitrer les délais de session du back-office (1 h d'inactivité et 12 h
+      au plus, provisoires) : `SESSION_POLICY_BY_FRONT` dans l'API et
+      `deploy/keycloak-init.sh` pour le realm
 - [ ] Écrans d'avis : un titre d'onglet qui suit l'avis (RGAA 8.6), et
       « Réessayer » ou « Se connecter » en liens plutôt qu'en boutons. Avec le
       bouton de déconnexion : après une déconnexion refusée par la limite de

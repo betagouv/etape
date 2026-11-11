@@ -71,19 +71,12 @@ const schema = z.object({
 <FormField
   control={form.control}
   name="nomConseiller"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Nom du conseiller</FormLabel>
-      <FormControl>
-        <Input {...field} />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
+  label="Nom du conseiller"
+  render={({ field, attributes }) => <Input {...field} {...attributes} />}
 />;
 ```
 
-**Ce que l'exemple montre** : `FormLabel`, `FormControl` et `FormMessage` génèrent et relient `id`, `aria-describedby` et `aria-invalid` entre eux. C'est exactement le travail que le simulateur fait à la main dans `fields/aria.ts` — une vingtaine de lignes qu'il faudrait réécrire, et surtout ne pas oublier, sur chaque nouveau formulaire.
+**Ce que l'exemple montre** : `FormField` génère et relie `id`, `aria-describedby` et `aria-invalid` entre le libellé, le champ et son message (exemple mis à jour le 30 octobre 2026 ; il montrait l'ancien `form.tsx`). C'est exactement le travail que le simulateur fait à la main dans `fields/aria.ts` — une vingtaine de lignes qu'il faudrait réécrire, et surtout ne pas oublier, sur chaque nouveau formulaire.
 
 </details>
 
@@ -102,13 +95,19 @@ const schema = z.object({
 
 Deux approches cohabitent donc dans le dépôt, assumées, avec un critère écrit pour savoir laquelle s'applique.
 
-**react-hook-form + zod, via `form.tsx`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API.
+**react-hook-form + zod, via `FormField`**, dès qu'un écran réunit ces trois traits : plusieurs champs saisis librement sur une même page, des erreurs affichées par champ, et une soumission à l'API.
+
+> **Mise à jour du 30 octobre 2026 (#106)** : `form.tsx` est remplacé par `Field`, le composant du kit Figma, que shadcn associe désormais à react-hook-form, et par l'enveloppe `FormField` (`packages/ui/src/components/form-field.tsx`). Elle génère `id`, `aria-invalid` et `aria-describedby`, comme le faisait `form.tsx`. Le choix de react-hook-form et de zod ne change pas.
 
 **Le simulateur garde son moteur déclaratif.** Ce n'est pas un formulaire : une question par écran, une navigation dérivée de l'URL, des réponses persistées entre les sessions, des règles de cohérence entre questions. react-hook-form gère l'état d'un formulaire monté — il n'a rien à apporter ici, et ferait perdre le caractère déclaratif des questions.
 
 **Pourquoi react-hook-form plutôt que TanStack Form** : le composant `Form` de shadcn/ui, sur lequel repose déjà notre bibliothèque, est écrit pour react-hook-form. Choisir TanStack Form (1.33.5, projet actif et sérieux) voudrait dire réécrire ce câblage nous-mêmes, pour un gain que nous ne savons pas nommer aujourd'hui.
 
-**Ce qui reste à notre charge dans les deux cas** : react-hook-form ne fournit ni style ni ARIA, et `form.tsx` ne déplace pas le focus vers le premier champ en erreur — ce que le simulateur, lui, fait déjà (`QuestionScreen`, `focusFirstInvalid`).
+**Ce qui reste à notre charge dans les deux cas** : react-hook-form ne fournit ni style ni ARIA ; `FormField` les apporte. L'annonce des erreurs revient à l'écran : le focus automatique de react-hook-form (`shouldFocusError`) arrive avant l'affichage des erreurs, le lecteur d'écran lirait le champ sans son message. Un écran le désactive (`shouldFocusError: false`) et donne le focus, à la soumission, à son résumé d'erreurs (`VoletErrorsAlert` au front-office, comme dans la maquette), dont chaque lien mène au champ par son `id`, qui est son `name`. Le simulateur, lui, focalise le premier champ en erreur après affichage (`QuestionScreen`, `focusFirstInvalid`).
+
+**Quand une erreur s'affiche** (décision du 5 novembre 2026) : à la sortie du champ, jamais pendant la saisie. Un formulaire déclare `mode: "onBlur"` et `reValidateMode: "onBlur"` ; sans le second, react-hook-form revalide à chaque frappe après la première erreur ou la première soumission. Conséquence assumée : un message reste affiché pendant la correction, jusqu'à la sortie du champ. Un champ composé (groupe de boutons radio, bouton qui ouvre une liste ou un calendrier) transmet lui aussi sa sortie (`field.onBlur`) : le focus quitte le groupe, ou la liste fermée, ou l'on interagit hors de la liste ouverte.
+
+**À la sortie du champ, l'erreur est annoncée** (décision du 5 novembre 2026) : une région `role="status"` toujours montée lit « libellé : message » (`useFieldErrorAnnouncement` au front-office), puisque le focus est déjà sur le champ suivant. Une soumission ne passe pas par cette région : c'est le résumé d'erreurs, focalisé, qui l'annonce.
 
 ## Décision 2 — Validation de schéma : zod
 
@@ -325,7 +324,7 @@ Le reste des 21 règles ne produit aucune violation — sur les deux apps Next, 
 
 ## Décision 8 — Tests : le domaine et les composants maintenant, l'E2E ensuite
 
-**Il n'existait aucun test du front** au 22 septembre : ni dans `apps/site`, ni dans `apps/simulateur`, ni dans `packages/ui`. Les premiers sont arrivés le 5 octobre 2026, dans `packages/ui` (composants) et `packages/api-client`. L'outillage, lui, existe déjà — `apps/api` est testé avec Vitest, `turbo.json` porte une tâche `test` et la CI lance `npm run test` de façon bloquante. **Il n'y a donc pas d'infrastructure à monter, seulement des tests à écrire** et Vitest à déclarer dans les workspaces du front.
+**Il n'existait aucun test du front** au 22 septembre : ni dans `apps/site`, ni dans `apps/simulateur`, ni dans `packages/ui`. Les premiers sont arrivés le 5 octobre 2026, dans `packages/ui` (composants) et `packages/api-client`. L'outillage, lui, existe déjà — `apps/api` est testé avec Vitest, `turbo.json` porte une tâche `test` et la CI lance `pnpm run test` de façon bloquante. **Il n'y a donc pas d'infrastructure à monter, seulement des tests à écrire** et Vitest à déclarer dans les workspaces du front.
 
 L'arbitrage a tranché le **périmètre**, et il est volontairement en deux temps :
 
@@ -361,7 +360,7 @@ it("n'affiche pas le CEP à un demandeur d'emploi", () => {
 
 </details>
 
-**Condition pour que ça tienne** : elle est déjà remplie côté CI — `npm run test` y est une étape bloquante. Un test de front écrit dans un workspace qui déclare Vitest sera donc exécuté et bloquant dès sa première PR, sans rien ajouter au pipeline.
+**Condition pour que ça tienne** : elle est déjà remplie côté CI — `pnpm run test` y est une étape bloquante. Un test de front écrit dans un workspace qui déclare Vitest sera donc exécuté et bloquant dès sa première PR, sans rien ajouter au pipeline.
 
 ## Décision 9 — Langue de l'interface : français uniquement
 
@@ -449,11 +448,11 @@ Le SDK est tranché, **l'hébergement ne l'est pas** — la question est posée 
 
 **Navigation : TanStack Router, en configuration par code — pas de routage par fichiers.** Les deux apps n'avaient jusqu'ici qu'un seul écran ; TanStack Router est retenu pour la même raison qu'axios ci-dessus : ne pas réinventer ce que la bibliothèque fait déjà, et rester dans la même famille que TanStack Query déjà acté (décision 3). **Le routage par fichiers n'est délibérément pas retenu pour l'instant** : `@tanstack/router-plugin` génère `routeTree.gen.ts` au moment où Vite tourne, or le script `build` de ces apps est `tsc -b && vite build` — `tsc -b` s'exécute **avant** Vite et échouerait sur un clone neuf où ce fichier généré n'existe pas encore. La configuration par code (`createRootRoute`, `createRoute`, `createRouter`, dans `src/navigation/`) n'a pas ce problème : rien à générer, rien à exclure du lint ni du dépôt. À revoir si le nombre d'écrans rend la déclaration manuelle des routes pénible.
 
-**La session** : une garde `beforeLoad` sur la route racine vérifie la session au démarrage et envoie vers le formulaire de connexion si personne n'est connecté ; un 401 en cours d'utilisation efface les données en cache et ouvre le dialogue « Session expirée » ; si la personne quitte la page (bouton Précédent), elle est redirigée vers le formulaire de connexion. Le détail est dans [`authentification.md`](../authentification.md).
+**La session** : une garde `beforeLoad` sur la route racine vérifie la session au démarrage et envoie vers le formulaire de connexion si personne n'est connecté ; un 401 en cours d'utilisation efface les données en cache et ouvre le dialogue « Session expirée » ; si la personne quitte la page (bouton Précédent), elle est redirigée vers le formulaire de connexion. L'activité prolonge la session, et un dialogue avertit deux minutes avant sa fin. Ce branchement, commun aux deux apps, vit dans `packages/session`. Le détail est dans [`authentification.md`](../authentification.md).
 
 **Une origine par front** : chaque app relaie `/api` sur son propre sous-domaine (nginx en production, proxy de Vite en local, en forme objet pour garder l'en-tête `Host`, que l'API lit pour reconnaître le front). `createHttpClient` envoie l'en-tête anti-CSRF exigé par l'API sur les écritures, et la garde de démarrage s'arrête d'elle-même quand le cookie de session n'est pas conservé (« Connexion impossible »).
 
-**Ce qui reste à faire** (détail dans [`authentification.md`](../authentification.md#ce-qui-reste-à-faire), « Ce qui reste à faire ») : la session inactive.
+**Ce qui reste à faire** (détail dans [`authentification.md`](../authentification.md#ce-qui-reste-à-faire), « Ce qui reste à faire ») : arbitrer les délais de session du back-office.
 
 ## Relevé d'arbitrage du 22 septembre 2026
 

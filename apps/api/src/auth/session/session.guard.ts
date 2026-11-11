@@ -11,10 +11,11 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
- * Exige une session valide et la rattache à la requête.
+ * Exige une session valide et la rattache à la requête. Toute requête qu'il
+ * laisse passer compte comme une activité : la fin d'inactivité est repoussée.
  *
- * Rien ne l'utilise encore : il attend les routes qui manipuleront le dossier
- * d'une personne, pour qu'on n'y réinvente pas une relecture de cookie.
+ * À poser sur chaque route qui manipule les données d'une personne, pour qu'on
+ * n'y réinvente pas une relecture de cookie.
  */
 @Injectable()
 export class SessionGuard implements CanActivate {
@@ -27,7 +28,7 @@ export class SessionGuard implements CanActivate {
 
     if (!session) throw new UnauthorizedException();
 
-    (request as AuthenticatedRequest).session = session;
+    (request as AuthenticatedRequest).session = await this.sessions.recordActivity(session);
     return true;
   }
 }

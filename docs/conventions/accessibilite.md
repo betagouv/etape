@@ -9,7 +9,7 @@ Ces règles précisent la case « Accessibilité (navigation clavier, focus visi
 
 Un bouton qui a le focus et passe `disabled` perd le focus (`document.activeElement` devient `body`) et ne le retrouve pas à la fin de l'action : la personne au clavier ou au lecteur d'écran perd sa position dans la page.
 
-On expose l'état par `aria-disabled` et `aria-busy`, et on bloque la double activation dans le handler.
+On expose l'état par `aria-disabled` et `aria-busy`, et on bloque la double activation dans le handler. `Button` porte le grisé et le curseur de ces deux états.
 
 ```tsx
 async function handleDownload() {
@@ -23,7 +23,6 @@ async function handleDownload() {
   onClick={handleDownload}
   aria-disabled={isGenerating}
   aria-busy={isGenerating}
-  className="aria-busy:cursor-progress"
 >
   {isGenerating && <Loader2Icon aria-hidden="true" className="size-4 animate-spin" />}
   {BUTTON_LABELS[status]}
