@@ -9,9 +9,12 @@
  * Volontairement simple : on découpe aux opérateurs du shell et on lit les mots.
  * Une chaîne entre guillemets compte pour un seul mot : ni le motif d'un
  * `grep "HUSKY=0 git push|…"` ni le message d'un `git commit -m "corrige -n"`
- * ne sont lus comme des commandes ou des options. Seul compte un `git` en
- * position de commande, c'est-à-dire précédé uniquement d'affectations de
- * variables ou de `env` : un `echo git push --no-verify` ne fait que citer.
+ * ne sont lus comme des commandes ou des options.
+ *
+ * Seul compte un `git` en position de commande : en tête, ou après des
+ * affectations de variables, un mot-clé du shell (`then`, `do`…) ou une commande
+ * qui en lance une autre (`sudo`, `command`, `time`, `env`…). Un
+ * `echo git push --no-verify` ne fait que citer, et passe.
  */
 
 /** Sous-commandes dont les hooks comptent. */
@@ -20,15 +23,48 @@ const HOOKED_SUBCOMMANDS = new Set(["push", "commit"]);
 /** Variables qui désactivent les hooks quand elles préfixent la commande. */
 const BYPASS_VARIABLES = [/^HUSKY=0$/, /^SKIP_AI_REVIEW=/];
 
-const SEGMENT_SEPARATOR = /&&|\|\||[;|\n]/;
+/** Opérateurs et sous-shells : chacun commence une nouvelle commande. */
+const SEGMENT_SEPARATOR = /&&|\|\||[;|\n()`]/;
 
 const QUOTED = /'[^']*'|"(?:\\.|[^"\\])*"/g;
 
 /** Ce qui, dans une chaîne entre guillemets, ferait sinon changer de mot ou de commande. */
 const QUOTED_BREAKS = /[\s;|&]/g;
 
-/** Ce qui peut précéder `git` en position de commande : `VAR=valeur` ou `env`. */
-const COMMAND_PREFIX = /^(env|[A-Za-z_][A-Za-z0-9_]*=.*)$/;
+const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
+
+/** Mots-clés du shell après lesquels une commande commence. */
+const SHELL_KEYWORDS = new Set(["if", "then", "else", "elif", "while", "until", "do", "!", "{"]);
+
+/** Commandes qui en lancent une autre : le `git` qui les suit est exécuté, pas cité. */
+const COMMAND_RUNNERS = new Set([
+  "env",
+  "sudo",
+  "command",
+  "builtin",
+  "exec",
+  "time",
+  "nice",
+  "nohup",
+  "xargs",
+]);
+
+/**
+ * Position du `git` exécuté par ce segment, ou -1 s'il n'en exécute pas.
+ *
+ * @param {string[]} words
+ * @returns {number}
+ */
+function findGitIndex(words) {
+  let index = 0;
+  while (SHELL_KEYWORDS.has(words[index]) || ASSIGNMENT.test(words[index] ?? "")) {
+    index += 1;
+  }
+  if (words[index] === "git") return index;
+  // Les options d'une telle commande et leurs valeurs (`sudo -u eric`, `env -i`) précèdent `git`.
+  if (COMMAND_RUNNERS.has(words[index])) return words.indexOf("git", index + 1);
+  return -1;
+}
 
 /**
  * Rend la raison du refus, ou `undefined` si la commande ne contourne rien.
@@ -52,12 +88,12 @@ export function findHookBypass(command) {
       return `\`${segment.trim()}\` désactive les hooks git pour toute la suite de la session`;
     }
 
-    const gitIndex = words.indexOf("git");
+    const gitIndex = findGitIndex(words);
     if (gitIndex === -1) continue;
 
-    const prefix = words.slice(0, gitIndex);
-    if (!prefix.every((word) => COMMAND_PREFIX.test(word))) continue;
-    const variable = prefix.find((word) => BYPASS_VARIABLES.some((pattern) => pattern.test(word)));
+    const variable = words
+      .slice(0, gitIndex)
+      .find((word) => BYPASS_VARIABLES.some((pattern) => pattern.test(word)));
     if (variable) return `\`${variable}\` désactive les hooks git`;
 
     // Options globales de git (`git -c clé=valeur push`) avant la sous-commande.

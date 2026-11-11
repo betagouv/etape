@@ -20,6 +20,18 @@ describe("findHookBypass", () => {
     'git -c "core.hooksPath=/dev/null" push',
     'SKIP_AI_REVIEW="1" git push',
     "cd apps/api; git push --no-verify",
+    // Après un mot-clé du shell ou une commande qui en lance une autre.
+    "command git push --no-verify",
+    "sudo git push --no-verify",
+    "sudo -u eric git push --no-verify",
+    "time git commit -n -m x",
+    "if true; then git push --no-verify; fi",
+    "for b in a; do git push --no-verify; done",
+    "env -i HUSKY=0 git push",
+    "sudo env HUSKY=0 git push",
+    "(git push --no-verify)",
+    "echo $(git push --no-verify)",
+    "git branch | xargs git push --no-verify",
   ];
 
   const allowed = [
