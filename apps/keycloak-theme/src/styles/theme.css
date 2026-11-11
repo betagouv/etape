@@ -89,25 +89,28 @@
 
   .kc-illustration {
     display: none;
-    flex-shrink: 0;
-    background-image: url("../assets/login-illustration.jpg");
+    flex: 1 1 0%;
+    border-radius: calc(var(--radius) + 8px);
+    background-color: var(--surface-warm);
+    background-image: url("../assets/illustration-jumelles.svg");
     background-position: center;
-    background-size: cover;
+    background-repeat: no-repeat;
+    background-size: 230px 191px;
   }
 
   .kc-panel {
+    display: flex;
     flex: 1 1 0%;
   }
 
   @media (width >= 64rem) {
-    .kc-illustration {
-      display: block;
-      width: 44%;
-      max-width: 640px;
+    .kc-split {
+      gap: 24px;
+      padding: 20px;
     }
 
-    .kc-panel {
-      border-left: 1px solid var(--border);
+    .kc-illustration {
+      display: block;
     }
   }
 }
@@ -138,7 +141,7 @@
     border: 1px solid var(--border);
     background-color: var(--background);
     padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
-    font-size: var(--text-body-sm);
+    font-size: var(--text-sm);
   }
 
   .kc-fallback :where(input[type="submit"]),
@@ -154,7 +157,7 @@
   }
 
   .kc-fallback :where(a) {
-    color: var(--content-accent);
+    color: var(--primary);
     font-weight: 600;
   }
 
@@ -184,5 +187,20 @@ altcha-widget {
   --altcha-checkbox-border-color: var(--border-strong);
   --altcha-spinner-color: var(--primary);
   font-family: var(--font-sans);
-  font-size: var(--text-body-sm);
+  font-size: var(--text-sm);
+}
+
+/* ------------------------------------------------------------------ */
+/* Préremplissage                                                      */
+/* ------------------------------------------------------------------ */
+
+@keyframes etape-autofill {
+  from {
+    opacity: 1;
+  }
+}
+
+input:-webkit-autofill {
+  animation-name: etape-autofill;
+  animation-duration: 1ms;
 }

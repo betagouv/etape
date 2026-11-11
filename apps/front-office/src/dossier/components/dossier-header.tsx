@@ -5,10 +5,11 @@ import { Badge } from "@etape/ui/components/badge";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 import { Progress } from "@etape/ui/components/progress";
+import { Tag } from "@etape/ui/components/tag";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftIcon, CheckIcon, ClockIcon, FolderOpenIcon, type LucideIcon } from "lucide-react";
 
-import illustrationUrl from "@/assets/illustration-jumelles.svg";
+import illustrationUrl from "@/assets/illustration-dossier.svg";
 import {
   computeProgressPercent,
   formatVoletsLabel,
@@ -16,16 +17,16 @@ import {
 } from "../domain/progress";
 import { STATUT_DOSSIER, type StatutDossier } from "../domain/statut-dossier";
 
-interface StatutBadge {
+interface StatutTag {
   label: string;
-  variant: NonNullable<ComponentProps<typeof Badge>["variant"]>;
+  status: NonNullable<ComponentProps<typeof Tag>["status"]>;
   Icon: LucideIcon;
 }
 
-const STATUT_BADGES: Record<StatutDossier, StatutBadge> = {
+const STATUT_TAGS: Record<StatutDossier, StatutTag> = {
   [STATUT_DOSSIER.BROUILLON]: {
     label: "Saisie en cours",
-    variant: "warning-solid",
+    status: "warning",
     Icon: ClockIcon,
   },
 };
@@ -49,7 +50,7 @@ export function DossierHeader({
   progress,
 }: DossierHeaderProps) {
   const progressLabelId = useId();
-  const { label, variant, Icon } = STATUT_BADGES[statut];
+  const { label, status, Icon } = STATUT_TAGS[statut];
 
   return (
     <header className="bg-surface-warm">
@@ -57,8 +58,8 @@ export function DossierHeader({
         <img
           src={illustrationUrl}
           alt=""
-          width={230}
-          height={191}
+          width={246}
+          height={204}
           className="absolute top-10.5 right-58 hidden xl:block"
         />
         <div className="flex flex-col items-start gap-2">
@@ -78,7 +79,7 @@ export function DossierHeader({
           </Badge>
           <p
             role="status"
-            className="text-content-strong text-body-sm flex items-center gap-2 font-medium"
+            className="text-content-strong flex items-center gap-2 text-sm font-medium"
           >
             {updatedAtLabel && (
               <>
@@ -90,14 +91,14 @@ export function DossierHeader({
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-4">
-            <p id={progressLabelId} className="text-muted-foreground text-body-sm font-medium">
+            <p id={progressLabelId} className="text-muted-foreground text-sm font-medium">
               <span className="text-foreground">{progress.completed}</span>{" "}
               {formatVoletsLabel(progress)}
             </p>
-            <Badge variant={variant} size="xl">
+            <Tag status={status} importance="emphasized">
               <Icon aria-hidden="true" />
               {label}
-            </Badge>
+            </Tag>
           </div>
           <Progress value={computeProgressPercent(progress)} aria-labelledby={progressLabelId} />
         </div>

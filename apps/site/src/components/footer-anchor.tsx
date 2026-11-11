@@ -10,7 +10,7 @@ import { isCurrentPage } from "@/lib/navigation";
 import type { FooterLink } from "@/lib/footer";
 
 const linkClassName = cn(
-  "text-content-secondary hover:text-content-accent rounded-sm text-sm hover:underline hover:underline-offset-4",
+  "text-content-secondary hover:text-primary rounded-sm text-sm hover:underline hover:underline-offset-4",
   focusRing,
 );
 
@@ -26,7 +26,7 @@ export function FooterAnchor({ link }: { link: FooterLink }) {
       <Link
         href={link.href}
         aria-current={isCurrent ? "page" : undefined}
-        className={cn(linkClassName, isCurrent && "text-content-accent font-semibold")}
+        className={cn(linkClassName, isCurrent && "text-primary font-semibold")}
       >
         {link.label}
       </Link>

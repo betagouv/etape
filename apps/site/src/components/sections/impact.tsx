@@ -19,8 +19,8 @@ export function Impact() {
           <li key={label} className="flex">
             <Card variant="muted" className="w-full px-6">
               <p className="font-heading text-heading-lg text-primary">{value}</p>
-              <p className="text-caption text-muted-foreground tracking-wide uppercase">{label}</p>
-              <p className="text-body text-content-secondary">{description}</p>
+              <p className="text-muted-foreground text-xs tracking-wide uppercase">{label}</p>
+              <p className="text-content-secondary text-base">{description}</p>
             </Card>
           </li>
         ))}

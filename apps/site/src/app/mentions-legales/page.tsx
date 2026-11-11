@@ -108,7 +108,7 @@ export default function MentionsLegales() {
                   className="flex scroll-mt-8 flex-col gap-4 focus:outline-none"
                 >
                   <header className="flex flex-col gap-1">
-                    <p className="text-body-sm text-primary font-semibold uppercase">
+                    <p className="text-primary text-sm font-semibold uppercase">
                       {sectionLabel(index)}
                     </p>
                     <h2>{section.title}</h2>

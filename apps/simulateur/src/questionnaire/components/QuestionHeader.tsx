@@ -20,7 +20,7 @@ export function QuestionHeader({
   const { title, subtitle, notice } = question;
   return (
     <header className="flex w-full flex-col gap-2 md:gap-3">
-      <p className="text-body text-primary leading-none font-semibold uppercase">Question {step}</p>
+      <p className="text-primary text-base leading-none font-semibold uppercase">Question {step}</p>
       <h1
         ref={headingRef}
         id={titleId}
@@ -32,7 +32,7 @@ export function QuestionHeader({
       </h1>
       {(subtitle || notice) && (
         // La mention reste dans le paragraphe désigné par l'aria-describedby du titre.
-        <p id={subtitleId} className="text-body text-muted-foreground">
+        <p id={subtitleId} className="text-muted-foreground text-base">
           {subtitle}
           {notice && <span className="text-foreground block font-medium">{notice}</span>}
         </p>

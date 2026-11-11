@@ -20,7 +20,7 @@ export function Topbar() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             {/* Sans action tant que la page « Mon profil » n'existe pas. */}
-            <Button type="button" variant="ghost-primary" size="sm">
+            <Button type="button" variant="ghost">
               <CircleUserRoundIcon aria-hidden="true" />
               Mon profil
             </Button>

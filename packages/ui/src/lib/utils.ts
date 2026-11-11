@@ -7,17 +7,7 @@ import { extendTailwindMerge } from "tailwind-merge";
  * c'est l'ordre de la feuille de styles qui tranche au lieu de celui des classes.
  * À garder aligné sur les tokens `--text-*` de `src/styles/globals.css`.
  */
-const FONT_SIZES = [
-  "heading-xl",
-  "heading-lg",
-  "heading-md",
-  "heading-sm",
-  "body-lg",
-  "body",
-  "body-sm",
-  "label-lg",
-  "caption",
-];
+const FONT_SIZES = ["heading-xl", "heading-lg", "heading-md", "heading-sm", "body-lg", "label-lg"];
 
 const twMerge = extendTailwindMerge({
   extend: {

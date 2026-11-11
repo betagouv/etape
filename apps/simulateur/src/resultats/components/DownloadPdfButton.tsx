@@ -22,7 +22,6 @@ export function DownloadPdfButton({ label, isGenerating, download }: DownloadPdf
       onClick={download}
       aria-disabled={isGenerating}
       aria-busy={isGenerating}
-      className="aria-busy:cursor-progress"
       {...(isGenerating ? {} : analyticsEventProps(ANALYTICS_EVENT.SIMULATEUR_TELECHARGER_PDF))}
     >
       {isGenerating ? (

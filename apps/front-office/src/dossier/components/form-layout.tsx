@@ -7,26 +7,37 @@ import { SectionHeader } from "@etape/ui/components/section";
 import { Separator } from "@etape/ui/components/separator";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
-import type { Volet, VoletPosition } from "../domain/volets";
+import type { VoletProgress } from "../domain/statut-volet";
+import type { VoletId } from "../domain/volet-id";
+import type { VoletDefinition, VoletPosition } from "../domain/volets";
 import { FormSidebar } from "./form-sidebar";
 import { VoletLink } from "./volet-link";
 
 export interface FormLayoutProps {
-  volets: Volet[];
+  volets: VoletDefinition[];
+  voletProgress?: Partial<Record<VoletId, VoletProgress>>;
   position: VoletPosition;
   headingRef: Ref<HTMLHeadingElement>;
+  formId?: string;
   children?: ReactNode;
 }
 
 /** Cadre d'un volet du dossier, posé à cheval sur le bas de `DossierHeader`. */
-export function FormLayout({ volets, position, headingRef, children }: FormLayoutProps) {
+export function FormLayout({
+  volets,
+  voletProgress,
+  position,
+  headingRef,
+  formId,
+  children,
+}: FormLayoutProps) {
   const titleId = useId();
   const { index, current, previous, next } = position;
 
   return (
     <Container size="app" className="relative -mt-22">
       <Card variant="panel" className="grid lg:grid-cols-[auto_auto_minmax(0,1fr)]">
-        <FormSidebar volets={volets} />
+        <FormSidebar volets={volets} voletProgress={voletProgress} />
         <Separator orientation="vertical" className="hidden lg:block" />
         <div className="flex min-w-0 flex-col gap-6">
           <SectionHeader
@@ -41,21 +52,27 @@ export function FormLayout({ volets, position, headingRef, children }: FormLayou
           {children}
           <div className="flex justify-end border-t pt-5">
             {previous && (
-              <Button asChild variant="secondary" size="md" className="mr-auto">
+              <Button asChild variant="secondary" size="lg" className="mr-auto">
                 <VoletLink voletId={previous.id}>
                   <ArrowLeftIcon aria-hidden="true" />
                   Étape précédente
                 </VoletLink>
               </Button>
             )}
-            {next && (
-              <Button asChild size="md">
-                <VoletLink voletId={next.id}>
+            {next &&
+              (formId ? (
+                <Button type="submit" form={formId} size="lg">
                   Étape suivante
                   <ArrowRightIcon aria-hidden="true" />
-                </VoletLink>
-              </Button>
-            )}
+                </Button>
+              ) : (
+                <Button asChild size="lg">
+                  <VoletLink voletId={next.id}>
+                    Étape suivante
+                    <ArrowRightIcon aria-hidden="true" />
+                  </VoletLink>
+                </Button>
+              ))}
           </div>
         </div>
       </Card>

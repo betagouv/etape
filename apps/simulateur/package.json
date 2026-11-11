@@ -14,8 +14,8 @@
     "@etape/analytics": "workspace:*",
     "@etape/ui": "workspace:*",
     "@react-pdf/renderer": "^4.9.0",
-    "lucide-react": "^1.64.0",
-    "next": "16.4.3",
+    "lucide-react": "^1.69.0",
+    "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "sonner": "^2.0.7"

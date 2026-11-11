@@ -37,7 +37,7 @@ function RadioGroupItem({
 }
 
 const radioGroupChipVariants = cva(
-  "border-border bg-background text-body-sm text-foreground hover:bg-secondary focus-visible:border-ring focus-visible:ring-ring/50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground aria-invalid:border-destructive inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border whitespace-nowrap transition-[color,background-color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+  "border-border bg-background text-sm text-foreground hover:bg-secondary focus-visible:border-ring focus-visible:ring-ring/50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground aria-invalid:border-destructive inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border whitespace-nowrap transition-[color,background-color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       size: {

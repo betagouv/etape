@@ -18,7 +18,7 @@ export function DidYouKnow() {
       containerClassName="lg:grid lg:grid-cols-5 lg:items-center lg:gap-8"
     >
       <div className="flex flex-col items-start gap-6 lg:col-span-3">
-        <p className="text-caption text-primary font-medium tracking-wide uppercase">
+        <p className="text-primary text-xs font-medium tracking-wide uppercase">
           {didYouKnow.caption}
         </p>
 

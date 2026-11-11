@@ -31,7 +31,7 @@ pnpm --filter @etape/api run typecheck
 - `src/main.ts` — bootstrap (CORS limité à `FRONT_BASE_URL`, `trust proxy`, helmet) ; `src/app.module.ts`.
 - `src/config/env.ts` — schéma zod des variables d'environnement.
 - `src/database/` — `PrismaService` (module global).
-- `src/auth/` — les 4 routes `GET /api/auth/login|callback|logout|session`, OIDC, `session/` (chiffrement du cookie, garde, store). **Code de référence de l'API**, tests à côté du code (`*.test.ts`).
+- `src/auth/` — les 4 routes `GET /api/auth/login|callback|logout|session`, OIDC, `session/` (chiffrement du cookie, garde, repository). **Code de référence de l'API**, tests à côté du code (`*.test.ts`).
 - `src/account/` — `AccountService`.
 - `prisma/schema.prisma` — modèles `Account` et `Session` ; `prisma/migrations/`. Le client est généré dans `src/generated/prisma` (ignoré par le lint).
 

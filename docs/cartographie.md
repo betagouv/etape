@@ -108,7 +108,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 
 ## 5. Authentification : Keycloak, lancé par Docker avec sa propre base
 
-Keycloak n'apparaît ni dans `apps/` ni dans `packages/` : c'est l'**image Docker officielle** (`quay.io/keycloak/keycloak:26.7`), avec **sa propre base PostgreSQL**.
+Keycloak n'apparaît ni dans `apps/` ni dans `packages/` : c'est l'**image Docker officielle** (`quay.io/keycloak/keycloak:26.7.3`), avec **sa propre base PostgreSQL**.
 
 | Pièce                 | Ce qu'elle fait                                                                                                                  |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |

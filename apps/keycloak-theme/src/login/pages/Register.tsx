@@ -6,6 +6,7 @@ import { AltchaField } from "../components/altcha/altcha-field";
 import { CheckboxField, FieldError } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
 import { AccountSwitch } from "../components/prose";
+import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
 import { PasswordRules, UserProfileFields } from "../components/user-profile-fields";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
@@ -74,7 +75,7 @@ export default function Register(props: RegisterProps) {
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
       headerNode={msg("etapeRegisterTitle")}
-      subtitle={msg("etapeRegisterSubtitle")}
+      slots={{ subtitle: msg("etapeRegisterSubtitle") }}
       displayMessage={messagesPerField.exists("global")}
       socialProvidersNode={
         <SocialProviders
@@ -88,6 +89,7 @@ export default function Register(props: RegisterProps) {
         id="kc-register-form"
         action={url.registrationAction}
         method="post"
+        onSubmit={() => rememberSubmittedForm(SUBMITTED_FORM.REGISTRATION)}
         className="flex flex-col gap-8"
       >
         <UserProfileFields
@@ -134,9 +136,7 @@ export default function Register(props: RegisterProps) {
           </Button>
 
           {!termsAcceptanceRequired && (
-            <p className="text-body-sm text-muted-foreground text-center">
-              {msg("etapeRegisterTerms")}
-            </p>
+            <p className="text-muted-foreground text-center text-sm">{msg("etapeRegisterTerms")}</p>
           )}
 
           <AccountSwitch

@@ -27,8 +27,8 @@ export function NavLink({
         "inline-block rounded-sm py-2 leading-6 transition-colors",
         focusRing,
         isCurrent
-          ? "text-content-accent font-bold"
-          : "text-foreground hover:text-content-accent hover:underline hover:underline-offset-4",
+          ? "text-primary font-bold"
+          : "text-foreground hover:text-primary hover:underline hover:underline-offset-4",
         className,
       )}
       {...props}

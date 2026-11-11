@@ -29,7 +29,7 @@ export function Topbar() {
       <Container size="md" className="flex items-center justify-between gap-4 py-4">
         <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
           <span className="font-heading text-heading-sm text-primary">etape.</span>
-          <span className="text-body text-foreground font-semibold">Simulateur d’éligibilité</span>
+          <span className="text-foreground text-base font-semibold">Simulateur d’éligibilité</span>
         </p>
         <ExitDialog />
       </Container>
@@ -41,7 +41,7 @@ function ExitDialog() {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button type="button" variant="secondary" size="sm">
+        <Button type="button" variant="secondary">
           Quitter
         </Button>
       </AlertDialogTrigger>
@@ -61,8 +61,8 @@ function ExitDialog() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel size="sm">Annuler</AlertDialogCancel>
-          <AlertDialogAction variant="destructive-subdued" size="sm" asChild>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction variant="destructive-subdued" asChild>
             <Link href={EXIT_HREF}>Quitter</Link>
           </AlertDialogAction>
         </AlertDialogFooter>

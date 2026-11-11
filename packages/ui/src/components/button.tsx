@@ -11,51 +11,49 @@ import { cn } from "@etape/ui/lib/utils";
  * de portée du pointeur.
  */
 const buttonVariants = cva(
-  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:not-aria-disabled:bg-primary/90",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+          "bg-destructive text-white hover:not-aria-disabled:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
         outline:
-          "border bg-background text-secondary-foreground shadow-xs hover:bg-secondary dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        "ghost-primary": "text-secondary-foreground hover:bg-secondary",
-        link: "text-primary underline-offset-4 hover:underline",
+          "border bg-background text-secondary-foreground shadow-xs hover:not-aria-disabled:bg-secondary dark:border-input dark:bg-input/30 dark:hover:not-aria-disabled:bg-input/50",
+        secondary: "bg-secondary text-secondary-foreground hover:not-aria-disabled:bg-secondary/80",
+        ghost: "text-secondary-foreground hover:not-aria-disabled:bg-secondary",
+        link: "text-primary underline-offset-4 hover:not-aria-disabled:underline",
         // Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
         // CTA posés sur un fond coloré.
-        inverse: "bg-background text-primary shadow-xs hover:bg-background/90",
-        // `hover:text-secondary-foreground` n'est pas décoratif : sans lui, le
+        inverse: "bg-background text-primary shadow-xs hover:not-aria-disabled:bg-background/90",
+        // Le `text-secondary-foreground` du survol n'est pas décoratif : sans lui, le
         // libellé reste en `text-primary` sur le fond `secondary` du survol, et
         // le contraste tombe de 5,70:1 à 4,65:1.
         "outline-primary":
-          "border border-primary bg-background text-primary hover:bg-secondary hover:text-secondary-foreground",
+          "border border-primary bg-background text-primary hover:not-aria-disabled:bg-secondary hover:not-aria-disabled:text-secondary-foreground",
         // Écart au kit : libellé en `destructive-text` (7:1), `destructive` n'y fait que 4,1:1.
         "destructive-subdued":
-          "bg-destructive/10 text-destructive-text hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30",
+          "bg-destructive/10 text-destructive-text hover:not-aria-disabled:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:not-aria-disabled:bg-destructive/30",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        // Tailles du kit : 10px de côté, avec ou sans icône.
+        default: "h-8 gap-1.5 rounded-lg px-2.5",
         xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
+        sm: "h-7 gap-1 rounded-md px-2.5 text-xs",
         // Le `Variant=Link` du kit n'a ni hauteur ni padding.
         inline: "gap-1.5",
-        // `Size=lg` du kit (36px) : notre `lg` reste à 40px pour ne pas modifier l'existant.
-        md: "h-9 gap-1.5 rounded-lg px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        lg: "h-9 gap-1.5 rounded-lg px-2.5",
         // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
+        // Bouton des formulaires de connexion (Figma FRONT-OFFICE, « 00. SIGN-IN ») : 40px, libellé 16px.
+        form: "h-10 rounded-lg px-6 text-base has-[>svg]:px-4",
         responsive: "h-11 px-6 has-[>svg]:px-4 md:h-9 md:px-4 md:has-[>svg]:px-3",
         "responsive-sm": "h-11 gap-1.5 px-4 has-[>svg]:px-3 md:h-8 md:px-3 md:has-[>svg]:px-2.5",
         "icon-responsive-sm": "size-11 md:size-8",
-        icon: "size-9",
+        icon: "size-8 rounded-lg",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        // `Size=icon-sm` du kit (28px) : notre `icon-sm` reste à 32px pour ne pas modifier l'existant.
-        "icon-compact": "size-7",
-        "icon-lg": "size-10",
+        "icon-sm": "size-7",
+        "icon-lg": "size-9 rounded-lg",
       },
     },
     defaultVariants: {
