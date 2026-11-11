@@ -163,7 +163,7 @@ Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour un
 
 ## Review IA en pre-push
 
-**Statut** : en observation depuis le 2026-11-11, en mode `report`. Il a été proposé le 2026-11-08 et n'est pas encore arbitré en équipe.
+**Statut** : en observation depuis le 2026-11-11, en mode `report`.
 
 Avant chaque `git push`, `.husky/pre-push` lance en parallèle :
 
@@ -217,8 +217,6 @@ Quand c'est Claude Code qui pousse, seul l'agent lit la sortie : `AGENTS.md` lui
 Tout ce qui est propre à la machine reste dans `.git/etape-review/` : un rapport par diff relu, le dernier rapport (`last.json`, `last.md`), et `journal.jsonl`, une ligne par push (base retenue, nombre de commits, modèle, durée, nombre de constats par niveau, review sautée et pourquoi). C'est la matière de la mesure.
 
 **Déploiement** : deux semaines en `report` pour mesurer le bruit (constats jugés pertinents, durée, nombre de `SKIP_AI_REVIEW`), puis `block` sur `critical` seulement si les faux positifs critiques restent sous 10 %. Il ne remplace ni `review-pr` ni la CI : il fait arriver la PR en relecture déjà débarrassée de ce qu'un agent sait voir.
-
-**Restent à trancher en équipe** : l'envoi du diff chez Anthropic, qui fait évoluer le prompt, et le seuil de blocage de la phase 2.
 
 ## Serveur MCP `shadcn`
 
