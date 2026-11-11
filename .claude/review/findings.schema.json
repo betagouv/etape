@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["findings", "verdict"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "file", "line", "summary", "why", "suggestion"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["critical", "major", "minor"] },
+          "file": { "type": "string" },
+          "line": { "type": "integer", "minimum": 1 },
+          "summary": { "type": "string" },
+          "why": { "type": "string" },
+          "suggestion": { "type": "string" },
+          "rule": { "type": "string" }
+        }
+      }
+    },
+    "verdict": { "type": "string", "enum": ["ready", "needs-work"] }
+  }
+}
