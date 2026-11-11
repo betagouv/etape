@@ -1,0 +1,25 @@
+# Typecheck et review IA en parallèle. Voir docs/conventions/outillage-agent.md,
+# section « Review IA en pre-push ».
+#
+# Husky lance ce fichier en `sh -e` : chaque code de retour est gardé par
+# `|| status=$?` pour que l'échec de l'un n'interrompe pas l'attente de l'autre.
+
+# Le typecheck ne lit pas stdin : les refs poussées sont pour la review.
+typecheck_log=$(mktemp)
+pnpm exec turbo run typecheck --filter='...[origin/main]' --output-logs=errors-only </dev/null >"$typecheck_log" 2>&1 &
+typecheck_pid=$!
+
+review_status=0
+node scripts/ai-review.mjs --pre-push || review_status=$?
+
+typecheck_status=0
+wait "$typecheck_pid" || typecheck_status=$?
+if [ "$typecheck_status" -ne 0 ]; then
+  cat "$typecheck_log"
+  echo "[pre-push] Typecheck en échec : push refusé."
+fi
+rm -f "$typecheck_log"
+
+# Le typecheck bloque toujours : il est déterministe. La review ne bloque qu'en mode `block`.
+[ "$typecheck_status" -eq 0 ] || exit 1
+exit "$review_status"
