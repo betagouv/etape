@@ -17,6 +17,8 @@ describe("findHookBypass", () => {
     "export HUSKY=0",
     "export SKIP_AI_REVIEW=1",
     "git -c core.hooksPath=/dev/null push",
+    'git -c "core.hooksPath=/dev/null" push',
+    'SKIP_AI_REVIEW="1" git push',
     "cd apps/api; git push --no-verify",
   ];
 
@@ -31,6 +33,13 @@ describe("findHookBypass", () => {
     "grep -rn SKIP_AI_REVIEW scripts/",
     "pnpm run ai-review",
     "HUSKY=1 git push",
+    "CI=1 git push",
+    // Cités, pas exécutés : `git` n'est pas en position de commande.
+    'grep -n "HUSKY=0 git push" docs/conventions/outillage-agent.md',
+    "echo git push --no-verify",
+    'grep -n "Avant chaque push\\|HUSKY=0 git push" AGENTS.md',
+    'git commit -m "Corrige le tri -n des listes"',
+    "git commit -m 'Documente --no-verify'",
     "",
   ];
 
