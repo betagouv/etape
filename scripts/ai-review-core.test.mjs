@@ -8,9 +8,11 @@ import {
   SEVERITY,
   buildClaudeArgs,
   buildClaudeEnv,
+  buildNotification,
   countBySeverity,
   decideExitCode,
   findSkipReason,
+  formatMarkdown,
   formatReport,
   parseClaudeOutput,
   parsePushRefs,
@@ -269,5 +271,70 @@ describe("formatReport", () => {
     assert.ok(critical >= 0 && critical < major && major < minor, output);
     assert.match(output, /Règle : docs\/conventions\/typescript\.md §2/);
     assert.match(output, /\[BLOCKING\] en relecture/);
+  });
+
+  it("au push, une suggestion tient sur une ligne ; en détail, elle a son explication", () => {
+    const report = {
+      findings: [
+        finding(SEVERITY.MINOR, { why: "Raison cachée", suggestion: "Correction cachée" }),
+      ],
+      verdict: "ready",
+    };
+    assert.doesNotMatch(formatReport(report, plain), /Raison cachée/);
+    const detailed = formatReport(report, plain, { isDetailed: true });
+    assert.match(detailed, /Pourquoi : Raison cachée/);
+    assert.match(detailed, /Correction : Correction cachée/);
+  });
+});
+
+describe("formatMarkdown", () => {
+  const saved = {
+    date: "2026-11-11T15:15:13.886Z",
+    branch: "feat/x",
+    commits: 2,
+    model: MODEL.SONNET,
+  };
+
+  it("aucun constat", () =>
+    assert.match(
+      formatMarkdown({ ...saved, report: { findings: [], verdict: "ready" } }),
+      /Aucun constat\./,
+    ));
+
+  it("une section par niveau présent, du plus grave au moins grave, avec le détail", () => {
+    const markdown = formatMarkdown({
+      ...saved,
+      report: {
+        findings: [
+          finding(SEVERITY.MINOR, { summary: "Nom peu clair" }),
+          finding(SEVERITY.CRITICAL, { summary: "État figé", why: "Le fetch échoue" }),
+        ],
+        verdict: "needs-work",
+      },
+    });
+    assert.match(markdown, /^# Review IA — feat\/x/);
+    assert.match(markdown, /2 commit\(s\) relu\(s\) par sonnet/);
+    assert.ok(markdown.indexOf("## Critiques") < markdown.indexOf("## Suggestions"));
+    assert.doesNotMatch(markdown, /## Écarts de convention/);
+    assert.match(markdown, /### `apps\/site\/src\/page\.tsx:12` — État figé/);
+    assert.match(markdown, /- \*\*Pourquoi\*\* : Le fetch échoue/);
+  });
+});
+
+describe("buildNotification", () => {
+  it("rien à signaler : pas de notification", () =>
+    assert.equal(buildNotification({ branch: "feat/x", findings: [] }), undefined));
+
+  it("résume les constats et dit comment revoir le rapport", () => {
+    const notification = buildNotification({
+      branch: "feat/x",
+      findings: [finding(SEVERITY.CRITICAL), finding(SEVERITY.MAJOR), finding(SEVERITY.MAJOR)],
+    });
+    assert.equal(notification?.title, "Review IA — feat/x");
+    assert.match(
+      notification?.message ?? "",
+      /1 critique\(s\), 2 écart\(s\) de convention, 0 suggestion\(s\)/,
+    );
+    assert.match(notification?.message ?? "", /pnpm run ai-review:last/);
   });
 });

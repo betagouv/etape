@@ -206,7 +206,15 @@ Le reviewer ne corrige rien : il rapporte, le développeur décide.
 | `SKIP_AI_REVIEW=1 git push` | Saute la review ; consigné dans le journal                         |
 | `HUSKY=0 git push`          | Saute tous les hooks ; à réserver aux urgences                     |
 
-Tout ce qui est propre à la machine reste dans `.git/etape-review/` : un rapport par diff relu, le dernier rapport, et `journal.jsonl`, une ligne par push (base retenue, nombre de commits, modèle, durée, nombre de constats par niveau, review sautée et pourquoi). C'est la matière de la mesure.
+**Où voir le rapport.** Pousser depuis un terminal l'affiche directement. Depuis un IDE, la sortie d'un hook qui réussit reste dans le journal Git, et en mode `report` le push réussit toujours. Trois relais :
+
+- **notification système** (macOS par `osascript`, Linux par `notify-send`) dès qu'il y a au moins un constat, avec le nombre par niveau ; `ETAPE_REVIEW_NOTIFY=0` la coupe ;
+- **rapport complet en Markdown** dans `.git/etape-review/last.md`, dont le chemin s'affiche en fin de sortie : un clic l'ouvre dans l'éditeur ;
+- **`pnpm run ai-review:last`**, qui détaille aussi les suggestions : au push, elles tiennent sur une ligne.
+
+Quand c'est Claude Code qui pousse, seul l'agent lit la sortie : `AGENTS.md` lui demande de recopier le rapport dans sa réponse.
+
+Tout ce qui est propre à la machine reste dans `.git/etape-review/` : un rapport par diff relu, le dernier rapport (`last.json`, `last.md`), et `journal.jsonl`, une ligne par push (base retenue, nombre de commits, modèle, durée, nombre de constats par niveau, review sautée et pourquoi). C'est la matière de la mesure.
 
 **Déploiement** : deux semaines en `report` pour mesurer le bruit (constats jugés pertinents, durée, nombre de `SKIP_AI_REVIEW`), puis `block` sur `critical` seulement si les faux positifs critiques restent sous 10 %. Il ne remplace ni `review-pr` ni la CI : il fait arriver la PR en relecture déjà débarrassée de ce qu'un agent sait voir.
 

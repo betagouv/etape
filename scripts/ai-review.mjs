@@ -35,9 +35,11 @@ import {
   MAX_DIFF_LINES,
   buildClaudeArgs,
   buildClaudeEnv,
+  buildNotification,
   countBySeverity,
   decideExitCode,
   findSkipReason,
+  formatMarkdown,
   formatReport,
   parseClaudeOutput,
   parsePushRefs,
@@ -82,14 +84,52 @@ function warn(message) {
 /** `git rev-parse --git-path` plutôt que `.git/` en dur : juste aussi dans un worktree. */
 let stateDir = "";
 let lastReportPath = "";
+let lastMarkdownPath = "";
 let journalPath = "";
 
 function initState() {
   process.chdir(git("rev-parse", "--show-toplevel"));
   stateDir = path.resolve(git("rev-parse", "--git-path", "etape-review"));
   lastReportPath = path.join(stateDir, "last.json");
+  lastMarkdownPath = path.join(stateDir, "last.md");
   journalPath = path.join(stateDir, "journal.jsonl");
   mkdirSync(stateDir, { recursive: true });
+}
+
+/**
+ * Commande de notification par système. Absente ailleurs : on n'affiche rien.
+ *
+ * @type {Partial<Record<NodeJS.Platform, (notification: { title: string, message: string }) => string[]>>}
+ */
+const NOTIFIERS = {
+  // `on run argv` : titre et message passent en arguments, sans échappement AppleScript.
+  darwin: ({ title, message }) => [
+    "osascript",
+    "-e",
+    "on run argv",
+    "-e",
+    "display notification (item 2 of argv) with title (item 1 of argv)",
+    "-e",
+    "end run",
+    title,
+    message,
+  ],
+  linux: ({ title, message }) => ["notify-send", title, message],
+};
+
+/**
+ * Notification système de fin de review, sans l'attendre ni échouer : un poste
+ * sans `notify-send` n'en a simplement pas. `ETAPE_REVIEW_NOTIFY=0` la coupe.
+ *
+ * @param {{ title: string, message: string } | undefined} notification
+ */
+function notify(notification) {
+  if (!notification || process.env.ETAPE_REVIEW_NOTIFY === "0") return;
+  const command = NOTIFIERS[process.platform]?.(notification);
+  if (!command) return;
+  const child = spawn(command[0], command.slice(1), { stdio: "ignore", detached: true });
+  child.on("error", () => {});
+  child.unref();
 }
 
 /** @param {Record<string, unknown>} entry */
@@ -205,15 +245,16 @@ async function reviewTarget({ branch, localSha, remoteSha }) {
     writeFileSync(cachePath, JSON.stringify({ model, report }, null, 2));
   }
 
-  writeFileSync(
-    lastReportPath,
-    JSON.stringify(
-      { date: new Date().toISOString(), branch, base, reason, commits, model, report },
-      null,
-      2,
-    ),
-  );
+  const saved = { date: new Date().toISOString(), branch, base, reason, commits, model, report };
+  writeFileSync(lastReportPath, JSON.stringify(saved, null, 2));
+  writeFileSync(lastMarkdownPath, formatMarkdown(saved));
   console.log(formatReport(report, styleText));
+  if (report.findings.length > 0) {
+    console.log(`[ai-review] Rapport complet : ${lastMarkdownPath}`);
+  }
+  if (process.argv.includes("--pre-push")) {
+    notify(buildNotification({ branch, findings: report.findings }));
+  }
   appendJournal({
     branch,
     reason,
@@ -249,7 +290,7 @@ function showLastReport() {
   console.log(
     `[ai-review] ${last.branch}, ${last.commits} commit(s), relu par ${last.model} le ${last.date}\n`,
   );
-  console.log(formatReport(last.report, styleText));
+  console.log(formatReport(last.report, styleText, { isDetailed: true }));
 }
 
 /** @returns {{ branch: string, localSha: string, remoteSha: string }[]} */

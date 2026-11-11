@@ -269,14 +269,33 @@ const SEVERITY_DISPLAY = {
   [SEVERITY.MINOR]: { label: "suggestion", style: "gray" },
 };
 
+/** Les titres de section du rapport Markdown, par niveau. */
+const SEVERITY_HEADING = {
+  [SEVERITY.CRITICAL]: "Critiques",
+  [SEVERITY.MAJOR]: "Écarts de convention — [BLOCKING] en relecture",
+  [SEVERITY.MINOR]: "Suggestions",
+};
+
+/**
+ * @param {Finding[]} findings
+ * @returns {string}
+ */
+function formatCounts(findings) {
+  const counts = countBySeverity(findings);
+  return `${counts[SEVERITY.CRITICAL]} critique(s), ${counts[SEVERITY.MAJOR]} écart(s) de convention, ${counts[SEVERITY.MINOR]} suggestion(s)`;
+}
+
 /**
  * Le rapport tel qu'il s'affiche dans le terminal, du plus grave au moins grave.
+ * Au push, une suggestion tient sur une ligne ; en détail (`ai-review:last`),
+ * elle a son explication et sa correction comme les autres.
  *
  * @param {Report} report
  * @param {(style: string | string[], text: string) => string} paint `util.styleText` en terminal, l'identité en test.
+ * @param {{ isDetailed?: boolean }} [options]
  * @returns {string}
  */
-export function formatReport(report, paint) {
+export function formatReport(report, paint, { isDetailed = false } = {}) {
   if (report.findings.length === 0) {
     return paint("green", "[ai-review] Aucun constat.");
   }
@@ -286,7 +305,7 @@ export function formatReport(report, paint) {
     const display = SEVERITY_DISPLAY[severity];
     for (const finding of report.findings.filter((item) => item.severity === severity)) {
       const location = `${finding.file}:${finding.line}`;
-      if (severity === SEVERITY.MINOR) {
+      if (severity === SEVERITY.MINOR && !isDetailed) {
         lines.push(`${paint(display.style, display.label)} ${location} — ${finding.summary}`);
         continue;
       }
@@ -300,13 +319,66 @@ export function formatReport(report, paint) {
   }
 
   const counts = countBySeverity(report.findings);
-  lines.push(
-    `[ai-review] ${counts[SEVERITY.CRITICAL]} critique(s), ${counts[SEVERITY.MAJOR]} écart(s) de convention, ${counts[SEVERITY.MINOR]} suggestion(s).`,
-  );
+  lines.push(`[ai-review] ${formatCounts(report.findings)}.`);
   if (counts[SEVERITY.MAJOR] > 0) {
     lines.push(
       "[ai-review] Les écarts de convention sont [BLOCKING] en relecture : à corriger avant la PR.",
     );
   }
   return lines.join("\n");
+}
+
+/**
+ * @typedef {{ date: string, branch: string, commits: number, model: string, report: Report }} SavedReport
+ */
+
+/**
+ * Le rapport complet en Markdown, écrit dans `.git/etape-review/last.md` : il
+ * s'ouvre d'un clic depuis le terminal, et se lit même quand l'IDE a masqué la
+ * sortie du hook.
+ *
+ * @param {SavedReport} saved
+ * @returns {string}
+ */
+export function formatMarkdown({ date, branch, commits, model, report }) {
+  const lines = [
+    `# Review IA — ${branch}`,
+    "",
+    `${commits} commit(s) relu(s) par ${model} le ${date}.`,
+    "",
+  ];
+  if (report.findings.length === 0) {
+    lines.push("Aucun constat.");
+    return `${lines.join("\n")}\n`;
+  }
+
+  lines.push(`**${formatCounts(report.findings)}**`);
+  for (const severity of SEVERITY_ORDER) {
+    const findings = report.findings.filter((finding) => finding.severity === severity);
+    if (findings.length === 0) continue;
+    lines.push("", `## ${SEVERITY_HEADING[severity]}`);
+    for (const finding of findings) {
+      lines.push("", `### \`${finding.file}:${finding.line}\` — ${finding.summary}`, "");
+      lines.push(`- **Pourquoi** : ${finding.why}`);
+      if (finding.rule) lines.push(`- **Règle** : ${finding.rule}`);
+      lines.push(`- **Correction** : ${finding.suggestion}`);
+    }
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+/**
+ * La notification système de fin de review, ou `undefined` s'il n'y a rien à
+ * signaler. C'est elle qui rend le rapport visible quand on pousse depuis un
+ * IDE, qui n'affiche la sortie d'un hook qu'en cas d'échec.
+ *
+ * @param {{ branch: string, findings: Finding[] }} input
+ * @returns {{ title: string, message: string } | undefined}
+ */
+export function buildNotification({ branch, findings }) {
+  if (findings.length === 0) return undefined;
+  return {
+    title: `Review IA — ${branch}`,
+    message: `${formatCounts(findings)}. pnpm run ai-review:last`,
+  };
 }
