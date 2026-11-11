@@ -5,6 +5,7 @@ import { Button } from "@etape/ui/components/button";
 import { FormField } from "@etape/ui/components/form-field";
 import { Input } from "@etape/ui/components/input";
 
+import { formatSiret } from "../domain/format-siret";
 import {
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   type SituationProfessionnelleFormData,
@@ -45,7 +46,12 @@ export function EmployeurManualFields({
           required
           description="Les 14 chiffres qui figurent sur votre bulletin de salaire"
           render={({ field, attributes }) => (
-            <Input {...field} {...attributes} inputMode="numeric" />
+            <Input
+              {...field}
+              {...attributes}
+              inputMode="numeric"
+              onChange={(e) => field.onChange(formatSiret(e.target.value))}
+            />
           )}
         />
 
