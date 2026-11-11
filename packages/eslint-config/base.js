@@ -5,6 +5,22 @@ import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 /**
+ * `docs/conventions/typescript.md` : valeurs finies en objet `as const`. Les
+ * apps Next.js l'imposent par `erasableSyntaxOnly` ; ici la règle couvre aussi
+ * l'API NestJS, dont les propriétés de paramètre de constructeur excluent cette
+ * option.
+ *
+ * Exportée parce qu'une configuration qui redéclare `no-restricted-syntax`
+ * remplace la liste entière : elle doit la reprendre, sans quoi les `enum`
+ * redeviennent permis dans ses fichiers.
+ */
+export const NO_ENUM_RESTRICTION = {
+  selector: "TSEnumDeclaration",
+  message:
+    "Pas d'enum TypeScript : objet `as const` + type dérivé (docs/conventions/typescript.md).",
+};
+
+/**
  * Configuration ESLint de base, partagée par tous les projets du monorepo.
  *
  * Le formatage est délégué à Prettier : `eslint-config-prettier` (placé en
@@ -19,18 +35,7 @@ export const baseConfig = defineConfig([
     plugins: { turbo: turboPlugin },
     rules: {
       "turbo/no-undeclared-env-vars": "warn",
-      // `docs/conventions/typescript.md` : valeurs finies en objet `as const`.
-      // Les apps Next.js l'imposent par `erasableSyntaxOnly` ; ici la règle
-      // couvre aussi l'API NestJS, dont les propriétés de paramètre de
-      // constructeur excluent cette option.
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector: "TSEnumDeclaration",
-          message:
-            "Pas d'enum TypeScript : objet `as const` + type dérivé (docs/conventions/typescript.md).",
-        },
-      ],
+      "no-restricted-syntax": ["error", NO_ENUM_RESTRICTION],
     },
   },
   // `docs/conventions/typescript.md` : type de retour explicite sur les
