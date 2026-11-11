@@ -1,10 +1,12 @@
 import Image from "next/image";
 
+import { ANALYTICS_EVENT, analyticsEventProps } from "@etape/analytics";
 import { Button } from "@etape/ui/components/button";
 import { Section } from "@etape/ui/components/section";
 
 import accompagnementImage from "@/assets/accompagnement-equipe.jpg";
 import { audience } from "@/content/home";
+import { EMPLACEMENT_ACCES_SIMULATEUR } from "@/lib/analytics";
 import { SIMULATEUR_URL } from "@/lib/navigation";
 
 export function Audience() {
@@ -34,7 +36,15 @@ export function Audience() {
         <p className="text-body-lg">{audience.subtext}</p>
 
         <Button asChild variant="inverse" size="xl" className="w-full sm:w-auto">
-          <a href={SIMULATEUR_URL}>{audience.cta}</a>
+          <a
+            href={SIMULATEUR_URL}
+            {...analyticsEventProps(
+              ANALYTICS_EVENT.ACCES_SIMULATEUR,
+              EMPLACEMENT_ACCES_SIMULATEUR.AUDIENCE,
+            )}
+          >
+            {audience.cta}
+          </a>
         </Button>
       </div>
     </Section>

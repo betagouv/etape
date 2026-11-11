@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   // Transpile le package UI partagé (source .tsx). Turbopack le fait déjà
   // automatiquement pour les packages workspace ; explicite par sécurité.
-  transpilePackages: ["@etape/ui"],
+  transpilePackages: ["@etape/analytics", "@etape/ui"],
   // `basePath` ne préfixe pas le `src` de `next/image` ni les URL écrites à la
   // main vers `public/` : on l'expose pour les dériver au lieu de les dupliquer.
   env: { NEXT_PUBLIC_BASE_PATH: SIMULATEUR_BASE_PATH },
