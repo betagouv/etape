@@ -3,8 +3,11 @@ import { normalizeForSearch } from "@etape/utils/text";
 
 import { selectPlural, type PluralForms } from "@/lib/plural";
 
+/** Message de la liste vide quand la recherche ne retient aucun secteur. */
 export const NO_SECTEUR_MESSAGE = "Aucun secteur d’activité ne correspond.";
+/** Message de la liste vide quand les secteurs n'ont pas pu être chargés. */
 export const SECTEURS_ERROR_MESSAGE = "La liste des secteurs d’activité est indisponible.";
+/** Message de la liste vide pendant le chargement des secteurs. */
 export const SECTEURS_LOADING_MESSAGE = "Chargement des secteurs d’activité…";
 
 const SECTEUR_FOUND_LABELS: PluralForms<string> = {
@@ -47,6 +50,7 @@ export function formatSecteurActivite({ code, libelle }: SecteurActivite): strin
   return `${libelle} (${code})`;
 }
 
+/** Ce que devient le champ quand on le quitte. */
 export const SECTEUR_BLUR_OUTCOME = {
   /** Un code complet tapé sans passer par la liste désigne déjà son secteur. */
   SELECT: "select",
@@ -58,6 +62,7 @@ export const SECTEUR_BLUR_OUTCOME = {
   KEEP_TEXT: "keep-text",
 } as const;
 
+/** L'issue retenue à la sortie du champ, avec le secteur quand elle en désigne un. */
 export type SecteurBlurOutcome =
   | { outcome: typeof SECTEUR_BLUR_OUTCOME.SELECT; secteur: SecteurActivite }
   | { outcome: typeof SECTEUR_BLUR_OUTCOME.CLEAR }

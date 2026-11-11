@@ -15,6 +15,7 @@ import {
   type InformationsSection,
 } from "../schema";
 
+/** Les valeurs reprises de l'inscription et du profil. */
 export interface InformationsPrefilledValues {
   nom: string;
   prenom: string;
@@ -22,6 +23,7 @@ export interface InformationsPrefilledValues {
   adresse: string;
 }
 
+/** Ce que renvoie `useInformationsForm` : le formulaire et ce qui s'en déduit pour l'écran. */
 export interface UseInformationsFormResult {
   form: UseFormReturn<InformationsFormData>;
   /** Repris de l'inscription et du profil : affichés, jamais saisis ici. */

@@ -28,6 +28,7 @@ interface Row {
   value: string | null;
 }
 
+/** Ce que reçoit `EmployeurCard` : l'établissement choisi et de quoi en changer. */
 export interface EmployeurCardProps {
   etablissement: Etablissement;
   /** Vrai quand la carte vient d'être choisie : le focus passe au bouton, le champ ayant disparu. */

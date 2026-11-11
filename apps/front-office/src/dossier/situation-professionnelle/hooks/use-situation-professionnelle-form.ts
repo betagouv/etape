@@ -16,6 +16,7 @@ import {
   type SituationProfessionnelleSection,
 } from "../schema";
 
+/** Ce que renvoie `useSituationProfessionnelleForm` : le formulaire et ce qui s'en déduit pour l'écran. */
 export interface UseSituationProfessionnelleFormResult {
   form: UseFormReturn<SituationProfessionnelleFormData>;
   progress: VoletProgress;

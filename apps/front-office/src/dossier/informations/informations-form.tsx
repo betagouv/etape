@@ -45,6 +45,7 @@ import {
   type InformationsFormData,
 } from "./schema";
 
+/** Ce que reçoit `InformationsForm` : l'`id` du formulaire, l'encart du volet et la suite d'un envoi valide. */
 export interface InformationsFormProps {
   formId: string;
   notice?: VoletNoticeContent;
@@ -56,6 +57,7 @@ const CIVILITE_FIELD_ID = "civilite";
 const CIVILITE_LEGEND_ID = `${CIVILITE_FIELD_ID}-legend`;
 const CIVILITE_ERROR_ID = `${CIVILITE_FIELD_ID}-error`;
 
+/** Le volet « Mes informations » : l'identité, l'adresse de résidence, puis le contact. */
 export function InformationsForm({ formId, notice, onSubmitValid }: InformationsFormProps) {
   const { form, sections, voletErrors, errorAnnouncement, prefilledValues } =
     useDossierVolets().informations;

@@ -37,6 +37,7 @@ const DESCRIPTION_ID = `${EMPLOYEUR_FIELD_ID}-description`;
 const ERROR_ID = `${EMPLOYEUR_FIELD_ID}-error`;
 const LIST_ID = `${EMPLOYEUR_FIELD_ID}-list`;
 
+/** Ce que reçoit `EmployeurSearch` : la recherche, le lien au formulaire et le passage à la saisie manuelle. */
 export interface EmployeurSearchProps {
   search: UseEmployeurSearchResult;
   fieldRef: React.Ref<HTMLInputElement>;

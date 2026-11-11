@@ -3,13 +3,16 @@ import { z } from "zod";
 
 import { isDateDemissionInFuture } from "./domain/date-demission";
 
+/** Les réponses à la question sur la démission. */
 export const DEMISSION = {
   OUI: "oui",
   NON: "non",
 } as const;
 
+/** Une réponse, parmi celles de `DEMISSION`. */
 export type Demission = (typeof DEMISSION)[keyof typeof DEMISSION];
 
+/** Libellé de chaque réponse. */
 export const DEMISSION_LABEL: Record<Demission, string> = {
   [DEMISSION.OUI]: "Oui",
   [DEMISSION.NON]: "Non",
@@ -21,6 +24,7 @@ export const EMPLOYEUR_ENTRY_MODE = {
   MANUAL: "manual",
 } as const;
 
+/** Un mode de saisie, parmi ceux d'`EMPLOYEUR_ENTRY_MODE`. */
 export type EmployeurEntryMode = (typeof EMPLOYEUR_ENTRY_MODE)[keyof typeof EMPLOYEUR_ENTRY_MODE];
 
 const SIRET_PATTERN = /^\d{14}$/;
@@ -56,7 +60,7 @@ const refinedFieldsSchema = baseSituationProfessionnelleSchema.pick({
   dateDemission: true,
 });
 
-// Seuls les champs du mode en cours sont exigés.
+/** Le schéma du formulaire « Ma situation professionnelle » ; seuls les champs du mode en cours sont exigés. */
 export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema.superRefine(
   (data, ctx) => {
     const require = (path: keyof typeof REQUIRED_MESSAGES, isFilled: boolean): void => {
@@ -98,6 +102,7 @@ export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema
   },
 );
 
+/** Les valeurs du formulaire « Ma situation professionnelle », telles que le schéma les valide. */
 export type SituationProfessionnelleFormData = z.infer<typeof situationProfessionnelleSchema>;
 
 /** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
@@ -118,11 +123,13 @@ export const SITUATION_PROFESSIONNELLE_FIELD_LABEL: Record<
   dateDemission: "Date de votre démission",
 };
 
+/** Les sections du volet qui portent un compteur. */
 export const SITUATION_PROFESSIONNELLE_SECTION = {
   EMPLOI: "emploi",
   DEMISSION: "demission",
 } as const;
 
+/** Une section du volet, parmi celles de `SITUATION_PROFESSIONNELLE_SECTION`. */
 export type SituationProfessionnelleSection =
   (typeof SITUATION_PROFESSIONNELLE_SECTION)[keyof typeof SITUATION_PROFESSIONNELLE_SECTION];
 

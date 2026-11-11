@@ -2,6 +2,7 @@ import { FieldDescription } from "@etape/ui/components/field";
 
 import { SUPPORT_EMAIL } from "../../domain/volets-dossier";
 
+/** Ce que reçoit `PrefilledFieldDescription` : son `id`. */
 export interface PrefilledFieldDescriptionProps {
   /** Relié au champ par son `aria-describedby`. */
   id: string;

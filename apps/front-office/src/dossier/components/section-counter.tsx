@@ -48,6 +48,7 @@ function getCounterStatut({
   return null;
 }
 
+/** Ce que reçoit `SectionCounter` : l'avancement de la section. */
 export interface SectionCounterProps {
   progress: SectionProgress;
 }

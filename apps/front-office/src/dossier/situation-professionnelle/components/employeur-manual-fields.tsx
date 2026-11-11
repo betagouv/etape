@@ -12,6 +12,7 @@ import {
 } from "../schema";
 import { SecteurActiviteField } from "./secteur-activite-field";
 
+/** Ce que reçoit `EmployeurManualFields` : le contrôle du formulaire et le retour à la recherche. */
 export interface EmployeurManualFieldsProps {
   control: Control<SituationProfessionnelleFormData>;
   /** Vrai à l'ouverture depuis la recherche : le focus passe au premier champ, la recherche ayant disparu. */

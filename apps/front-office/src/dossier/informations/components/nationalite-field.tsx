@@ -9,6 +9,7 @@ export interface NationaliteFieldControl {
   ref: React.Ref<HTMLButtonElement>;
 }
 
+/** Ce que reçoit `NationaliteField` : le champ du formulaire et son erreur. */
 export interface NationaliteFieldProps {
   field: NationaliteFieldControl;
   error?: { message?: string };

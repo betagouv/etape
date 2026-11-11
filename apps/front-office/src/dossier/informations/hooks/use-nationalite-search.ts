@@ -22,11 +22,13 @@ export function nationaliteOptionId({ code }: Nationalite): string {
 /** La liste se filtre à chaque frappe : on n'annonce que le nombre où la saisie s'arrête. */
 const ANNOUNCEMENT_DELAY_MS = 300;
 
+/** Les gestionnaires à poser sur le champ de recherche. */
 export interface NationaliteSearchInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
 }
 
+/** Ce que renvoie `useNationaliteSearch` : l'état de la recherche et ses actions. */
 export interface UseNationaliteSearchResult {
   searchText: string;
   isListOpen: boolean;

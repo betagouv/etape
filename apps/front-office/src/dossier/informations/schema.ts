@@ -8,13 +8,16 @@ import {
 } from "./domain/date-naissance";
 import { isCleNirValid, NIR_PATTERN } from "./domain/validate-nir";
 
+/** Les civilités proposées. */
 export const CIVILITE = {
   MADAME: "madame",
   MONSIEUR: "monsieur",
 } as const;
 
+/** Une civilité, parmi celles de `CIVILITE`. */
 export type Civilite = (typeof CIVILITE)[keyof typeof CIVILITE];
 
+/** Libellé de chaque civilité. */
 export const CIVILITE_LABEL: Record<Civilite, string> = {
   [CIVILITE.MADAME]: "Madame",
   [CIVILITE.MONSIEUR]: "Monsieur",
@@ -58,6 +61,7 @@ const baseInformationsSchema = z.object({
 /** Les champs que lit le contrôle de la clé : il ne s'exécute que s'ils sont valides. */
 const refinedFieldsSchema = baseInformationsSchema.pick({ nir: true, cleNir: true });
 
+/** Le schéma du formulaire « Mes informations » ; la clé est contrôlée contre le NIR. */
 export const informationsSchema = baseInformationsSchema.superRefine(
   (data, ctx) => {
     if (!isCleNirValid(data.nir, data.cleNir)) {
@@ -76,6 +80,7 @@ export const informationsSchema = baseInformationsSchema.superRefine(
   },
 );
 
+/** Les valeurs du formulaire « Mes informations », telles que le schéma les valide. */
 export type InformationsFormData = z.infer<typeof informationsSchema>;
 
 /** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
@@ -91,11 +96,13 @@ export const INFORMATIONS_FIELD_LABEL: Record<InformationsFieldName, string> = {
   telephone: "Téléphone",
 };
 
+/** Les sections du volet qui portent un compteur. */
 export const INFORMATIONS_SECTION = {
   IDENTITE: "identite",
   CONTACT: "contact",
 } as const;
 
+/** Une section du volet, parmi celles d'`INFORMATIONS_SECTION`. */
 export type InformationsSection = (typeof INFORMATIONS_SECTION)[keyof typeof INFORMATIONS_SECTION];
 
 /** Champs obligatoires de chaque section ; les champs préremplis n'y figurent pas. */

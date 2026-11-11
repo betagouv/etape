@@ -1,3 +1,4 @@
+/** Les états de la recherche d'employeur. */
 export const SEARCH_STATUS = {
   IDLE: "idle",
   RESULTS: "results",
@@ -7,10 +8,14 @@ export const SEARCH_STATUS = {
   RETRYING: "retrying",
 } as const;
 
+/** Un état de la recherche, parmi ceux de `SEARCH_STATUS`. */
 export type SearchStatus = (typeof SEARCH_STATUS)[keyof typeof SEARCH_STATUS];
 
+/** Titre de l'alerte, et annonce, quand aucun établissement ne correspond. */
 export const NO_RESULT_TITLE = "Aucun établissement ne correspond à cette recherche";
+/** Titre de l'alerte, et annonce, quand la recherche d'entreprises échoue. */
 export const SEARCH_ERROR_TITLE = "La recherche d’entreprises ne répond pas pour le moment";
+/** Annoncé pendant la relance de la recherche. */
 export const RETRYING_ANNOUNCEMENT = "Nouvelle recherche en cours…";
 
 /** Où en est la recherche ; `count` reste indéfini tant qu'aucune réponse n'est arrivée. */

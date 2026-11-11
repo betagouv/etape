@@ -16,6 +16,7 @@ export interface DateFieldControl {
   ref: React.Ref<HTMLButtonElement>;
 }
 
+/** Ce que reçoit `DateField` : le champ du formulaire, son libellé, son texte d'aide et son calendrier. */
 export interface DateFieldProps {
   id: string;
   label: string;

@@ -28,6 +28,7 @@ import {
   type SituationProfessionnelleFormData,
 } from "./schema";
 
+/** Ce que reçoit `SituationProfessionnelleForm` : l'`id` du formulaire et la suite d'un envoi valide. */
 export interface SituationProfessionnelleFormProps {
   formId: string;
   onSubmitValid: (data: SituationProfessionnelleFormData) => void;

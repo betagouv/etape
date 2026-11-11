@@ -29,6 +29,7 @@ const SECTEURS_DISPLAY_LIMIT = 50;
 /** La liste se filtre à chaque frappe : on n'annonce que le nombre où la saisie s'arrête. */
 const ANNOUNCEMENT_DELAY_MS = 300;
 
+/** Les gestionnaires à poser sur le champ de recherche. */
 export interface SecteurActiviteInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
@@ -36,6 +37,7 @@ export interface SecteurActiviteInputHandlers {
   onBlur: () => void;
 }
 
+/** Ce que renvoie `useSecteurActiviteSearch` : l'état de la recherche et ses actions. */
 export interface UseSecteurActiviteSearchResult {
   /** Ce que montre le champ : la saisie en cours, sinon le secteur choisi. */
   inputText: string;

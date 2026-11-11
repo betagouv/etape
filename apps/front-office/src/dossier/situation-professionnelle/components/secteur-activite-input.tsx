@@ -20,6 +20,7 @@ const DESCRIPTION_ID = `${SECTEUR_ACTIVITE_FIELD_ID}-description`;
 const ERROR_ID = `${SECTEUR_ACTIVITE_FIELD_ID}-error`;
 const LIST_ID = `${SECTEUR_ACTIVITE_FIELD_ID}-list`;
 
+/** Ce que reçoit `SecteurActiviteInput` : la recherche, la valeur choisie et le lien au formulaire. */
 export interface SecteurActiviteInputProps {
   search: UseSecteurActiviteSearchResult;
   value: string;

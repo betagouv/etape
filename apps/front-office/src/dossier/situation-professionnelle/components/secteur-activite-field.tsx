@@ -9,6 +9,7 @@ export interface SecteurActiviteFieldControl {
   ref: React.Ref<HTMLInputElement>;
 }
 
+/** Ce que reçoit `SecteurActiviteField` : le champ du formulaire et son erreur. */
 export interface SecteurActiviteFieldProps {
   field: SecteurActiviteFieldControl;
   error?: { message?: string };

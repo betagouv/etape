@@ -2,6 +2,7 @@ import { startOfDay } from "date-fns";
 
 import { parseFieldDate, type DateFieldCalendar } from "../../domain/field-date";
 
+/** La date de démission la plus récente acceptée. */
 export interface DateDemissionBounds {
   /** Démission la plus récente acceptée : le jour même. */
   max: Date;

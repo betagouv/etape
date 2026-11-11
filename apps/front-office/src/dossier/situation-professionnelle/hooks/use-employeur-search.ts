@@ -34,12 +34,14 @@ export function employeurOptionId({ siret }: Etablissement): string {
   return `${EMPLOYEUR_FIELD_ID}-option-${siret}`;
 }
 
+/** Les gestionnaires à poser sur le champ de recherche. */
 export interface EmployeurSearchInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   onFocus: () => void;
 }
 
+/** Ce que renvoie `useEmployeurSearch` : l'état de la recherche et ses actions. */
 export interface UseEmployeurSearchResult {
   searchText: string;
   status: SearchStatus;

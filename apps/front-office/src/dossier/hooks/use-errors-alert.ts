@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 
 import type { VoletError } from "../domain/volet-errors";
 
+/** Ce que renvoie `useErrorsAlert` : la référence du résumé d'erreurs et les erreurs à y afficher. */
 export interface UseErrorsAlertResult {
   ref: RefObject<HTMLDivElement | null>;
   /** Les erreurs du dernier envoi, vides avant le premier. */

@@ -28,6 +28,7 @@ const VALUE_ID = `${NATIONALITE_FIELD_ID}-value`;
 const ERROR_ID = `${NATIONALITE_FIELD_ID}-error`;
 const LIST_ID = `${NATIONALITE_FIELD_ID}-list`;
 
+/** Ce que reçoit `NationaliteInput` : la recherche, la valeur choisie et le lien au formulaire. */
 export interface NationaliteInputProps {
   search: UseNationaliteSearchResult;
   value: string;

@@ -1,6 +1,7 @@
 import { selectPlural, type PluralForms } from "@/lib/plural";
 import type { FieldErrors } from "./field-error-announcement";
 
+/** Une erreur du résumé : le champ fautif, par son `id`, et son message. */
 export interface VoletError {
   fieldId: string;
   message: string;

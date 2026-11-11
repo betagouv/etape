@@ -66,18 +66,22 @@ const STATUT_VOLET_UI: Record<StatutVolet, StatutVoletUi> = {
   [STATUT_VOLET.FACULTATIF]: A_REMPLIR_UI,
 };
 
+/** Ce que reçoit `StatutVoletIcon` : le statut du volet. */
 export interface StatutVoletIconProps {
   statut: StatutVolet;
 }
 
+/** L'icône d'un statut de volet. */
 export function StatutVoletIcon({ statut }: StatutVoletIconProps) {
   return STATUT_VOLET_UI[statut].icon;
 }
 
+/** Ce que reçoit `StatutVoletLabel` : une ligne du statut. */
 export interface StatutVoletLabelProps {
   line: StatutVoletLine;
 }
 
+/** Une ligne du statut d'un volet, à la couleur de ce statut. */
 export function StatutVoletLabel({ line }: StatutVoletLabelProps) {
   return (
     <span className={cn("text-xs font-medium", STATUT_VOLET_UI[line.statut].textClassName)}>

@@ -2,9 +2,12 @@ import { startOfDay, subYears } from "date-fns";
 
 import { parseFieldDate, type DateFieldCalendar } from "../../domain/field-date";
 
+/** Âge le plus bas accepté, en années révolues. */
 export const AGE_MINIMUM = 18;
+/** Âge le plus élevé accepté, en années révolues. */
 export const AGE_MAXIMUM = 70;
 
+/** Les naissances la plus ancienne et la plus récente acceptées. */
 export interface DateNaissanceBounds {
   /** Naissance la plus ancienne acceptée : `AGE_MAXIMUM` ans révolus le jour même. */
   min: Date;

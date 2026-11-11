@@ -12,6 +12,7 @@ import { EmployeurCard } from "./employeur-card";
 import { EmployeurManualFields } from "./employeur-manual-fields";
 import { EmployeurSearch } from "./employeur-search";
 
+/** Ce que reçoit `EmployeurField` : le formulaire du volet. */
 export interface EmployeurFieldProps {
   form: UseFormReturn<SituationProfessionnelleFormData>;
 }

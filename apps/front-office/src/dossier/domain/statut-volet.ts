@@ -9,6 +9,7 @@ export const STATUT_VOLET = {
   FACULTATIF: "FACULTATIF",
 } as const;
 
+/** Un statut de volet, parmi ceux de `STATUT_VOLET`. */
 export type StatutVolet = (typeof STATUT_VOLET)[keyof typeof STATUT_VOLET];
 
 /** `requiredFieldCount` et `remainingFieldCount` ne comptent que les champs obligatoires ; `filledFieldCount` les compte tous. */
@@ -31,11 +32,13 @@ export interface StatutVoletLine {
   label: string;
 }
 
+/** Libellé des champs restants, au singulier et au pluriel. */
 export const REMAINING_FIELD_LABELS: PluralForms<string> = {
   one: "champ restant",
   other: "champs restants",
 };
 
+/** Libellé des erreurs à corriger, au singulier et au pluriel. */
 export const ERROR_LABELS: PluralForms<string> = {
   one: "erreur à corriger",
   other: "erreurs à corriger",
