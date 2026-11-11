@@ -146,7 +146,7 @@ export function SituationProfessionnelleForm({
                   <DateField
                     id="dateDemission"
                     label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.dateDemission}
-                    description="Date de l’accusé de réception ou de la remise en main propre contre décharge. Format : jj/mm/aaaa"
+                    description="Date de l’accusé de réception ou de la remise en main propre contre décharge. Format : JJ/MM/AAAA"
                     getCalendar={computeDateDemissionCalendar}
                     field={field}
                     error={fieldState.error}
