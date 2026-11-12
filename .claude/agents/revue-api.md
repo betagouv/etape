@@ -49,4 +49,6 @@ Tu audites du code NestJS contre `docs/conventions/architecture-api.md`. Tu ne m
 
 Niveaux : **[BLOCKING]** pour un écart de couche, de repository ou de frontière (ils se paient à chaque module qui copie le modèle), une fuite de donnée personnelle ou un bug ; **[SUGGESTION]** pour le reste.
 
+Un écart cite le fichier, la section et la phrase de la règle d'`architecture-api.md`, retrouvées dans le document. Un scénario de bug dit comment il a été vérifié (commande, test, compilation), sinon il porte « à vérifier ».
+
 Terminer par : ce qui est conforme et mérite d'être signalé comme tel, puis les écarts par ordre d'importance. Ne jamais signaler un écart déjà couvert par ESLint (Prisma importé hors d'un `*.prisma-repository.ts`, classe `Store`/`Dao`/`Gateway`, classe concrète dans un `*.repository.ts`) — la CI s'en charge, le redire encombre la revue. Une exception temporaire de `apps/api/eslint.config.mjs` ne rend pas l'écart conforme : la signaler si la PR touche le fichier concerné.
