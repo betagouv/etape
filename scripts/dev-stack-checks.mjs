@@ -17,6 +17,12 @@ const ROOT_REQUIRED_KEYS = [
   "BACK_OFFICE_KEYCLOAK_CLIENT_SECRET",
 ];
 
+/**
+ * Variables des `.env.example` d'app qu'on laisse vides en local : sans site ID,
+ * la mesure d'audience est désactivée et aucune visite de dev ne part dans Matomo.
+ */
+const OPTIONAL_KEYS = new Set(["VITE_MATOMO_URL", "VITE_MATOMO_SITE_ID"]);
+
 /** Ports publiés par `docker-compose.yml` : base applicative et Keycloak. */
 const DOCKER_PORTS = [5432, 8080];
 
@@ -94,14 +100,16 @@ function checkDocker() {
     : [{ isBlocking: true, message: "Docker ne répond pas", hint: "démarrer Docker Desktop" }];
 }
 
-/** Chaque variable de `<dir>/.env.example` doit figurer, non vide, dans `<dir>/.env`. */
+/** Chaque variable de `<dir>/.env.example`, hors `OPTIONAL_KEYS`, doit figurer non vide dans `<dir>/.env`. */
 function checkEnvAgainstExample(dir) {
   const envPath = `${dir}/.env`;
   if (!existsSync(envPath)) {
     return [{ isBlocking: true, message: `${envPath} manquant`, hint: VAULT_HINT }];
   }
   const env = readEnvFile(envPath);
-  const missing = [...readEnvFile(`${dir}/.env.example`).keys()].filter((key) => !env.get(key));
+  const missing = [...readEnvFile(`${dir}/.env.example`).keys()].filter(
+    (key) => !OPTIONAL_KEYS.has(key) && !env.get(key),
+  );
   return missing.length === 0
     ? []
     : [
