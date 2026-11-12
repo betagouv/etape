@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSecteursActivite, type SecteurActivite } from "@etape/api-contract";
 
 import { useListboxNavigation } from "@etape/ui/hooks/use-listbox-navigation";
+import { KEY } from "@etape/ui/lib/keys";
 
 import { httpClient } from "@/lib/clients";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
@@ -121,7 +122,22 @@ export function useSecteurActiviteSearch(
         setOpen(true);
         navigation.reset();
       },
-      onKeyDown: navigation.onKeyDown,
+      onKeyDown: (event) => {
+        // Un code complet suivi d'Entrée vaut un choix, comme en quittant le champ.
+        if (event.key === KEY.ENTER && navigation.active === null) {
+          const result = findSecteurBlurOutcome(
+            query.data ?? [],
+            searchText,
+            selected !== undefined,
+          );
+          if (result.outcome === SECTEUR_BLUR_OUTCOME.SELECT) {
+            event.preventDefault();
+            select(result.secteur);
+            return;
+          }
+        }
+        navigation.onKeyDown(event);
+      },
       onFocus: () => setOpen(true),
       onBlur: () => {
         setOpen(false);
