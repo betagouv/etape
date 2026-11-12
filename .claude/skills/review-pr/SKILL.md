@@ -23,7 +23,9 @@ description: Revue d'une PR ou d'un diff ETAPE selon les conventions du projet (
 3. Lire les conventions (source de vérité — ne jamais répondre de mémoire) :
    - `docs/conventions/nommage.md` et `docs/conventions/glossaire.md` (charger le skill `convention-nommage`) ;
    - `docs/conventions/typescript.md` ;
-   - `docs/conventions/accessibilite.md` pour tout composant `.tsx`.
+   - `docs/conventions/accessibilite.md` pour tout composant `.tsx` ;
+   - `docs/conventions/architecture-api.md` pour tout fichier de `apps/api`.
+4. **Relire en entier chaque fichier touché par le diff**, pas seulement les lignes modifiées : un écart déjà présent dans un fichier que la PR étend se signale, avec la mention « antérieur à la PR ».
 
 ### 2. Revues précédentes : suivi obligatoire
 
@@ -45,7 +47,8 @@ S'il y en a, la synthèse **commence par un tableau de suivi** : chaque constat 
   - **Typage** : littéraux en dur dans les conditions ou les appels, correspondances en ternaire ou `switch` au lieu d'un `Record`, `useState` non typé par l'union.
   - **Accessibilité** : `disabled` sur une action asynchrone, annonces d'état (région toujours montée, sans doublon), nom accessible, erreur reliée au champ par `aria-describedby`, icônes décoratives.
   - **Design system** (`.claude/rules/design-system.md`) : `className` d'apparence au lieu d'une variante `cva`, primitive de `packages/ui` réécrite à la main.
-- Sur un diff qui touche des `.tsx`, lancer le sous-agent `revue-front` (pratiques React, design system, poids du bundle mesuré), en parallèle de la section 4.
+  - **Architecture API** : couches, repository (nom, fichiers, aucune règle métier), Prisma et types générés confinés au repository, frontière HTTP.
+- S'appuyer sur les sous-agents, lancés en parallèle de la section 4 selon ce que touche le diff : **`revue-front`** sur un diff qui touche des `.tsx` (pratiques React, design system, poids du bundle mesuré), **`revue-api`** pour `apps/api`. Chacun de leurs constats est vérifié dans le code avant d'être repris.
 
 ### 4. Valider la logique
 

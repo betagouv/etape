@@ -11,6 +11,7 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@etape/analytics": "workspace:*",
     "@etape/ui": "workspace:*",
     "@etape/utils": "workspace:*",
     "@react-pdf/renderer": "^4.9.0",

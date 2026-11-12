@@ -67,6 +67,9 @@ jobs:
         with:
           dossier: pr-${{ github.event.number }}
           hote: pr-${{ github.event.number }}.${{ env.PREVIEW_DOMAIN }}
+          # Le site Matomo de recette : de quoi vérifier la mesure sur une PR.
+          # Les visites des previews s'y mêlent à celles de la recette.
+          matomo-site-id: "272"
 
       - name: Poser l'URL en commentaire de la PR
         uses: actions/github-script@v9

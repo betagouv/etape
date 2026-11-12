@@ -302,6 +302,9 @@ Ce que cette fonction protège : le jour où la table gagne une colonne — un j
 3. **La transaction appartient au service**, qui la déclare et la passe au repository.
 4. **L'abstraction décrit un besoin, pas un schéma** : `findBrouillon(beneficiaireId)`, pas `findFirstWhere(...)`.
 5. **Pas de repository pour un module qui ne touche pas la base** : il n'y a rien à séparer.
+6. **Le nom et le fichier disent la couche** : l'abstraction `XRepository` dans `<module>.repository.ts`, seule dans son fichier ; l'implémentation `PrismaXRepository` dans `<module>.prisma-repository.ts` (voir [Découpage des dossiers](#découpage-des-dossiers)). Ni `Store`, ni `Dao`, ni `Gateway` : un autre nom fait croire à une autre couche, et la règle « aucune règle métier » ne s'y applique plus aux yeux du lecteur.
+
+**Ce qui le vérifie** : ESLint, dans `apps/api/eslint.config.mjs`, refuse Prisma — client et types générés — hors d'un `*.prisma-repository.ts`, une classe nommée `…Store`, `…Dao` ou `…Gateway`, et une classe concrète dans un `*.repository.ts`. L'absence de règle métier ne se vérifie pas par un outil : c'est le sous-agent `revue-api` qui la relit en revue.
 
 <details><summary><strong>Exemple — ce que « renvoyer les types du module » veut dire, en code</strong> (proposition)</summary>
 
@@ -678,6 +681,8 @@ providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }];
 ## Décision 9 — La purge des données expirées
 
 **Ce qui existe déjà**, et qu'il faut avoir en tête avant d'en discuter : une purge est en place. `PrismaSessionRepository.deleteExpiredSessions(now)` supprime les sessions dont l'une des deux fins est passée, et `SessionService.openSession` l'appelle à chaque connexion, avec la date de référence. À quoi s'ajoute un contrôle à la lecture : `SessionService.readSession` refuse une session expirée même si elle est encore en base, et la supprime. La transaction de connexion, elle, n'est plus en base : elle voyage dans un cookie chiffré, qui expire de lui-même.
+
+**Ce contrôle à la lecture est une règle métier, il revient au service** (décision 2, principe 2) : le repository rend la session, `SessionService` juge qu'elle est finie et la supprime. La purge, elle, reste une requête du repository, exposée comme un besoin — `deleteExpiredSessions(now)`, la date de référence fournie par le service.
 
 ```ts
 async deleteExpiredSessions(now: number): Promise<void> {
