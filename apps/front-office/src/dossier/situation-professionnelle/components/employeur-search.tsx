@@ -90,7 +90,7 @@ export function EmployeurSearch({
             ref={fieldRef}
             role="combobox"
             aria-autocomplete="list"
-            aria-expanded={search.isPopupOpen}
+            aria-expanded={search.isPopupOpen && search.etablissements.length > 0}
             aria-controls={LIST_ID}
             aria-activedescendant={search.active ? employeurOptionId(search.active) : undefined}
             aria-invalid={isInvalid || undefined}
