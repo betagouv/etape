@@ -7,14 +7,7 @@ import { InputGroup, InputGroupAddon, InputGroupTrigger } from "@etape/ui/compon
 import { Popover, PopoverContent, PopoverTrigger } from "@etape/ui/components/popover";
 
 import { formatFieldDate, parseFieldDate, type DateFieldCalendar } from "../domain/field-date";
-
-/** Ce que fournit le `field` d'un `Controller` de react-hook-form. */
-export interface DateFieldControl {
-  value: string;
-  onChange: (value: string) => void;
-  onBlur: () => void;
-  ref: React.Ref<HTMLButtonElement>;
-}
+import type { FieldControl } from "./field-control";
 
 /** Ce que reçoit `DateField` : le champ du formulaire, son libellé, son texte d'aide et son calendrier. */
 export interface DateFieldProps {
@@ -22,7 +15,7 @@ export interface DateFieldProps {
   label: string;
   description: string;
   getCalendar: (today: Date) => DateFieldCalendar;
-  field: DateFieldControl;
+  field: FieldControl<HTMLButtonElement>;
   error?: { message?: string };
 }
 

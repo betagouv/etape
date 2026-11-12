@@ -1,17 +1,11 @@
+import type { FieldControl } from "../../components/field-control";
 import { useNationaliteSearch } from "../hooks/use-nationalite-search";
 import { NationaliteInput } from "./nationalite-input";
 
-/** Ce que fournit le `field` d'un `Controller` de react-hook-form. */
-export interface NationaliteFieldControl {
-  value: string;
-  onChange: (code: string) => void;
-  onBlur: () => void;
-  ref: React.Ref<HTMLButtonElement>;
-}
-
 /** Ce que reçoit `NationaliteField` : le champ du formulaire et son erreur. */
 export interface NationaliteFieldProps {
-  field: NationaliteFieldControl;
+  /** La valeur est le code de la nationalité. */
+  field: FieldControl<HTMLButtonElement>;
   error?: { message?: string };
 }
 

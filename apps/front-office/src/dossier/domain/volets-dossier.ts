@@ -1,5 +1,5 @@
 import type { VoletDefinition, VoletNoticeContent } from "./volets";
-import { VOLET_ID } from "./volet-id";
+import { VOLET_ID, type VoletId } from "./volet-id";
 
 export const SUPPORT_EMAIL = "contact.etape@certif-pro.fr";
 
@@ -68,3 +68,8 @@ export const VOLETS_DOSSIER: VoletDefinition[] = [
   // Sans maquette : ni description ni contenu.
   { id: VOLET_ID.DOCUMENTS, label: "Mes documents", title: "Mes documents" },
 ];
+
+/** Le libellé d'un volet du dossier, tel qu'il s'affiche dans le menu : « Mes informations ». */
+export function findVoletLabel(voletId: VoletId): string {
+  return VOLETS_DOSSIER.find(({ id }) => id === voletId)?.label ?? "";
+}

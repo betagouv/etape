@@ -1,12 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 
-import type { SectionProgress, VoletProgress } from "../../domain/statut-volet";
+import type { SectionProgress } from "../../domain/statut-volet";
 import { VOLET_ID } from "../../domain/volet-id";
-import { computeSectionProgress, computeVoletProgress } from "../../domain/volet-progress";
-import { VOLETS_DOSSIER } from "../../domain/volets-dossier";
-import { listVoletErrors, type VoletError } from "../../domain/volet-errors";
-import { useFieldErrorAnnouncement } from "../../hooks/use-field-error-announcement";
+import { computeSectionProgress } from "../../domain/volet-progress";
+import { useVoletProgress, type UseVoletProgressResult } from "../../hooks/use-volet-progress";
+import { VOLET_FORM_OPTIONS } from "../../volet-form-options";
 import { findRequiredFields } from "../domain/required-fields";
 import {
   INFORMATIONS_FIELD_LABEL,
@@ -25,15 +24,14 @@ export interface InformationsPrefilledValues {
 }
 
 /** Ce que renvoie `useInformationsForm` : le formulaire et ce qui s'en déduit pour l'écran. */
-export interface UseInformationsFormResult {
+export interface UseInformationsFormResult extends Omit<
+  UseVoletProgressResult<InformationsSection>,
+  "requiredFields"
+> {
   form: UseFormReturn<InformationsFormData>;
+  sections: Record<InformationsSection, SectionProgress>;
   /** Repris de l'inscription et du profil : affichés, jamais saisis ici. */
   prefilledValues: InformationsPrefilledValues;
-  progress: VoletProgress;
-  sections: Record<InformationsSection, SectionProgress>;
-  voletErrors: VoletError[];
-  /** Erreur du champ qu'on vient de quitter et statut du volet, pour la région `role="status"` de l'écran. */
-  errorAnnouncement: string;
 }
 
 // Nom, prénom, e-mail, adresse : en attendant l'API.
@@ -44,17 +42,11 @@ const PREFILLED_VALUES: InformationsPrefilledValues = {
   adresse: "",
 };
 
-const VOLET_LABEL = VOLETS_DOSSIER.find(({ id }) => id === VOLET_ID.INFORMATIONS)?.label ?? "";
-
-/**
- * Le formulaire « Mes informations » et ce qui s'en déduit pendant le rendu : avancement
- * du volet, compteurs par section, erreurs pour le résumé. Rien n'est recopié dans un état.
- */
+/** Le formulaire « Mes informations » et ce qui s'en déduit pendant le rendu. */
 export function useInformationsForm(): UseInformationsFormResult {
   const form = useForm<InformationsFormData>({
+    ...VOLET_FORM_OPTIONS,
     resolver: zodResolver(informationsSchema),
-    mode: "onBlur",
-    reValidateMode: "onBlur",
     defaultValues: {
       civilite: undefined,
       dateNaissance: "",
@@ -63,20 +55,16 @@ export function useInformationsForm(): UseInformationsFormResult {
       cleNir: "",
       telephone: "",
     },
-    // Le focus revient au résumé d'erreurs de l'écran, pas au premier champ fautif.
-    shouldFocusError: false,
   });
 
-  const errorAnnouncement = useFieldErrorAnnouncement(
+  const { errors } = form.formState;
+  const { requiredFields, ...voletProgress } = useVoletProgress(
     form,
+    errors,
+    VOLET_ID.INFORMATIONS,
     INFORMATIONS_FIELD_LABEL,
-    VOLET_LABEL,
     findRequiredFields,
   );
-  // Le formulaire vit dans `DossierScreen` : surveiller les valeurs elles-mêmes re-rendrait
-  // tout le dossier à chaque frappe ; les champs remplis ne changent qu'au passage de vide à rempli.
-  const requiredFields = useWatch({ control: form.control, compute: findRequiredFields });
-  const { errors } = form.formState;
 
   // Un littéral plutôt qu'un `Object.fromEntries` casté : une section ajoutée sans compteur ne compile pas.
   const sections: Record<InformationsSection, SectionProgress> = {
@@ -95,9 +83,7 @@ export function useInformationsForm(): UseInformationsFormResult {
   return {
     form,
     prefilledValues: PREFILLED_VALUES,
-    progress: computeVoletProgress(requiredFields.allFields, requiredFields.filledFields, errors),
+    ...voletProgress,
     sections,
-    voletErrors: listVoletErrors(requiredFields.allFields, errors),
-    errorAnnouncement,
   };
 }

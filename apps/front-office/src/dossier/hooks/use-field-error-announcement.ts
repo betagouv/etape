@@ -28,7 +28,7 @@ export function useFieldErrorAnnouncement<TFieldValues extends FieldValues>(
         // `touchedFields` en plus : un champ valide quitté pour la première fois ne change pas
         // `errors`, et le statut, lui, change.
         formState: { errors: true, touchedFields: true },
-        // Avec `mode` et `reValidateMode` à `onBlur`, un nom de champ signale sa sortie ;
+        // Avec `VOLET_FORM_OPTIONS`, validé à `onBlur`, un nom de champ signale sa sortie ;
         // une soumission n'en porte pas.
         callback: ({ name, errors }) => {
           if (!name) return;
