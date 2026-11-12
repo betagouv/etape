@@ -1,11 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { Controller, type Control, type FieldPath, type FieldValues } from "react-hook-form";
+import {
+  Controller,
+  type Control,
+  type FieldPath,
+  type FieldPathValue,
+  type FieldValues,
+} from "react-hook-form";
 
 import { FieldError, FieldLegend, FieldSet } from "@etape/ui/components/field";
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
+
+/** Une valeur que le champ `TName` peut prendre, parmi celles qu'on propose en options. */
+type OptionValue<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = Extract<
+  FieldPathValue<TFieldValues, TName>,
+  string
+>;
 
 /** Ce que reçoit `FormRadioGroup` : le champ du formulaire, sa légende et ses options. */
 interface FormRadioGroupProps<
@@ -15,10 +27,18 @@ interface FormRadioGroupProps<
   name: TName;
   control: Control<TFieldValues>;
   label: React.ReactNode;
-  /** Le libellé de chaque valeur, dans l'ordre d'affichage. */
-  options: Record<string, string>;
+  /** Le libellé de chaque valeur du champ, dans l'ordre d'affichage. */
+  options: Record<OptionValue<TFieldValues, TName>, string>;
   /** Appelé après le choix, pour ce qui en dépend ailleurs dans le formulaire. */
-  onValueChange?: (value: string) => void;
+  onValueChange?: (value: OptionValue<TFieldValues, TName>) => void;
+}
+
+/** Radix rend la valeur cochée en `string` : on la ramène au type du champ. */
+function isOptionValue<TValue extends string>(
+  options: Record<TValue, string>,
+  value: string,
+): value is TValue {
+  return Object.hasOwn(options, value);
 }
 
 /**
@@ -49,6 +69,7 @@ function FormRadioGroup<TFieldValues extends FieldValues, TName extends FieldPat
             id={name}
             value={typeof field.value === "string" ? field.value : ""}
             onValueChange={(value) => {
+              if (!isOptionValue(options, value)) return;
               field.onChange(value);
               onValueChange?.(value);
             }}
@@ -63,7 +84,7 @@ function FormRadioGroup<TFieldValues extends FieldValues, TName extends FieldPat
             aria-invalid={fieldState.invalid}
             aria-describedby={fieldState.invalid ? errorId : undefined}
           >
-            {Object.entries(options).map(([value, optionLabel], index) => (
+            {Object.entries<string>(options).map(([value, optionLabel], index) => (
               <div key={value} className="flex items-center gap-2">
                 <RadioGroupItem
                   value={value}
