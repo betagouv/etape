@@ -1,7 +1,7 @@
 # Conventions d'accessibilité — ETAPE
 
 **Statut** : Proposé · **Date** : 2026-09-15 · **Origine** : revue de la PR #49 (bouton de téléchargement du PDF)
-**Portée** : composants React de `apps/site`, `apps/simulateur` et `packages/ui`
+**Portée** : composants React de `apps/site`, `apps/simulateur`, `apps/front-office`, `apps/back-office`, `apps/keycloak-theme` et `packages/ui`
 
 Ces règles précisent la case « Accessibilité (navigation clavier, focus visible) » du modèle de PR. Aucune n'est vérifiable par un outil : elles sont appliquées à l'écriture et contrôlées en revue.
 

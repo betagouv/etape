@@ -1,7 +1,7 @@
 # Conventions TypeScript — ETAPE
 
 **Statut** : Proposé · **Date** : 2026-09-15 · **Origine** : revue de la PR #49 (état de génération du PDF)
-**Portée** : `apps/site`, `apps/simulateur`, `packages/ui`, et l'API à venir
+**Portée** : tout le code TypeScript du dépôt — `apps/site`, `apps/simulateur`, `apps/front-office`, `apps/back-office`, `apps/keycloak-theme`, `apps/api` et les `packages/`. Les exceptions propres à Keycloakify sont listées à la règle concernée.
 
 Le nommage des identifiants (langue, casse) relève de [`nommage.md`](./nommage.md). Ce document fixe la façon de typer.
 

@@ -33,7 +33,7 @@ C'est `keycloak-providers` qui recopie le JAR dans le volume d'extensions : un s
 
 ## Conventions
 
-- Hors du périmètre de `docs/conventions/react.md` : les contraintes viennent de Keycloakify (voir le README).
+- Dans la portée de `docs/conventions/react.md` (design system compris), `typescript.md` et `accessibilite.md`, sauf ce que Keycloakify impose : signature de `Template` et des pages, pages en `export default`, code généré, noms de champ de `messagesPerField` en littéral. La liste fait foi en tête de `react.md`.
 - Le bouton FranceConnect suit son propre kit graphique, Marianne comprise : c'est une exigence de FranceConnect, vérifiée à l'homologation. Cela n'en fait pas un service de l'État : pas de DSFR pour le reste des écrans.
 - ESLint `@etape/eslint-config/react-internal` : les règles `jsx-a11y` ne s'appliquent pas ici.
 

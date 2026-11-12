@@ -104,7 +104,7 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 - **Un type Prisma ne franchit pas la frontière HTTP**, et le service ne voit jamais Prisma (`.claude/rules/api.md`).
 - **`api-contract` ne dépend que de zod.** Il ne doit importer ni NestJS, ni React, ni axios.
 - **Une couleur ne s'écrit que dans les tokens de `packages/ui`.** Une app étend par variante `cva` dans `packages/ui`, jamais par `className` d'apparence.
-- **`keycloak-theme` est hors du périmètre de `react.md`** : ses contraintes viennent de Keycloakify (voir son README).
+- **`keycloak-theme` suit `react.md`, `typescript.md` et `accessibilite.md`**, sauf ce que Keycloakify impose (liste en tête de `react.md`, détail dans son README).
 
 ## 5. Authentification : Keycloak, lancé par Docker avec sa propre base
 
