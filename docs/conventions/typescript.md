@@ -71,9 +71,12 @@ setStatus("done");
 
 **Pourquoi** : une seule source pour les valeurs. Le type accepte encore le littéral (`"done"` est un `PdfStatus` valide) : seule cette règle garantit qu'un renommage ne laisse aucune chaîne orpheline.
 
-**Exception** : le discriminant d'une union de types (`FlowAction`, `{ type: "RESET" }`) reste un littéral ; TypeScript s'en sert pour affiner le type dans un `switch`.
+**Exceptions** :
 
-**Outillage** : aucun, vérifié en revue.
+- le discriminant d'une union de types (`FlowAction`, `{ type: "RESET" }`, `kcContext.pageId`) reste un littéral ; TypeScript s'en sert pour affiner le type dans un `switch` ;
+- dans `apps/keycloak-theme`, le nom d'un champ passé à `messagesPerField` (`existsError("altcha")`) : Keycloakify ne transmet à la page que les erreurs des champs qu'il trouve écrits en littéral dans ces appels (`readFieldNameUsage`, au build). Les attributs du profil utilisateur y échappent, Keycloakify les ajoute d'office.
+
+**Outillage** : règle ESLint `etape/no-hardcoded-literal` (`packages/eslint-config/rules/`), en erreur dans les presets `base` et `next`, sur les fichiers de `src/`. Elle lit les types : elle ne signale une chaîne que là où le code attend une union de chaînes littérales **déclarée dans le dépôt** — comparaison, `switch`, argument d'une fonction du dépôt. Elle ne voit pas les attributs JSX, ni les appels à une fonction de bibliothèque (`useState("done")` passe) : ces cas restent à la revue.
 
 ### 4. Une correspondance valeur → libellé est un `Record`
 
@@ -111,6 +114,6 @@ const [status, setStatus] = useState<PdfStatus>(PDF_STATUS.IDLE);
 | ----------------------------------------- | ------------------------------------------------------- |
 | 1. Type de retour des fonctions exportées | ESLint `explicit-module-boundary-types` (`**/*.ts`)     |
 | 2. `as const` plutôt qu'`enum`            | `erasableSyntaxOnly` + ESLint `no-restricted-syntax`    |
-| 3. Pas de littéral en dur                 | Revue (skill `review-pr`)                               |
+| 3. Pas de littéral en dur                 | ESLint `etape/no-hardcoded-literal` ; revue pour le JSX |
 | 4. `Record` pour les correspondances      | Revue (skill `review-pr`)                               |
 | 5. `useState` typé par l'union            | Revue (skill `review-pr`) ; le compilateur aide souvent |

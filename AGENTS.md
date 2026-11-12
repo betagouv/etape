@@ -38,7 +38,7 @@ La langue suit la couche : **le domaine métier est en français, la technique e
 
 ## Typage et accessibilité — règles par défaut
 
-- **Typage** (`docs/conventions/typescript.md`) : type de retour explicite sur les fonctions exportées d'un `.ts` ; valeurs finies en objet `as const` + type dérivé, jamais d'`enum` ; jamais de littéral en dur dans une condition ; correspondances en `Record<Type, …>` ; `useState` typé par l'union.
+- **Typage** (`docs/conventions/typescript.md`) : type de retour explicite sur les fonctions exportées d'un `.ts` ; valeurs finies en objet `as const` + type dérivé, jamais d'`enum` ; jamais de littéral en dur dans une condition ou un appel (ESLint `etape/no-hardcoded-literal`) ; correspondances en `Record<Type, …>` ; `useState` typé par l'union.
 - **Accessibilité** (`docs/conventions/accessibilite.md`) : pas de `disabled` sur un bouton d'action asynchrone (`aria-disabled` + garde) ; changements d'état annoncés dans une région `role="status"` toujours montée.
 
 Les règles détaillées se chargent depuis `.claude/rules/` quand un fichier concerné est lu.
