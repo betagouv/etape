@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  computeSectionsProgress,
+  computeSectionProgress,
   computeVoletProgress,
   describeVoletStatut,
   listFilledFields,
@@ -64,29 +64,20 @@ describe("computeVoletProgress", () => {
   });
 });
 
-describe("computeSectionsProgress", () => {
-  it("compte, pour chaque section, ses champs qui restent à remplir et ses erreurs", () => {
+describe("computeSectionProgress", () => {
+  it("compte les champs de la section qui restent à remplir, et ses erreurs", () => {
+    const requiredFields: RequiredFields = {
+      sectionFields: { emploi: ["siret", "adresse", "intitulePoste"], demission: ["demission"] },
+      allFields: ["siret", "adresse", "intitulePoste", "demission"],
+      filledFields: ["intitulePoste", "employeur"],
+    };
+
     expect(
-      computeSectionsProgress(
-        { emploi: ["siret", "adresse", "intitulePoste"], demission: ["demission"] },
-        ["intitulePoste", "employeur"],
-        { siret: { message: "x" }, dateDemission: { message: "y" } },
-      ),
-    ).toEqual({
-      emploi: { remainingFieldCount: 2, errorCount: 1 },
-      demission: { remainingFieldCount: 1, errorCount: 0 },
-    });
-  });
-
-  it("rend un compteur pour chaque section reçue, même sans champ", () => {
-    const sections = computeSectionsProgress(
-      { identite: ["civilite"], adresse: [], contact: ["telephone"] },
-      [],
-      {},
-    );
-
-    expect(Object.keys(sections)).toEqual(["identite", "adresse", "contact"]);
-    expect(sections.adresse).toEqual({ remainingFieldCount: 0, errorCount: 0 });
+      computeSectionProgress(requiredFields, "emploi", {
+        siret: { message: "x" },
+        dateDemission: { message: "y" },
+      }),
+    ).toEqual({ remainingFieldCount: 2, errorCount: 1 });
   });
 });
 

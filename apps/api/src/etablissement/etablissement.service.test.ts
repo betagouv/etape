@@ -1,6 +1,7 @@
 import { HttpStatus } from "@nestjs/common";
-import type { ConfigService } from "@nestjs/config";
+import { ConfigService } from "@nestjs/config";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ZodError } from "zod";
 
 import type { Env } from "../config/env.js";
 import { EtablissementService } from "./etablissement.service.js";
@@ -43,8 +44,7 @@ const fetchMock = vi.fn<typeof fetch>();
 
 function createService(): EtablissementService {
   const values: Partial<Env> = { API_SIRENE_URL, INSEE_API_KEY };
-  const config = { get: (name: keyof Env) => values[name] } as unknown as ConfigService<Env, true>;
-  return new EtablissementService(config);
+  return new EtablissementService(new ConfigService<Env, true>(values));
 }
 
 describe("EtablissementService", () => {
@@ -75,6 +75,12 @@ describe("EtablissementService", () => {
     await expect(createService().searchEtablissements("acme")).rejects.toThrow(
       "Sirene a répondu 500",
     );
+  });
+
+  it("lève une exception quand la réponse de Sirene n'a pas la forme attendue", async () => {
+    fetchMock.mockResolvedValue(Response.json({ header: { total: 1 } }));
+
+    await expect(createService().searchEtablissements("acme")).rejects.toThrow(ZodError);
   });
 
   it("renvoie les établissements trouvés, transformés pour le contrat", async () => {

@@ -5,8 +5,8 @@ import type { SearchEtablissementsResponse } from "@etape/api-contract";
 import type { Env } from "../config/env.js";
 import {
   buildSireneSearchUrl,
+  sireneSearchResponseSchema,
   toSearchEtablissementsResponse,
-  type SireneSearchResponse,
 } from "./sirene.js";
 
 /** Au-delà, le front affiche « ne répond pas » plutôt que de laisser la personne attendre. */
@@ -35,6 +35,6 @@ export class EtablissementService {
     if (response.status === HttpStatus.NOT_FOUND) return NO_ETABLISSEMENT;
     if (!response.ok) throw new Error(`Sirene a répondu ${response.status}`);
 
-    return toSearchEtablissementsResponse((await response.json()) as SireneSearchResponse);
+    return toSearchEtablissementsResponse(sireneSearchResponseSchema.parse(await response.json()));
   }
 }

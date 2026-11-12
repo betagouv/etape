@@ -1,5 +1,6 @@
 import type { Etablissement, SearchEtablissementsResponse } from "@etape/api-contract";
 import { stripDiacritics } from "@etape/utils/text";
+import { z } from "zod";
 
 import { LIBELLES_NAF } from "../secteur-activite/libelles-naf.js";
 
@@ -21,32 +22,38 @@ const SIRENE_FIELDS = [
   "activitePrincipaleEtablissement",
 ].join(",");
 
-/** Réponse de `GET /siret` restreinte à `SIRENE_FIELDS`. */
-export interface SireneSearchResponse {
-  header: { total: number };
-  etablissements: SireneEtablissement[];
-}
-
-interface SireneEtablissement {
-  siret: string;
-  uniteLegale: {
-    denominationUniteLegale: string | null;
-    nomUniteLegale: string | null;
-    prenomUsuelUniteLegale: string | null;
-  };
-  adresseEtablissement: {
-    numeroVoieEtablissement: string | null;
-    typeVoieEtablissement: string | null;
-    libelleVoieEtablissement: string | null;
-    codePostalEtablissement: string | null;
-    libelleCommuneEtablissement: string | null;
-  };
+const sireneEtablissementSchema = z.object({
+  siret: z.string(),
+  uniteLegale: z.object({
+    denominationUniteLegale: z.string().nullable(),
+    nomUniteLegale: z.string().nullable(),
+    prenomUsuelUniteLegale: z.string().nullable(),
+  }),
+  adresseEtablissement: z.object({
+    numeroVoieEtablissement: z.string().nullable(),
+    typeVoieEtablissement: z.string().nullable(),
+    libelleVoieEtablissement: z.string().nullable(),
+    codePostalEtablissement: z.string().nullable(),
+    libelleCommuneEtablissement: z.string().nullable(),
+  }),
   /** La période en cours d'abord. */
-  periodesEtablissement: {
-    enseigne1Etablissement: string | null;
-    activitePrincipaleEtablissement: string | null;
-  }[];
-}
+  periodesEtablissement: z.array(
+    z.object({
+      enseigne1Etablissement: z.string().nullable(),
+      activitePrincipaleEtablissement: z.string().nullable(),
+    }),
+  ),
+});
+
+type SireneEtablissement = z.infer<typeof sireneEtablissementSchema>;
+
+/** Réponse de `GET /siret` restreinte à `SIRENE_FIELDS`. */
+export const sireneSearchResponseSchema = z.object({
+  header: z.object({ total: z.number() }),
+  etablissements: z.array(sireneEtablissementSchema),
+});
+
+export type SireneSearchResponse = z.infer<typeof sireneSearchResponseSchema>;
 
 /**
  * Un SIRET (espaces, points et tirets tolérés), sinon chaque mot cherché en début de mot du nom ou
