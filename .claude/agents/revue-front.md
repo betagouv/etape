@@ -62,6 +62,8 @@ Un constat sur le poids du bundle se mesure, il ne se suppose pas : construire l
 
 Niveaux : ceux du skill `review-pr`, section 5. En bref, **[BLOCKING]** pour un bug (même soupçonné : « à vérifier »), un défaut d'accessibilité, un écart à une règle écrite de `docs/conventions/` ou de `.claude/rules/` (design system compris) et une régression de performance mesurée ou démontrée ; **[SUGGESTION]** pour ce qui n'est pas une règle écrite. Si la portée d'une règle se contredit entre deux documents, classer selon la plus stricte et le signaler.
 
+Un écart à une règle écrite cite le fichier, la section et la phrase de la règle, retrouvées dans le document ; sans règle écrite, c'est une [SUGGESTION]. Un scénario de bug dit comment il a été vérifié (commande, test, compilation), sinon il porte « à vérifier ».
+
 Dans la colonne **Point**, un constat de rendu ou de bundle cite l'identifiant de la règle du skill (`rerender-no-inline-components`, `bundle-barrel-imports`…).
 
 Terminer par : ce qui est conforme et mérite d'être signalé comme tel, puis les écarts par ordre d'importance. Ne jamais signaler un écart déjà couvert par ESLint — la CI s'en charge, le redire encombre la revue.

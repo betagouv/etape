@@ -97,7 +97,7 @@ Les `AGENTS.md` par workspace suivent la même logique, à l'échelle d'un dossi
 ### Skills et sous-agent
 
 - **`convention-nommage`** — vérifie un identifiant contre le glossaire. Existant.
-- **`review-pr`** — méthode de revue : suivi des constats précédents, niveaux, suggestions vérifiées, rien de posté sans validation. Existant.
+- **`review-pr`** — méthode de revue : constats prouvés avant d'être écrits (règle citée dans le texte, scénario exécuté), suivi des constats précédents avec les contestations de l'auteur tranchées, niveaux, suggestions vérifiées, rien de posté sans validation. Existant.
 - **`composant-ui`** — procédure d'ajout ou d'extension d'un composant : chercher l'existant, récupérer la source officielle par le MCP `shadcn`, étendre par variante, brancher les tokens, vérifier le focus. Nouveau.
 - **`revue-front`** (sous-agent, lecture seule) — audite un diff contre `react.md` : logique dans les composants, props, `className` d'apparence, primitives réécrites ; puis contre le skill `vercel-react-best-practices` : rendus inutiles, poids ajouté au bundle (mesuré par un build comparé à `main`). Appelé par `review-pr`. Nouveau.
 - **`revue-api`** (sous-agent, lecture seule) — audite un diff de `apps/api` contre `architecture-api.md` : couches, repository (nom, fichiers, aucune règle métier), frontière HTTP, journaux. Relit en entier chaque fichier touché, pas seulement les lignes modifiées. Appelé par `review-pr`, sur le modèle de `revue-front` (issue #82).
