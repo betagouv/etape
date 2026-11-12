@@ -50,8 +50,8 @@ interface FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPa
  * - Contrôle Radix : brancher la valeur à la main, les attributs sur l'élément focalisable :
  *   `<Select value={field.value} onValueChange={field.onChange}>` puis
  *   `<SelectTrigger ref={field.ref} {...attributes}>`.
- * - Groupe de choix (radios, cases) : pas de `FormField`, dont le `<label>` ne peut
- *   nommer un groupe ; passer par `FieldSet` et `FieldLegend`.
+ * - Groupe de choix : pas de `FormField`, dont le `<label>` ne peut nommer un groupe.
+ *   Boutons radio : `FormRadioGroup` ; cases à cocher : `FieldSet` et `FieldLegend`.
  *
  * Le focus des erreurs revient à l'écran : `useForm({ shouldFocusError: false })`, puis
  * focus sur son résumé d'erreurs à la soumission.

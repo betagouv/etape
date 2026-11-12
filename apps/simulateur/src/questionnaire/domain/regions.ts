@@ -13,6 +13,8 @@
 // été retirées sur décision produit, et les réseaux régionalisés n'ont donc
 // pas à leur donner de lien.
 
+import { normalizeForSearch } from "@etape/utils/text";
+
 import { FIELD_REGION_RESIDENCE, FIELD_REGION_TRAVAIL } from "./questions";
 import type { Answers, AnswerValue } from "./types";
 
@@ -76,11 +78,8 @@ export function regionFromAnswers(answers: Answers): RegionCode | null {
 }
 
 /** Sans accent ni majuscule ; tirets et apostrophes → espace. */
-function normalize(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
+function normalizeNom(text: string): string {
+  return normalizeForSearch(text)
     .replace(/[\s'’-]+/g, " ")
     .trim();
 }
@@ -89,20 +88,20 @@ function normalize(text: string): string {
 const ARTICLE = /^(la|le|les|l) /;
 
 function searchKeys(region: Region): string[] {
-  const nom = normalize(region.nom);
+  const nom = normalizeNom(region.nom);
   return [nom, nom.replace(ARTICLE, "")];
 }
 
 /** Par début de nom : chercher au milieu proposerait la moitié de la liste dès la 1re lettre. */
 export function findRegions(query: string): readonly Region[] {
-  const wanted = normalize(query);
+  const wanted = normalizeNom(query);
   if (wanted === "") return REGIONS;
   return REGIONS.filter((region) => searchKeys(region).some((key) => key.startsWith(wanted)));
 }
 
 /** Le nom complet tapé, aux accents et majuscules près, vaut un choix. */
 export function findRegionByName(text: string): RegionCode | null {
-  const wanted = normalize(text);
+  const wanted = normalizeNom(text);
   if (wanted === "") return null;
   return REGIONS.find((region) => searchKeys(region).includes(wanted))?.code ?? null;
 }

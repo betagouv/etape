@@ -6,6 +6,8 @@ import {
   ComboboxInput,
   ComboboxList,
   ComboboxOption,
+  ComboboxOptionDetail,
+  ComboboxOptionTitle,
 } from "@etape/ui/components/combobox";
 
 afterEach(cleanup);
@@ -51,5 +53,21 @@ describe("Combobox", () => {
     expect(bretagne.getAttribute("aria-selected")).toBe("true");
     expect(corse.getAttribute("aria-selected")).toBe("false");
     expect(corse.getAttribute("data-active")).toBe("true");
+  });
+
+  it("garde le titre et les précisions dans le nom d'une option à plusieurs lignes", () => {
+    render(
+      <ComboboxList aria-label="Établissements">
+        <ComboboxOption id="carrefour">
+          <ComboboxOptionTitle>CARREFOUR</ComboboxOptionTitle>
+          <ComboboxOptionDetail label="Enseigne">CHAMPION</ComboboxOptionDetail>
+        </ComboboxOption>
+      </ComboboxList>,
+    );
+
+    const option = screen.getByRole("option", { name: /CARREFOUR.*Enseigne : CHAMPION/ });
+    expect(option.querySelector("[data-slot=combobox-option-detail]")?.textContent).toBe(
+      "Enseigne : CHAMPION",
+    );
   });
 });

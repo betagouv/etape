@@ -35,7 +35,11 @@ pnpm --filter @etape/api run typecheck
 - `src/account/` — `AccountService`.
 - `prisma/schema.prisma` — modèles `Account` et `Session` ; `prisma/migrations/`. Le client est généré dans `src/generated/prisma` (ignoré par le lint).
 
-Aucun module métier n'existe encore : le découpage cible est dans `architecture-api.md`, « Découpage des dossiers ».
+- `src/etablissement/` — `GET /api/etablissement`, recherche dans le répertoire Sirene de l'Insee (clé `INSEE_API_KEY`).
+- `src/secteur-activite/` — `GET /api/secteur-activite`, les 732 sous-classes de la NAF rév. 2 (`libelles-naf.ts`, lu aussi par `etablissement/`), sans session.
+- `src/common/validation.pipe.ts` — pipe global : une entrée déclarée par `{ schema }` est validée par le schéma du contrat.
+
+Le découpage cible des modules métier est dans `architecture-api.md`, « Découpage des dossiers ».
 
 ## Conventions
 
@@ -46,6 +50,6 @@ Aucun module métier n'existe encore : le découpage cible est dans `architectur
 
 ## État et pièges
 
-- Pas encore en place : filtre d'exceptions global, journaux pino et `correlationId`, Sentry, pipe de validation (choix resté ouvert). Ne pas supposer que l'en-tête `x-request-id` ou le corps `ApiErrorBody` attendus par `packages/api-client` sont déjà produits.
-- `packages/api-contract` n'est encore importé nulle part : la première route métier l'amorce.
+- Pas encore en place : filtre d'exceptions global, journaux pino et `correlationId`, Sentry. Ne pas supposer que l'en-tête `x-request-id` ou le corps `ApiErrorBody` attendus par `packages/api-client` sont déjà produits.
+- `packages/api-contract` et `packages/utils` sont lus compilés (`dist/`) : sans leur `run build`, l'API ne démarre pas hors de turbo.
 - `typecheck` et `test` lancent `prisma generate` : un `src/generated/` absent n'est pas une erreur.

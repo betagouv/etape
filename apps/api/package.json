@@ -16,6 +16,8 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@etape/api-contract": "workspace:*",
+    "@etape/utils": "workspace:*",
     "@nestjs/common": "^12.3.3",
     "@nestjs/config": "^12.1.0",
     "@nestjs/core": "^12.3.3",
@@ -32,7 +34,6 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@etape/api-contract": "workspace:*",
     "@etape/eslint-config": "workspace:*",
     "@etape/prettier-config": "workspace:*",
     "@nestjs/cli": "^12.0.11",

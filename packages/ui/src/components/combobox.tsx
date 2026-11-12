@@ -154,6 +154,35 @@ function ComboboxOption({
   );
 }
 
+/** Titre d'une option à plusieurs lignes, au-dessus de ses `ComboboxOptionDetail`. */
+function ComboboxOptionTitle({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="combobox-option-title"
+      className={cn("text-base font-medium", className)}
+      {...props}
+    />
+  );
+}
+
+/** Précision d'une option à plusieurs lignes, sous son `ComboboxOptionTitle` : « libellé : valeur ». */
+function ComboboxOptionDetail({
+  label,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"span"> & { label: React.ReactNode }) {
+  return (
+    <span
+      data-slot="combobox-option-detail"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    >
+      {label} : <span className="text-foreground">{children}</span>
+    </span>
+  );
+}
+
 function ComboboxEmpty({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
@@ -170,6 +199,8 @@ export {
   ComboboxList,
   ComboboxGroup,
   ComboboxOption,
+  ComboboxOptionTitle,
+  ComboboxOptionDetail,
   ComboboxEmpty,
   comboboxVariants,
 };

@@ -13,9 +13,10 @@ La seule chose que le front et l'API partagent : le **contrat de chaque route** 
 
 ## Lancer et vérifier
 
-Sources TypeScript sans build, **ne dépend que de zod** : ni NestJS, ni React, ni axios.
+**Ne dépend que de zod** : ni NestJS, ni React, ni axios. Compilé par `tsc` dans `dist/`, que Node lit (condition d'export `node` : l'API, les tests) ; TypeScript et Vite lisent `src/`. Turbo le construit avant `dev` et `test`, et le recompile à chaque modification pendant `pnpm run dev` (tâche `dev` lancée avec celle de l'API).
 
 ```bash
+pnpm --filter @etape/api-contract run build
 pnpm --filter @etape/api-contract run lint
 pnpm --filter @etape/api-contract run typecheck
 ```
@@ -32,4 +33,4 @@ pnpm --filter @etape/api-contract run typecheck
 
 ## État
 
-**Squelette vide volontaire** : aucune route, aucun consommateur. La première route s'écrit avec le premier vrai écran qui appelle l'API, pas avant. Ne pas ajouter de contrat « pour préparer ».
+Routes : `auth/` (session), `etablissement/` (recherche Sirene du volet « Ma situation professionnelle ») et `secteur-activite/` (NAF rév. 2). Un contrat s'écrit avec l'écran qui appelle la route, pas avant : ne pas en ajouter « pour préparer ».

@@ -51,6 +51,11 @@ const envSchema = z
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
 
     DATABASE_URL: z.url(),
+
+    /** Envoyée à Sirene dans l'en-tête `X-INSEE-Api-Key-Integration`. */
+    INSEE_API_KEY: z.string().min(1),
+    /** Version comprise, sans slash final : `https://api.insee.fr/api-sirene/3.11`. */
+    API_SIRENE_URL: z.url(),
   })
   // Deux fronts sur le même hôte seraient indiscernables, et une API servie
   // ailleurs que sur l'origine de son front ne recevrait pas ses cookies.

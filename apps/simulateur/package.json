@@ -13,6 +13,7 @@
   "dependencies": {
     "@etape/analytics": "workspace:*",
     "@etape/ui": "workspace:*",
+    "@etape/utils": "workspace:*",
     "@react-pdf/renderer": "^4.9.0",
     "lucide-react": "^1.69.0",
     "next": "16.4.5",

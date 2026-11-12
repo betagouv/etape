@@ -17,6 +17,7 @@ const VOLET_LABELS: PluralForms<VoletLabelForms> = {
   other: { noun: "sections", participle: "complétées" },
 };
 
+/** Le nombre de volets complétés, sur leur total. */
 export function computeDossierProgress(volets: VoletProgress[]): DossierProgress {
   return {
     completed: volets.filter(isVoletCompleted).length,

@@ -3,10 +3,12 @@ import { InfoIcon } from "lucide-react";
 
 import type { VoletNoticeContent } from "../domain/volets";
 
+/** Ce que reçoit `VoletNotice` : le contenu de l'encart, s'il y en a un. */
 export interface VoletNoticeProps {
   notice?: VoletNoticeContent;
 }
 
+/** L'encart d'information en tête d'un volet ; rien quand le volet n'en a pas. */
 export function VoletNotice({ notice }: VoletNoticeProps) {
   if (!notice) return null;
 

@@ -30,7 +30,8 @@
     "packages/api-client/**/*.ts": "pnpm --filter @etape/api-client run lint --fix",
     "packages/api-contract/**/*.ts": "pnpm --filter @etape/api-contract run lint --fix",
     "packages/session/**/*.{ts,tsx}": "pnpm --filter @etape/session run lint --fix",
-    "packages/ui/**/*.{ts,tsx}": "pnpm --filter @etape/ui run lint --fix"
+    "packages/ui/**/*.{ts,tsx}": "pnpm --filter @etape/ui run lint --fix",
+    "packages/utils/**/*.ts": "pnpm --filter @etape/utils run lint --fix"
   },
   "devDependencies": {
     "@etape/prettier-config": "workspace:*",

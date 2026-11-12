@@ -3,28 +3,21 @@ import { z } from "zod";
 import {
   AGE_MAXIMUM,
   AGE_MINIMUM,
-  computeDateNaissanceBounds,
-  parseDateNaissance,
+  isAgeMaximumRespected,
+  isAgeMinimumRespected,
 } from "./domain/date-naissance";
 import { isCleNirValid, NIR_PATTERN } from "./domain/validate-nir";
 
-function isAgeMinimumRespected(value: string): boolean {
-  const date = parseDateNaissance(value);
-  return date !== undefined && date <= computeDateNaissanceBounds(new Date()).max;
-}
-
-function isAgeMaximumRespected(value: string): boolean {
-  const date = parseDateNaissance(value);
-  return date !== undefined && date >= computeDateNaissanceBounds(new Date()).min;
-}
-
+/** Les civilités proposées. */
 export const CIVILITE = {
   MADAME: "madame",
   MONSIEUR: "monsieur",
 } as const;
 
+/** Une civilité, parmi celles de `CIVILITE`. */
 export type Civilite = (typeof CIVILITE)[keyof typeof CIVILITE];
 
+/** Libellé de chaque civilité. */
 export const CIVILITE_LABEL: Record<Civilite, string> = {
   [CIVILITE.MADAME]: "Madame",
   [CIVILITE.MONSIEUR]: "Monsieur",
@@ -38,8 +31,14 @@ const baseInformationsSchema = z.object({
     .string()
     .min(1, "Veuillez indiquer votre date de naissance.")
     .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Le format attendu est JJ/MM/AAAA.")
-    .refine(isAgeMinimumRespected, `Vous devez avoir au moins ${AGE_MINIMUM} ans.`)
-    .refine(isAgeMaximumRespected, `Vous devez avoir moins de ${AGE_MAXIMUM} ans.`),
+    .refine(
+      (value) => isAgeMinimumRespected(value, new Date()),
+      `Vous devez avoir au moins ${AGE_MINIMUM} ans.`,
+    )
+    .refine(
+      (value) => isAgeMaximumRespected(value, new Date()),
+      `Vous devez avoir moins de ${AGE_MAXIMUM} ans.`,
+    ),
   nationalite: z.string().min(1, "Veuillez choisir une nationalité."),
   nir: z
     .string()
@@ -59,28 +58,32 @@ const baseInformationsSchema = z.object({
     .regex(/^0[1-79]/, "Le numéro doit être un téléphone français (fixe ou mobile)."),
 });
 
-const nirCleSchema = baseInformationsSchema.pick({ nir: true, cleNir: true });
+/** Les champs que lit le contrôle de la clé : il ne s'exécute que s'ils sont valides. */
+const refinedFieldsSchema = baseInformationsSchema.pick({ nir: true, cleNir: true });
 
+/** Le schéma du formulaire « Mes informations » ; la clé est contrôlée contre le NIR. */
 export const informationsSchema = baseInformationsSchema.superRefine(
   (data, ctx) => {
     if (!isCleNirValid(data.nir, data.cleNir)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
+        path: ["cleNir"],
         message:
           "La clé ne correspond pas au numéro : vérifiez les 2 derniers chiffres de votre carte Vitale.",
-        path: ["cleNir"],
       });
     }
   },
   {
     // Sans `when`, zod saute ce contrôle dès qu'un champ est rejeté d'emblée : une civilité
     // vide suffisait à laisser passer une clé fausse.
-    when: ({ value }) => nirCleSchema.safeParse(value).success,
+    when: ({ value }) => refinedFieldsSchema.safeParse(value).success,
   },
 );
 
+/** Les valeurs du formulaire « Mes informations », telles que le schéma les valide. */
 export type InformationsFormData = z.infer<typeof informationsSchema>;
 
+/** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
 export type InformationsFieldName = keyof InformationsFormData;
 
 /** Libellés des champs, partagés par le formulaire et l'annonce de leurs erreurs. */
@@ -93,11 +96,13 @@ export const INFORMATIONS_FIELD_LABEL: Record<InformationsFieldName, string> = {
   telephone: "Téléphone",
 };
 
+/** Les sections du volet qui portent un compteur. */
 export const INFORMATIONS_SECTION = {
   IDENTITE: "identite",
   CONTACT: "contact",
 } as const;
 
+/** Une section du volet, parmi celles d'`INFORMATIONS_SECTION`. */
 export type InformationsSection = (typeof INFORMATIONS_SECTION)[keyof typeof INFORMATIONS_SECTION];
 
 /** Champs obligatoires de chaque section ; les champs préremplis n'y figurent pas. */
