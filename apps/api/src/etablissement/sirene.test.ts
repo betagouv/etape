@@ -14,6 +14,10 @@ describe("buildSireneSearchUrl", () => {
     );
   });
 
+  it.each(["503-932-568-00010", "503.932.568.00010"])("cherche un SIRET tapé « %s »", (search) => {
+    expect(query(search)).toBe("siret:50393256800010 AND statutDiffusionEtablissement:O");
+  });
+
   it("cherche chaque mot en début de nom ou de commune", () => {
     expect(query("carrefour le cannet")).toBe(
       "(raisonSociale:carrefour* OR libelleCommuneEtablissement:carrefour*) AND " +

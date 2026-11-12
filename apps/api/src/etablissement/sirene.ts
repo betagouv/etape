@@ -49,24 +49,24 @@ interface SireneEtablissement {
 }
 
 /**
- * Un SIRET (espaces tolérés), sinon chaque mot cherché en début de mot du nom ou
+ * Un SIRET (espaces, points et tirets tolérés), sinon chaque mot cherché en début de mot du nom ou
  * de la commune. `null` sans aucun mot : Sirene refuserait une requête vide.
  */
 export function buildSireneSearchUrl(baseUrl: string, search: string): URL | null {
-  const siret = search.replace(/\s/g, "");
+  const siret = search.replace(/[\s.-]/g, "");
   // Seuls lettres et chiffres passent : le reste ferait partie de la syntaxe de `q`.
   // Sirene ignore les accents ; les retirer évite qu'une saisie décomposée (NFD) soit coupée en deux mots.
   const words = stripDiacritics(search).match(/[\p{L}\p{N}]+/gu) ?? [];
 
-  const criteres = SIRET_PATTERN.test(siret)
+  const criteria = SIRET_PATTERN.test(siret)
     ? `siret:${siret}`
     : words
         .map((word) => `(raisonSociale:${word}* OR libelleCommuneEtablissement:${word}*)`)
         .join(" AND ");
 
-  if (criteres === "") return null;
+  if (criteria === "") return null;
 
-  const query = `${criteres} AND statutDiffusionEtablissement:O`;
+  const query = `${criteria} AND statutDiffusionEtablissement:O`;
 
   const url = new URL(`${baseUrl}/siret`);
   url.searchParams.set("q", query);
