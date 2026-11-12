@@ -26,6 +26,9 @@ import {
 /** Chaque frappe n'appelle pas Sirene, dont la clé a un quota. */
 const SEARCH_DELAY_MS = 300;
 
+/** Revenir à une recherche déjà faite ne rappelle pas Sirene pendant ce délai. */
+const SEARCH_STALE_TIME_MS = 5 * 60 * 1000;
+
 /** Le résumé d'erreurs mène à `#employeur`. */
 export const EMPLOYEUR_FIELD_ID = "employeur";
 
@@ -90,6 +93,7 @@ export function useEmployeurSearch(
     placeholderData: keepPreviousData,
     // Chaque relance automatique entame le quota de la clé Insee et retarde l'alerte : « Relancer la recherche » suffit.
     retry: false,
+    staleTime: SEARCH_STALE_TIME_MS,
   });
 
   // Pas `isError` : une requête qui n'a jamais abouti repasse en chargement pendant la relance, et l'alerte disparaîtrait avec le focus.
