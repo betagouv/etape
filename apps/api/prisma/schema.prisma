@@ -70,3 +70,60 @@ model Session {
   @@index([accountId])
   @@map("session")
 }
+
+// Copie du référentiel ROME de France Travail, rechargée quand sa version change.
+model MetierRome {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  code    String @unique
+  libelle String
+
+  // Absent de la dernière version importée : gardé pour ce qui le cite déjà.
+  isObsolete Boolean @default(false) @map("is_obsolete")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  appellations AppellationRome[]
+
+  @@map("metier_rome")
+}
+
+model AppellationRome {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  code String @unique
+
+  metierRomeId String     @map("metier_rome_id") @db.Uuid
+  metierRome   MetierRome @relation(fields: [metierRomeId], references: [id])
+
+  libelle        String
+  libelleCourt   String                        @map("libelle_court")
+  classification ClassificationAppellationRome
+
+  isObsolete Boolean @default(false) @map("is_obsolete")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@index([metierRomeId])
+  @@map("appellation_rome")
+}
+
+enum ClassificationAppellationRome {
+  PRINCIPALE
+  SYNONYME
+}
+
+model VersionRome {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  version String @unique
+
+  // Celle de France Travail (`lastModifiedDate`) ; `created_at` date l'import.
+  dateModification DateTime @map("date_modification") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("version_rome")
+}

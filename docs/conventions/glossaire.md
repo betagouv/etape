@@ -119,6 +119,19 @@ Définitions reprises des descriptions de `apps/simulateur/src/resultats/domain/
 | Contrat de professionnalisation | `contrat_professionnalisation` | à compléter                                                                                                                                                                          | `catalogue.ts` |
 | CFP                             | `cfp`                          | Congé de formation professionnelle                                                                                                                                                   | `catalogue.ts` |
 
+## Référentiel ROME (France Travail)
+
+Définitions relevées le 2026-11-13 dans la documentation de l'API « ROME 4.0 – Métiers » de francetravail.io et dans ses réponses (version 62 du ROME).
+
+| Terme métier                     | Identifiant        | Définition                                                                                                                                                                                                                      | Source                                                   |
+| -------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| ROME                             | `rome`             | Référentiel des métiers et de leurs appellations publié par France Travail, par versions numérotées ; développement du sigle à compléter (non sourcé)                                                                           | API ROME 4.0 – Métiers, francetravail.io                 |
+| Métier ROME                      | `metier_rome`      | Métier du ROME : un code unique d'une lettre et quatre chiffres (« D1102 ») et un libellé (« Boulanger / Boulangère ») ; 1 923 métiers dans la version 62. Distinct de `metier`, le projet de métier déclaré dans le simulateur | `GET /v1/metiers/metier`                                 |
+| Appellation ROME                 | `appellation_rome` | Intitulé rattaché à un seul métier ROME : un code unique en chiffres (« 38444 »), un libellé (« Boulanger-viennoisier / Boulangère-viennoisière ») et un libellé court ; 14 330 appellations dans la version 62                 | `GET /v1/metiers/metier`, champ `appellations`           |
+| Classification d'une appellation | `classification`   | `PRINCIPALE`, une seule par métier, ou `SYNONYME`                                                                                                                                                                               | `GET /v1/metiers/metier`, champ `appellations`           |
+| Version du ROME                  | `version_rome`     | Numéro de version du référentiel (« 62 ») et date de sa dernière modification, tels que France Travail les publie                                                                                                               | `GET /v1/metiers/version`                                |
+| Obsolète                         | `obsolete`         | Métier ou appellation absent de la dernière version importée : conservé en base et marqué (`is_obsolete`), jamais supprimé. France Travail porte un champ `obsolete` sur la lecture d'un métier, pas dans la liste              | décision du 2026-11-13 ; `GET /v1/metiers/metier/{code}` |
+
 ## Termes techniques proches du métier
 
 Ces termes ne sont **pas** métier : ils restent en anglais dans les identifiants (décision du 2026-09-15, `nommage.md`, « Cas tranchés »). Ils figurent ici pour qu'on ne les francise pas et qu'on ne les confonde pas avec un rôle métier.
