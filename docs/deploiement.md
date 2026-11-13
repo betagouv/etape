@@ -93,6 +93,8 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 | `COOKIE_ENCRYPTION_KEY`               | oui         | Chiffre la transaction de connexion (base64, 32 octets)           |
 | `TRUST_PROXY_HOPS`                    | non         | Proxys devant l'API, `2` par défaut                               |
 | `INSEE_API_KEY`                       | oui         | Clé de l'API Sirene, recherche de l'employeur                     |
+| `FRANCE_TRAVAIL_IO_ID`                | oui         | Identifiant de l'application francetravail.io, référentiel ROME   |
+| `FRANCE_TRAVAIL_IO_API_KEY`           | oui         | Clé de la même application                                        |
 | `FRANCECONNECT_CLIENT_ID`             | non         | Identifiant du client FranceConnect                               |
 | `FRANCECONNECT_CLIENT_SECRET`         | non         | Secret du client FranceConnect                                    |
 | `FRANCECONNECT_ENVIRONMENT`           | non         | `INTEGRATION_STANDARD_V2` (bac à sable) par défaut                |
