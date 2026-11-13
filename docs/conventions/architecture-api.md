@@ -809,7 +809,7 @@ src/
     dossier.prisma-repository.ts   ← implémentation Prisma
     dossier.mapper.ts              ← base → type de réponse du contrat
     dossier.module.ts
-  common/                          ← technique : pipe, filtre d'exception, décorateurs
+  common/                          ← technique : pipe, filtre d'exception, décorateurs, fonctions utilitaires
 ```
 
 Un sous-dossier n'apparaît que quand un module dépasse la poignée de fichiers (`auth/session/` en est l'exemple).

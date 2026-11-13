@@ -235,6 +235,28 @@ France Travail. La version de la copie est la dernière importée. Si France
 Travail revenait à une version déjà importée, sa ligne est redatée plutôt que
 dupliquée.
 
+### La recherche d'une appellation
+
+`GET /api/appellation-rome?search=…` sert le champ « Quel métier visez-vous ? ».
+Elle cherche dans les appellations, pas dans les métiers : chaque métier a une
+appellation `PRINCIPALE` qui porte son libellé, et les appellations contiennent
+en plus les intitulés que les personnes emploient (« Vendeur / Vendeuse en
+boulangerie-pâtisserie »). Chaque résultat porte le code et le libellé de son
+métier. Les obsolètes ne sont pas proposés.
+
+La saisie est comparée mot par mot, sans accents ni casse, et chaque mot doit
+figurer dans le libellé. Un seul `like` sur la saisie entière ne trouvait pas
+« développeur web » : le libellé est « Développeur / Développeuse web ».
+
+L'extension PostgreSQL `unaccent` retire les accents, des deux côtés de la
+comparaison. Elle est créée par une migration et fait partie de l'image
+`postgres:17-alpine`. Prisma ne sait pas l'appeler : la requête est en SQL
+brut.
+
+Aucun index : la requête lit les 14 330 appellations en 12 ms environ (mesuré
+en local, version 62). À revoir si le référentiel grossit d'un ordre de
+grandeur.
+
 ### Limite connue
 
 Si l'API tourne un jour en plusieurs instances, chacune lancera la tâche. Un

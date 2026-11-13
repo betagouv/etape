@@ -37,8 +37,9 @@ pnpm --filter @etape/api run typecheck
 
 - `src/etablissement/` — `GET /api/etablissement`, recherche dans le répertoire Sirene de l'Insee (clé `INSEE_API_KEY`).
 - `src/secteur-activite/` — `GET /api/secteur-activite`, les 732 sous-classes de la NAF rév. 2 (`libelles-naf.ts`, lu aussi par `etablissement/`), sans session.
-- `src/metier-rome/` — copie du référentiel ROME de France Travail, sans route pour l'instant : `FranceTravailClient` (identifiants `FRANCE_TRAVAIL_IO_*`), `MetierRomeService.syncMetiersRome()`, et `MetierRomeSyncTask`, qui la lance le 1er de chaque mois et au démarrage tant que la base est vide. Détail dans `docs/donnees.md`.
+- `src/metier-rome/` — copie du référentiel ROME de France Travail : `FranceTravailClient` (identifiants `FRANCE_TRAVAIL_IO_*`), `MetierRomeService.syncMetiersRome()`, et `MetierRomeSyncTask`, qui la lance le 1er de chaque mois et au démarrage tant que la base est vide. `GET /api/appellation-rome` (`appellation-rome.controller.ts`) y cherche une appellation mot par mot, sans accents, avec session. Détail dans `docs/donnees.md`.
 - `src/common/validation.pipe.ts` — pipe global : une entrée déclarée par `{ schema }` est validée par le schéma du contrat.
+- `src/common/like-pattern.ts` — `escapeLikePattern`, pour tout `like` construit à partir d'une saisie.
 
 Le découpage cible des modules métier est dans `architecture-api.md`, « Découpage des dossiers ».
 
