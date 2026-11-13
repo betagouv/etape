@@ -33,7 +33,7 @@ aujourd'hui, et la minimisation doit rester défendable à l'homologation.
 **Les jetons**, hors l'`id_token` d'une session ouverte, gardé pour le seul
 `id_token_hint` de la déconnexion et effacé avec elle.
 
-## Les deux tables
+## Les deux tables de l'authentification
 
 Le schéma est dans [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma).
 En résumé :
@@ -72,8 +72,9 @@ updated_at = case
 `is distinct from` et non `<>` : le second répond `null` dès qu'un champ est
 absent, donc jamais « vrai ».
 
-C'est la seule requête écrite en SQL brut du projet
-([`account.service.ts`](../apps/api/src/account/account.service.ts)).
+C'est l'une des trois requêtes écrites en SQL brut du projet
+([`account.service.ts`](../apps/api/src/account/account.service.ts)) ; les deux
+autres écrivent le référentiel ROME, plus bas.
 L'API de Prisma ne sait pas exprimer cette condition, et lire-puis-écrire ne
 tiendrait pas : deux onglets qui reviennent en même temps créeraient deux lignes.
 `on conflict` laisse la base trancher.
@@ -157,8 +158,9 @@ ferait deux versions qui divergeraient dès la première mise à jour du profil.
 
 Les lignes expirées ne sont jamais rendues, les lectures vérifiant la date. Leur
 suppression est du ménage, fait à l'écriture — c'est-à-dire à la connexion, donc
-rarement. Une minuterie demanderait `@nestjs/schedule` et un verrou pour ne pas
-tourner deux fois sur deux instances.
+rarement. Une minuterie est possible depuis que `@nestjs/schedule` est installé
+(import du référentiel ROME), mais il lui faudrait un verrou pour ne pas tourner
+deux fois sur deux instances.
 
 ### La transaction de connexion n'est pas en base
 
@@ -173,6 +175,72 @@ un code, et `returnTo` est borné à 512 caractères.
 Cycles de vie et identifiants distincts, Keycloak gère son schéma lui-même
 (Liquibase) et il ne faut pas y toucher, et un dump des données du service ne
 contient pas les empreintes de mots de passe de l'IAM.
+
+## Le référentiel ROME : France Travail fait foi, la base recopie
+
+Le volet « Mon futur métier » doit retrouver un métier du ROME à partir d'une
+saisie. L'API « ROME 4.0 – Métiers » de France Travail ne peut pas servir à
+chaque frappe : le quota de notre application y est de 1, et deux appels
+enchaînés reçoivent une 429. La base en garde donc une copie, rechargée quand
+la version du ROME change. Le référentiel est public : ces tables ne
+contiennent aucune donnée personnelle.
+
+| Table              | Rôle                                                                |
+| ------------------ | ------------------------------------------------------------------- |
+| `metier_rome`      | Un métier du ROME : son code (`D1102`) et son libellé               |
+| `appellation_rome` | Un intitulé rattaché à un seul métier, `PRINCIPALE` ou `SYNONYME`   |
+| `version_rome`     | Les versions importées ; la dernière importée est celle de la copie |
+
+Le code est dans [`apps/api/src/metier-rome/`](../apps/api/src/metier-rome/).
+
+### Ce qui déclenche un import
+
+`MetierRomeSyncTask` lance la synchronisation le 1er de chaque mois à 3 h, heure
+du serveur, et au démarrage tant qu'aucune version n'est en base. À chaque
+fois, `MetierRomeService` lit la version publiée (`GET /metiers/version`) et ne
+télécharge le référentiel que si elle diffère de la dernière importée. Tout
+arrive en un seul appel : 1 923 métiers et 14 330 appellations en version 62.
+
+France Travail injoignable, ou un secret faux, n'empêche pas l'API de démarrer
+et ne l'arrête pas : l'erreur est journalisée, et la copie reste ce qu'elle
+était.
+
+### Un métier retiré est marqué, jamais supprimé
+
+Un métier ou une appellation que la nouvelle version ne contient plus passe à
+`is_obsolete`, et la marque est retirée s'il revient. France Travail a bien un
+champ `obsolete`, mais seulement sur la lecture d'un métier : la liste ne le
+rend pas. C'est donc l'absence d'un code dans la liste qui fait la marque.
+
+Non vérifié : que la liste écarte bien les métiers que France Travail tient
+pour obsolètes. Il faudrait lire les métiers un par un pour le savoir.
+
+### Tout ou rien, et `updated_at` ne bouge que si la ligne change
+
+L'import tient dans une transaction : métiers, appellations, marques et version
+sont écrits ensemble ou pas du tout. Une liste vide est refusée avant toute
+écriture — elle marquerait tout le référentiel obsolète.
+
+Les deux écritures en masse sont en SQL brut
+([`metier-rome.prisma-repository.ts`](../apps/api/src/metier-rome/metier-rome.prisma-repository.ts)) :
+Prisma ne sait pas créer ou mettre à jour des lignes en masse. Leur `where … is
+distinct from` ne touche que les lignes qui changent, pour la même raison que
+sur `account` : `updated_at` date la dernière modification réelle, pas le
+dernier import.
+
+### `version_rome` garde une ligne par version
+
+`created_at` y date l'import, `date_modification` reprend la date publiée par
+France Travail. La version de la copie est la dernière importée. Si France
+Travail revenait à une version déjà importée, sa ligne est redatée plutôt que
+dupliquée.
+
+### Limite connue
+
+Si l'API tourne un jour en plusieurs instances, chacune lancera la tâche. Un
+import rejoué ne réécrit aucune ligne inchangée, mais les instances
+partageraient le quota de France Travail (en-têtes
+`X-Ratelimit-*-Clientidlimiter`).
 
 ## Migrations
 

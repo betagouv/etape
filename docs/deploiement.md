@@ -18,7 +18,7 @@ celles de l'environnement visé.
 | `auth`        | nginx : refuse tout sauf les realms applicatifs                         | son sous-domaine |
 | `keycloak`    | IAM, broker FranceConnect, thème ETAPE                                  | non              |
 | `keycloak-db` | PostgreSQL de Keycloak                                                  | non              |
-| `app-db`      | PostgreSQL applicative : comptes, sessions                              | non              |
+| `app-db`      | PostgreSQL applicative : comptes, sessions, référentiel ROME            | non              |
 
 Une origine par app, et c'est voulu :
 
