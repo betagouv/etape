@@ -20,10 +20,12 @@ function nirToNumber(nir: string): number {
   return Number(upper);
 }
 
+/** La clé attendue pour ce NIR : 97 moins le reste de sa division par 97. */
 export function computeCleNir(nir: string): number {
   return 97 - (nirToNumber(nir) % 97);
 }
 
+/** Vrai si la clé saisie est celle du NIR. */
 export function isCleNirValid(nir: string, cle: string): boolean {
   return computeCleNir(nir) === Number(cle);
 }

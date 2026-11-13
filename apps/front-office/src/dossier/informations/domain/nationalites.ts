@@ -1,10 +1,26 @@
+import { normalizeForSearch } from "@etape/utils/text";
+
+import { selectPlural, type PluralForms } from "@/lib/plural";
+
+/** Une nationalité : son libellé et le code de son pays. */
 export interface Nationalite {
   label: string;
+  /** Les deux lettres du pays, en minuscules : la valeur enregistrée, et le nom de son drapeau. */
   code: string;
 }
 
-export const SUGGESTION_NATIONALITE = "Française";
+/** Le code de la nationalité proposée en tête de liste. */
+export const SUGGESTION_NATIONALITE = "fr";
 
+/** Affiché dans la liste, et annoncé, quand la recherche ne retient aucune nationalité. */
+export const NO_NATIONALITE_MESSAGE = "Aucune nationalité ne correspond.";
+
+const NATIONALITE_FOUND_LABELS: PluralForms<string> = {
+  one: "nationalité trouvée",
+  other: "nationalités trouvées",
+};
+
+/** Les nationalités proposées par le champ. */
 export const NATIONALITES: readonly Nationalite[] = [
   { label: "Afghane", code: "af" },
   { label: "Albanaise", code: "al" },
@@ -203,21 +219,51 @@ export const NATIONALITES: readonly Nationalite[] = [
   { label: "Zimbabwéenne", code: "zw" },
 ];
 
-const NATIONALITE_BY_LABEL = new Map(NATIONALITES.map((n) => [n.label, n]));
+const NATIONALITE_BY_CODE = new Map(NATIONALITES.map((n) => [n.code, n]));
 
-function normalize(text: string): string {
-  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
-
+/** Les nationalités dont le libellé contient la recherche, sans casse ni accents ; toutes si elle est vide. */
 export function findNationalites(query: string): readonly Nationalite[] {
   const trimmed = query.trim();
   if (!trimmed) return NATIONALITES;
-  const normalized = normalize(trimmed);
-  return NATIONALITES.filter((n) => normalize(n.label).includes(normalized));
+  const normalized = normalizeForSearch(trimmed);
+  return NATIONALITES.filter((n) => normalizeForSearch(n.label).includes(normalized));
 }
 
-export function findNationaliteByLabel(label: string): Nationalite | undefined {
-  return NATIONALITE_BY_LABEL.get(label);
+/** La nationalité qui porte ce code, sinon `undefined`. */
+export function findNationaliteByCode(code: string): Nationalite | undefined {
+  return NATIONALITE_BY_CODE.get(code);
+}
+
+/** Les nationalités d'une recherche, la suggestion mise à part. */
+export interface NationaliteGroups {
+  /** La nationalité proposée en tête de liste, quand la recherche la retient. */
+  suggestion: Nationalite | null;
+  nationalites: readonly Nationalite[];
+}
+
+/** Met la suggestion à part des autres nationalités : la liste l'affiche en tête, dans son propre groupe. */
+export function splitSuggestion(nationalites: readonly Nationalite[]): NationaliteGroups {
+  const suggestion = nationalites.find(({ code }) => code === SUGGESTION_NATIONALITE) ?? null;
+  return {
+    suggestion,
+    nationalites: suggestion
+      ? nationalites.filter((nationalite) => nationalite !== suggestion)
+      : nationalites,
+  };
+}
+
+/**
+ * Ce qu'annonce la région `role="status"` : rien tant que la liste est fermée ou que rien
+ * n'est recherché, sinon ce que la liste affiche.
+ */
+export function findNationaliteAnnouncement(
+  isListOpen: boolean,
+  searchText: string,
+  nationaliteCount: number,
+): string {
+  if (!isListOpen || searchText.trim() === "") return "";
+  if (nationaliteCount === 0) return NO_NATIONALITE_MESSAGE;
+  return `${nationaliteCount} ${selectPlural(nationaliteCount, NATIONALITE_FOUND_LABELS)}`;
 }
 
 /*
@@ -230,6 +276,7 @@ const FLAG_URLS = import.meta.glob<string>("/node_modules/circle-flags/flags/*.s
   eager: true,
 });
 
+/** L'adresse du drapeau d'un pays, par son code à deux lettres ; vide si le drapeau manque. */
 export function flagUrl(code: string): string {
   return FLAG_URLS[`/node_modules/circle-flags/flags/${code}.svg`] ?? "";
 }

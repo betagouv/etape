@@ -92,14 +92,16 @@ Modèle complet et commenté : [`deploy/.env.example`](../deploy/.env.example).
 | `BACK_OFFICE_KEYCLOAK_CLIENT_SECRET`  | oui         | Secret du client `etape-api` du realm `etape-back-office`         |
 | `COOKIE_ENCRYPTION_KEY`               | oui         | Chiffre la transaction de connexion (base64, 32 octets)           |
 | `TRUST_PROXY_HOPS`                    | non         | Proxys devant l'API, `2` par défaut                               |
+| `INSEE_API_KEY`                       | oui         | Clé de l'API Sirene, recherche de l'employeur                     |
 | `FRANCECONNECT_CLIENT_ID`             | non         | Identifiant du client FranceConnect                               |
 | `FRANCECONNECT_CLIENT_SECRET`         | non         | Secret du client FranceConnect                                    |
 | `FRANCECONNECT_ENVIRONMENT`           | non         | `INTEGRATION_STANDARD_V2` (bac à sable) par défaut                |
 | `FRANCECONNECT_EIDAS`                 | non         | Niveau eIDAS demandé, `EIDAS1` par défaut                         |
 | `KEYCLOAK_TEST_USER_PASSWORD`         | non         | Crée `test@etape.local` avec ce mot de passe                      |
 | `SMTP_*`                              | non         | Envoi par Brevo ; sans lui, pas d'email du tout                   |
+| `MATOMO_SITE_ID`                      | non         | Site Matomo de l'environnement ; vide : aucune mesure d'audience  |
 
-Trois pièges tiennent au moment où ces valeurs sont lues :
+Quatre pièges tiennent au moment où ces valeurs sont lues :
 
 - `KEYCLOAK_ADMIN_PASSWORD` ne crée le compte qu'au **tout premier** démarrage.
   Le modifier ensuite n'a aucun effet — il faut passer par la console.
@@ -110,6 +112,12 @@ Trois pièges tiennent au moment où ces valeurs sont lues :
   `@`, `:` ou `/`, qui y changeraient de sens.
 - Les deux `…_KEYCLOAK_CLIENT_SECRET`, à l'inverse, sont réappliqués à chaque
   démarrage de Keycloak : ce sont les seuls qui se corrigent en redéployant.
+- `MATOMO_SITE_ID` est un **argument de build**, pas une variable d'exécution :
+  les bundles des fronts le figent. Le changer demande de reconstruire les
+  images, un simple redémarrage garde l'ancien. Chaque environnement a son site
+  sur `stats.beta.gouv.fr` (272 pour la recette, celui de la production à
+  demander sur `#incubateur-ops`). Les previews de PR mesurent aussi dans le site de
+  recette (`.github/workflows/preview.yml`) ; `main.dev` ne mesure rien.
 
 `KEYCLOAK_TEST_USER_PASSWORD` mérite un mot. Aucun identifiant n'est versionné :
 le fichier de realm ne crée plus de compte, et `test@etape.local` n'existe que si

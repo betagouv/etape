@@ -8,6 +8,8 @@ import { CsrfGuard } from "./auth/csrf.guard.js";
 import { FrontGuard } from "./auth/front.guard.js";
 import { validateEnv } from "./config/env.js";
 import { DatabaseModule } from "./database/database.module.js";
+import { EtablissementModule } from "./etablissement/etablissement.module.js";
+import { SecteurActiviteModule } from "./secteur-activite/secteur-activite.module.js";
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { DatabaseModule } from "./database/database.module.js";
     ThrottlerModule.forRoot({ throttlers: [{ ttl: minutes(1), limit: 300 }] }),
     DatabaseModule,
     AuthModule,
+    EtablissementModule,
+    SecteurActiviteModule,
   ],
   // Dans cet ordre : le front d'abord, qu'un hôte inconnu soit refusé avant de
   // compter dans la limite de débit, et que la garde CSRF connaisse l'origine

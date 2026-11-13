@@ -1,0 +1,156 @@
+import { EtablissementSchema } from "@etape/api-contract";
+import { z } from "zod";
+
+import { isDateDemissionInFuture } from "./domain/date-demission";
+
+/** Les réponses à la question sur la démission. */
+export const DEMISSION = {
+  OUI: "oui",
+  NON: "non",
+} as const;
+
+/** Une réponse, parmi celles de `DEMISSION`. */
+export type Demission = (typeof DEMISSION)[keyof typeof DEMISSION];
+
+/** Libellé de chaque réponse. */
+export const DEMISSION_LABEL: Record<Demission, string> = {
+  [DEMISSION.OUI]: "Oui",
+  [DEMISSION.NON]: "Non",
+};
+
+/** L'employeur se choisit dans Sirene, ou se saisit à la main quand la recherche échoue. */
+export const EMPLOYEUR_ENTRY_MODE = {
+  SEARCH: "search",
+  MANUAL: "manual",
+} as const;
+
+/** Un mode de saisie, parmi ceux d'`EMPLOYEUR_ENTRY_MODE`. */
+export type EmployeurEntryMode = (typeof EMPLOYEUR_ENTRY_MODE)[keyof typeof EMPLOYEUR_ENTRY_MODE];
+
+const SIRET_PATTERN = /^\d{14}$/;
+
+const REQUIRED_MESSAGES = {
+  employeur: "Veuillez choisir votre employeur.",
+  denomination: "Veuillez saisir le nom de votre employeur.",
+  secteurActivite: "Veuillez choisir le secteur d’activité.",
+  adresse: "Veuillez saisir l’adresse de votre employeur.",
+  dateDemission: "Veuillez choisir la date de votre démission.",
+} as const;
+
+const baseSituationProfessionnelleSchema = z.object({
+  employeurEntryMode: z.enum(EMPLOYEUR_ENTRY_MODE),
+  employeur: EtablissementSchema.nullable(),
+  denomination: z.string().trim(),
+  siret: z.string(),
+  secteurActivite: z.string(),
+  adresse: z.string().trim(),
+  intitulePoste: z.string().trim().min(1, "Veuillez saisir l’intitulé de votre poste."),
+  demission: z.enum(DEMISSION, "Veuillez indiquer si vous avez remis votre démission."),
+  dateDemission: z.string(),
+});
+
+/** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */
+const refinedFieldsSchema = baseSituationProfessionnelleSchema.pick({
+  employeurEntryMode: true,
+  employeur: true,
+  denomination: true,
+  siret: true,
+  secteurActivite: true,
+  adresse: true,
+  dateDemission: true,
+});
+
+/** Le schéma du formulaire « Ma situation professionnelle » ; seuls les champs du mode en cours sont exigés. */
+export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema.superRefine(
+  (data, ctx) => {
+    const require = (path: keyof typeof REQUIRED_MESSAGES, isFilled: boolean): void => {
+      if (!isFilled)
+        ctx.addIssue({ code: "custom", path: [path], message: REQUIRED_MESSAGES[path] });
+    };
+
+    if (data.demission === DEMISSION.OUI) {
+      require("dateDemission", data.dateDemission !== "");
+      if (isDateDemissionInFuture(data.dateDemission, new Date())) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dateDemission"],
+          message: "La date de votre démission ne peut pas être dans le futur.",
+        });
+      }
+    }
+
+    if (data.employeurEntryMode === EMPLOYEUR_ENTRY_MODE.SEARCH) {
+      require("employeur", data.employeur !== null);
+      return;
+    }
+
+    require("denomination", data.denomination !== "");
+    if (!SIRET_PATTERN.test(data.siret.replace(/\s/g, ""))) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["siret"],
+        message: "Le numéro SIRET doit comporter 14 chiffres.",
+      });
+    }
+    require("secteurActivite", data.secteurActivite !== "");
+    require("adresse", data.adresse !== "");
+  },
+  {
+    // Sans `when`, zod saute ce contrôle dès qu'un champ est rejeté d'emblée : l'employeur
+    // n'apparaîtrait qu'au second envoi.
+    when: ({ value }) => refinedFieldsSchema.safeParse(value).success,
+  },
+);
+
+/** Les valeurs du formulaire « Ma situation professionnelle », telles que le schéma les valide. */
+export type SituationProfessionnelleFormData = z.infer<typeof situationProfessionnelleSchema>;
+
+/** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
+export type SituationProfessionnelleFieldName = keyof SituationProfessionnelleFormData;
+
+/** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
+export const SITUATION_PROFESSIONNELLE_FIELD_LABEL: Record<
+  Exclude<SituationProfessionnelleFieldName, "employeurEntryMode">,
+  string
+> = {
+  employeur: "Votre employeur",
+  denomination: "Nom de votre employeur",
+  siret: "Numéro SIRET",
+  secteurActivite: "Secteur d’activité",
+  adresse: "Adresse",
+  intitulePoste: "Intitulé de votre poste",
+  demission: "Avez-vous déjà remis votre démission à votre employeur ?",
+  dateDemission: "Date de votre démission",
+};
+
+/** Les sections du volet qui portent un compteur. */
+export const SITUATION_PROFESSIONNELLE_SECTION = {
+  EMPLOI: "emploi",
+  DEMISSION: "demission",
+} as const;
+
+/** Une section du volet, parmi celles de `SITUATION_PROFESSIONNELLE_SECTION`. */
+export type SituationProfessionnelleSection =
+  (typeof SITUATION_PROFESSIONNELLE_SECTION)[keyof typeof SITUATION_PROFESSIONNELLE_SECTION];
+
+/** Les champs exigés par chaque mode de saisie de l'employeur. */
+export const EMPLOYEUR_FIELDS: Record<
+  EmployeurEntryMode,
+  readonly SituationProfessionnelleFieldName[]
+> = {
+  [EMPLOYEUR_ENTRY_MODE.SEARCH]: ["employeur"],
+  [EMPLOYEUR_ENTRY_MODE.MANUAL]: ["denomination", "siret", "secteurActivite", "adresse"],
+};
+
+/** La date n'est exigée qu'après un « oui » (maquette 10). */
+export function findSectionFields(
+  mode: EmployeurEntryMode,
+  demission: Demission | undefined,
+): Record<SituationProfessionnelleSection, readonly SituationProfessionnelleFieldName[]> {
+  return {
+    // 2 champs en recherche, 5 en saisie manuelle (maquettes 01 et 07).
+    [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: [...EMPLOYEUR_FIELDS[mode], "intitulePoste"],
+    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]:
+      demission === DEMISSION.OUI ? ["demission", "dateDemission"] : ["demission"],
+  };
+}

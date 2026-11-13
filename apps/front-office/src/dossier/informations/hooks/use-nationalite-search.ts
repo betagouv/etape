@@ -1,110 +1,101 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from "react";
-import { flushSync } from "react-dom";
 
-import { findNationalites, SUGGESTION_NATIONALITE, type Nationalite } from "../domain/nationalites";
+import { useListboxNavigation } from "@etape/ui/hooks/use-listbox-navigation";
 
-interface UseNationaliteSearchOptions {
-  idPrefix: string;
-  onSelect: (value: string) => void;
+import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import {
+  findNationaliteAnnouncement,
+  findNationaliteByCode,
+  findNationalites,
+  splitSuggestion,
+  type Nationalite,
+} from "../domain/nationalites";
+
+/** Le résumé d'erreurs mène à `#nationalite`. */
+export const NATIONALITE_FIELD_ID = "nationalite";
+
+/** L'id de l'option d'une nationalité, que désigne l'`aria-activedescendant` de la recherche. */
+export function nationaliteOptionId({ code }: Nationalite): string {
+  return `${NATIONALITE_FIELD_ID}-option-${code}`;
 }
 
+/** La liste se filtre à chaque frappe : on n'annonce que le nombre où la saisie s'arrête. */
+const ANNOUNCEMENT_DELAY_MS = 300;
+
+/** Les gestionnaires à poser sur le champ de recherche. */
 export interface NationaliteSearchInputHandlers {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
 }
 
+/** Ce que renvoie `useNationaliteSearch` : l'état de la recherche et ses actions. */
 export interface UseNationaliteSearchResult {
   searchText: string;
+  isListOpen: boolean;
+  /** La nationalité choisie, pour le drapeau et le texte du champ. */
+  selected: Nationalite | undefined;
+  /** La nationalité proposée en tête de liste, quand la recherche la retient. */
   suggestion: Nationalite | null;
   nationalites: readonly Nationalite[];
-  activeValue: string | null;
-  optionId: (label: string) => string;
+  /** Pour la région `role="status"` : vide tant que la liste est fermée ou que rien n'est recherché. */
+  announcement: string;
+  active: Nationalite | null;
   inputHandlers: NationaliteSearchInputHandlers;
-  select: (label: string) => void;
-  reset: () => void;
+  select: (nationalite: Nationalite) => void;
+  /** Ouvre ou ferme la liste ; à la fermeture, la recherche repart de zéro. */
+  setListOpen: (isOpen: boolean) => void;
 }
 
-const NO_ACTIVE = -1;
-
-export function useNationaliteSearch({
-  idPrefix,
-  onSelect,
-}: UseNationaliteSearchOptions): UseNationaliteSearchResult {
+/** Choix d'une nationalité dans une liste que filtre la recherche. La valeur est le code. */
+export function useNationaliteSearch(
+  code: string,
+  onChange: (code: string) => void,
+): UseNationaliteSearchResult {
   const [searchText, setSearchText] = useState("");
-  const [activeIndex, setActiveIndex] = useState(NO_ACTIVE);
+  const [isListOpen, setOpen] = useState(false);
 
-  const filtered = findNationalites(searchText);
+  const { suggestion, nationalites } = splitSuggestion(findNationalites(searchText));
+  const options = suggestion ? [suggestion, ...nationalites] : nationalites;
 
-  const suggestionEntry = filtered.find((n) => n.label === SUGGESTION_NATIONALITE);
-  const suggestion = suggestionEntry ?? null;
-  const nationalites = suggestion
-    ? filtered.filter((n) => n.label !== SUGGESTION_NATIONALITE)
-    : filtered;
+  const navigation = useListboxNavigation({
+    items: options,
+    optionId: nationaliteOptionId,
+    isOpen: isListOpen,
+    onSelect: (nationalite) => select(nationalite),
+  });
+  const announcement = useDebouncedValue(
+    findNationaliteAnnouncement(isListOpen, searchText, options.length),
+    ANNOUNCEMENT_DELAY_MS,
+  );
 
-  const allItems = suggestion ? [suggestion, ...nationalites] : [...nationalites];
-
-  const active = activeIndex >= 0 && activeIndex < allItems.length ? activeIndex : NO_ACTIVE;
-  const activeValue = active !== NO_ACTIVE ? allItems[active].label : null;
-
-  const optionId = (label: string): string =>
-    `${idPrefix}-option-${label.toLowerCase().replace(/\s+/g, "-")}`;
-
-  function select(label: string): void {
-    onSelect(label);
+  function setListOpen(isOpen: boolean): void {
+    setOpen(isOpen);
+    if (isOpen) return;
     setSearchText("");
-    setActiveIndex(NO_ACTIVE);
+    navigation.reset();
   }
 
-  function reset(): void {
-    setSearchText("");
-    setActiveIndex(NO_ACTIVE);
-  }
-
-  function activate(index: number): void {
-    flushSync(() => {
-      setActiveIndex(index);
-    });
-    const item = allItems[index];
-    if (item) {
-      document.getElementById(optionId(item.label))?.scrollIntoView({ block: "nearest" });
-    }
-  }
-
-  function handleChange(event: ChangeEvent<HTMLInputElement>): void {
-    setSearchText(event.target.value);
-    setActiveIndex(NO_ACTIVE);
-  }
-
-  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
-    const last = allItems.length - 1;
-    switch (event.key) {
-      case "ArrowDown":
-        event.preventDefault();
-        if (last >= 0) activate(Math.min(active + 1, last));
-        return;
-      case "ArrowUp":
-        event.preventDefault();
-        if (last >= 0) activate(active > 0 ? active - 1 : last);
-        return;
-      case "Enter":
-        if (activeValue === null) return;
-        event.preventDefault();
-        select(activeValue);
-        return;
-    }
+  function select(nationalite: Nationalite): void {
+    onChange(nationalite.code);
+    setListOpen(false);
   }
 
   return {
     searchText,
+    isListOpen,
+    selected: findNationaliteByCode(code),
     suggestion,
     nationalites,
-    activeValue,
-    optionId,
+    announcement,
+    active: navigation.active,
     inputHandlers: {
-      onChange: handleChange,
-      onKeyDown: handleKeyDown,
+      onChange: (event) => {
+        setSearchText(event.target.value);
+        navigation.reset();
+      },
+      onKeyDown: navigation.onKeyDown,
     },
     select,
-    reset,
+    setListOpen,
   };
 }

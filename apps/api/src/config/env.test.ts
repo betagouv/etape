@@ -13,6 +13,8 @@ const validEnv = {
   KEYCLOAK_CLIENT_ID: "etape-api",
   COOKIE_ENCRYPTION_KEY: Buffer.alloc(32).toString("base64"),
   DATABASE_URL: "postgresql://etape:etape@localhost:5432/etape",
+  INSEE_API_KEY: "cle-insee",
+  API_SIRENE_URL: "https://api.insee.fr/api-sirene/3.11",
 };
 
 describe("validateEnv", () => {

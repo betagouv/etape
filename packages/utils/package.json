@@ -1,0 +1,32 @@
+{
+  "name": "@etape/utils",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "prettier": "@etape/prettier-config",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    "./text": {
+      "types": "./src/text.ts",
+      "node": "./dist/text.js",
+      "default": "./src/text.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@etape/eslint-config": "workspace:*",
+    "@etape/prettier-config": "workspace:*",
+    "@types/node": "^24.13.6",
+    "eslint": "^9",
+    "typescript": "^5",
+    "vitest": "^5.1.0"
+  }
+}

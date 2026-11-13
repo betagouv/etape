@@ -1,7 +1,12 @@
 # Pratiques React — ETAPE
 
 **Statut** : Décidé · **Décidé le** : 2026-09-22 · **Par** : l'équipe, en réunion d'arbitrage
-**Portée** : `apps/site`, `apps/simulateur`, `packages/ui`. **`apps/keycloak-theme` n'y est pas** : le thème Keycloak est construit par Keycloakify, une bonne part de son code est générée, et il n'a pas été audité contre ce document — ses écarts ne sont donc pas listés ici. À rattacher à la portée le jour où il sera repris à la main.
+**Portée** : `apps/site`, `apps/simulateur`, `packages/ui` ; `apps/front-office` et `apps/back-office`, qui reprennent les décisions front déjà actées (décision 12 de [`stack-front.md`](./stack-front.md)) ; et `apps/keycloak-theme`, rattaché comme prévu le jour où il serait repris à la main — c'est fait depuis la refonte des écrans d'après les maquettes FRONT-OFFICE (connexion #102, mot de passe oublié #105 et #116, inscription #110). Le thème n'a pas été audité en bloc : ses écarts ne sont pas listés ici et se reprennent au fil de l'eau. Ce que Keycloakify impose reste hors de la règle :
+
+- la signature de `Template` et des pages (`TemplateProps`, `PageProps`) : la limite de six props ne s'y applique pas, les ajouts d'ETAPE passent par `slots` ;
+- les pages en `export default`, chargées par `lazy()` dans `KcPage.tsx` ;
+- le code généré (`src/kc.gen.tsx`) et les écrans qui tombent sur `DefaultPage` ;
+- les noms de champ passés à `messagesPerField`, écrits en littéral (exception de [`typescript.md`](./typescript.md) §3).
 
 Ce document dit **comment écrire le code**, là où [`stack-front.md`](./stack-front.md) dit **quels outils on utilise**. Le nommage relève de [`nommage.md`](./nommage.md), le typage de [`typescript.md`](./typescript.md), l'accessibilité de [`accessibilite.md`](./accessibilite.md).
 

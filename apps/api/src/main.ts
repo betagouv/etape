@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 
 import { AppModule } from "./app.module.js";
+import { createValidationPipe } from "./common/validation.pipe.js";
 import type { Env } from "./config/env.js";
 
 /**
@@ -28,6 +29,7 @@ async function bootstrap(): Promise<void> {
   app.set("trust proxy", config.get("TRUST_PROXY_HOPS", { infer: true }));
   app.use(helmet());
   app.use(cookieParser());
+  app.useGlobalPipes(createValidationPipe());
 
   // Pas de CORS : chaque front relaie `/api` sur sa propre origine — nginx en
   // production, le proxy de Vite en local. Aucune page d'une autre origine n'a à

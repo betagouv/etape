@@ -302,6 +302,9 @@ Ce que cette fonction protège : le jour où la table gagne une colonne — un j
 3. **La transaction appartient au service**, qui la déclare et la passe au repository.
 4. **L'abstraction décrit un besoin, pas un schéma** : `findBrouillon(beneficiaireId)`, pas `findFirstWhere(...)`.
 5. **Pas de repository pour un module qui ne touche pas la base** : il n'y a rien à séparer.
+6. **Le nom et le fichier disent la couche** : l'abstraction `XRepository` dans `<module>.repository.ts`, seule dans son fichier ; l'implémentation `PrismaXRepository` dans `<module>.prisma-repository.ts` (voir [Découpage des dossiers](#découpage-des-dossiers)). Ni `Store`, ni `Dao`, ni `Gateway` : un autre nom fait croire à une autre couche, et la règle « aucune règle métier » ne s'y applique plus aux yeux du lecteur.
+
+**Ce qui le vérifie** : ESLint, dans `apps/api/eslint.config.mjs`, refuse Prisma — client et types générés — hors d'un `*.prisma-repository.ts`, une classe nommée `…Store`, `…Dao` ou `…Gateway`, et une classe concrète dans un `*.repository.ts`. L'absence de règle métier ne se vérifie pas par un outil : c'est le sous-agent `revue-api` qui la relit en revue.
 
 <details><summary><strong>Exemple — ce que « renvoyer les types du module » veut dire, en code</strong> (proposition)</summary>
 
@@ -421,7 +424,7 @@ on conflict (keycloak_sub) do update set
 
 **Décidé** : un paquet partagé, `packages/api-contract`, qui ne dépend que de zod. Se tranche avec la décision 5 de [`stack-front.md`](./stack-front.md), validée en même temps.
 
-**Amorcé le 28 septembre 2026** (voir décision 12 de [`stack-front.md`](./stack-front.md)) : la structure (`RouteDefinition`, `buildRoutePath`) existe. **Première route le 5 octobre 2026** : `getSession` (`GET /auth/session`), fonctionnelle, sans écran. L'API n'en importe que des types — le paquet est publié en TypeScript source, que Node n'exécute pas depuis `node_modules` — ; valider une entrée avec un schéma du contrat demandera de le compiler. **Reste à attribuer** : le porteur.
+**Amorcé le 28 septembre 2026** (voir décision 12 de [`stack-front.md`](./stack-front.md)) : la structure (`RouteDefinition`, `buildRoutePath`) existe. **Première route le 5 octobre 2026** : `getSession` (`GET /auth/session`), fonctionnelle, sans écran. **Compilé depuis le 3 novembre 2026** : Node refuse le TypeScript situé dans `node_modules`, où `pnpm deploy` copie le contrat. Le paquet est donc compilé (`dist/`) : Node le lit par la condition d'export `node`, TypeScript et Vite lisent les sources. **Reste à attribuer** : le porteur.
 
 ### Les principes
 
@@ -494,7 +497,7 @@ Un pipe est le mécanisme que NestJS exécute **avant** d'entrer dans la méthod
 
 **Lequel des deux pipes reste ouvert, et la raison a changé.** L'arbitrage avait posé le choix en ces termes : pipe maison maintenant, quitte à le remplacer à la montée en NestJS 12, dont l'évaluation revenait à Herbert. **La montée est faite** — la PR #59 a migré l'API en 12.1.0 — donc la condition qui imposait le pipe maison est levée, et `StandardSchemaValidationPipe` est disponible.
 
-Le choix **se tranche à la première route qui validera une entrée**, et sur un critère précis : le pipe intégré sait-il produire le corps d'erreur que le front attend, `{ code: "ENTREE_INVALIDE", erreurs: [{ champ, message }] }` ? C'est lui qui permet d'afficher le message sous le bon champ (décision 6). S'il le sait, on n'écrit pas les quinze lignes maison ; s'il ne le sait pas, on les écrit. Aucune route ne validant d'entrée aujourd'hui, la question n'est pas urgente — mais elle ne doit pas être tranchée par défaut, en recopiant l'exemple ci-dessous sans se la poser.
+**Tranché le 3 novembre 2026, à la première route qui valide une entrée** (`GET /etablissement`) : le pipe intégré sait produire le corps d'erreur attendu par le front, `{ code: "ENTREE_INVALIDE", erreurs: [{ champ, message }] }`, par son option `exceptionFactory`. C'est donc **`StandardSchemaValidationPipe`**, posé globalement (`apps/api/src/common/validation.pipe.ts`) ; une route déclare son schéma par `@Query({ schema })`, `@Body({ schema })` ou `@Param({ schema })`. L'exemple ci-dessous, le pipe maison, n'a pas été retenu.
 
 <details><summary><strong>Exemple — le pipe, et ce qu'il produit comme erreur</strong> (proposition)</summary>
 
@@ -679,6 +682,8 @@ providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }];
 
 **Ce qui existe déjà**, et qu'il faut avoir en tête avant d'en discuter : une purge est en place. `PrismaSessionRepository.deleteExpiredSessions(now)` supprime les sessions dont l'une des deux fins est passée, et `SessionService.openSession` l'appelle à chaque connexion, avec la date de référence. À quoi s'ajoute un contrôle à la lecture : `SessionService.readSession` refuse une session expirée même si elle est encore en base, et la supprime. La transaction de connexion, elle, n'est plus en base : elle voyage dans un cookie chiffré, qui expire de lui-même.
 
+**Ce contrôle à la lecture est une règle métier, il revient au service** (décision 2, principe 2) : le repository rend la session, `SessionService` juge qu'elle est finie et la supprime. La purge, elle, reste une requête du repository, exposée comme un besoin — `deleteExpiredSessions(now)`, la date de référence fournie par le service.
+
 ```ts
 async deleteExpiredSessions(now: number): Promise<void> {
   const date = new Date(now);
@@ -833,5 +838,5 @@ Les onze questions que portait ce document, et ce que l'équipe a répondu.
 1. **L'instance Sentry** — **issue #64**, qui pose la question à betagouv et au coaching. Elle est tranchée dans [`stack-front.md`](./stack-front.md) (décision 11), et la décision 7 de ce document en dépend : Sentry Logs n'est pas garanti sur l'instance de betagouv.
 2. **Qui vérifie la confiance au proxy** (`trust proxy`) pour que la limitation de débit compte les bonnes adresses (décision 8). La question voisine — `Host` ou `X-Forwarded-Host` pour reconnaître le front — est tranchée : `Host` (décision 8).
 3. **Le porteur de `packages/api-contract`**. Sa première route, `getSession`, est posée depuis le 5 octobre 2026.
-4. **Lequel des deux pipes de validation** (décision 4) : celui de NestJS 12, désormais disponible, ou le pipe maison. Se tranche à la première route qui validera une entrée, sur le format du corps d'erreur.
+4. ~~Lequel des deux pipes de validation~~ (décision 4) : tranché le 3 novembre 2026, `StandardSchemaValidationPipe`.
 5. **Les tests du front** : l'API est couverte et bloquante en CI ; côté front, seuls `packages/ui` et `packages/api-client` ont des tests depuis le 5 octobre 2026, les apps aucun (voir [`stack-front.md`](./stack-front.md), décision 8).

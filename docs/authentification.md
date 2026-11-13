@@ -554,7 +554,8 @@ pnpm run test           # tests de l'API, du thème, d'ui et d'api-client (Vites
 1. il demande quelles apps lancer, toutes cochées par défaut (`--all` saute la
    question). Un front coché ajoute l'API ; sans l'API, ni Docker ni migrations ;
 2. il vérifie, avant tout lancement, les `.env` des apps retenues contre leurs
-   `.env.example`, l'égalité des secrets `etape-api` entre le `.env` racine et
+   `.env.example` (sauf `VITE_MATOMO_URL` et `VITE_MATOMO_SITE_ID`, qu'on laisse
+   vides en local), l'égalité des secrets `etape-api` entre le `.env` racine et
    `apps/api/.env`, les ports libres, Docker, la version de Node et l'installation
    des dépendances. Chaque constat dit quoi faire ; un ✗ annule le lancement ;
 3. il lance `docker compose up -d`, les migrations déjà écrites (`db:deploy`), puis

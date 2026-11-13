@@ -26,9 +26,10 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 
 ## Où vivent les choses
 
-- `src/components/` — un fichier par composant : accordion, back-to-top, badge, button, calendar, callout, card, checkbox, combobox, container, dialog, dropdown-menu, field, form-field, form-section, input, input-group, label, popover, prose, radio-group, section, select, separator, skip-links, sonner, tabs, tag, textarea, theme-provider.
+- `src/components/` — un fichier par composant : accordion, back-to-top, badge, button, calendar, callout, card, checkbox, combobox, container, dialog, dropdown-menu, field, form-field, form-radio-group, form-section, input, input-group, label, popover, prose, radio-group, section, select, separator, skip-links, sonner, tabs, tag, textarea, theme-provider.
 - `src/styles/globals.css` — **les tokens** : la seule source de couleur du dépôt.
-- `src/lib/utils.ts` (`cn`), `src/lib/focus.ts`.
+- `src/lib/utils.ts` (`cn`), `src/lib/focus.ts`, `src/lib/keys.ts` (`KEY`, les touches du clavier).
+- `src/hooks/` — `use-listbox-navigation.ts` : flèches, Entrée et Échap d'une liste d'options, le comportement qui va avec les parties de `combobox.tsx`. Import : `@etape/ui/hooks/<nom>`.
 - `components.json` — configuration shadcn.
 
 ## Conventions
@@ -40,5 +41,4 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 
 ## Pièges
 
-- `package.json` exporte `./hooks/*`, mais le dossier `src/hooks/` n'existe pas.
 - `dialog`, `dropdown-menu`, `field`, `form-field`, `tabs` et `textarea` existent mais aucune app ne les importe encore : les réutiliser plutôt que d'en écrire d'autres. Un formulaire react-hook-form passe par `FormField`, qui relie libellé, description et erreur au champ.

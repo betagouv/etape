@@ -7,6 +7,7 @@ import type { VoletDefinition } from "../domain/volets";
 import { StatutVoletIcon, StatutVoletLabel } from "./statut-volet";
 import { VoletLink } from "./volet-link";
 
+/** Ce que reçoit `FormSidebarItem` : le volet, avec son avancement quand il est connu. */
 export interface FormSidebarItemProps {
   volet: VoletDefinition & Partial<VoletProgress>;
 }
@@ -15,6 +16,7 @@ function hasProgress(volet: Partial<VoletProgress>): volet is VoletProgress {
   return typeof volet.requiredFieldCount === "number";
 }
 
+/** Un volet dans la barre latérale : son lien, l'icône et les lignes de son statut. */
 export function FormSidebarItem({ volet }: FormSidebarItemProps) {
   return (
     <li>

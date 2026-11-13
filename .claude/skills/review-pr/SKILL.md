@@ -9,6 +9,7 @@ description: Revue d'une PR ou d'un diff ETAPE selon les conventions du projet (
 
 - **Rien n'est posté sur GitHub sans validation explicite** : produire un brouillon, puis poster seulement quand l'utilisateur le demande, avec le type de revue qu'il choisit (« Comment » ou « Request changes »).
 - **Chaque affirmation est vérifiée ou signalée comme non testée.** Un comportement (focus, rendu, téléchargement) se constate dans le navigateur ou par un script ; sinon, on écrit « non testé ».
+- **Un constat se prouve avant de s'écrire.** Un raisonnement plausible n'est pas une preuve : le scénario annoncé s'exécute sur le code de la PR — compiler la variante pour un argument de typage (« une section ajoutée compilerait »), test ou script pour un comportement. Ce qui n'a pas pu être exécuté porte « à vérifier », jamais la forme d'un fait établi.
 - **Un bug soupçonné se vérifie, il ne se rétrograde pas.** Faute de preuve, il reste **[BLOCKING]** avec la mention « à vérifier » : c'est l'auteur qui le lève, en montrant que le cas ne se produit pas. Le classer « [SUGGESTION, non testé] » laisse passer un vrai bug.
 - **Le niveau suit la règle, pas le reviewer** : le même écart a le même niveau d'une PR à l'autre et d'une personne à l'autre (section 5).
 - **Des constats à fort impact**, pas de pinaillage de style : Prettier et ESLint s'en chargent.
@@ -23,7 +24,9 @@ description: Revue d'une PR ou d'un diff ETAPE selon les conventions du projet (
 3. Lire les conventions (source de vérité — ne jamais répondre de mémoire) :
    - `docs/conventions/nommage.md` et `docs/conventions/glossaire.md` (charger le skill `convention-nommage`) ;
    - `docs/conventions/typescript.md` ;
-   - `docs/conventions/accessibilite.md` pour tout composant `.tsx`.
+   - `docs/conventions/accessibilite.md` pour tout composant `.tsx` ;
+   - `docs/conventions/architecture-api.md` pour tout fichier de `apps/api`.
+4. **Relire en entier chaque fichier touché par le diff**, pas seulement les lignes modifiées : un écart déjà présent dans un fichier que la PR étend se signale, avec la mention « antérieur à la PR ».
 
 ### 2. Revues précédentes : suivi obligatoire
 
@@ -32,9 +35,18 @@ Récupérer les revues et commentaires existants :
 ```sh
 gh api repos/{owner}/{repo}/pulls/<n>/reviews
 gh api repos/{owner}/{repo}/pulls/<n>/comments --paginate
+gh api repos/{owner}/{repo}/issues/<n>/comments --paginate   # réponses générales de l'auteur
 ```
 
-S'il y en a, la synthèse **commence par un tableau de suivi** : chaque constat antérieur avec son statut — corrigé (avec le commit), toujours présent, ou reclassé (avec la raison). Un constat n'est jamais fondu dans un autre ni abaissé sans le dire ; un changement de contexte justifie de réévaluer la gravité, pas de la faire disparaître.
+S'il y en a, la synthèse **commence par un tableau de suivi** : chaque constat antérieur avec son statut — corrigé (avec le commit), toujours présent, reclassé (avec la raison) ou retiré parce qu'erroné. Un constat n'est jamais fondu dans un autre ni abaissé sans le dire ; un changement de contexte justifie de réévaluer la gravité, pas de la faire disparaître.
+
+**Lire chaque réponse de l'auteur**, sur les fils de commentaires comme dans les commentaires généraux de la PR. Quand il conteste un constat, ou l'explique autrement :
+
+1. revérifier la prémisse du constat sur le code revu à l'époque (compiler, exécuter), pas seulement sur le code actuel ;
+2. trancher explicitement dans le tableau : « l'auteur a raison » (le constat est **retiré, erroné**, ou reclassé) ou « l'auteur a tort, parce que… », avec la preuve ;
+3. ne jamais écarter sa réponse parce que le code a changé depuis (« n'a plus d'objet ») : un constat faux corrigé quand même reste un constat faux, et l'auteur doit l'entendre.
+
+**« Corrigé » ne se coche qu'après avoir revérifié que le constat était fondé** et que la correction le règle. Que le code ait changé ne suffit pas.
 
 ### 3. Vérifications
 
@@ -45,7 +57,8 @@ S'il y en a, la synthèse **commence par un tableau de suivi** : chaque constat 
   - **Typage** : littéraux en dur dans les conditions ou les appels, correspondances en ternaire ou `switch` au lieu d'un `Record`, `useState` non typé par l'union.
   - **Accessibilité** : `disabled` sur une action asynchrone, annonces d'état (région toujours montée, sans doublon), nom accessible, erreur reliée au champ par `aria-describedby`, icônes décoratives.
   - **Design system** (`.claude/rules/design-system.md`) : `className` d'apparence au lieu d'une variante `cva`, primitive de `packages/ui` réécrite à la main.
-- Sur un diff qui touche des `.tsx`, lancer le sous-agent `revue-front` (pratiques React, design system, poids du bundle mesuré), en parallèle de la section 4.
+  - **Architecture API** : couches, repository (nom, fichiers, aucune règle métier), Prisma et types générés confinés au repository, frontière HTTP.
+- S'appuyer sur les sous-agents, lancés en parallèle de la section 4 selon ce que touche le diff : **`revue-front`** sur un diff qui touche des `.tsx` (pratiques React, design system, poids du bundle mesuré), **`revue-api`** pour `apps/api`. Chacun de leurs constats est vérifié dans le code avant d'être repris, avec les mêmes exigences : règle citée retrouvée dans le document, scénario exécuté.
 
 ### 4. Valider la logique
 
@@ -72,7 +85,7 @@ Pour chaque constat : `fichier:ligne`, problème, scénario ou raison, correctio
 - **Bug** : un cas limite qui produit un résultat faux, même rare, ou un comportement visible anormal (état figé, champ qui ne se valide jamais, focus perdu).
 - **Bug soupçonné, non vérifié** : [BLOCKING] avec la mention « à vérifier » (voir les principes).
 - **Accessibilité** : régression ou défaut sur du code nouveau (nom accessible, erreur non reliée au champ, annonce manquante ou en double, élément focalisable perdu).
-- **Écart à une règle écrite** de `docs/conventions/` ou de `.claude/rules/` (nommage, typage, accessibilité, design system), **quel que soit le coût après fusion**, y compris dans une app front.
+- **Écart à une règle écrite** de `docs/conventions/` ou de `.claude/rules/` (nommage, typage, accessibilité, design system), **quel que soit le coût après fusion**, y compris dans une app front. Le constat cite le fichier, la section et la phrase de la règle, retrouvées par `grep` au moment de la revue, pas de mémoire. Un commit, une PR ou une revue passée, « on fait comme ça » ne sont pas des règles écrites : sans règle, le constat est une [SUGGESTION], et on propose d'écrire la règle (et de la porter par ESLint si une machine peut la vérifier).
 - **Performance** : régression mesurée (poids du bundle comparé à la base) ou démontrée (tout un écran re-rendu à chaque frappe).
 - **Tests** : logique nouvelle (domaine, hooks, parseurs, scripts) livrée sans test dans un workspace qui déclare Vitest. Dans un workspace sans Vitest, le signaler en [SUGGESTION].
 

@@ -19,8 +19,10 @@ flowchart LR
   subgraph packages["packages/"]
     ui["ui<br/>design system"]
     session["session<br/>session des SPA"]
+    analytics["analytics<br/>mesure d'audience"]
     client["api-client<br/>axios + TanStack Query"]
-    contract["api-contract<br/>contrats zod (vide)"]
+    contract["api-contract<br/>contrats zod"]
+    utils["utils<br/>fonctions pures"]
   end
   subgraph docker["docker compose"]
     keycloak["Keycloak 26.7<br/>:8080"]
@@ -31,9 +33,12 @@ flowchart LR
   theme["apps/keycloak-theme<br/>JAR Keycloakify"]
 
   site & simulateur & fo & bo & theme --> ui
+  site & simulateur & fo & bo --> analytics
+  analytics -- "stats.beta.gouv.fr" --> matomo(["Matomo betagouv"])
   fo & bo --> session
   session --> client & ui
   fo & bo --> client
+  api & fo & simulateur --> utils
   contract -. prévu .-> api
   contract -. prévu .-> client
   site -- "fetch /api" --> api
@@ -59,13 +64,15 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | `packages/ui`              | Design system unique : shadcn/ui + tokens Tailwind                        | Toutes les apps React          | Sources TS, sans build                                     | —        | Mature                             |
 | `packages/api-client`      | Couche HTTP des SPA : `createHttpClient`, `ApiError`, `createQueryClient` | FO, BO                         | Sources TS, axios + TanStack Query                         | —        | Socle, aucun hook métier           |
 | `packages/session`         | Session commune des SPA : garde, inactivité, « Session expirée »          | FO, BO                         | Sources TS, TanStack Router + Query                        | —        | En place                           |
-| `packages/api-contract`    | Contrats de route partagés front/API (méthode, chemin, schémas zod)       | API, FO, BO (prévu)            | Sources TS, ne dépend que de zod                           | —        | **Squelette vide volontaire**      |
+| `packages/analytics`       | Mesure d'audience Matomo : pages vues, clics, refus de la mesure          | Toutes les apps React          | Sources TS, sans dépendance                                | —        | En place                           |
+| `packages/api-contract`    | Contrats de route partagés front/API (méthode, chemin, schémas zod)       | API, FO, BO                    | TS compilé (`dist/` pour Node), zod seul                   | —        | Session, établissement, secteur    |
+| `packages/utils`           | Fonctions pures partagées : normalisation de texte (`normalizeForSearch`) | API, FO, simulateur            | TS compilé (`dist/` pour Node), aucune dépendance          | —        | Une fonction                       |
 | `packages/eslint-config`   | Presets ESLint `base`, `next`, `react-internal`                           | Tous les workspaces            | JS                                                         | —        | Stable                             |
 | `packages/prettier-config` | Configuration Prettier partagée                                           | Tout le dépôt                  | JS                                                         | —        | Stable                             |
 
 **Un scaffold n'est pas un modèle.** FO et BO ne contiennent qu'un écran de démonstration. Pour s'inspirer d'un code existant : le simulateur pour le front (domaine pur, hooks, vues), `apps/api/src/auth/` pour l'API.
 
-**`api-contract` est vide par décision**, pas par oubli : la première route s'écrit avec le premier vrai écran (`architecture-api.md`, décision 3). Ne pas y ajouter de contrat « pour préparer ».
+**Un contrat s'écrit avec l'écran qui l'appelle** (`architecture-api.md`, décision 3). Ne pas en ajouter « pour préparer ».
 
 ## 3. Je veux… → où, avec quel outil
 
@@ -87,6 +94,8 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 | Un écran de connexion ou un e-mail (inscription, mot de passe) | `apps/keycloak-theme/src/login/pages/`, `apps/keycloak-theme/src/email/`                                                                                 | README du thème, section 5 ci-dessous                          |
 | Un client OIDC, une URI de redirection, FranceConnect          | `keycloak/realms/etape-realm.json`                                                                                                                       | `docs/authentification.md`                                     |
 | L'appel HTTP commun (401, erreurs, cookie)                     | `packages/api-client/src/http-client.ts`                                                                                                                 | `stack-front.md` décision 12                                   |
+| Mesurer un clic ou une page (Matomo)                           | `packages/analytics/src/events.ts` (catalogue), puis `analyticsEventProps` sur l'élément                                                                 | `stack-front.md` décision 10                                   |
+| Une normalisation de texte (accents, forme Unicode)            | `packages/utils/src/text.ts` (`@etape/utils/text`) — chaque appelant garde sa casse et sa ponctuation                                                    | `packages/utils/AGENTS.md`                                     |
 | Une règle de lint                                              | `packages/eslint-config/` (`base`, `next` ou `react-internal`, selon le workspace)                                                                       | `outillage-agent.md`                                           |
 | Le déploiement, les images, les VM                             | `Dockerfile`, `docker-compose.prod.yml`, `deploy/`, `infra/`, `.github/workflows/`                                                                       | `docs/deploiement.md`, `docs/previews.md`                      |
 | Relire une PR ou un diff                                       | —                                                                                                                                                        | skill `review-pr` (et sous-agent `revue-front` pour le `.tsx`) |
@@ -98,8 +107,9 @@ Flèche pleine : dépendance ou appel réel. Pointillés : prévu, pas encore en
 - **Les données venant de l'API passent par TanStack Query**, jamais par un `fetch` dans un `useEffect`.
 - **Un type Prisma ne franchit pas la frontière HTTP**, et le service ne voit jamais Prisma (`.claude/rules/api.md`).
 - **`api-contract` ne dépend que de zod.** Il ne doit importer ni NestJS, ni React, ni axios.
+- **`utils` ne dépend de rien** et ne contient aucun métier : une fonction n'y entre qu'au second appelant.
 - **Une couleur ne s'écrit que dans les tokens de `packages/ui`.** Une app étend par variante `cva` dans `packages/ui`, jamais par `className` d'apparence.
-- **`keycloak-theme` est hors du périmètre de `react.md`** : ses contraintes viennent de Keycloakify (voir son README).
+- **`keycloak-theme` suit `react.md`, `typescript.md` et `accessibilite.md`**, sauf ce que Keycloakify impose (liste en tête de `react.md`, détail dans son README).
 
 ## 5. Authentification : Keycloak, lancé par Docker avec sa propre base
 
