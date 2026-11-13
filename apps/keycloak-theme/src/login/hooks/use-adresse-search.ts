@@ -1,3 +1,5 @@
+import { useListboxNavigation } from "@etape/ui/hooks/use-listbox-navigation";
+import { KEY } from "@etape/ui/lib/keys";
 import { type ChangeEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { type Adresse, formatAdresse } from "../components/adresse/adresse";
@@ -20,6 +22,13 @@ export type AdresseSearchStatus =
 const DEBOUNCE_MS = 250;
 const NO_ACTIVE = -1;
 const NO_QUERY = "";
+/** Liste des suggestions, cible d'`aria-controls`. */
+export const ADRESSE_SUGGESTIONS_ID = "adresse-suggestions";
+
+/** Identifiant d'une suggestion dans la page, pour `aria-activedescendant`. */
+export function adresseOptionId(index: number): string {
+  return `${ADRESSE_SUGGESTIONS_ID}-${index}`;
+}
 
 /** État de la recherche d'adresse et ses gestionnaires d'événements. */
 export interface UseAdresseSearchResult {
@@ -46,7 +55,6 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
   const [results, setResults] = useState<readonly Adresse[]>([]);
   const [status, setStatus] = useState<AdresseSearchStatus>(ADRESSE_SEARCH_STATUS.IDLE);
   const [isOpen, setIsOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(NO_ACTIVE);
   const isFieldFocused = useRef(false);
   const [request] = useState(createDebouncedRequest);
 
@@ -60,7 +68,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
           if (signal.aborted) return;
           setResults(found);
           setStatus(found.length === 0 ? ADRESSE_SEARCH_STATUS.EMPTY : ADRESSE_SEARCH_STATUS.FOUND);
-          setActiveIndex(NO_ACTIVE);
+          navigation.reset();
           setIsOpen(found.length !== 0 && isFieldFocused.current);
         })
         .catch(() => {
@@ -72,9 +80,17 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
     }, DEBOUNCE_MS);
   };
 
+  const navigation = useListboxNavigation({
+    items: results,
+    optionId: (adresse) => adresseOptionId(results.indexOf(adresse)),
+    isOpen: results.length !== 0,
+    onSelect: (adresse) => choose(adresse),
+    onEscape: () => close(),
+  });
+
   const close = (): void => {
     setIsOpen(false);
-    setActiveIndex(NO_ACTIVE);
+    navigation.reset();
   };
 
   const reset = (): void => {
@@ -97,7 +113,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
     results,
     status,
     isOpen,
-    activeIndex,
+    activeIndex: navigation.active === null ? NO_ACTIVE : results.indexOf(navigation.active),
     choose,
     handleFocus: () => {
       isFieldFocused.current = true;
@@ -117,7 +133,7 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
       const nextQuery = toSearchQuery(value);
       setChosen(null);
       setText(value);
-      setActiveIndex(NO_ACTIVE);
+      navigation.reset();
 
       if (nextQuery.length < MIN_QUERY_LENGTH) {
         reset();
@@ -128,33 +144,9 @@ export function useAdresseSearch(initial: Adresse | null): UseAdresseSearchResul
       search(nextQuery);
     },
     handleKeyDown: (event) => {
-      const last = results.length - 1;
-      switch (event.key) {
-        case "ArrowDown":
-          if (last < 0) return;
-          event.preventDefault();
-          setIsOpen(true);
-          setActiveIndex(isOpen ? Math.min(activeIndex + 1, last) : 0);
-          return;
-        case "ArrowUp":
-          if (last < 0) return;
-          event.preventDefault();
-          setIsOpen(true);
-          setActiveIndex(isOpen && activeIndex > 0 ? activeIndex - 1 : last);
-          return;
-        case "Enter": {
-          const active = isOpen ? results[activeIndex] : undefined;
-          if (active === undefined) return;
-          event.preventDefault();
-          choose(active);
-          return;
-        }
-        case "Escape":
-          if (!isOpen) return;
-          event.preventDefault();
-          close();
-          return;
-      }
+      const isArrow = event.key === KEY.ARROW_DOWN || event.key === KEY.ARROW_UP;
+      if (isArrow && results.length !== 0) setIsOpen(true);
+      navigation.onKeyDown(event);
     },
   };
 }

@@ -13,6 +13,7 @@ import type { ComponentProps, ReactNode } from "react";
 import {
   COMMUNES_STATUS,
   type CommunesStatus,
+  MANUAL_FIELD,
   MANUAL_FIELD_ID,
   type UseManualAdresseResult,
 } from "../../hooks/use-manual-adresse";
@@ -49,28 +50,28 @@ export default function ManualAdresseForm(props: ManualAdresseFormProps) {
           id={MANUAL_FIELD_ID.NUMERO_VOIE}
           label={msg("etapeAdresseNumeroVoie")}
           value={fields.numeroVoie}
-          onChange={(value) => manual.changeField("numeroVoie", value)}
+          onChange={(value) => manual.changeField(MANUAL_FIELD.NUMERO_VOIE, value)}
           inputProps={{ autoFocus: true }}
         />
         <ManualTextField
           id={MANUAL_FIELD_ID.TYPE_VOIE}
           label={msg("etapeAdresseTypeVoie")}
           value={fields.typeVoie}
-          onChange={(value) => manual.changeField("typeVoie", value)}
+          onChange={(value) => manual.changeField(MANUAL_FIELD.TYPE_VOIE, value)}
           required
         />
         <ManualTextField
           id={MANUAL_FIELD_ID.NOM_VOIE}
           label={msg("etapeAdresseNomVoie")}
           value={fields.nomVoie}
-          onChange={(value) => manual.changeField("nomVoie", value)}
+          onChange={(value) => manual.changeField(MANUAL_FIELD.NOM_VOIE, value)}
           required
         />
         <ManualTextField
           id={MANUAL_FIELD_ID.COMPLEMENT}
           label={msg("etapeAdresseComplement")}
           value={fields.complement}
-          onChange={(value) => manual.changeField("complement", value)}
+          onChange={(value) => manual.changeField(MANUAL_FIELD.COMPLEMENT, value)}
           inputProps={{ autoComplete: "address-line2" }}
         />
         <Field

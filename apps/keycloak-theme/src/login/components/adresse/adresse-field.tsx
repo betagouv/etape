@@ -9,7 +9,12 @@ import {
 import { StatusRegion } from "@etape/ui/components/status-region";
 import { ExternalLink, FilePenLine, RefreshCw, Search, X } from "lucide-react";
 
-import { ADRESSE_SEARCH_STATUS, type AdresseSearchStatus } from "../../hooks/use-adresse-search";
+import {
+  ADRESSE_SEARCH_STATUS,
+  ADRESSE_SUGGESTIONS_ID,
+  adresseOptionId,
+  type AdresseSearchStatus,
+} from "../../hooks/use-adresse-search";
 import { ADRESSE_SEARCH_INPUT_ID, type UseAdresseFieldResult } from "../../hooks/use-adresse-field";
 import type { I18n } from "../../i18n";
 import { Alert, MESSAGE_TYPE } from "../alert";
@@ -18,10 +23,7 @@ import { ADRESSE_ATTRIBUTE } from "./adresse";
 import { ManualAdresseLoader } from "./manual-adresse-loader";
 import { type RegionCode, REGIONS, TRANSITIONS_PRO_CONTACTS_URL } from "./region";
 
-const SUGGESTIONS_ID = "adresse-suggestions";
 const SINGLE_RESULT = 1;
-
-const optionId = (index: number): string => `${SUGGESTIONS_ID}-${index}`;
 
 /** Props d'`AdresseField`. */
 export interface AdresseFieldProps {
@@ -167,7 +169,7 @@ function AdresseSearch(props: AdresseSearchProps) {
   const { msg, msgStr } = i18n;
 
   const activeOption =
-    search.isOpen && search.activeIndex >= 0 ? optionId(search.activeIndex) : undefined;
+    search.isOpen && search.activeIndex >= 0 ? adresseOptionId(search.activeIndex) : undefined;
 
   return (
     <Field
@@ -188,7 +190,7 @@ function AdresseSearch(props: AdresseSearchProps) {
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={search.isOpen}
-          aria-controls={SUGGESTIONS_ID}
+          aria-controls={ADRESSE_SUGGESTIONS_ID}
           aria-activedescendant={activeOption}
           aria-required
           aria-describedby={
@@ -227,11 +229,11 @@ function AdresseSearch(props: AdresseSearchProps) {
         )}
         <Combobox variant="popup" hidden={!search.isOpen} className="absolute z-10 mt-2">
           <ComboboxHeader aria-hidden>{resultsLabel(search.results.length, i18n)}</ComboboxHeader>
-          <ComboboxList id={SUGGESTIONS_ID} aria-label={msgStr("etapeAdresseLabel")}>
+          <ComboboxList id={ADRESSE_SUGGESTIONS_ID} aria-label={msgStr("etapeAdresseLabel")}>
             {search.results.map((adresse, index) => (
               <ComboboxOption
                 key={`${adresse.voie}-${adresse.codeCommune}`}
-                id={optionId(index)}
+                id={adresseOptionId(index)}
                 active={index === search.activeIndex}
                 variant="separated"
                 onMouseDown={(event) => event.preventDefault()}

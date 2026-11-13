@@ -38,6 +38,14 @@ export const MANUAL_FIELD_ID = {
 /** Identifiant d'un champ de la saisie manuelle. */
 export type ManualFieldId = (typeof MANUAL_FIELD_ID)[keyof typeof MANUAL_FIELD_ID];
 
+/** Champs texte de la saisie manuelle, passés à `changeField`. */
+export const MANUAL_FIELD = {
+  NUMERO_VOIE: "numeroVoie",
+  TYPE_VOIE: "typeVoie",
+  NOM_VOIE: "nomVoie",
+  COMPLEMENT: "complement",
+} as const satisfies Record<string, keyof ManualAdresseFields>;
+
 const EMPTY_FIELDS: ManualAdresseFields = {
   numeroVoie: "",
   typeVoie: "",
