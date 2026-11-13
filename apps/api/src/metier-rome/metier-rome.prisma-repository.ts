@@ -1,12 +1,21 @@
 import { Injectable } from "@nestjs/common";
 
+import { escapeLikePattern } from "../common/like-pattern.js";
 import { PrismaService } from "../database/prisma.service.js";
 import { Prisma } from "../generated/prisma/client.ts";
 import { MetierRomeRepository } from "./metier-rome.repository.js";
-import type { MetierRome, VersionRome } from "./metier-rome.types.js";
+import type { AppellationRomeSearchResult, MetierRome, VersionRome } from "./metier-rome.types.js";
 
 // Un import écrit 16 000 lignes : les 5 s par défaut de Prisma sont pensées pour une requête d'écran.
 const TRANSACTION_TIMEOUT_MS = 60_000;
+
+interface AppellationRomeRow {
+  code: string;
+  libelle: string;
+  codeMetier: string;
+  libelleMetier: string;
+  appellationRomeCount: number;
+}
 
 @Injectable()
 export class PrismaMetierRomeRepository extends MetierRomeRepository {
@@ -27,6 +36,44 @@ export class PrismaMetierRomeRepository extends MetierRomeRepository {
       },
       { timeout: TRANSACTION_TIMEOUT_MS },
     );
+  }
+
+  async searchAppellationsRome(
+    words: string[],
+    limit: number,
+  ): Promise<AppellationRomeSearchResult> {
+    const patterns = words.map(escapeLikePattern);
+    const [firstPattern = ""] = patterns;
+
+    // SQL brut : Prisma ne sait pas appeler `unaccent`. Le libellé et la saisie passent par la même
+    // expression ; `unaccent` avant `lower`, qui n'a alors plus que de l'ASCII à traiter. Le tri se
+    // fait aussi sans accent : tel quel, « Œnologue » sortirait après « Zoologiste ».
+    const rows = await this.client.$queryRaw<AppellationRomeRow[]>`
+      select appellation_rome.code, appellation_rome.libelle,
+             metier_rome.code as "codeMetier", metier_rome.libelle as "libelleMetier",
+             count(*) over ()::int as "appellationRomeCount"
+      from appellation_rome
+      join metier_rome on metier_rome.id = appellation_rome.metier_rome_id
+      where not appellation_rome.is_obsolete
+        and lower(unaccent(appellation_rome.libelle)) like all (
+          select '%' || lower(unaccent(pattern)) || '%'
+          from unnest(${patterns}::text[]) as pattern
+        )
+      order by lower(unaccent(appellation_rome.libelle))
+                 like lower(unaccent(${firstPattern})) || '%' desc,
+               lower(unaccent(appellation_rome.libelle)),
+               appellation_rome.code
+      limit ${limit}
+    `;
+
+    return {
+      appellationRomeCount: rows[0]?.appellationRomeCount ?? 0,
+      appellationsRome: rows.map(({ code, libelle, codeMetier, libelleMetier }) => ({
+        code,
+        libelle,
+        metierRome: { code: codeMetier, libelle: libelleMetier },
+      })),
+    };
   }
 
   async findCurrentVersionRome(): Promise<VersionRome | null> {

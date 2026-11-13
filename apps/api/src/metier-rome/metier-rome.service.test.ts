@@ -200,3 +200,91 @@ describe("MetierRomeService", () => {
     expect(context.repository.versions).toEqual([]);
   });
 });
+
+describe("MetierRomeService : recherche d'une appellation", () => {
+  const AIDE_PATISSIER: AppellationRome = {
+    code: "10885",
+    libelle: "Aide-pâtissier / Aide-pâtissière",
+    libelleCourt: "Aide-pâtissier / Aide-pâtissière",
+    classification: CLASSIFICATION_APPELLATION_ROME.SYNONYME,
+  };
+
+  async function setupWith(metiers: MetierRome[]): Promise<ReturnType<typeof setup>> {
+    const context = setup();
+    await context.repository.saveMetiersRome(metiers);
+
+    return context;
+  }
+
+  it("trouve une appellation par ses mots, quels que soient l'ordre, les accents et la casse", async () => {
+    const { service } = await setupWith([BOULANGER, PATISSIER]);
+
+    await expect(service.searchAppellationsRome("  VIENNOISIERE   boulanger ")).resolves.toEqual({
+      appellationRomeCount: 1,
+      appellationsRome: [
+        {
+          code: "38444",
+          libelle: VIENNOISIER.libelle,
+          metierRome: { code: "D1102", libelle: BOULANGER.libelle },
+        },
+      ],
+    });
+  });
+
+  it("ne garde que les appellations qui contiennent tous les mots", async () => {
+    const { service } = await setupWith([BOULANGER, PATISSIER]);
+
+    const { appellationsRome } = await service.searchAppellationsRome("boulanger patissier");
+
+    expect(appellationsRome).toEqual([]);
+  });
+
+  it("place d'abord les libellés qui commencent par le premier mot", async () => {
+    const { service } = await setupWith([
+      { ...PATISSIER, appellations: [AIDE_PATISSIER, ...PATISSIER.appellations] },
+    ]);
+
+    const { appellationsRome } = await service.searchAppellationsRome("patissier");
+
+    expect(appellationsRome.map(({ code }) => code)).toEqual(["17551", "10885"]);
+  });
+
+  it("écarte une appellation obsolète", async () => {
+    const context = await setupWith([BOULANGER]);
+    await context.repository.markAppellationsRomeObsoleteExcept(["11573"]);
+
+    const result = await context.service.searchAppellationsRome("boulanger");
+
+    expect(result.appellationRomeCount).toBe(1);
+    expect(result.appellationsRome.map(({ code }) => code)).toEqual(["11573"]);
+  });
+
+  it("rend 20 appellations et le nombre de toutes celles trouvées", async () => {
+    const { service } = await setupWith([
+      {
+        code: "H2913",
+        libelle: "Soudeur / Soudeuse",
+        appellations: Array.from({ length: 25 }, (_, index) => ({
+          code: String(20_000 + index),
+          libelle: `Soudeur / Soudeuse ${index}`,
+          libelleCourt: `Soudeur(se) ${index}`,
+          classification: CLASSIFICATION_APPELLATION_ROME.SYNONYME,
+        })),
+      },
+    ]);
+
+    const result = await service.searchAppellationsRome("soudeur");
+
+    expect(result.appellationRomeCount).toBe(25);
+    expect(result.appellationsRome).toHaveLength(20);
+  });
+
+  it("ne trouve rien pour une saisie sans mot", async () => {
+    const { service } = await setupWith([BOULANGER]);
+
+    await expect(service.searchAppellationsRome("   ")).resolves.toEqual({
+      appellationRomeCount: 0,
+      appellationsRome: [],
+    });
+  });
+});

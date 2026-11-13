@@ -2,8 +2,16 @@ import { Injectable, Logger } from "@nestjs/common";
 
 import { FranceTravailClient } from "./france-travail.client.js";
 import { MetierRomeRepository } from "./metier-rome.repository.js";
+import type { AppellationRomeSearchResult } from "./metier-rome.types.js";
 
-/** Tient la copie locale du référentiel ROME à la version que publie France Travail. */
+const SEARCH_RESULT_LIMIT = 20;
+
+const NO_APPELLATION_ROME: AppellationRomeSearchResult = {
+  appellationRomeCount: 0,
+  appellationsRome: [],
+};
+
+/** Tient la copie locale du référentiel ROME à la version que publie France Travail, et y cherche. */
 @Injectable()
 export class MetierRomeService {
   private readonly logger = new Logger(MetierRomeService.name);
@@ -12,6 +20,14 @@ export class MetierRomeService {
     private readonly franceTravailClient: FranceTravailClient,
     private readonly metierRomeRepository: MetierRomeRepository,
   ) {}
+
+  /** Chaque mot de la saisie doit figurer dans le libellé, dans n'importe quel ordre. */
+  async searchAppellationsRome(search: string): Promise<AppellationRomeSearchResult> {
+    const words = search.split(/\s+/).filter(Boolean);
+    if (words.length === 0) return NO_APPELLATION_ROME;
+
+    return this.metierRomeRepository.searchAppellationsRome(words, SEARCH_RESULT_LIMIT);
+  }
 
   /** Premier remplissage : ne contacte pas France Travail dès qu'une version est en base. */
   async syncMetiersRomeIfEmpty(): Promise<void> {

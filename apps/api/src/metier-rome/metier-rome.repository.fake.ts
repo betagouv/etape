@@ -1,5 +1,12 @@
+import { normalizeForSearch } from "@etape/utils/text";
+
 import type { MetierRomeRepository } from "./metier-rome.repository.js";
-import type { AppellationRome, MetierRome, VersionRome } from "./metier-rome.types.js";
+import type {
+  AppellationRome,
+  AppellationRomeSearchResult,
+  MetierRome,
+  VersionRome,
+} from "./metier-rome.types.js";
 
 interface StoredMetierRome {
   libelle: string;
@@ -20,6 +27,43 @@ export class FakeMetierRomeRepository implements MetierRomeRepository {
   readonly appellations = new Map<string, StoredAppellationRome>();
   /** La dernière importée en dernier. */
   readonly versions: VersionRome[] = [];
+
+  async searchAppellationsRome(
+    words: string[],
+    limit: number,
+  ): Promise<AppellationRomeSearchResult> {
+    const searchedWords = words.map(normalizeForSearch);
+    const [firstWord = ""] = searchedWords;
+
+    const found = [...this.appellations]
+      .flatMap(([code, { libelle, codeMetier, isObsolete }]) => {
+        const metier = this.metiers.get(codeMetier);
+        if (isObsolete || !metier) return [];
+
+        return [
+          {
+            sortKey: normalizeForSearch(libelle),
+            appellation: {
+              code,
+              libelle,
+              metierRome: { code: codeMetier, libelle: metier.libelle },
+            },
+          },
+        ];
+      })
+      .filter(({ sortKey }) => searchedWords.every((word) => sortKey.includes(word)))
+      .sort(
+        (a, b) =>
+          Number(b.sortKey.startsWith(firstWord)) - Number(a.sortKey.startsWith(firstWord)) ||
+          a.sortKey.localeCompare(b.sortKey) ||
+          a.appellation.code.localeCompare(b.appellation.code),
+      );
+
+    return {
+      appellationRomeCount: found.length,
+      appellationsRome: found.slice(0, limit).map(({ appellation }) => appellation),
+    };
+  }
 
   async findCurrentVersionRome(): Promise<VersionRome | null> {
     return this.versions.at(-1) ?? null;

@@ -22,6 +22,19 @@ export interface MetierRome {
   appellations: AppellationRome[];
 }
 
+/** Appellation trouvée par une recherche, avec le métier auquel elle est rattachée. */
+export interface FoundAppellationRome {
+  code: string;
+  libelle: string;
+  metierRome: Pick<MetierRome, "code" | "libelle">;
+}
+
+/** `appellationRomeCount` compte toutes les appellations trouvées, au-delà de celles rendues. */
+export interface AppellationRomeSearchResult {
+  appellationRomeCount: number;
+  appellationsRome: FoundAppellationRome[];
+}
+
 /** Version du ROME telle que France Travail la publie. */
 export interface VersionRome {
   version: string;
