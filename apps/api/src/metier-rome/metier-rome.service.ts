@@ -13,6 +13,13 @@ export class MetierRomeService {
     private readonly metierRomeRepository: MetierRomeRepository,
   ) {}
 
+  /** Premier remplissage : ne contacte pas France Travail dès qu'une version est en base. */
+  async syncMetiersRomeIfEmpty(): Promise<void> {
+    if (await this.metierRomeRepository.findCurrentVersionRome()) return;
+
+    await this.syncMetiersRome();
+  }
+
   /** Ne télécharge le référentiel que si sa version n'est pas celle déjà en base. */
   async syncMetiersRome(): Promise<void> {
     const version = await this.franceTravailClient.fetchVersionRome();
