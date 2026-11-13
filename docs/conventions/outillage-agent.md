@@ -106,6 +106,8 @@ Les `AGENTS.md` par workspace suivent la même logique, à l'échelle d'un dossi
 
 - **`lint-staged`** ne lançait que Prettier ; il lance désormais aussi `eslint --fix` sur les `.ts` et `.tsx`, **une entrée par workspace** (`pnpm --filter @etape/… run lint --fix`). Le détour par pnpm n'est pas cosmétique : lint-staged exécute ses commandes depuis la racine, où ESLint ne trouve aucune configuration, puisque chaque app et chaque package a la sienne. Passer par le workspace place le répertoire de travail au bon endroit. **C'est le garde-fou qui compte** : il s'applique à tout le monde, à chaque commit.
 - **Hook `PostToolUse`** (`.claude/settings.json`) : après chaque écriture d'un `.ts`/`.tsx` par l'agent, `.claude/hooks/eslint-fix.sh` corrige ce qui est corrigeable. Il ne remplace pas `lint-staged` ; il évite simplement de laisser des écarts derrière soi en cours de session. **L'arbitrage a décidé de le garder** — c'était le point le plus discutable de la PR, puisque `lint-staged` suffirait et couvre tout le monde. Les deux coexistent donc, avec des rôles distincts : le hook travaille pendant la session, `lint-staged` est le garde-fou du commit. Si le hook devient gênant, c'est lui qu'on retire, pas `lint-staged`.
+- **Hook `pre-push`** (`.husky/pre-push`) : typecheck des workspaces touchés et review IA, en parallèle. Détail dans la section suivante.
+- **Hook `PreToolUse`** (`.claude/settings.json`) : `.claude/hooks/block-hook-bypass.mjs` refuse à l'agent `--no-verify`, `git commit -n`, `HUSKY=0`, `SKIP_AI_REVIEW` et `core.hooksPath`. L'agent ne contourne pas ce qu'on impose aux humains. La détection est dans `scripts/hook-bypass.mjs`, testée en CI.
 - **Permissions** : les commandes de vérification déjà utilisées en boucle (`pnpm run lint`, `typecheck`, `format:check`, `gh pr view`) sont autorisées d'avance, pour ne plus interrompre une session pour les valider une à une.
 
 <details><summary><strong>Exemple — pourquoi <code>lint-staged</code> passe par pnpm, et pas directement par <code>eslint</code></strong></summary>
@@ -158,6 +160,63 @@ exit 0
 Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour une erreur que `pnpm run lint` signalera de toute façon. Son seul rôle est d'éviter de laisser derrière soi des écarts que `--fix` sait régler.
 
 </details>
+
+## Review IA en pre-push
+
+**Statut** : en observation depuis le 2026-11-11, en mode `report`.
+
+Avant chaque `git push`, `.husky/pre-push` lance en parallèle :
+
+- **le typecheck** des workspaces touchés depuis `origin/main` (`turbo run typecheck --filter='...[origin/main]'`). Il **bloque toujours** : il est déterministe ;
+- **la review IA** (`scripts/ai-review.mjs`) : un seul agent, `claude -p`, en lecture seule (`Read`, `Grep`, `Glob`), sur les **seuls commits qui partent avec ce push**.
+
+| Ce qui est poussé                                 | Ce qui est relu                                                                              |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Une branche existante que le push avance          | Les nouveaux commits seulement (`remote_sha..local_sha`)                                     |
+| Une nouvelle branche                              | Tous ses commits, depuis sa divergence avec `origin/main`                                    |
+| Un historique réécrit (force-push, rebase, amend) | Tout depuis la divergence avec `origin/main` : diff-er l'état distant donnerait un diff faux |
+| `main`, un tag, une suppression                   | Rien                                                                                         |
+
+**Abonnement, jamais l'API.** L'appel passe par l'abonnement Claude du développeur : `--restricted` plutôt que `--bare`, qui n'accepte qu'une clé d'API. `ANTHROPIC_API_KEY` est retiré de l'environnement de l'appel, pour qu'une clé exportée ne soit pas facturée à l'insu du développeur. `--restricted` ne charge pas `CLAUDE.md` : le prompt (`.claude/review/prompt.md`) est autonome, et le script lui joint les condensés de `.claude/rules/`.
+
+**Niveaux** : ceux de `review-pr` (section 5), pour que le push et la relecture parlent la même langue.
+
+| Niveau     | Contenu                                                          | Au push                                          | En relecture |
+| ---------- | ---------------------------------------------------------------- | ------------------------------------------------ | ------------ |
+| `critical` | Bug, faille de sécurité, bug soupçonné « à vérifier »            | Affiché en tête ; refuse le push en mode `block` | [BLOCKING]   |
+| `major`    | Écart à une règle écrite (`docs/conventions/`, `.claude/rules/`) | Affiché avec la règle citée ; ne bloque jamais   | [BLOCKING]   |
+| `minor`    | Suggestion                                                       | Une ligne par constat                            | [SUGGESTION] |
+
+Le reviewer ne corrige rien : il rapporte, le développeur décide.
+
+**Ce qui le rend supportable dans un hook :**
+
+- **fail open** : sans `claude`, sans connexion, sur un quota atteint, après 150 s ou sur une réponse hors format, le push passe avec un avertissement qui dit pourquoi ;
+- **cache** : un diff déjà relu n'est pas relu de nouveau, son rapport est réutilisé ;
+- **routage déterministe** : Opus si le diff touche l'authentification, la session, les guards, `apps/api/prisma/`, `keycloak/` ou le calcul d'éligibilité du simulateur ; Sonnet sinon (liste dans `scripts/ai-review-core.mjs`) ;
+- **plafond** : un diff de plus de 4 000 lignes n'est pas relu ; la documentation (`*.md`), le lockfile et les fichiers générés sont exclus.
+
+**Commandes et échappatoires :**
+
+| Commande                    | Effet                                                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `pnpm run ai-review`        | Relit à la demande ce que le prochain push enverrait                                                        |
+| `pnpm run ai-review:last`   | Réaffiche le dernier rapport, pour traiter les constats après coup                                          |
+| `ETAPE_REVIEW_MODE=block`   | Phase 2 : un `critical` refuse le push                                                                      |
+| `SKIP_AI_REVIEW=1 git push` | Saute la review ; consigné dans le journal. Seule la valeur `1` compte : `0` ou `false` la laissent tourner |
+| `HUSKY=0 git push`          | Saute tous les hooks ; à réserver aux urgences                                                              |
+
+**Où voir le rapport.** Pousser depuis un terminal l'affiche directement. Depuis un IDE, la sortie d'un hook qui réussit reste dans le journal Git, et en mode `report` le push réussit toujours. Trois relais :
+
+- **notification système** (macOS par `osascript`, Linux par `notify-send`) dès qu'il y a au moins un constat, avec le nombre par niveau ; `ETAPE_REVIEW_NOTIFY=0` la coupe ;
+- **rapport complet en Markdown** dans `.git/etape-review/last.md`, dont le chemin s'affiche en fin de sortie : un clic l'ouvre dans l'éditeur ;
+- **`pnpm run ai-review:last`**, qui détaille aussi les suggestions : au push, elles tiennent sur une ligne.
+
+Quand c'est Claude Code qui pousse, seul l'agent lit la sortie : `AGENTS.md` lui demande de recopier le rapport dans sa réponse.
+
+Tout ce qui est propre à la machine reste dans `.git/etape-review/` : un rapport par diff relu, le dernier rapport (`last.json`, `last.md`), et `journal.jsonl`, une ligne par push (base retenue, nombre de commits, modèle, durée, nombre de constats par niveau, review sautée et pourquoi). C'est la matière de la mesure.
+
+**Déploiement** : deux semaines en `report` pour mesurer le bruit (constats jugés pertinents, durée, nombre de `SKIP_AI_REVIEW`), puis `block` sur `critical` seulement si les faux positifs critiques restent sous 10 %. Il ne remplace ni `review-pr` ni la CI : il fait arriver la PR en relecture déjà débarrassée de ce qu'un agent sait voir.
 
 ## Serveur MCP `shadcn`
 

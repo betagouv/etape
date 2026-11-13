@@ -91,6 +91,8 @@ Pour chaque constat : `fichier:ligne`, problème, scénario ou raison, correctio
 
 **[SUGGESTION]** : ce qui n'est pas une règle écrite — lisibilité, commentaire, découpage, préférence de design, performance non mesurée, piste d'amélioration sans défaut constaté.
 
+La review IA du pre-push (`scripts/ai-review.mjs`) suit ces niveaux : `critical` (bug, faille) et `major` (écart à une règle écrite) correspondent à [BLOCKING], `minor` à [SUGGESTION]. Si son prompt (`.claude/review/prompt.md`) ou cette section change, l'autre suit.
+
 En cas de doute sur la portée d'une règle (document qui exclut un workspace, règle `.claude/rules/` qui l'inclut), classer selon la règle la plus stricte et signaler la contradiction dans le message général, pour qu'elle soit tranchée dans les documents.
 
 Terminer par un verdict (à fusionner / à fusionner après correctifs / à reprendre) et, le cas échéant, les termes métier à ajouter au glossaire.
