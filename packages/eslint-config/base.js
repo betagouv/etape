@@ -3,6 +3,7 @@ import eslintConfigPrettier from "eslint-config-prettier";
 import turboPlugin from "eslint-plugin-turbo";
 import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
+import { noHardcodedLiteralConfig } from "./rules/no-hardcoded-literal.js";
 
 /**
  * `docs/conventions/typescript.md` : valeurs finies en objet `as const`. Les
@@ -47,6 +48,7 @@ export const baseConfig = defineConfig([
       "@typescript-eslint/explicit-module-boundary-types": "error",
     },
   },
+  noHardcodedLiteralConfig,
   // Doit rester en dernier : neutralise les règles en conflit avec Prettier.
   eslintConfigPrettier,
   globalIgnores(["**/node_modules/**", "**/dist/**", "**/.turbo/**"]),

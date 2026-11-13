@@ -55,9 +55,14 @@ const sectionHeaderVariants = cva("flex flex-col gap-2", {
       default: "lg:gap-4",
       compact: "",
     },
+    align: {
+      center: "items-center text-center",
+      start: "items-start text-left",
+    },
   },
   defaultVariants: {
     variant: "default",
+    align: "center",
   },
 });
 
@@ -80,9 +85,15 @@ const sectionSubtextVariants = cva("text-muted-foreground", {
       default: "text-body-lg",
       compact: "text-sm",
     },
+    // Un chapô centré garde une ligne lisible ; aligné à gauche, il suit la colonne.
+    align: {
+      center: "max-w-3xl",
+      start: "",
+    },
   },
   defaultVariants: {
     variant: "default",
+    align: "center",
   },
 });
 
@@ -97,7 +108,7 @@ function SectionHeader({
   titleId,
   titleRef,
   subtext,
-  align = "center",
+  align,
   variant,
   className,
   ...props
@@ -108,7 +119,6 @@ function SectionHeader({
     titleId: string;
     titleRef?: React.Ref<HTMLHeadingElement>;
     subtext?: React.ReactNode;
-    align?: "center" | "start";
   }) {
   const isTitleFocusable = titleRef !== undefined;
 
@@ -116,11 +126,7 @@ function SectionHeader({
     <div
       data-slot="section-header"
       data-variant={variant}
-      className={cn(
-        sectionHeaderVariants({ variant }),
-        align === "center" ? "items-center text-center" : "items-start text-left",
-        className,
-      )}
+      className={cn(sectionHeaderVariants({ variant, align }), className)}
       {...props}
     >
       {caption ? <p className={sectionCaptionVariants({ variant })}>{caption}</p> : null}
@@ -132,11 +138,7 @@ function SectionHeader({
       >
         {title}
       </h2>
-      {subtext ? (
-        <p className={cn(sectionSubtextVariants({ variant }), align === "center" && "max-w-3xl")}>
-          {subtext}
-        </p>
-      ) : null}
+      {subtext ? <p className={sectionSubtextVariants({ variant, align })}>{subtext}</p> : null}
     </div>
   );
 }
