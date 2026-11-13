@@ -1,6 +1,14 @@
-# Socle de la VM back (DEBFCOETAPAPP01) : Docker + Compose pour le back NestJS
-# à venir (DAT §3.2 : VM + Docker Compose ; images via Harbor à terme).
-# Préparatoire : aucun service applicatif n'est encore déployé sur cette machine.
+# Socle des VM back : Docker + Compose pour le back NestJS à venir (DAT §3.2 :
+# VM + Docker Compose ; images via Harbor à terme).
+# Préparatoire : aucun service applicatif n'est encore déployé sur ces machines.
+#
+# Un seul playbook pour les deux environnements : le socle (Docker, Compose,
+# login Harbor) est identique en dev et en Recette, le dupliquer ferait
+# diverger deux copies sans raison. La machine visée est choisie par la
+# variable `cible` (un groupe de l'inventaire) :
+#   (sans -e)              groupe back,         DEBFCOETAPAPP01 (dev)
+#   -e cible=back_recette  groupe back_recette, REBFCOETAPAPP01 (Recette)
+# Le défaut reste `back` : les lancements existants visent toujours le dev.
 #
 # NB : noms de paquets Debian 13 à confirmer sur la cible ; si les dépôts Debian
 # ne fournissent pas Compose v2, l'alternative est le dépôt officiel Docker
@@ -14,7 +22,7 @@
 # mot de passe est fourni = arrêt explicite.
 
 - name: Configurer la VM back (socle conteneurs)
-  hosts: back
+  hosts: "{{ cible | default('back') }}"
   become: true
   vars:
     # Registre privé Harbor (coordonnées transmises par Cegedim le 2/09, confirmées
