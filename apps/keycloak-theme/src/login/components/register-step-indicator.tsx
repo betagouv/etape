@@ -1,0 +1,31 @@
+import { Progress } from "@etape/ui/components/progress";
+import { sectionCaptionVariants } from "@etape/ui/components/section";
+
+import type { RegisterStep } from "../hooks/use-register-form";
+import type { I18n } from "../i18n";
+
+const STEP_COUNT = 2;
+const PROGRESS_PER_STEP = 100 / STEP_COUNT;
+const LABEL_ID = "register-step-label";
+
+/** Props de `RegisterStepIndicator`. */
+export interface RegisterStepIndicatorProps {
+  step: RegisterStep;
+  isStepComplete: boolean;
+  i18n: I18n;
+}
+
+/** Étape en cours de l'inscription et barre de progression. */
+export function RegisterStepIndicator(props: RegisterStepIndicatorProps) {
+  const { step, isStepComplete, i18n } = props;
+  const completedSteps = isStepComplete ? step : step - 1;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p id={LABEL_ID} className={sectionCaptionVariants({ variant: "step" })}>
+        {i18n.msg("etapeRegisterStep", String(step), String(STEP_COUNT))}
+      </p>
+      <Progress aria-labelledby={LABEL_ID} value={completedSteps * PROGRESS_PER_STEP} />
+    </div>
+  );
+}

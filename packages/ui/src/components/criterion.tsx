@@ -13,11 +13,11 @@ export const CRITERION_STATUS = {
 /** État d'un `Criterion` : critère satisfait ou non. */
 export type CriterionStatus = (typeof CRITERION_STATUS)[keyof typeof CRITERION_STATUS];
 
-// Critères du mot de passe (Figma FRONT-OFFICE, écran 10) : pastille cochée ou barrée.
+// Critères du mot de passe (Figma FRONT-OFFICE, inscription et écran 10) : pastille verte pleine ou grise.
 const criterionMarkVariants = cva("flex shrink-0 rounded-full p-1 [&_svg]:size-2.5", {
   variants: {
     status: {
-      [CRITERION_STATUS.MET]: "bg-success-border text-success",
+      [CRITERION_STATUS.MET]: "bg-success text-success-foreground",
       [CRITERION_STATUS.UNMET]: "bg-divider text-muted-foreground",
     },
   },
@@ -26,7 +26,7 @@ const criterionMarkVariants = cva("flex shrink-0 rounded-full p-1 [&_svg]:size-2
 const criterionLabelVariants = cva("", {
   variants: {
     status: {
-      [CRITERION_STATUS.MET]: "text-success",
+      [CRITERION_STATUS.MET]: "text-foreground",
       [CRITERION_STATUS.UNMET]: "text-muted-foreground",
     },
   },

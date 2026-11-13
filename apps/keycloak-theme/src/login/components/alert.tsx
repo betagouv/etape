@@ -32,29 +32,37 @@ const ROLE_BY_MESSAGE_TYPE: Record<MessageType, "alert" | "status"> = {
   [MESSAGE_TYPE.INFO]: "status",
 };
 
+/** Props d'`Alert`. */
+export interface AlertProps {
+  type: MessageType;
+  summary: string;
+  id?: string;
+  /** Pour relier le résumé à un bouton de l'encart par `aria-describedby`. */
+  summaryId?: string;
+  /** `false` quand une région toujours montée annonce déjà le message. */
+  isLive?: boolean;
+  children?: ReactNode;
+}
+
 /**
  * Bandeau de message global de Keycloak (échec de connexion, email envoyé…).
  *
  * `summary` arrive en HTML depuis Keycloak, d'où `kcSanitize`.
  */
-export function Alert(props: {
-  type: MessageType;
-  summary: string;
-  id?: string;
-  children?: ReactNode;
-}) {
-  const { type, summary, id, children } = props;
+export function Alert(props: AlertProps) {
+  const { type, summary, id, summaryId, isLive = true, children } = props;
   const Icon = ICON_BY_MESSAGE_TYPE[type];
 
   return (
     <div
       id={id}
-      role={ROLE_BY_MESSAGE_TYPE[type]}
+      role={isLive ? ROLE_BY_MESSAGE_TYPE[type] : undefined}
       className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 ${STYLE_BY_MESSAGE_TYPE[type]}`}
     >
       <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col gap-2 text-sm">
         <span
+          id={summaryId}
           className="font-medium"
           dangerouslySetInnerHTML={{
             __html: kcSanitize(summary),

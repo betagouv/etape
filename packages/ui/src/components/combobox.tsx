@@ -8,7 +8,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/componen
 import { cn } from "@etape/ui/lib/utils";
 
 /*
- * Motif « combobox » de l'APG, liste à autocomplétion affichée dans le fil de la page.
+ * Motif « combobox » de l'APG, liste à autocomplétion affichée dans le fil de la page,
+ * ou dans un panneau flottant que l'appelant positionne (`popup`).
  *
  * Pas de `cmdk`, la bibliothèque du `command` de shadcn : faite pour une palette
  * de commandes, elle annonce sa liste toujours ouverte (`aria-expanded` forcé à
@@ -30,6 +31,9 @@ const comboboxVariants = cva("bg-popover text-popover-foreground flex w-full fle
       default: "border-foreground/10 rounded-lg border shadow-md",
       /** Dans un `PopoverContent` ou tout cadre qui porte déjà bordure et rayon. */
       inset: "",
+      // Panneau ouvert sous le champ de recherche d'adresse (Figma FRONT-OFFICE, « 01. SIGN-UP ») :
+      // l'appelant le positionne ; la liste y touche les bords, pour les options `separated`.
+      popup: "overflow-hidden rounded-lg border shadow-md *:data-[slot=combobox-list]:p-0",
     },
   },
   defaultVariants: {
@@ -47,6 +51,17 @@ function Combobox({
       data-slot="combobox"
       data-variant={variant}
       className={cn(comboboxVariants({ variant }), className)}
+      {...props}
+    />
+  );
+}
+
+/** Ligne d'en-tête du panneau, par exemple le nombre de résultats. */
+function ComboboxHeader({ className, ...props }: React.ComponentProps<"p">) {
+  return (
+    <p
+      data-slot="combobox-header"
+      className={cn("text-muted-foreground border-b p-3 text-sm", className)}
       {...props}
     />
   );
@@ -119,28 +134,46 @@ function ComboboxGroup({
   );
 }
 
+const comboboxOptionVariants = cva(
+  [
+    "hover:bg-accent hover:text-accent-foreground relative flex min-h-11 cursor-pointer items-center gap-2 text-sm select-none md:min-h-7",
+    "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground data-[active=true]:ring-ring data-[active=true]:ring-2 data-[active=true]:ring-inset",
+  ],
+  {
+    variants: {
+      variant: {
+        default: "rounded-md py-1 pr-8 pl-1.5",
+        // Options sur deux lignes séparées par un filet, dans un `Combobox` `popup` :
+        // suggestions d'adresse, Figma « 01. SIGN-UP ».
+        separated: "rounded-none border-b px-3 py-2 last:border-b-0 aria-selected:pe-8",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
 function ComboboxOption({
   className,
+  variant,
   selected = false,
   active = false,
   children,
   ...props
-}: React.ComponentProps<"li"> & {
-  selected?: boolean;
-  /** Option désignée au clavier (`aria-activedescendant` du champ). */
-  active?: boolean;
-}) {
+}: React.ComponentProps<"li"> &
+  VariantProps<typeof comboboxOptionVariants> & {
+    selected?: boolean;
+    /** Option désignée au clavier (`aria-activedescendant` du champ). */
+    active?: boolean;
+  }) {
   return (
     <li
       data-slot="combobox-option"
       role="option"
       aria-selected={selected}
       data-active={active}
-      className={cn(
-        "hover:bg-accent hover:text-accent-foreground relative flex min-h-11 cursor-pointer items-center gap-2 rounded-md py-1 pr-8 pl-1.5 text-sm select-none md:min-h-7",
-        "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground data-[active=true]:ring-ring data-[active=true]:ring-2 data-[active=true]:ring-inset",
-        className,
-      )}
+      className={cn(comboboxOptionVariants({ variant }), className)}
       {...props}
     >
       <span className="min-w-0 flex-1">{children}</span>
@@ -151,6 +184,17 @@ function ComboboxOption({
         />
       )}
     </li>
+  );
+}
+
+/** Seconde ligne d'une option, en retrait : la commune sous la voie d'une adresse. */
+function ComboboxOptionDescription({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="combobox-option-description"
+      className={cn("text-muted-foreground block", className)}
+      {...props}
+    />
   );
 }
 
@@ -195,10 +239,12 @@ function ComboboxEmpty({ className, ...props }: React.ComponentProps<"p">) {
 
 export {
   Combobox,
+  ComboboxHeader,
   ComboboxInput,
   ComboboxList,
   ComboboxGroup,
   ComboboxOption,
+  ComboboxOptionDescription,
   ComboboxOptionTitle,
   ComboboxOptionDetail,
   ComboboxEmpty,

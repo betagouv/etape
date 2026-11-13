@@ -91,15 +91,23 @@ function InputShell(props: {
 const inputClassName =
   "text-sm placeholder:text-muted-foreground min-h-0 w-full min-w-0 rounded-none border-0 bg-transparent p-0 outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
+/** Props de `TextInput` : celles d'un `<input>`, plus l'icône, l'état invalide et un bouton en fin de champ. */
+export interface TextInputProps extends ComponentProps<"input"> {
+  icon?: IconComponent;
+  invalid?: boolean;
+  trailing?: ReactNode;
+}
+
 export function TextInput({
   icon,
   invalid,
+  trailing,
   className,
   "aria-invalid": ariaInvalid,
   ...props
-}: ComponentProps<"input"> & { icon?: IconComponent; invalid?: boolean }) {
+}: TextInputProps) {
   return (
-    <InputShell icon={icon} invalid={invalid}>
+    <InputShell icon={icon} invalid={invalid} trailing={trailing}>
       <input
         {...props}
         aria-invalid={invalid || ariaInvalid}
@@ -174,12 +182,18 @@ export function FieldError(props: { id: string; message: string }) {
   );
 }
 
+/** Props de `CheckboxField` : celles d'un `<input>`, plus le libellé. */
+export interface CheckboxFieldProps extends ComponentProps<"input"> {
+  id: string;
+  label: ReactNode;
+}
+
 /** Case à cocher native, teintée aux couleurs du produit. */
-export function CheckboxField(props: ComponentProps<"input"> & { id: string; label: ReactNode }) {
+export function CheckboxField(props: CheckboxFieldProps) {
   const { id, label, className, ...inputProps } = props;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-start gap-2">
       <input
         {...inputProps}
         id={id}
@@ -189,7 +203,7 @@ export function CheckboxField(props: ComponentProps<"input"> & { id: string; lab
           className,
         )}
       />
-      <label htmlFor={id} className="text-foreground cursor-pointer text-sm font-semibold">
+      <label htmlFor={id} className="text-foreground cursor-pointer text-sm">
         {label}
       </label>
     </div>

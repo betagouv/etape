@@ -151,6 +151,7 @@ COPY --from=reset-credentials-extension /src/target/etape-keycloak-reset-credent
 COPY deploy/keycloak-init.sh /opt/keycloak/bin/etape-init.sh
 COPY deploy/keycloak-altcha.sh /opt/keycloak/bin/etape-altcha.sh
 COPY deploy/keycloak-reset-credentials.sh /opt/keycloak/bin/etape-reset-credentials.sh
+COPY deploy/keycloak-registration.sh /opt/keycloak/bin/etape-registration.sh
 COPY deploy/keycloak-start.sh /opt/keycloak/bin/etape-keycloak-start.sh
 
 # Importés au premier démarrage, un realm par front. Ils décrivent le poste de
