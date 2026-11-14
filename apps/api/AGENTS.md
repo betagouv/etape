@@ -40,6 +40,7 @@ pnpm --filter @etape/api run typecheck
 - `src/metier-rome/` — copie du référentiel ROME de France Travail : `FranceTravailClient` (identifiants `FRANCE_TRAVAIL_IO_*`), `MetierRomeService.syncMetiersRome()`, et `MetierRomeSyncTask`, qui la lance chaque jour et au démarrage tant que la base est vide, jamais deux fois en même temps. `GET /api/appellation-rome` (`appellation-rome.controller.ts`) y cherche une appellation mot par mot, sans accents, avec session. Détail dans `docs/donnees.md`.
 - `src/common/validation.pipe.ts` — pipe global : une entrée déclarée par `{ schema }` est validée par le schéma du contrat.
 - `src/common/like-pattern.ts` — `escapeLikePattern`, pour tout `like` construit à partir d'une saisie.
+- `src/common/wait.ts` — `wait(ms)`, une promesse résolue après le délai.
 
 Le découpage cible des modules métier est dans `architecture-api.md`, « Découpage des dossiers ».
 

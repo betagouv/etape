@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
+import { wait } from "../common/wait.js";
 import type { Env } from "../config/env.js";
 import {
   buildMetiersRomeUrl,
@@ -18,12 +19,6 @@ import type { MetierRome, VersionRome } from "./metier-rome.types.js";
 const MIN_CALL_INTERVAL_MS = 5_000;
 
 const REQUEST_TIMEOUT_MS = 30_000;
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
 
 /** API « ROME 4.0 – Métiers » de France Travail, que seule l'API peut appeler avec ses identifiants. */
 @Injectable()
