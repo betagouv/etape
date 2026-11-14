@@ -19,6 +19,7 @@ Chaque décision est suivie de ses **principes** — des règles courtes, vérif
 | `@nestjs/config` + zod        | 12.0.1 / 4.1.13 | Schéma d'environnement validé au démarrage (`src/config/env.ts`)                                   |
 | helmet, cookie-parser         | —               | Session par cookie opaque : aucun jeton visible du navigateur                                      |
 | `@nestjs/throttler`           | 6.7.1           | Limitation de débit **déjà en place**, en garde globale (décision 8)                               |
+| `@nestjs/schedule`            | 12.0.3          | Tâche quotidienne du référentiel ROME ; la purge des sessions reste à trancher (décision 9)        |
 | Vitest                        | 5.0.1           | **Cinq fichiers de test** dans `auth/`, lancés par `pnpm run test`, bloquants en CI (décision 11)  |
 
 **Comment l'API tourne**, car plusieurs décisions en dépendent : un conteneur Docker parmi six, décrit par `docker-compose.prod.yml`, construit et démarré par l'hébergeur (Cegedim). Elle n'est pas exposée directement — nginx sert les exports statiques et relaie `/api/`. Elle applique ses migrations au démarrage, avant de servir.
@@ -701,6 +702,8 @@ async deleteExpiredSessions(now: number): Promise<void> {
 
 **Décidé** : la purge opportuniste est gardée. **L'ajout d'une tâche planifiée n'est pas tranché** — l'arbitrage a renvoyé le point à l'issue #60, le temps de peser ce que la minimisation exige réellement face à un conteneur qui exécute un `deleteMany` toutes les heures pour rien la plupart du temps. La proposition instruite dans cette issue est une tâche `@nestjs/schedule` (12.0.2) ; l'exemple ci-dessous la décrit.
 
+Depuis le 13 novembre 2026, `@nestjs/schedule` (12.0.3) est installé pour une autre tâche, la synchronisation quotidienne du référentiel ROME (`metier-rome/metier-rome.task.ts`, voir `docs/donnees.md`). Le planificateur existe donc ; la question de la purge, elle, reste entière.
+
 <details><summary><strong>Exemple — la tâche planifiée</strong> (proposition)</summary>
 
 ```ts
@@ -806,7 +809,7 @@ src/
     dossier.prisma-repository.ts   ← implémentation Prisma
     dossier.mapper.ts              ← base → type de réponse du contrat
     dossier.module.ts
-  common/                          ← technique : pipe, filtre d'exception, décorateurs
+  common/                          ← technique : pipe, filtre d'exception, décorateurs, fonctions utilitaires
 ```
 
 Un sous-dossier n'apparaît que quand un module dépasse la poignée de fichiers (`auth/session/` en est l'exemple).
