@@ -102,12 +102,12 @@ describe("MetierRomeSyncTask", () => {
     });
   });
 
-  describe("chaque mois", () => {
+  describe("chaque jour", () => {
     it("importe la version publiée quand elle a changé", async () => {
       const { task, repository } = setup();
       await repository.saveVersionRome({ ...VERSION, version: "61" });
 
-      await task.syncMonthly();
+      await task.syncDaily();
 
       expect(repository.versions.at(-1)).toEqual(VERSION);
       expect([...repository.metiers.keys()]).toEqual(["D1102"]);
@@ -117,7 +117,7 @@ describe("MetierRomeSyncTask", () => {
       const { task, repository, fetchMetiersRome } = setup();
       await repository.saveVersionRome(VERSION);
 
-      await task.syncMonthly();
+      await task.syncDaily();
 
       expect(fetchMetiersRome).not.toHaveBeenCalled();
     });
@@ -126,9 +126,63 @@ describe("MetierRomeSyncTask", () => {
       const { task, fetchVersionRome } = setup();
       fetchVersionRome.mockRejectedValue(new Error("France Travail a répondu 503"));
 
-      await expect(task.syncMonthly()).resolves.toBeUndefined();
+      await expect(task.syncDaily()).resolves.toBeUndefined();
 
       expect(logError).toHaveBeenCalledOnce();
+    });
+
+    it("rattrape un premier remplissage raté", async () => {
+      const { task, repository, fetchVersionRome } = setup();
+      fetchVersionRome.mockRejectedValueOnce(new Error("France Travail a répondu 503"));
+
+      task.onApplicationBootstrap();
+      await vi.waitFor(() => {
+        expect(logError).toHaveBeenCalledOnce();
+      });
+      expect(repository.versions).toEqual([]);
+
+      await task.syncDaily();
+
+      expect(repository.versions).toEqual([VERSION]);
+    });
+  });
+
+  describe("sans chevauchement", () => {
+    it("ignore la tâche du jour pendant l'import du démarrage", async () => {
+      const { task, repository, fetchVersionRome } = setup();
+      let publishVersion: (version: VersionRome) => void = () => undefined;
+      fetchVersionRome.mockReturnValueOnce(
+        new Promise((resolve) => {
+          publishVersion = resolve;
+        }),
+      );
+
+      task.onApplicationBootstrap();
+      await vi.waitFor(() => {
+        expect(fetchVersionRome).toHaveBeenCalledOnce();
+      });
+
+      await task.syncDaily();
+
+      expect(fetchVersionRome).toHaveBeenCalledOnce();
+      expect(log).toHaveBeenCalledWith(
+        "Synchronisation du référentiel ROME déjà en cours : appel ignoré.",
+      );
+
+      publishVersion(VERSION);
+      await vi.waitFor(() => {
+        expect(repository.versions).toEqual([VERSION]);
+      });
+    });
+
+    it("libère le verrou après une erreur", async () => {
+      const { task, fetchVersionRome } = setup();
+      fetchVersionRome.mockRejectedValueOnce(new Error("France Travail a répondu 503"));
+
+      await task.syncDaily();
+      await task.syncDaily();
+
+      expect(fetchVersionRome).toHaveBeenCalledTimes(2);
     });
   });
 });

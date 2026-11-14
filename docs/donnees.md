@@ -195,15 +195,20 @@ Le code est dans [`apps/api/src/metier-rome/`](../apps/api/src/metier-rome/).
 
 ### Ce qui déclenche un import
 
-`MetierRomeSyncTask` lance la synchronisation le 1er de chaque mois à 3 h, heure
-du serveur, et au démarrage tant qu'aucune version n'est en base. À chaque
-fois, `MetierRomeService` lit la version publiée (`GET /metiers/version`) et ne
+`MetierRomeSyncTask` lance la synchronisation chaque jour à 3 h, heure du
+serveur, et au démarrage tant qu'aucune version n'est en base. À chaque fois,
+`MetierRomeService` lit la version publiée (`GET /metiers/version`) et ne
 télécharge le référentiel que si elle diffère de la dernière importée. Tout
 arrive en un seul appel : 1 923 métiers et 14 330 appellations en version 62.
 
+Une synchronisation demandée pendant qu'une autre tourne est ignorée : jamais
+deux imports en même temps. Ce verrou vit dans le processus et ne vaut que tant
+que l'API tourne en une seule instance ; au-delà, il faudra un verrou en base
+(`pg_try_advisory_lock`).
+
 France Travail injoignable, ou un secret faux, n'empêche pas l'API de démarrer
-et ne l'arrête pas : l'erreur est journalisée, et la copie reste ce qu'elle
-était.
+et ne l'arrête pas : l'erreur est journalisée, la copie reste ce qu'elle
+était, et la synchronisation est retentée le lendemain.
 
 ### Un métier retiré est marqué, jamais supprimé
 

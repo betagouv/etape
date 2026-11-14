@@ -3,13 +3,16 @@ import { Cron } from "@nestjs/schedule";
 
 import { MetierRomeService } from "./metier-rome.service.js";
 
-// Le 1er de chaque mois à 3 h, heure du serveur.
-const MONTHLY_SYNC_CRON = "0 3 1 * *";
+// Chaque jour à 3 h, heure du serveur : seule la version est lue, et un import raté est retenté le lendemain.
+const DAILY_SYNC_CRON = "0 3 * * *";
 
-/** Recharge le référentiel ROME sans requête : chaque mois, et au démarrage tant que la base est vide. */
+/** Recharge le référentiel ROME sans requête : chaque jour, et au démarrage tant que la base est vide. */
 @Injectable()
 export class MetierRomeSyncTask implements OnApplicationBootstrap {
   private readonly logger = new Logger(MetierRomeSyncTask.name);
+
+  // L'API tourne en une seule instance : ce drapeau suffit à empêcher deux synchronisations simultanées.
+  private isSyncing = false;
 
   constructor(private readonly metierRomeService: MetierRomeService) {}
 
@@ -18,13 +21,19 @@ export class MetierRomeSyncTask implements OnApplicationBootstrap {
     void this.run(() => this.metierRomeService.syncMetiersRomeIfEmpty());
   }
 
-  @Cron(MONTHLY_SYNC_CRON)
-  async syncMonthly(): Promise<void> {
+  @Cron(DAILY_SYNC_CRON)
+  async syncDaily(): Promise<void> {
     await this.run(() => this.metierRomeService.syncMetiersRome());
   }
 
   // France Travail injoignable ne doit ni empêcher l'API de démarrer ni l'arrêter.
   private async run(sync: () => Promise<void>): Promise<void> {
+    if (this.isSyncing) {
+      this.logger.log("Synchronisation du référentiel ROME déjà en cours : appel ignoré.");
+      return;
+    }
+
+    this.isSyncing = true;
     try {
       await sync();
     } catch (error) {
@@ -32,6 +41,8 @@ export class MetierRomeSyncTask implements OnApplicationBootstrap {
         "La synchronisation du référentiel ROME a échoué.",
         error instanceof Error ? error.stack : undefined,
       );
+    } finally {
+      this.isSyncing = false;
     }
   }
 }
