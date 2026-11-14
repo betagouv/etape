@@ -8,7 +8,7 @@ import { FakeMetierRomeRepository } from "./metier-rome.repository.fake.js";
 import { MetierRomeService } from "./metier-rome.service.js";
 import {
   CLASSIFICATION_APPELLATION_ROME,
-  type AppellationRome,
+  type ImportedAppellationRome,
   type MetierRome,
   type VersionRome,
 } from "./metier-rome.types.js";
@@ -23,7 +23,7 @@ const VERSION_63: VersionRome = {
   dateModification: new Date("2026-11-20T09:00:00.000Z"),
 };
 
-const VIENNOISIER: AppellationRome = {
+const VIENNOISIER: ImportedAppellationRome = {
   code: "38444",
   libelle: "Boulanger-viennoisier / Boulangère-viennoisière",
   libelleCourt: "Boulanger-viennoisier / Boulangère-viennoisière",
@@ -202,7 +202,7 @@ describe("MetierRomeService", () => {
 });
 
 describe("MetierRomeService : recherche d'une appellation", () => {
-  const AIDE_PATISSIER: AppellationRome = {
+  const AIDE_PATISSIER: ImportedAppellationRome = {
     code: "10885",
     libelle: "Aide-pâtissier / Aide-pâtissière",
     libelleCourt: "Aide-pâtissier / Aide-pâtissière",

@@ -2,7 +2,7 @@ import { normalizeForSearch } from "@etape/utils/text";
 
 import type { MetierRomeRepository } from "./metier-rome.repository.js";
 import type {
-  AppellationRome,
+  ImportedAppellationRome,
   AppellationRomeSearchResult,
   MetierRome,
   VersionRome,
@@ -13,7 +13,7 @@ interface StoredMetierRome {
   isObsolete: boolean;
 }
 
-interface StoredAppellationRome extends Omit<AppellationRome, "code"> {
+interface StoredAppellationRome extends Omit<ImportedAppellationRome, "code"> {
   codeMetier: string;
   isObsolete: boolean;
 }

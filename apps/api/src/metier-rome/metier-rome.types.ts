@@ -7,8 +7,8 @@ export const CLASSIFICATION_APPELLATION_ROME = {
 export type ClassificationAppellationRome =
   (typeof CLASSIFICATION_APPELLATION_ROME)[keyof typeof CLASSIFICATION_APPELLATION_ROME];
 
-/** Intitulé rattaché à un seul métier ROME. */
-export interface AppellationRome {
+/** Appellation telle que France Travail la publie : intitulé rattaché à un seul métier ROME. */
+export interface ImportedAppellationRome {
   code: string;
   libelle: string;
   libelleCourt: string;
@@ -19,7 +19,7 @@ export interface AppellationRome {
 export interface MetierRome {
   code: string;
   libelle: string;
-  appellations: AppellationRome[];
+  appellations: ImportedAppellationRome[];
 }
 
 /** Appellation trouvée par une recherche, avec le métier auquel elle est rattachée. */
