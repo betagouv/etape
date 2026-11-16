@@ -43,7 +43,11 @@ export function MetierViseManualFields({
             <Input
               {...field}
               {...attributes}
-              onChange={(e) => field.onChange(formatCodeRome(e.target.value))}
+              // Mis en forme à la sortie : réécrire la saisie à chaque frappe renverrait le curseur en fin de champ.
+              onBlur={() => {
+                field.onChange(formatCodeRome(field.value));
+                field.onBlur();
+              }}
             />
           )}
         />

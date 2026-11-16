@@ -1,6 +1,8 @@
 import { AppellationRomeSchema } from "@etape/api-contract";
 import { z } from "zod";
 
+import { formatCodeRome } from "./domain/format-code-rome";
+
 /** Le métier visé se choisit dans le référentiel ROME, ou se saisit à la main quand la recherche échoue. */
 export const METIER_VISE_ENTRY_MODE = {
   SEARCH: "search",
@@ -22,7 +24,8 @@ const baseFuturMetierSchema = z.object({
   metierViseEntryMode: z.enum(METIER_VISE_ENTRY_MODE),
   metierVise: AppellationRomeSchema.nullable(),
   intituleMetierVise: z.string().trim(),
-  codeRome: z.string(),
+  // Le champ n'est mis en forme qu'à sa sortie : un envoi par Entrée arrive avec la saisie brute.
+  codeRome: z.string().transform(formatCodeRome),
 });
 
 /** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */

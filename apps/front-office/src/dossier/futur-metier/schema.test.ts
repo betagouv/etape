@@ -63,11 +63,16 @@ describe("futurMetierSchema, code ROME", () => {
   });
 
   it("refuse un code mal formé", () => {
-    for (const codeRome of ["D110", "D11022", "1102D", "d1102"]) {
+    for (const codeRome of ["D110", "D11022", "1102D", "D 11 0"]) {
       expect(findMessages({ ...MANUAL_FORM, codeRome }, "codeRome")).toEqual([
         "Le code ROME comporte une lettre suivie de quatre chiffres, par exemple D1102.",
       ]);
     }
+  });
+
+  it("accepte un code saisi en minuscule ou avec des espaces, et le rend mis en forme", () => {
+    const result = futurMetierSchema.safeParse({ ...MANUAL_FORM, codeRome: " d 1102 " });
+    expect(result.data?.codeRome).toBe("D1102");
   });
 
   it("ne contrôle pas le code en recherche", () => {
