@@ -11,6 +11,9 @@ import type { KcContext } from "../KcContext";
  * de maîtrise de la boîte mail serait une prise de contrôle de compte. Le flux
  * `first broker login` enchaîne ensuite sur une vérification par email ; ce que
  * l'on confirme ici, c'est seulement l'intention de lier.
+ *
+ * Pas de bouton « Vérifiez vos informations de profil » : la revue de profil d'ETAPE
+ * ne s'affiche qu'à une création de compte, il ramènerait à cet écran.
  */
 export default function LoginIdpLinkConfirm(
   props: EtapePageProps<Extract<KcContext, { pageId: "login-idp-link-confirm.ftl" }>>,
@@ -39,17 +42,6 @@ export default function LoginIdpLinkConfirm(
             className="w-full rounded-lg"
           >
             {msg("confirmLinkIdpContinue", idpAlias)}
-          </Button>
-          <Button
-            type="submit"
-            name="submitAction"
-            id="updateProfile"
-            value="updateProfile"
-            variant="outline"
-            size="xl"
-            className="w-full rounded-lg"
-          >
-            {msg("confirmLinkIdpReviewProfile")}
           </Button>
         </div>
       </form>

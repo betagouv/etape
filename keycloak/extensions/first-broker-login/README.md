@@ -22,12 +22,14 @@ et l'attache au fournisseur `franceconnect`.
 | `etape-idp-review-profile` | `authenticator` | `idp-review-profile` |
 
 Elle hérite de `IdpReviewProfileAuthenticator`, une classe interne de Keycloak : elle
-est à retester à chaque montée de version.
+est à retester à chaque montée de version. Le flow `etape-first-broker-login` est une
+copie figée de `first broker login` : à chaque montée, le comparer au flow natif.
 
 ## Ce qui change par rapport à Keycloak
 
 - **L'écran ne s'affiche qu'à une création** : aucun compte avec cet e-mail ou cet
-  identifiant. Sinon le flow passe à la liaison, sans demander l'adresse ni les CGU.
+  identifiant. Sinon le flow passe à la liaison, sans demander l'adresse ni les CGU,
+  et l'écran de liaison du thème n'offre plus de revenir à la revue.
 - **Les conditions générales sont exigées** (`termsAccepted`), et leur date
   d'acceptation est enregistrée dans `terms_and_conditions`, comme à l'inscription.
 - **Prénom, nom et e-mail viennent de FranceConnect** : les valeurs envoyées par le

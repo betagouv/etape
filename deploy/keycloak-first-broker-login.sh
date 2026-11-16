@@ -37,12 +37,13 @@ fi
 
 BUILTIN_EXECUTION=$(execution_of "$BUILTIN_REVIEW_PROVIDER")
 
-if [ -z "$(execution_of "$REVIEW_PROVIDER")" ]; then
+REVIEW_EXECUTION=$(execution_of "$REVIEW_PROVIDER")
+if [ -z "$REVIEW_EXECUTION" ]; then
   $KCADM create "authentication/flows/${FLOW}/executions/execution" -r "$REALM" \
     -s "provider=${REVIEW_PROVIDER}"
+  REVIEW_EXECUTION=$(execution_of "$REVIEW_PROVIDER")
 fi
 
-REVIEW_EXECUTION=$(execution_of "$REVIEW_PROVIDER")
 PRIORITY=${REVIEW_EXECUTION##*,}
 if [ -n "$BUILTIN_EXECUTION" ]; then
   PRIORITY=${BUILTIN_EXECUTION##*,}
