@@ -28,8 +28,12 @@ type Provider = {
  *
  * @see https://gouvfr.atlassian.net/wiki/spaces/DB/pages/967868417/
  */
-export function FranceConnectButton(props: { loginUrl: string; i18n: I18n }) {
-  const { loginUrl, i18n } = props;
+export function FranceConnectButton(props: {
+  loginUrl: string;
+  onSelect?: () => void;
+  i18n: I18n;
+}) {
+  const { loginUrl, onSelect, i18n } = props;
   const { msgStr } = i18n;
 
   return (
@@ -37,6 +41,7 @@ export function FranceConnectButton(props: { loginUrl: string; i18n: I18n }) {
       <a
         id={`social-${FRANCECONNECT_ALIAS}`}
         href={loginUrl}
+        onClick={onSelect}
         className="bg-france-blue focus-visible:outline-france-blue flex items-center justify-center gap-3 px-3 py-1 focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <img src={franceConnectLogo} alt="" aria-hidden className="h-12 w-10" />
@@ -87,9 +92,11 @@ function GenericProviderButton(props: { provider: Provider }) {
 export function SocialProviders(props: {
   providers: Provider[] | undefined;
   separatorLabel: string;
+  /** Appelé au choix de FranceConnect, avant de quitter la page. */
+  onProviderSelect?: () => void;
   i18n: I18n;
 }) {
-  const { providers, separatorLabel, i18n } = props;
+  const { providers, separatorLabel, onProviderSelect, i18n } = props;
 
   const franceConnect = providers?.find((provider) => provider.alias === FRANCECONNECT_ALIAS);
   const others = providers?.filter((provider) => provider.alias !== FRANCECONNECT_ALIAS) ?? [];
@@ -99,7 +106,11 @@ export function SocialProviders(props: {
       {(franceConnect !== undefined || others.length !== 0) && (
         <div id="kc-social-providers" className="flex flex-col items-start gap-4">
           {franceConnect !== undefined && (
-            <FranceConnectButton loginUrl={franceConnect.loginUrl} i18n={i18n} />
+            <FranceConnectButton
+              loginUrl={franceConnect.loginUrl}
+              onSelect={onProviderSelect}
+              i18n={i18n}
+            />
           )}
           {others.map((provider) => (
             <GenericProviderButton key={provider.alias} provider={provider} />

@@ -64,6 +64,14 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeRegisterActivationHint: "Vous recevrez un e-mail pour activer votre espace.",
       etapeRegisterCepNote:
         "Vous êtes conseiller ou conseillère en évolution professionnelle ? Inutile de créer un espace : vous accédez au dossier par le lien qui vous a été transmis par le bénéficiaire.",
+      etapeIdpReviewTitle: "Finaliser la création de votre espace",
+      etapeIdpReviewIdentityTitle: "Identité transmise par FranceConnect",
+      etapeIdpReviewIdentityHint:
+        "Vos prénoms, nom et adresse e-mail seront repris dans votre dossier. Ils ne peuvent pas être modifiés.",
+      etapeIdpReviewSubmit: "Créer mon espace",
+      etapeIdpReviewIncomplete:
+        "Renseignez votre adresse et acceptez les conditions pour créer votre espace.",
+      etapeIdpReviewCancel: "Annuler et revenir à l'inscription",
       etapeTermsAccept: "J'accepte les",
       etapeTermsCgu: "conditions générales d'utilisation",
       etapeTermsAnd: "et les",
@@ -224,6 +232,13 @@ const { useI18n, ofTypeI18n } = i18nBuilder
       etapeRegisterActivationHint: "You will receive an email to activate your space.",
       etapeRegisterCepNote:
         "Are you a career development adviser? No need to create a space: you access the file through the link the beneficiary sent you.",
+      etapeIdpReviewTitle: "Finish creating your space",
+      etapeIdpReviewIdentityTitle: "Identity provided by FranceConnect",
+      etapeIdpReviewIdentityHint:
+        "Your first names, last name and email address will be used in your file. They cannot be changed.",
+      etapeIdpReviewSubmit: "Create my space",
+      etapeIdpReviewIncomplete: "Enter your address and accept the terms to create your space.",
+      etapeIdpReviewCancel: "Cancel and go back to sign-up",
       etapeTermsAccept: "I accept the",
       etapeTermsCgu: "terms of use",
       etapeTermsAnd: "and the",

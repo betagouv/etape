@@ -1,21 +1,29 @@
 import { Button } from "@etape/ui/components/button";
-import { FormSection, FormSectionTitle } from "@etape/ui/components/form-section";
+import { FormSection } from "@etape/ui/components/form-section";
 import { StatusRegion } from "@etape/ui/components/status-region";
 import { useUserProfileForm } from "keycloakify/login/lib/useUserProfileForm";
 import { ArrowRight, CircleArrowLeft } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 
-import { type Adresse, ADRESSE_ATTRIBUTE, isAdresseComplete } from "../components/adresse/adresse";
+import {
+  ADRESSE_ATTRIBUTES,
+  readInitialAdresse,
+  readRegionsPilotes,
+} from "../components/adresse/adresse";
 import { AdresseField } from "../components/adresse/adresse-field";
 import { AltchaField } from "../components/altcha/altcha-field";
 import { isEmailFormatValid } from "../components/email-format";
-import { CheckboxField, FieldError } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
-import { LEGAL_DOCUMENT_URL } from "../components/legal-documents";
+import { REGISTRATION_RETURN, rememberRegistrationReturn } from "../components/registration-return";
 import { getPasswordRules } from "../components/password-rules";
 import { HeaderAccountSwitch } from "../components/prose";
 import { toRegistrationPageUrl } from "../components/registration-page";
 import { RegisterStepIndicator } from "../components/register-step-indicator";
+import {
+  RegisterSectionTitle,
+  TERMS_ACCEPTED_FIELD,
+  TermsField,
+} from "../components/registration-fields";
 import { TITLE_TONE } from "../components/title-tone";
 import {
   PasswordRules,
@@ -36,18 +44,9 @@ const HIDDEN_ATTRIBUTES: readonly string[] = [
   USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM,
 ];
 
-const ADRESSE_ATTRIBUTES = [
-  ADRESSE_ATTRIBUTE.ADRESSE,
-  ADRESSE_ATTRIBUTE.COMPLEMENT_ADRESSE,
-  ADRESSE_ATTRIBUTE.CODE_POSTAL,
-  ADRESSE_ATTRIBUTE.COMMUNE,
-  ADRESSE_ATTRIBUTE.CODE_COMMUNE,
-  ADRESSE_ATTRIBUTE.REGION,
-] as const;
-
 const REGISTER_FIELD = {
   USERNAME: "username",
-  TERMS_ACCEPTED: "termsAccepted",
+  TERMS_ACCEPTED: TERMS_ACCEPTED_FIELD,
 } as const;
 
 const STEP_ANNOUNCEMENT_KEY = {
@@ -59,20 +58,6 @@ type RegisterKcContext = Extract<KcContext, { pageId: "register.ftl" }>;
 
 interface RegisterProps extends EtapePageProps<RegisterKcContext> {
   doMakeUserConfirmPassword: boolean;
-}
-
-function readInitialAdresse(attributes: RegisterKcContext["profile"]["attributesByName"]) {
-  const read = (name: string): string => attributes[name]?.value ?? "";
-
-  const adresse: Adresse = {
-    voie: read(ADRESSE_ATTRIBUTE.ADRESSE),
-    complement: read(ADRESSE_ATTRIBUTE.COMPLEMENT_ADRESSE),
-    codePostal: read(ADRESSE_ATTRIBUTE.CODE_POSTAL),
-    commune: read(ADRESSE_ATTRIBUTE.COMMUNE),
-    codeCommune: read(ADRESSE_ATTRIBUTE.CODE_COMMUNE),
-  };
-
-  return isAdresseComplete(adresse) ? adresse : null;
 }
 
 export default function Register(props: RegisterProps) {
@@ -111,9 +96,10 @@ export default function Register(props: RegisterProps) {
     (fieldStates.get(name)?.displayableErrors.length ?? 0) !== 0;
 
   const [initialAdresse] = useState(() => readInitialAdresse(profile.attributesByName));
-  const regionsPilotes =
-    profile.attributesByName[ADRESSE_ATTRIBUTE.REGION]?.validators.options?.options ?? [];
-  const adresseField = useAdresseField(initialAdresse, regionsPilotes);
+  const adresseField = useAdresseField(
+    initialAdresse,
+    readRegionsPilotes(profile.attributesByName),
+  );
 
   const [areTermsAccepted, setAreTermsAccepted] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
@@ -252,6 +238,9 @@ export default function Register(props: RegisterProps) {
           <SocialProviders
             providers={social?.providers}
             separatorLabel={msgStr("etapeOrCredentials")}
+            onProviderSelect={() =>
+              rememberRegistrationReturn(REGISTRATION_RETURN.FRANCECONNECT_CHOSEN)
+            }
             i18n={i18n}
           />
         ) : undefined
@@ -319,48 +308,16 @@ export default function Register(props: RegisterProps) {
         </div>
 
         <div hidden={isOnInformations} className="flex flex-col gap-6">
-          <div className="flex flex-col gap-1">
-            <CheckboxField
-              id={REGISTER_FIELD.TERMS_ACCEPTED}
-              name={REGISTER_FIELD.TERMS_ACCEPTED}
-              checked={areTermsAccepted}
-              onChange={(event) => setAreTermsAccepted(event.target.checked)}
-              label={
-                <>
-                  {msg("etapeTermsAccept")}{" "}
-                  <LegalLink href={LEGAL_DOCUMENT_URL.CGU} newWindowLabel={msg("etapeNewWindow")}>
-                    {msg("etapeTermsCgu")}
-                  </LegalLink>{" "}
-                  {msg("etapeTermsAnd")}{" "}
-                  <LegalLink href={LEGAL_DOCUMENT_URL.CGI} newWindowLabel={msg("etapeNewWindow")}>
-                    {msg("etapeTermsCgi")}
-                  </LegalLink>
-                  .
-                </>
-              }
-              aria-describedby={
-                messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED)
-                  ? "input-error-terms-accepted terms-privacy-notice"
-                  : "terms-privacy-notice"
-              }
-            />
-            <p id="terms-privacy-notice" className="text-muted-foreground ms-7 text-xs">
-              {msg("etapeTermsPrivacyNotice")}{" "}
-              <LegalLink
-                href={LEGAL_DOCUMENT_URL.CONFIDENTIALITE}
-                newWindowLabel={msg("etapeNewWindow")}
-              >
-                {msg("etapeTermsPrivacyLink")}
-              </LegalLink>
-              .
-            </p>
-            {messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED) && (
-              <FieldError
-                id="input-error-terms-accepted"
-                message={messagesPerField.get(REGISTER_FIELD.TERMS_ACCEPTED)}
-              />
-            )}
-          </div>
+          <TermsField
+            isChecked={areTermsAccepted}
+            onCheckedChange={setAreTermsAccepted}
+            serverError={
+              messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED)
+                ? messagesPerField.get(REGISTER_FIELD.TERMS_ACCEPTED)
+                : undefined
+            }
+            i18n={i18n}
+          />
 
           {!isOnInformations && (
             <AltchaField
@@ -422,35 +379,5 @@ export default function Register(props: RegisterProps) {
         )}
       </form>
     </Template>
-  );
-}
-
-interface RegisterSectionTitleProps {
-  children: ReactNode;
-}
-
-function RegisterSectionTitle(props: RegisterSectionTitleProps) {
-  return (
-    <FormSectionTitle size="sm" asChild>
-      <h2>{props.children}</h2>
-    </FormSectionTitle>
-  );
-}
-
-interface LegalLinkProps {
-  href: string | undefined;
-  newWindowLabel: ReactNode;
-  children: ReactNode;
-}
-
-function LegalLink(props: LegalLinkProps) {
-  const { href, newWindowLabel, children } = props;
-  if (href === undefined) return <>{children}</>;
-
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="underline">
-      {children}
-      <span className="sr-only"> {newWindowLabel}</span>
-    </a>
   );
 }

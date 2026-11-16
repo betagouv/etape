@@ -1,6 +1,7 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 
+import { forgetRegistrationReturn } from "../components/registration-return";
 import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
 import { USER_PROFILE_ATTRIBUTE } from "../components/user-profile-fields";
 import { useSubmitting } from "./use-submitting";
@@ -54,6 +55,11 @@ export function useRegisterForm(options: UseRegisterFormOptions): UseRegisterFor
   const [hasStepChanged, setHasStepChanged] = useState(false);
   const { isSubmitting, startSubmitting } = useSubmitting();
   const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
+
+  // Déjà sur l'inscription : un renvoi en attente n'a plus lieu d'être.
+  useEffect(() => {
+    forgetRegistrationReturn();
+  }, []);
 
   const goTo = (nextStep: RegisterStep): void => {
     flushSync(() => {

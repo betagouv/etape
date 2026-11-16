@@ -89,3 +89,39 @@ export function buildManualAdresse(
     codeCommune: commune.code,
   };
 }
+
+/** Attributs de l'adresse, dans l'ordre où Keycloak peut les refuser. */
+export const ADRESSE_ATTRIBUTES = [
+  ADRESSE_ATTRIBUTE.ADRESSE,
+  ADRESSE_ATTRIBUTE.COMPLEMENT_ADRESSE,
+  ADRESSE_ATTRIBUTE.CODE_POSTAL,
+  ADRESSE_ATTRIBUTE.COMMUNE,
+  ADRESSE_ATTRIBUTE.CODE_COMMUNE,
+  ADRESSE_ATTRIBUTE.REGION,
+] as const;
+
+/** Attributs du profil tels que Keycloak les transmet au thème. */
+export type ProfileAttributes = Record<
+  string,
+  { value?: string; validators: { options?: { options: string[] } } } | undefined
+>;
+
+/** Adresse renvoyée par Keycloak après un envoi refusé, ou `null` si elle est incomplète. */
+export function readInitialAdresse(attributes: ProfileAttributes): Adresse | null {
+  const read = (name: string): string => attributes[name]?.value ?? "";
+
+  const adresse: Adresse = {
+    voie: read(ADRESSE_ATTRIBUTE.ADRESSE),
+    complement: read(ADRESSE_ATTRIBUTE.COMPLEMENT_ADRESSE),
+    codePostal: read(ADRESSE_ATTRIBUTE.CODE_POSTAL),
+    commune: read(ADRESSE_ATTRIBUTE.COMMUNE),
+    codeCommune: read(ADRESSE_ATTRIBUTE.CODE_COMMUNE),
+  };
+
+  return isAdresseComplete(adresse) ? adresse : null;
+}
+
+/** Régions pilotes : les options de l'attribut `region` du profil. */
+export function readRegionsPilotes(attributes: ProfileAttributes): readonly string[] {
+  return attributes[ADRESSE_ATTRIBUTE.REGION]?.validators.options?.options ?? [];
+}

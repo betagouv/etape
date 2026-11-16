@@ -3,6 +3,11 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import type { FormEvent } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  readRegistrationReturn,
+  REGISTRATION_RETURN,
+  rememberRegistrationReturn,
+} from "../components/registration-return";
 import { REGISTER_STEP, type RegisterStep, useRegisterForm } from "./use-register-form";
 
 const submitEvent = () => {
@@ -45,6 +50,15 @@ describe("useRegisterForm", () => {
     cleanup();
     document.body.replaceChildren();
     onIncomplete.mockClear();
+    sessionStorage.clear();
+  });
+
+  it("oublie un renvoi vers l'inscription resté en attente", () => {
+    rememberRegistrationReturn(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED);
+
+    render(REGISTER_STEP.INFORMATIONS, false, false);
+
+    expect(readRegistrationReturn()).toBeUndefined();
   });
 
   it("n'envoie pas le formulaire à l'étape 1 et passe à la suivante", () => {

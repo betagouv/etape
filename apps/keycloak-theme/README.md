@@ -239,6 +239,25 @@ manuelle et le contrôle de la région.
 Les liens des conditions générales et de la politique de confidentialité sont dans
 `components/legal-documents.ts`. Tant qu'une URL manque, le libellé reste du texte.
 
+## Inscription avec FranceConnect
+
+À la première arrivée par FranceConnect, Keycloak affiche `idp-review-user-profile.ftl`,
+rendu par `IdpReviewUserProfile.tsx` : « Finaliser la création de votre espace ». Le flow
+`etape-first-broker-login` et son extension (`keycloak/extensions/first-broker-login`)
+ne le montrent qu'à une création : un compte existant passe directement à la liaison.
+
+- **Prénom, nom et e-mail** sont envoyés en lecture seule (`readOnly`, jamais
+  `disabled`, qui ne serait pas envoyé). L'extension les réimpose de toute façon.
+- **Adresse et conditions générales** reprennent les composants de l'inscription
+  (`AdresseField`, `TermsField`) ; les CGU sont aussi exigées côté serveur.
+- **Retours vers l'inscription.** Keycloak rend la connexion après « Revenir sur
+  Transitions Pro » chez FranceConnect, et après « Annuler et revenir à
+  l'inscription », qui passe par `loginRestartFlowUrl` pour effacer l'identité
+  transmise (sans quoi un nouveau clic sur FranceConnect est vu comme un flow
+  imbriqué). Une marque dans le `sessionStorage` (`components/registration-return.ts`)
+  dit à la connexion de renvoyer aussitôt à l'étape 1. Stockage refusé : on reste sur
+  la connexion, d'où « Créer mon espace » reste à un clic.
+
 ## Case « Je ne suis pas un robot »
 
 `src/login/components/altcha/`, avec le hook `src/login/hooks/use-altcha-widget.ts`, affiche le widget ALTCHA sur l'inscription et
