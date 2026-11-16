@@ -197,13 +197,14 @@ interface BrokeredIdentityFieldProps {
 function BrokeredIdentityField(props: BrokeredIdentityFieldProps) {
   const { name, label, value, serverError, isEmail = false } = props;
   const errorId = `input-error-${name}`;
-  const isTransmitted = value !== "";
+  // Une valeur refusée par le serveur revient elle aussi pré-remplie : elle doit rester corrigeable.
+  const isLocked = value !== "" && serverError === undefined;
 
   return (
     <Field
       id={name}
       label={label}
-      required={!isTransmitted}
+      required={!isLocked}
       error={
         serverError === undefined ? undefined : <FieldError id={errorId} message={serverError} />
       }
@@ -213,8 +214,8 @@ function BrokeredIdentityField(props: BrokeredIdentityFieldProps) {
         name={name}
         type="text"
         defaultValue={value}
-        readOnly={isTransmitted}
-        aria-required={!isTransmitted}
+        readOnly={isLocked}
+        aria-required={!isLocked}
         icon={isEmail ? Mail : undefined}
         invalid={serverError !== undefined}
         aria-describedby={serverError === undefined ? undefined : errorId}
