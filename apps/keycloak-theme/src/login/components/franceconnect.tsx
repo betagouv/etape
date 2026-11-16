@@ -10,7 +10,7 @@ import type { I18n } from "../i18n";
  * son alias pour lui appliquer le bouton officiel. Tout autre fournisseur (un
  * ProConnect ajouté plus tard, par exemple) retombe sur le bouton générique.
  */
-const FRANCECONNECT_ALIAS = "franceconnect";
+export const FRANCECONNECT_ALIAS = "franceconnect";
 
 type Provider = {
   alias: string;

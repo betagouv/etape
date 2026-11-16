@@ -33,6 +33,10 @@ public class EtapeIdpReviewProfile extends IdpReviewProfileAuthenticator {
             BrokeredIdentityContext brokerContext) {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
 
+        Map<String, String> locked =
+                BrokeredIdentityLock.lockedValues(userCtx.getFirstName(), userCtx.getLastName(), userCtx.getEmail());
+        BrokeredIdentityLock.apply(formData, locked);
+
         if (!TermsAcceptance.isAccepted(formData.getFirst(TermsAcceptance.FIELD))) {
             context.challenge(context.form()
                     .setErrors(List.of(new FormMessage(TermsAcceptance.FIELD, TermsAcceptance.REQUIRED_MESSAGE)))
@@ -41,10 +45,6 @@ public class EtapeIdpReviewProfile extends IdpReviewProfileAuthenticator {
                     .createUpdateProfilePage());
             return;
         }
-
-        Map<String, String> locked =
-                BrokeredIdentityLock.lockedValues(userCtx.getFirstName(), userCtx.getLastName(), userCtx.getEmail());
-        BrokeredIdentityLock.apply(formData, locked);
 
         super.actionImpl(context, userCtx, brokerContext);
 
@@ -58,13 +58,10 @@ public class EtapeIdpReviewProfile extends IdpReviewProfileAuthenticator {
     private static boolean hasExistingAccount(AuthenticationFlowContext context,
             SerializedBrokeredIdentityContext userCtx) {
         RealmModel realm = context.getRealm();
-        String email = userCtx.getEmail();
-        if (email != null && !realm.isDuplicateEmailsAllowed()
-                && context.getSession().users().getUserByEmail(realm, email) != null) {
-            return true;
-        }
-        String username = realm.isRegistrationEmailAsUsername() && email != null ? email : userCtx.getUsername();
-        return username != null && context.getSession().users().getUserByUsername(realm, username) != null;
+        return ExistingAccount.exists(userCtx.getEmail(), userCtx.getUsername(), realm.isDuplicateEmailsAllowed(),
+                realm.isRegistrationEmailAsUsername(),
+                email -> context.getSession().users().getUserByEmail(realm, email) != null,
+                username -> context.getSession().users().getUserByUsername(realm, username) != null);
     }
 
     private static void restoreLockedIdentity(SerializedBrokeredIdentityContext userCtx, Map<String, String> locked) {

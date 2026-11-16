@@ -140,7 +140,7 @@ services:
           cp /first-broker-login/etape-keycloak-first-broker-login.jar /providers/
           echo "extension « première connexion FranceConnect » installée."
         else
-          echo "extension « première connexion FranceConnect » non construite — première connexion FranceConnect en erreur."
+          echo "extension « première connexion FranceConnect » non construite — FranceConnect créera les comptes sans adresse ni CGU."
           echo "  mvn -f keycloak/extensions/first-broker-login/pom.xml package pour l'obtenir."
         fi
 

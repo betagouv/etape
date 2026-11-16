@@ -229,7 +229,8 @@ l'email avec vérification obligatoire, et stocker le pivot en attributs
 utilisateur pour garder l'option ouverte.
 
 Le flux `first broker login` de Keycloak enchaîne `idp-confirm-link` puis
-`idp-email-verification`, ce qui prouve la maîtrise de la boîte mail avant fusion.
+`idp-email-verification` (ou, sans serveur d'envoi, une nouvelle saisie du mot de
+passe du compte), ce qui prouve la maîtrise du compte avant fusion.
 **Ne pas le remplacer par la liaison automatique**, et laisser `trustEmail: false`
 sur l'identity provider — activer cette option ferait sauter l'étape de vérification.
 
@@ -306,7 +307,7 @@ Ce qu'il faut savoir avant d'y toucher :
   sans cela, la détection de force brute compterait l'échec contre ce compte,
   et un robot pourrait verrouiller celui d'un tiers.
 - **FranceConnect n'est pas concerné** : la première connexion passe par
-  `first broker login`, pas par l'inscription.
+  `etape-first-broker-login`, pas par l'inscription.
 - **Un réglage invalide est ignoré** : les valeurs par défaut s'appliquent et
   Keycloak l'écrit dans ses journaux. Keycloak ne permet pas de valider la
   configuration d'une étape au moment où on la saisit.
@@ -536,7 +537,8 @@ En local, le proxy de Vite doit donc garder `Host` intact (forme objet, sans
 pnpm run build --filter=@etape/keycloak-theme
 
 # Les extensions ensuite, recopiées de même. Sans elles, l'inscription et le
-# « mot de passe oublié » répondent 500.
+# « mot de passe oublié » répondent 500, et FranceConnect crée les comptes sans
+# adresse ni conditions générales.
 mvn -f keycloak/extensions/altcha/pom.xml package
 mvn -f keycloak/extensions/reset-credentials/pom.xml package
 mvn -f keycloak/extensions/first-broker-login/pom.xml package

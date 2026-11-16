@@ -5,6 +5,7 @@ import {
   REGISTRATION_RETURN,
   rememberRegistrationReturn,
 } from "../components/registration-return";
+import { TERMS_ACCEPTED_FIELD } from "../components/registration-fields";
 import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
 import { useSubmitting } from "./use-submitting";
 
@@ -12,9 +13,9 @@ const MAIN_BUTTON = 0;
 
 interface UseIdpReviewFormOptions {
   isAdresseComplete: boolean;
-  areTermsAccepted: boolean;
-  /** Premier champ à compléter, dans l'ordre de la page. */
-  firstMissingFieldId: string | undefined;
+  hasAcceptedTerms: boolean;
+  /** Champ de l'adresse à compléter, s'il en reste un. */
+  adresseFirstMissingFieldId: string | undefined;
 }
 
 /** État de « Finaliser la création de votre espace ». */
@@ -30,17 +31,19 @@ export interface UseIdpReviewFormResult {
 
 /** Refus d'un envoi incomplet, qui place le focus sur le champ manquant, et garde contre la double soumission. */
 export function useIdpReviewForm(options: UseIdpReviewFormOptions): UseIdpReviewFormResult {
-  const { isAdresseComplete, areTermsAccepted, firstMissingFieldId } = options;
+  const { isAdresseComplete, hasAcceptedTerms, adresseFirstMissingFieldId } = options;
 
   const { isSubmitting, startSubmitting } = useSubmitting();
   const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
 
-  // Un « Annuler » ouvert dans un autre onglet ne doit pas renvoyer celui-ci plus tard.
+  // La marque posée avant FranceConnect, ou copiée par un onglet dupliqué, n'a plus lieu d'être ici.
   useEffect(() => {
     forgetRegistrationReturn();
   }, []);
 
-  const isComplete = isAdresseComplete && areTermsAccepted;
+  const isComplete = isAdresseComplete && hasAcceptedTerms;
+  const firstMissingFieldId =
+    adresseFirstMissingFieldId ?? (hasAcceptedTerms ? undefined : TERMS_ACCEPTED_FIELD);
 
   // Dérivé pendant le rendu : un formulaire redevenu complet oublie la tentative ratée.
   if (hasIncompleteAttempt && isComplete) setHasIncompleteAttempt(false);
@@ -66,13 +69,17 @@ export function useIdpReviewForm(options: UseIdpReviewFormOptions): UseIdpReview
       rememberSubmittedForm(SUBMITTED_FORM.REGISTRATION);
     },
     cancel: (event) => {
-      const opensElsewhere =
+      if (isSubmitting) {
+        event.preventDefault();
+        return;
+      }
+      const isOpeningElsewhere =
         event.button !== MAIN_BUTTON ||
         event.metaKey ||
         event.ctrlKey ||
         event.shiftKey ||
         event.altKey;
-      if (!opensElsewhere) rememberRegistrationReturn(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED);
+      if (!isOpeningElsewhere) rememberRegistrationReturn(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED);
     },
   };
 }

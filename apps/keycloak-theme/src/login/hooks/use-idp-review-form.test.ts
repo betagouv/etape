@@ -8,6 +8,7 @@ import {
   REGISTRATION_RETURN,
   rememberRegistrationReturn,
 } from "../components/registration-return";
+import { TERMS_ACCEPTED_FIELD } from "../components/registration-fields";
 import { readSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
 import { useIdpReviewForm } from "./use-idp-review-form";
 
@@ -18,15 +19,14 @@ const submitEvent = () => {
   return { preventDefault, event: { preventDefault } as unknown as FormEvent<HTMLFormElement> };
 };
 
-const render = (isAdresseComplete: boolean, areTermsAccepted: boolean) =>
+const render = (isAdresseComplete: boolean, hasAcceptedTerms: boolean) =>
   renderHook(
-    (props: { isAdresseComplete: boolean; areTermsAccepted: boolean }) =>
+    (props: { isAdresseComplete: boolean; hasAcceptedTerms: boolean }) =>
       useIdpReviewForm({
         ...props,
-        firstMissingFieldId:
-          props.isAdresseComplete && props.areTermsAccepted ? undefined : MISSING_FIELD_ID,
+        adresseFirstMissingFieldId: props.isAdresseComplete ? undefined : MISSING_FIELD_ID,
       }),
-    { initialProps: { isAdresseComplete, areTermsAccepted } },
+    { initialProps: { isAdresseComplete, hasAcceptedTerms } },
   );
 
 describe("useIdpReviewForm", () => {
@@ -50,7 +50,10 @@ describe("useIdpReviewForm", () => {
     expect(result.current.shouldAnnounceIncomplete).toBe(true);
   });
 
-  it("refuse l'envoi tant que les conditions ne sont pas acceptées", () => {
+  it("refuse l'envoi tant que les conditions ne sont pas acceptées, focus sur la case", () => {
+    const checkbox = document.createElement("input");
+    checkbox.id = TERMS_ACCEPTED_FIELD;
+    document.body.append(checkbox);
     const { result } = render(true, false);
     const { event, preventDefault } = submitEvent();
 
@@ -58,13 +61,14 @@ describe("useIdpReviewForm", () => {
 
     expect(result.current.isSubmitBlocked).toBe(true);
     expect(preventDefault).toHaveBeenCalled();
+    expect(document.activeElement).toBe(checkbox);
   });
 
   it("oublie l'annonce dès que le formulaire est complet", () => {
     const { result, rerender } = render(true, false);
     act(() => result.current.submit(submitEvent().event));
 
-    rerender({ isAdresseComplete: true, areTermsAccepted: true });
+    rerender({ isAdresseComplete: true, hasAcceptedTerms: true });
 
     expect(result.current.shouldAnnounceIncomplete).toBe(false);
     expect(result.current.isIncomplete).toBe(false);
@@ -87,8 +91,8 @@ describe("useIdpReviewForm", () => {
     expect(result.current.shouldAnnounceIncomplete).toBe(false);
   });
 
-  it("oublie à l'affichage un « Annuler » resté d'un autre onglet", () => {
-    rememberRegistrationReturn(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED);
+  it("oublie à l'affichage la marque posée avant FranceConnect", () => {
+    rememberRegistrationReturn(REGISTRATION_RETURN.FRANCECONNECT_CHOSEN);
 
     render(false, false);
 
@@ -123,6 +127,26 @@ describe("useIdpReviewForm", () => {
 
     act(() => result.current.submit(submitEvent().event));
 
+    expect(readRegistrationReturn()).toBeUndefined();
+  });
+
+  it("ignore « Annuler » pendant l'envoi", () => {
+    const { result } = render(true, true);
+    act(() => result.current.submit(submitEvent().event));
+    const preventDefault = vi.fn();
+
+    act(() =>
+      result.current.cancel({
+        button: 0,
+        metaKey: false,
+        ctrlKey: false,
+        shiftKey: false,
+        altKey: false,
+        preventDefault,
+      } as unknown as MouseEvent<HTMLAnchorElement>),
+    );
+
+    expect(preventDefault).toHaveBeenCalled();
     expect(readRegistrationReturn()).toBeUndefined();
   });
 });

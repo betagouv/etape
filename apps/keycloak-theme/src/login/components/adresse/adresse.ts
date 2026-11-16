@@ -90,7 +90,7 @@ export function buildManualAdresse(
   };
 }
 
-/** Attributs de l'adresse, dans l'ordre où Keycloak peut les refuser. */
+/** Attributs de l'adresse, dans l'ordre de priorité du message affiché (`getFirstError`). */
 export const ADRESSE_ATTRIBUTES = [
   ADRESSE_ATTRIBUTE.ADRESSE,
   ADRESSE_ATTRIBUTE.COMPLEMENT_ADRESSE,

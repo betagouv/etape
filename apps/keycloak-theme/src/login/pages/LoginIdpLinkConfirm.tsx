@@ -38,8 +38,8 @@ export default function LoginIdpLinkConfirm(
             name="submitAction"
             id="linkAccount"
             value="linkAccount"
-            size="xl"
-            className="w-full rounded-lg"
+            size="form"
+            className="w-full"
           >
             {msg("confirmLinkIdpContinue", idpAlias)}
           </Button>

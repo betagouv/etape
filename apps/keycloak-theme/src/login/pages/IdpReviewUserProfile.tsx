@@ -13,11 +13,7 @@ import { AdresseField } from "../components/adresse/adresse-field";
 import { Alert, MESSAGE_TYPE } from "../components/alert";
 import { Field, FieldError, TextInput } from "../components/form";
 import { HeaderAccountSwitch } from "../components/prose";
-import {
-  RegisterSectionTitle,
-  TERMS_ACCEPTED_FIELD,
-  TermsField,
-} from "../components/registration-fields";
+import { RegisterSectionTitle, TermsField } from "../components/registration-fields";
 import { toReloadablePageUrl } from "../components/reloadable-page";
 import { TITLE_TONE } from "../components/title-tone";
 import { USER_PROFILE_ATTRIBUTE } from "../components/user-profile-fields";
@@ -48,13 +44,12 @@ export default function IdpReviewUserProfile(props: EtapePageProps<IdpReviewKcCo
     initialAdresse,
     readRegionsPilotes(profile.attributesByName),
   );
-  const [areTermsAccepted, setAreTermsAccepted] = useState(false);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 
   const form = useIdpReviewForm({
     isAdresseComplete: adresseField.isComplete,
-    areTermsAccepted,
-    firstMissingFieldId:
-      adresseField.firstMissingFieldId ?? (areTermsAccepted ? undefined : TERMS_ACCEPTED_FIELD),
+    hasAcceptedTerms,
+    adresseFirstMissingFieldId: adresseField.firstMissingFieldId,
   });
 
   const adresseServerError = messagesPerField.existsError(...ADRESSE_ATTRIBUTES)
@@ -142,9 +137,13 @@ export default function IdpReviewUserProfile(props: EtapePageProps<IdpReviewKcCo
         </FormSection>
 
         <TermsField
-          isChecked={areTermsAccepted}
-          onCheckedChange={setAreTermsAccepted}
-          serverError={serverErrorOf(TERMS_ACCEPTED_FIELD)}
+          isChecked={hasAcceptedTerms}
+          onCheckedChange={setHasAcceptedTerms}
+          serverError={
+            messagesPerField.existsError("termsAccepted")
+              ? messagesPerField.get("termsAccepted")
+              : undefined
+          }
           i18n={i18n}
         />
 
@@ -163,7 +162,11 @@ export default function IdpReviewUserProfile(props: EtapePageProps<IdpReviewKcCo
             {msg("etapeRegisterActivationHint")}
           </p>
           <Button variant="link" size="inline" asChild>
-            <a href={url.loginRestartFlowUrl} onClick={form.cancel}>
+            <a
+              href={url.loginRestartFlowUrl}
+              onClick={form.cancel}
+              aria-disabled={form.isSubmitting}
+            >
               {msg("etapeIdpReviewCancel")}
             </a>
           </Button>
@@ -187,15 +190,20 @@ interface BrokeredIdentityFieldProps {
   isEmail?: boolean;
 }
 
-/** Donnée transmise par FranceConnect : lisible et envoyée, mais pas modifiable. */
+/**
+ * Donnée transmise par FranceConnect : lisible et envoyée, mais pas modifiable. Absente,
+ * elle se saisit, sans quoi Keycloak refuserait un champ obligatoire impossible à corriger.
+ */
 function BrokeredIdentityField(props: BrokeredIdentityFieldProps) {
   const { name, label, value, serverError, isEmail = false } = props;
   const errorId = `input-error-${name}`;
+  const isTransmitted = value !== "";
 
   return (
     <Field
       id={name}
       label={label}
+      required={!isTransmitted}
       error={
         serverError === undefined ? undefined : <FieldError id={errorId} message={serverError} />
       }
@@ -204,8 +212,9 @@ function BrokeredIdentityField(props: BrokeredIdentityFieldProps) {
         id={name}
         name={name}
         type="text"
-        value={value}
-        readOnly
+        defaultValue={value}
+        readOnly={isTransmitted}
+        aria-required={!isTransmitted}
         icon={isEmail ? Mail : undefined}
         invalid={serverError !== undefined}
         aria-describedby={serverError === undefined ? undefined : errorId}

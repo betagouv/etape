@@ -1,3 +1,5 @@
+import { FRANCECONNECT_ALIAS } from "./franceconnect";
+
 /** Raison de renvoyer vers l'inscription la connexion que Keycloak affiche. */
 export const REGISTRATION_RETURN = {
   /** FranceConnect a été choisi depuis l'inscription. */
@@ -10,8 +12,9 @@ export const REGISTRATION_RETURN = {
 export type RegistrationReturn = (typeof REGISTRATION_RETURN)[keyof typeof REGISTRATION_RETURN];
 
 const STORAGE_KEY = "etape-registration-return";
-const FRANCECONNECT_ENDPOINT_SUFFIX = "/broker/franceconnect/endpoint";
+const FRANCECONNECT_ENDPOINT_SUFFIX = `/broker/${FRANCECONNECT_ALIAS}/endpoint`;
 const LOGIN_PAGE_SUFFIX = "/login-actions/authenticate";
+const ERROR_PARAM = "error";
 const CANCELLED_ERROR = "access_denied";
 
 const isRegistrationReturn = (value: string | null): value is RegistrationReturn =>
@@ -61,6 +64,6 @@ export function shouldReturnToRegistration(
   return (
     reason === REGISTRATION_RETURN.FRANCECONNECT_CHOSEN &&
     location.pathname.endsWith(FRANCECONNECT_ENDPOINT_SUFFIX) &&
-    new URLSearchParams(location.search).get("error") === CANCELLED_ERROR
+    new URLSearchParams(location.search).get(ERROR_PARAM) === CANCELLED_ERROR
   );
 }
