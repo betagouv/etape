@@ -16,7 +16,7 @@ import {
 } from "../domain/remote-search";
 import { useDebouncedValue } from "./use-debounced-value";
 
-/** Chaque frappe n'appelle pas l'API : la recherche d'entreprises entame le quota de la clé Insee. */
+/** Chaque frappe n'appelle pas l'API : certaines ont un quota, comme la recherche d'entreprises (clé Insee). */
 const SEARCH_DELAY_MS = 300;
 
 /** Revenir à une recherche déjà faite ne rappelle pas l'API pendant ce délai. */
@@ -61,7 +61,7 @@ export function useRemoteSearch<TItem>(
     enabled: isSearching,
     // La liste précédente reste affichée pendant l'appel, au lieu de se fermer puis de se rouvrir.
     placeholderData: keepPreviousData,
-    // Chaque relance automatique entame le quota de la clé Insee et retarde l'alerte : « Relancer la recherche » suffit.
+    // Chaque relance automatique entame un éventuel quota (clé Insee) et retarde l'alerte : « Relancer la recherche » suffit.
     retry: false,
     staleTime: SEARCH_STALE_TIME_MS,
   });
