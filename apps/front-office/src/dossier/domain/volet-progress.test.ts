@@ -18,6 +18,12 @@ describe("listFilledFields", () => {
     ]);
   });
 
+  it("ne compte pas comme remplie une saisie faite seulement d'espaces", () => {
+    expect(
+      listFilledFields({ denomination: "   ", siret: " 1 " }, ["denomination", "siret"]),
+    ).toEqual(["siret"]);
+  });
+
   it("compte l'employeur choisi comme rempli, pas l'absence d'employeur", () => {
     expect(listFilledFields({ employeur: null }, ["employeur"])).toEqual([]);
     expect(listFilledFields({ employeur: { siret: "50393256800010" } }, ["employeur"])).toEqual([

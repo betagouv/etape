@@ -17,10 +17,12 @@ export function listFilledFields<TName extends string>(
   values: Partial<Record<TName, unknown>>,
   fields: readonly TName[],
 ): TName[] {
-  // Une valeur est une chaîne, un objet (l'employeur choisi) ou `null`.
+  // Une chaîne, un objet (l'employeur choisi) ou `null` ; une chaîne d'espaces est vide, comme pour le schéma.
   return fields.filter((name) => {
     const value = values[name];
-    return value !== undefined && value !== null && value !== "";
+    return (
+      value !== undefined && value !== null && (typeof value !== "string" || value.trim() !== "")
+    );
   });
 }
 
