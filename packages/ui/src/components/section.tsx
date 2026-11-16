@@ -67,6 +67,8 @@ const sectionCaptionVariants = cva("uppercase", {
     variant: {
       default: "text-xs text-primary font-medium tracking-wide",
       compact: "text-muted-foreground text-sm leading-none font-semibold",
+      // Étape en cours de l'inscription (Figma FRONT-OFFICE, « 01. SIGN-UP ») : graisse 500.
+      step: "text-muted-foreground text-sm leading-none font-medium",
     },
   },
   defaultVariants: {

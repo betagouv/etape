@@ -173,6 +173,7 @@ services:
     volumes:
       - ./deploy/keycloak-altcha.sh:/opt/keycloak/bin/etape-altcha.sh:ro
       - ./deploy/keycloak-reset-credentials.sh:/opt/keycloak/bin/etape-reset-credentials.sh:ro
+      - ./deploy/keycloak-registration.sh:/opt/keycloak/bin/etape-registration.sh:ro
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -227,6 +228,9 @@ services:
           REALM=$$realm bash /opt/keycloak/bin/etape-reset-credentials.sh \
             || echo "mot de passe oublié : envoi du lien de $$realm non branché — l'extension est-elle construite ?"
         done
+
+        bash /opt/keycloak/bin/etape-registration.sh \
+          || echo "inscription : profil et conditions générales non configurés."
 
         if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then
           $$KCADM update identity-provider/instances/franceconnect -r etape \
