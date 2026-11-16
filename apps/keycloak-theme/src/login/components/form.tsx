@@ -80,7 +80,7 @@ function InputShell(props: InputShellProps) {
       data-invalid={invalid || undefined}
       data-read-only={isReadOnly || undefined}
       className={cn(
-        "border-input bg-background flex min-h-11 w-full items-center gap-1.5 rounded-lg border px-4 transition-[color,box-shadow]",
+        "border-input bg-background flex min-h-10 w-full items-center gap-1.5 rounded-lg border px-4 transition-[color,box-shadow]",
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
         "data-invalid:border-destructive data-invalid:ring-destructive/20 data-invalid:ring-[3px]",
         "data-read-only:bg-muted data-read-only:text-muted-foreground",

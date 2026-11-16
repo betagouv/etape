@@ -27,8 +27,8 @@ const selectTriggerVariants = cva(
         sm: "h-7",
         default: "h-8",
         // Champ des formulaires de connexion et d'inscription (Figma FRONT-OFFICE, « 01. SIGN-UP ») :
-        // 44 px sur fond `background`, aligné sur leurs champs texte.
-        form: "bg-background h-11 shadow-none",
+        // 40 px sur fond `background`, aligné sur leurs champs texte.
+        form: "bg-background h-10 shadow-none",
       },
     },
     defaultVariants: {
