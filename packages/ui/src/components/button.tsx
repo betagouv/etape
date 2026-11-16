@@ -44,6 +44,10 @@ const buttonVariants = cva(
         inline: "gap-1.5",
         // `Variant=Link, Size=sm` du kit : libellé en 12 px.
         "inline-sm": "gap-1 text-xs",
+        // `Variant=Link, Size=LG` de la maquette FRONT-OFFICE (« Mon futur métier », saisie manuelle) : 48px, libellé 20px, icône 24px.
+        // Le libellé passe à la ligne : à cette taille, une phrase déborde d'un écran étroit.
+        "inline-lg":
+          "min-h-12 gap-1.5 rounded-lg text-left text-xl whitespace-normal [&_svg:not([class*='size-'])]:size-6",
         lg: "h-9 gap-1.5 rounded-lg px-2.5",
         // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
