@@ -18,6 +18,14 @@ type Provider = {
   loginUrl: string;
 };
 
+/** Props de `FranceConnectButton`. */
+export interface FranceConnectButtonProps {
+  loginUrl: string;
+  /** Appelé au clic, avant de quitter la page. */
+  onSelect?: () => void;
+  i18n: I18n;
+}
+
 /**
  * Bouton FranceConnect, conforme au kit d'implémentation.
  *
@@ -28,11 +36,7 @@ type Provider = {
  *
  * @see https://gouvfr.atlassian.net/wiki/spaces/DB/pages/967868417/
  */
-export function FranceConnectButton(props: {
-  loginUrl: string;
-  onSelect?: () => void;
-  i18n: I18n;
-}) {
+export function FranceConnectButton(props: FranceConnectButtonProps) {
   const { loginUrl, onSelect, i18n } = props;
   const { msgStr } = i18n;
 
@@ -81,6 +85,15 @@ function GenericProviderButton(props: { provider: Provider }) {
   );
 }
 
+/** Props de `SocialProviders`. */
+export interface SocialProvidersProps {
+  providers: Provider[] | undefined;
+  separatorLabel: string;
+  /** Appelé au choix de FranceConnect, avant de quitter la page. */
+  onProviderSelect?: () => void;
+  i18n: I18n;
+}
+
 /**
  * Bloc « fournisseurs d'identité », suivi du séparateur qui introduit le
  * formulaire email / mot de passe.
@@ -89,13 +102,7 @@ function GenericProviderButton(props: { provider: Provider }) {
  * libellé qui annonce le formulaire, et son absence laisserait la carte
  * démarrer sans transition.
  */
-export function SocialProviders(props: {
-  providers: Provider[] | undefined;
-  separatorLabel: string;
-  /** Appelé au choix de FranceConnect, avant de quitter la page. */
-  onProviderSelect?: () => void;
-  i18n: I18n;
-}) {
+export function SocialProviders(props: SocialProvidersProps) {
   const { providers, separatorLabel, onProviderSelect, i18n } = props;
 
   const franceConnect = providers?.find((provider) => provider.alias === FRANCECONNECT_ALIAS);

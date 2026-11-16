@@ -5,6 +5,9 @@ import {
   formatAdresse,
   isAdresseComplete,
   isCodePostalComplete,
+  type ProfileAttributes,
+  readInitialAdresse,
+  readRegionsPilotes,
   toCodePostal,
 } from "./adresse";
 import { parseAdresses, parseCommunes } from "./adresse-api";
@@ -166,5 +169,46 @@ describe("parseCommunes", () => {
 
   it("signale une réponse inattendue", () => {
     expect(() => parseCommunes({ message: "erreur" })).toThrow();
+  });
+});
+
+const attribute = (value: string, options?: string[]) => ({
+  value,
+  validators: options === undefined ? {} : { options: { options } },
+});
+
+describe("readInitialAdresse", () => {
+  it("relit l'adresse renvoyée par Keycloak", () => {
+    const attributes: ProfileAttributes = {
+      adresse: attribute("9 Rue Victor Hugo"),
+      complement_adresse: attribute(""),
+      code_postal: attribute("33000"),
+      commune: attribute("Bordeaux"),
+      code_commune: attribute("33063"),
+    };
+
+    expect(readInitialAdresse(attributes)).toEqual({
+      voie: "9 Rue Victor Hugo",
+      complement: "",
+      codePostal: "33000",
+      commune: "Bordeaux",
+      codeCommune: "33063",
+    });
+  });
+
+  it("ignore une adresse incomplète ou absente", () => {
+    expect(readInitialAdresse({ adresse: attribute("9 Rue Victor Hugo") })).toBeNull();
+    expect(readInitialAdresse({})).toBeNull();
+  });
+});
+
+describe("readRegionsPilotes", () => {
+  it("lit les options de l'attribut région", () => {
+    expect(readRegionsPilotes({ region: attribute("", ["75"]) })).toEqual(["75"]);
+  });
+
+  it("rend une liste vide sans options ou sans attribut", () => {
+    expect(readRegionsPilotes({ region: attribute("") })).toEqual([]);
+    expect(readRegionsPilotes({})).toEqual([]);
   });
 });

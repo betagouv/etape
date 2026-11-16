@@ -1,7 +1,14 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type MouseEvent, useEffect, useState } from "react";
 
+import {
+  forgetRegistrationReturn,
+  REGISTRATION_RETURN,
+  rememberRegistrationReturn,
+} from "../components/registration-return";
 import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
 import { useSubmitting } from "./use-submitting";
+
+const MAIN_BUTTON = 0;
 
 interface UseIdpReviewFormOptions {
   isAdresseComplete: boolean;
@@ -17,6 +24,8 @@ export interface UseIdpReviewFormResult {
   isIncomplete: boolean;
   shouldAnnounceIncomplete: boolean;
   submit: (event: FormEvent<HTMLFormElement>) => void;
+  /** « Annuler et revenir à l'inscription » : la connexion que Keycloak affiche ensuite y renverra. */
+  cancel: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 /** Refus d'un envoi incomplet, qui place le focus sur le champ manquant, et garde contre la double soumission. */
@@ -25,6 +34,11 @@ export function useIdpReviewForm(options: UseIdpReviewFormOptions): UseIdpReview
 
   const { isSubmitting, startSubmitting } = useSubmitting();
   const [hasIncompleteAttempt, setHasIncompleteAttempt] = useState(false);
+
+  // Un « Annuler » ouvert dans un autre onglet ne doit pas renvoyer celui-ci plus tard.
+  useEffect(() => {
+    forgetRegistrationReturn();
+  }, []);
 
   const isComplete = isAdresseComplete && areTermsAccepted;
 
@@ -48,7 +62,17 @@ export function useIdpReviewForm(options: UseIdpReviewFormOptions): UseIdpReview
         return;
       }
       startSubmitting();
+      forgetRegistrationReturn();
       rememberSubmittedForm(SUBMITTED_FORM.REGISTRATION);
+    },
+    cancel: (event) => {
+      const opensElsewhere =
+        event.button !== MAIN_BUTTON ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey;
+      if (!opensElsewhere) rememberRegistrationReturn(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED);
     },
   };
 }

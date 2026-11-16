@@ -1,8 +1,13 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from "@testing-library/react";
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  readRegistrationReturn,
+  REGISTRATION_RETURN,
+  rememberRegistrationReturn,
+} from "../components/registration-return";
 import { readSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
 import { useIdpReviewForm } from "./use-idp-review-form";
 
@@ -80,5 +85,44 @@ describe("useIdpReviewForm", () => {
 
     expect(second.preventDefault).toHaveBeenCalled();
     expect(result.current.shouldAnnounceIncomplete).toBe(false);
+  });
+
+  it("oublie à l'affichage un « Annuler » resté d'un autre onglet", () => {
+    rememberRegistrationReturn(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED);
+
+    render(false, false);
+
+    expect(readRegistrationReturn()).toBeUndefined();
+  });
+
+  it("retient « Annuler » pour un clic simple, pas pour une ouverture dans un autre onglet", () => {
+    const { result } = render(false, false);
+    const click = (init: Partial<MouseEvent<HTMLAnchorElement>>) =>
+      ({
+        button: 0,
+        metaKey: false,
+        ctrlKey: false,
+        shiftKey: false,
+        altKey: false,
+        ...init,
+      }) as MouseEvent<HTMLAnchorElement>;
+
+    act(() => result.current.cancel(click({ metaKey: true })));
+    expect(readRegistrationReturn()).toBeUndefined();
+
+    act(() => result.current.cancel(click({ button: 1 })));
+    expect(readRegistrationReturn()).toBeUndefined();
+
+    act(() => result.current.cancel(click({})));
+    expect(readRegistrationReturn()).toBe(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED);
+  });
+
+  it("oublie « Annuler » à l'envoi", () => {
+    const { result } = render(true, true);
+    rememberRegistrationReturn(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED);
+
+    act(() => result.current.submit(submitEvent().event));
+
+    expect(readRegistrationReturn()).toBeUndefined();
   });
 });

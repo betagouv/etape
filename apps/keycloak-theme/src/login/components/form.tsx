@@ -64,13 +64,15 @@ export function Field(props: {
  * Le focus est porté par le conteneur (`focus-within`) et non par l'`input`,
  * sans quoi l'anneau de focus s'afficherait à l'intérieur de la bordure.
  */
-function InputShell(props: {
+interface InputShellProps {
   icon?: IconComponent;
   trailing?: ReactNode;
   invalid?: boolean;
   isReadOnly?: boolean;
   children: ReactNode;
-}) {
+}
+
+function InputShell(props: InputShellProps) {
   const { icon: Icon, trailing, invalid = false, isReadOnly = false, children } = props;
 
   return (

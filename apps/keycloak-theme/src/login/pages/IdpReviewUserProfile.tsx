@@ -18,8 +18,7 @@ import {
   TERMS_ACCEPTED_FIELD,
   TermsField,
 } from "../components/registration-fields";
-import { toRegistrationPageUrl } from "../components/registration-page";
-import { REGISTRATION_RETURN, rememberRegistrationReturn } from "../components/registration-return";
+import { toReloadablePageUrl } from "../components/reloadable-page";
 import { TITLE_TONE } from "../components/title-tone";
 import { USER_PROFILE_ATTRIBUTE } from "../components/user-profile-fields";
 import type { I18n } from "../i18n";
@@ -79,7 +78,7 @@ export default function IdpReviewUserProfile(props: EtapePageProps<IdpReviewKcCo
         accountSwitch: (
           <HeaderAccountSwitch
             question={msg("etapeAlreadyAccount")}
-            href={url.loginUrl}
+            href={url.loginRestartFlowUrl}
             label={msg("doLogIn")}
           />
         ),
@@ -137,7 +136,7 @@ export default function IdpReviewUserProfile(props: EtapePageProps<IdpReviewKcCo
             field={adresseField}
             serverError={adresseServerError}
             shouldFocusOnMount={adresseServerError !== undefined}
-            reloadUrl={toRegistrationPageUrl(url.loginAction)}
+            reloadUrl={toReloadablePageUrl(url.loginAction)}
             i18n={i18n}
           />
         </FormSection>
@@ -164,10 +163,7 @@ export default function IdpReviewUserProfile(props: EtapePageProps<IdpReviewKcCo
             {msg("etapeRegisterActivationHint")}
           </p>
           <Button variant="link" size="inline" asChild>
-            <a
-              href={url.loginRestartFlowUrl}
-              onClick={() => rememberRegistrationReturn(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED)}
-            >
+            <a href={url.loginRestartFlowUrl} onClick={form.cancel}>
               {msg("etapeIdpReviewCancel")}
             </a>
           </Button>

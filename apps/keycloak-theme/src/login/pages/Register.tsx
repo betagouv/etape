@@ -17,7 +17,7 @@ import { SocialProviders } from "../components/franceconnect";
 import { REGISTRATION_RETURN, rememberRegistrationReturn } from "../components/registration-return";
 import { getPasswordRules } from "../components/password-rules";
 import { HeaderAccountSwitch } from "../components/prose";
-import { toRegistrationPageUrl } from "../components/registration-page";
+import { toReloadablePageUrl } from "../components/reloadable-page";
 import { RegisterStepIndicator } from "../components/register-step-indicator";
 import {
   RegisterSectionTitle,
@@ -291,7 +291,7 @@ export default function Register(props: RegisterProps) {
                 shouldFocusOnMount={
                   adresseServerError !== undefined && invalidFieldName === undefined
                 }
-                reloadUrl={toRegistrationPageUrl(url.registrationAction)}
+                reloadUrl={toReloadablePageUrl(url.registrationAction)}
                 i18n={i18n}
               />
             </FormSection>

@@ -89,4 +89,13 @@ describe("registration-return", () => {
   it("renvoie à l'inscription après « Annuler et revenir à l'inscription »", () => {
     expect(shouldReturnToRegistration(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED, LOGIN)).toBe(true);
   });
+
+  it("n'agit après « Annuler » que sur la page de connexion", () => {
+    expect(
+      shouldReturnToRegistration(REGISTRATION_RETURN.IDP_REVIEW_CANCELLED, {
+        pathname: "/realms/etape/login-actions/first-broker-login",
+        search: "",
+      }),
+    ).toBe(false);
+  });
 });
