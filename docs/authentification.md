@@ -253,6 +253,18 @@ sauter l'étape de vérification.
   affiche pendant la saisie. Modifier l'un sans l'autre annonce une règle que le
   serveur n'applique pas, ou fait échouer un formulaire qui paraît complet.
 
+### Inscription : adresse et conditions générales
+
+L'écran d'inscription du front-office demande l'adresse de résidence, dont il déduit
+la région : voir le [README du thème](../apps/keycloak-theme/README.md#inscription-en-deux-étapes).
+`deploy/keycloak-registration.sh`, lancé à chaque démarrage, déclare dans le profil
+du realm `etape` les attributs `adresse`, `complement_adresse`, `code_postal`,
+`commune`, `code_commune` et `region`, dont les options sont la liste des régions
+pilotes. Il y exige aussi les conditions générales
+(`registration-terms-and-conditions`), et active l'action `TERMS_AND_CONDITIONS` :
+sans elle, Keycloak contrôle la case mais n'enregistre pas la date d'acceptation
+(`terms_and_conditions`). L'API ne lit encore aucun de ces attributs.
+
 ### Protection contre les robots : ALTCHA
 
 L'inscription et le « mot de passe oublié » exigent une case « Je ne suis pas un

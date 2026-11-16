@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from "react";
 import { Alert, MESSAGE_TYPE } from "./components/alert";
 import { Logo } from "./components/logo";
 import { SupportFooter } from "./components/support-footer";
+import { TITLE_TONE, TITLE_TONE_CLASS, type TitleTone } from "./components/title-tone";
 import type { I18n } from "./i18n";
 import type { KcContext } from "./KcContext";
 
@@ -15,6 +16,9 @@ export interface TemplateSlots {
   subtitle?: ReactNode;
   accountSwitch?: ReactNode;
   backLink?: ReactNode;
+  /** Mention ajoutée au pied de page, sous le contact du support. */
+  footerNote?: ReactNode;
+  titleTone?: TitleTone;
 }
 
 type Props = TemplateProps<KcContext, I18n> & {
@@ -123,7 +127,10 @@ export default function Template(props: Props) {
                   </a>
                 </div>
               ) : (
-                <h1 id="kc-page-title" className="font-heading text-heading-md text-foreground">
+                <h1
+                  id="kc-page-title"
+                  className={`font-heading text-heading-md ${TITLE_TONE_CLASS[slots.titleTone ?? TITLE_TONE.DEFAULT]}`}
+                >
                   {headerNode}
                 </h1>
               )}
@@ -166,7 +173,7 @@ export default function Template(props: Props) {
             )}
           </div>
 
-          <SupportFooter i18n={i18n} />
+          <SupportFooter i18n={i18n} note={slots.footerNote} />
         </div>
       </main>
     </div>

@@ -1,57 +1,94 @@
 import { Button } from "@etape/ui/components/button";
+import { FormSection, FormSectionTitle } from "@etape/ui/components/form-section";
+import { StatusRegion } from "@etape/ui/components/status-region";
 import { useUserProfileForm } from "keycloakify/login/lib/useUserProfileForm";
-import { useMemo, useState } from "react";
+import { ArrowRight, CircleArrowLeft } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
 
+import { type Adresse, ADRESSE_ATTRIBUTE, isAdresseComplete } from "../components/adresse/adresse";
+import { AdresseField } from "../components/adresse/adresse-field";
 import { AltchaField } from "../components/altcha/altcha-field";
+import { isEmailFormatValid } from "../components/email-format";
 import { CheckboxField, FieldError } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
-import { AccountSwitch } from "../components/prose";
-import { rememberSubmittedForm, SUBMITTED_FORM } from "../components/submitted-form";
-import { PasswordRules, UserProfileFields } from "../components/user-profile-fields";
+import { LEGAL_DOCUMENT_URL } from "../components/legal-documents";
+import { getPasswordRules } from "../components/password-rules";
+import { HeaderAccountSwitch } from "../components/prose";
+import { toRegistrationPageUrl } from "../components/registration-page";
+import { RegisterStepIndicator } from "../components/register-step-indicator";
+import { TITLE_TONE } from "../components/title-tone";
+import {
+  PasswordRules,
+  USER_PROFILE_ATTRIBUTE,
+  UserProfileField,
+  type UserProfileFieldProps,
+} from "../components/user-profile-fields";
+import { useAdresseField } from "../hooks/use-adresse-field";
+import { REGISTER_STEP, type RegisterStep, useRegisterForm } from "../hooks/use-register-form";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
 
 const REGISTRATION_CONTEXT = "REGISTRATION";
+const INCOMPLETE_HINT_ID = "register-incomplete-hint";
 
-type RegisterProps = EtapePageProps<Extract<KcContext, { pageId: "register.ftl" }>> & {
+const HIDDEN_ATTRIBUTES: readonly string[] = [
+  USER_PROFILE_ATTRIBUTE.LOCALE,
+  USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM,
+];
+
+const ADRESSE_ATTRIBUTES = [
+  ADRESSE_ATTRIBUTE.ADRESSE,
+  ADRESSE_ATTRIBUTE.COMPLEMENT_ADRESSE,
+  ADRESSE_ATTRIBUTE.CODE_POSTAL,
+  ADRESSE_ATTRIBUTE.COMMUNE,
+  ADRESSE_ATTRIBUTE.CODE_COMMUNE,
+  ADRESSE_ATTRIBUTE.REGION,
+] as const;
+
+const REGISTER_FIELD = {
+  USERNAME: "username",
+  TERMS_ACCEPTED: "termsAccepted",
+} as const;
+
+const STEP_ANNOUNCEMENT_KEY = {
+  [REGISTER_STEP.INFORMATIONS]: "etapeRegisterStepOneAnnouncement",
+  [REGISTER_STEP.CREDENTIALS]: "etapeRegisterStepTwoAnnouncement",
+} as const satisfies Record<RegisterStep, string>;
+
+type RegisterKcContext = Extract<KcContext, { pageId: "register.ftl" }>;
+
+interface RegisterProps extends EtapePageProps<RegisterKcContext> {
   doMakeUserConfirmPassword: boolean;
-};
+}
+
+function readInitialAdresse(attributes: RegisterKcContext["profile"]["attributesByName"]) {
+  const read = (name: string): string => attributes[name]?.value ?? "";
+
+  const adresse: Adresse = {
+    voie: read(ADRESSE_ATTRIBUTE.ADRESSE),
+    complement: read(ADRESSE_ATTRIBUTE.COMPLEMENT_ADRESSE),
+    codePostal: read(ADRESSE_ATTRIBUTE.CODE_POSTAL),
+    commune: read(ADRESSE_ATTRIBUTE.COMMUNE),
+    codeCommune: read(ADRESSE_ATTRIBUTE.CODE_COMMUNE),
+  };
+
+  return isAdresseComplete(adresse) ? adresse : null;
+}
 
 export default function Register(props: RegisterProps) {
   const { kcContext, i18n, doUseDefaultCss, Template, classes, doMakeUserConfirmPassword } = props;
 
-  const { url, messagesPerField, termsAcceptanceRequired, altchaChallenge, altchaUnavailable } =
-    kcContext;
-
+  const { url, messagesPerField, altchaChallenge, altchaUnavailable } = kcContext;
   const { msg, msgStr } = i18n;
 
-  const hasAltchaError = messagesPerField.existsError("altcha");
-
-  /*
-   * Keycloak sert bien ces deux valeurs sur `register.ftl`, mais les types de
-   * Keycloakify 11.15 ne les déclarent pas — et pour `passwordRequired`, le
-   * gabarit généré ne la recopie même pas dans le contexte. D'où cette lecture
-   * explicite, à retirer si une version ultérieure les expose.
-   */
   const { passwordRequired, social, profile } = kcContext as typeof kcContext & {
     passwordRequired?: boolean;
     social?: { providers?: { alias: string; displayName: string; loginUrl: string }[] };
     profile: { context?: string };
   };
 
-  /*
-   * Sans mot de passe demandé, le compte se crée sans moyen de connexion. La
-   * page sert aussi à compléter un profil venu d'un fournisseur d'identité
-   * (`context` vaut alors autre chose) : là, il n'y a effectivement rien à
-   * définir, l'authentification restant du ressort du fournisseur.
-   */
   const isPasswordRequired = passwordRequired ?? profile.context === REGISTRATION_CONTEXT;
 
-  /*
-   * `useMemo` obligatoire : `useUserProfileForm` initialise son état à partir de
-   * l'objet reçu et le réinitialise s'il change d'identité. Un littéral recréé à
-   * chaque rendu vidait les champs déjà saisis à la frappe suivante.
-   */
   const patchedKcContext = useMemo(
     () => ({ ...kcContext, passwordRequired: isPasswordRequired }),
     [kcContext, isPasswordRequired],
@@ -63,10 +100,132 @@ export default function Register(props: RegisterProps) {
     doMakeUserConfirmPassword,
   });
 
-  const [areTermsAccepted, setAreTermsAccepted] = useState(false);
+  const fieldStates = new Map(
+    formState.formFieldStates.map((fieldState) => [fieldState.attribute.name, fieldState]),
+  );
+  const valueOf = (name: string): string => {
+    const value = fieldStates.get(name)?.valueOrValues;
+    return typeof value === "string" ? value : "";
+  };
+  const hasErrorOn = (name: string): boolean =>
+    (fieldStates.get(name)?.displayableErrors.length ?? 0) !== 0;
 
-  const isSubmitDisabled =
-    !formState.isFormSubmittable || (termsAcceptanceRequired && !areTermsAccepted);
+  const [initialAdresse] = useState(() => readInitialAdresse(profile.attributesByName));
+  const regionsPilotes =
+    profile.attributesByName[ADRESSE_ATTRIBUTE.REGION]?.validators.options?.options ?? [];
+  const adresseField = useAdresseField(initialAdresse, regionsPilotes);
+
+  const [areTermsAccepted, setAreTermsAccepted] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+
+  const firstName = valueOf(USER_PROFILE_ATTRIBUTE.FIRST_NAME);
+  const lastName = valueOf(USER_PROFILE_ATTRIBUTE.LAST_NAME);
+  const email = valueOf(USER_PROFILE_ATTRIBUTE.EMAIL);
+  const password = valueOf(USER_PROFILE_ATTRIBUTE.PASSWORD);
+
+  const isInformationsComplete =
+    firstName.trim() !== "" &&
+    lastName.trim() !== "" &&
+    !hasErrorOn(USER_PROFILE_ATTRIBUTE.FIRST_NAME) &&
+    !hasErrorOn(USER_PROFILE_ATTRIBUTE.LAST_NAME) &&
+    adresseField.isComplete;
+
+  const isCredentialsComplete =
+    isEmailFormatValid(email) &&
+    getPasswordRules(password).every((rule) => rule.isSatisfied) &&
+    areTermsAccepted;
+
+  const adresseServerError = messagesPerField.existsError(...ADRESSE_ATTRIBUTES)
+    ? messagesPerField.getFirstError(...ADRESSE_ATTRIBUTES)
+    : undefined;
+
+  const hasInformationsError =
+    messagesPerField.existsError(
+      USER_PROFILE_ATTRIBUTE.FIRST_NAME,
+      USER_PROFILE_ATTRIBUTE.LAST_NAME,
+    ) || adresseServerError !== undefined;
+  const hasCredentialsError =
+    messagesPerField.existsError(
+      USER_PROFILE_ATTRIBUTE.EMAIL,
+      REGISTER_FIELD.USERNAME,
+      USER_PROFILE_ATTRIBUTE.PASSWORD,
+      USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM,
+    ) ||
+    messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED) ||
+    messagesPerField.existsError("altcha");
+
+  const initialStep =
+    hasCredentialsError && !hasInformationsError
+      ? REGISTER_STEP.CREDENTIALS
+      : REGISTER_STEP.INFORMATIONS;
+
+  const invalidFieldCandidates: Record<RegisterStep, (string | false)[]> = {
+    [REGISTER_STEP.INFORMATIONS]: [
+      messagesPerField.existsError(USER_PROFILE_ATTRIBUTE.FIRST_NAME) &&
+        USER_PROFILE_ATTRIBUTE.FIRST_NAME,
+      messagesPerField.existsError(USER_PROFILE_ATTRIBUTE.LAST_NAME) &&
+        USER_PROFILE_ATTRIBUTE.LAST_NAME,
+    ],
+    [REGISTER_STEP.CREDENTIALS]: [
+      messagesPerField.existsError(USER_PROFILE_ATTRIBUTE.EMAIL, REGISTER_FIELD.USERNAME) &&
+        USER_PROFILE_ATTRIBUTE.EMAIL,
+      messagesPerField.existsError(
+        USER_PROFILE_ATTRIBUTE.PASSWORD,
+        USER_PROFILE_ATTRIBUTE.PASSWORD_CONFIRM,
+      ) && USER_PROFILE_ATTRIBUTE.PASSWORD,
+    ],
+  };
+  const invalidFieldName = invalidFieldCandidates[initialStep].find((name) => name !== false);
+
+  const isFirstNameMissing =
+    firstName.trim() === "" || hasErrorOn(USER_PROFILE_ATTRIBUTE.FIRST_NAME);
+  const isLastNameMissing = lastName.trim() === "" || hasErrorOn(USER_PROFILE_ATTRIBUTE.LAST_NAME);
+  const isPasswordMissing = !getPasswordRules(password).every((rule) => rule.isSatisfied);
+
+  const form = useRegisterForm({
+    initialStep,
+    isInformationsComplete,
+    isCredentialsComplete,
+    firstMissingFieldId: {
+      [REGISTER_STEP.INFORMATIONS]: [
+        isFirstNameMissing && USER_PROFILE_ATTRIBUTE.FIRST_NAME,
+        isLastNameMissing && USER_PROFILE_ATTRIBUTE.LAST_NAME,
+        adresseField.firstMissingFieldId,
+      ].find((id) => typeof id === "string"),
+      [REGISTER_STEP.CREDENTIALS]: [
+        !isEmailFormatValid(email) && USER_PROFILE_ATTRIBUTE.EMAIL,
+        isPasswordMissing && USER_PROFILE_ATTRIBUTE.PASSWORD,
+        !areTermsAccepted && REGISTER_FIELD.TERMS_ACCEPTED,
+      ].find((id) => typeof id === "string"),
+    },
+    onIncomplete: (fieldId) => {
+      if (fieldStates.has(fieldId)) {
+        dispatchFormAction({ action: "focus lost", name: fieldId, fieldIndex: undefined });
+      }
+    },
+  });
+
+  const isOnInformations = form.step === REGISTER_STEP.INFORMATIONS;
+
+  const stepAnnouncement = form.shouldAnnounceIncomplete
+    ? msgStr("etapeRegisterIncomplete")
+    : form.hasStepChanged
+      ? msgStr(STEP_ANNOUNCEMENT_KEY[form.step])
+      : "";
+
+  const profileField = (name: string, extra?: Partial<UserProfileFieldProps>) => {
+    const fieldState = fieldStates.get(name);
+    if (fieldState === undefined) return null;
+    return (
+      <UserProfileField
+        fieldState={fieldState}
+        dispatchFormAction={dispatchFormAction}
+        i18n={i18n}
+        {...extra}
+        inputProps={{ autoFocus: invalidFieldName === name, ...extra?.inputProps }}
+      />
+    );
+  };
 
   return (
     <Template
@@ -74,78 +233,224 @@ export default function Register(props: RegisterProps) {
       i18n={i18n}
       doUseDefaultCss={doUseDefaultCss}
       classes={classes}
+      documentTitle={msgStr("etapeRegisterTitle")}
       headerNode={msg("etapeRegisterTitle")}
-      slots={{ subtitle: msg("etapeRegisterSubtitle") }}
       displayMessage={messagesPerField.exists("global")}
+      slots={{
+        accountSwitch: (
+          <HeaderAccountSwitch
+            question={msg("etapeAlreadyAccount")}
+            href={url.loginUrl}
+            label={msg("doLogIn")}
+          />
+        ),
+        footerNote: msg("etapeRegisterCepNote"),
+        titleTone: TITLE_TONE.ACCENT,
+      }}
       socialProvidersNode={
-        <SocialProviders
-          providers={social?.providers}
-          separatorLabel={msgStr("etapeOrRegisterEmail")}
-          i18n={i18n}
-        />
+        isOnInformations ? (
+          <SocialProviders
+            providers={social?.providers}
+            separatorLabel={msgStr("etapeOrCredentials")}
+            i18n={i18n}
+          />
+        ) : undefined
       }
     >
       <form
         id="kc-register-form"
         action={url.registrationAction}
         method="post"
-        onSubmit={() => rememberSubmittedForm(SUBMITTED_FORM.REGISTRATION)}
-        className="flex flex-col gap-8"
+        className="flex flex-col gap-6"
+        onSubmit={form.submit}
       >
-        <UserProfileFields
-          formFieldStates={formState.formFieldStates}
-          dispatchFormAction={dispatchFormAction}
-          i18n={i18n}
-          passwordAddon={(value) => <PasswordRules value={value} i18n={i18n} />}
-          shouldConfirmPassword={doMakeUserConfirmPassword}
-        />
+        {!isOnInformations && (
+          <Button
+            type="button"
+            variant="link"
+            size="inline"
+            onClick={form.goBack}
+            className="self-start"
+          >
+            <CircleArrowLeft aria-hidden />
+            {msg("etapeRegisterBackToStepOne")}
+          </Button>
+        )}
 
-        {termsAcceptanceRequired && (
-          <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-5">
+          <RegisterStepIndicator
+            step={form.step}
+            isStepComplete={isOnInformations ? isInformationsComplete : isCredentialsComplete}
+            i18n={i18n}
+          />
+
+          <StatusRegion message={stepAnnouncement} />
+
+          <div hidden={!isOnInformations} className="flex flex-col gap-5">
+            <FormSection className="gap-4">
+              <RegisterSectionTitle>{msg("etapeRegisterInformations")}</RegisterSectionTitle>
+              <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+                {profileField(USER_PROFILE_ATTRIBUTE.FIRST_NAME)}
+                {profileField(USER_PROFILE_ATTRIBUTE.LAST_NAME)}
+              </div>
+            </FormSection>
+            <FormSection className="gap-4">
+              <RegisterSectionTitle>{msg("etapeRegisterResidence")}</RegisterSectionTitle>
+              <AdresseField
+                field={adresseField}
+                serverError={adresseServerError}
+                shouldFocusOnMount={
+                  adresseServerError !== undefined && invalidFieldName === undefined
+                }
+                reloadUrl={toRegistrationPageUrl(url.registrationAction)}
+                i18n={i18n}
+              />
+            </FormSection>
+          </div>
+
+          <FormSection hidden={isOnInformations} className="gap-4">
+            <RegisterSectionTitle>{msg("etapeRegisterCredentials")}</RegisterSectionTitle>
+            {profileField(USER_PROFILE_ATTRIBUTE.EMAIL, { hint: msg("etapeRegisterEmailHint") })}
+            {profileField(USER_PROFILE_ATTRIBUTE.PASSWORD, {
+              inputProps: { onFocus: () => setIsPasswordFocused(true) },
+              addon: isPasswordFocused ? <PasswordRules value={password} i18n={i18n} /> : undefined,
+            })}
+          </FormSection>
+        </div>
+
+        <div hidden={isOnInformations} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-1">
             <CheckboxField
-              id="termsAccepted"
-              name="termsAccepted"
+              id={REGISTER_FIELD.TERMS_ACCEPTED}
+              name={REGISTER_FIELD.TERMS_ACCEPTED}
               checked={areTermsAccepted}
               onChange={(event) => setAreTermsAccepted(event.target.checked)}
-              label={msg("acceptTerms")}
+              label={
+                <>
+                  {msg("etapeTermsAccept")}{" "}
+                  <LegalLink href={LEGAL_DOCUMENT_URL.CGU} newWindowLabel={msg("etapeNewWindow")}>
+                    {msg("etapeTermsCgu")}
+                  </LegalLink>{" "}
+                  {msg("etapeTermsAnd")}{" "}
+                  <LegalLink href={LEGAL_DOCUMENT_URL.CGI} newWindowLabel={msg("etapeNewWindow")}>
+                    {msg("etapeTermsCgi")}
+                  </LegalLink>
+                  .
+                </>
+              }
               aria-describedby={
-                messagesPerField.existsError("termsAccepted")
-                  ? "input-error-terms-accepted"
-                  : undefined
+                messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED)
+                  ? "input-error-terms-accepted terms-privacy-notice"
+                  : "terms-privacy-notice"
               }
             />
-            {messagesPerField.existsError("termsAccepted") && (
+            <p id="terms-privacy-notice" className="text-muted-foreground ms-7 text-xs">
+              {msg("etapeTermsPrivacyNotice")}{" "}
+              <LegalLink
+                href={LEGAL_DOCUMENT_URL.CONFIDENTIALITE}
+                newWindowLabel={msg("etapeNewWindow")}
+              >
+                {msg("etapeTermsPrivacyLink")}
+              </LegalLink>
+              .
+            </p>
+            {messagesPerField.existsError(REGISTER_FIELD.TERMS_ACCEPTED) && (
               <FieldError
                 id="input-error-terms-accepted"
-                message={messagesPerField.get("termsAccepted")}
+                message={messagesPerField.get(REGISTER_FIELD.TERMS_ACCEPTED)}
               />
             )}
           </div>
+
+          {!isOnInformations && (
+            <AltchaField
+              challenge={altchaChallenge}
+              isUnavailable={altchaUnavailable ?? false}
+              serverError={
+                messagesPerField.existsError("altcha") ? messagesPerField.get("altcha") : undefined
+              }
+              i18n={i18n}
+            />
+          )}
+        </div>
+
+        {formState.formFieldStates
+          .filter((fieldState) => HIDDEN_ATTRIBUTES.includes(fieldState.attribute.name))
+          .map((fieldState) => (
+            <input
+              key={fieldState.attribute.name}
+              type="hidden"
+              name={fieldState.attribute.name}
+              value={typeof fieldState.valueOrValues === "string" ? fieldState.valueOrValues : ""}
+              readOnly
+            />
+          ))}
+
+        {isOnInformations ? (
+          <Button
+            type="submit"
+            size="form"
+            aria-disabled={form.isContinueBlocked}
+            aria-describedby={form.isStepIncomplete ? INCOMPLETE_HINT_ID : undefined}
+            className="w-full"
+          >
+            {msg("etapeRegisterContinue")}
+            <ArrowRight aria-hidden />
+          </Button>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <Button
+              type="submit"
+              size="form"
+              aria-disabled={form.isSubmitBlocked}
+              aria-busy={form.isSubmitting}
+              aria-describedby={form.isStepIncomplete ? INCOMPLETE_HINT_ID : undefined}
+              className="w-full"
+            >
+              {msg("doRegister")}
+            </Button>
+            <p className="text-muted-foreground text-center text-sm">
+              {msg("etapeRegisterActivationHint")}
+            </p>
+          </div>
         )}
 
-        <AltchaField
-          challenge={altchaChallenge}
-          isUnavailable={altchaUnavailable ?? false}
-          serverError={hasAltchaError ? messagesPerField.get("altcha") : undefined}
-          i18n={i18n}
-        />
-
-        <div className="flex flex-col gap-4">
-          <Button type="submit" size="xl" disabled={isSubmitDisabled} className="w-full rounded-lg">
-            {msg("doRegister")}
-          </Button>
-
-          {!termsAcceptanceRequired && (
-            <p className="text-muted-foreground text-center text-sm">{msg("etapeRegisterTerms")}</p>
-          )}
-
-          <AccountSwitch
-            question={msg("etapeAlreadyAccount")}
-            href={url.loginUrl}
-            label={msg("doLogIn")}
-          />
-        </div>
+        {form.isStepIncomplete && (
+          <span id={INCOMPLETE_HINT_ID} className="sr-only">
+            {msg("etapeRegisterIncomplete")}
+          </span>
+        )}
       </form>
     </Template>
+  );
+}
+
+interface RegisterSectionTitleProps {
+  children: ReactNode;
+}
+
+function RegisterSectionTitle(props: RegisterSectionTitleProps) {
+  return (
+    <FormSectionTitle size="sm" asChild>
+      <h2>{props.children}</h2>
+    </FormSectionTitle>
+  );
+}
+
+interface LegalLinkProps {
+  href: string | undefined;
+  newWindowLabel: ReactNode;
+  children: ReactNode;
+}
+
+function LegalLink(props: LegalLinkProps) {
+  const { href, newWindowLabel, children } = props;
+  if (href === undefined) return <>{children}</>;
+
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="underline">
+      {children}
+      <span className="sr-only"> {newWindowLabel}</span>
+    </a>
   );
 }
