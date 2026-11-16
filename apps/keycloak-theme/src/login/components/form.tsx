@@ -204,7 +204,7 @@ export function CheckboxField(props: CheckboxFieldProps) {
         id={id}
         type="checkbox"
         className={cn(
-          "accent-primary focus-visible:outline-ring size-5 shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2",
+          "accent-primary focus-visible:outline-ring size-4 shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2",
           className,
         )}
       />

@@ -40,7 +40,7 @@ export function TermsField(props: TermsFieldProps) {
   const { msg } = i18n;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <CheckboxField
         id={TERMS_ACCEPTED_FIELD}
         name={TERMS_ACCEPTED_FIELD}
@@ -65,7 +65,7 @@ export function TermsField(props: TermsFieldProps) {
             : `${TERMS_ERROR_ID} ${TERMS_PRIVACY_NOTICE_ID}`
         }
       />
-      <p id={TERMS_PRIVACY_NOTICE_ID} className="text-muted-foreground ms-7 text-xs">
+      <p id={TERMS_PRIVACY_NOTICE_ID} className="text-muted-foreground ms-6 text-xs">
         {msg("etapeTermsPrivacyNotice")}{" "}
         <LegalLink href={LEGAL_DOCUMENT_URL.CONFIDENTIALITE} newWindowLabel={msg("etapeNewWindow")}>
           {msg("etapeTermsPrivacyLink")}

@@ -10,7 +10,7 @@ import {
   readRegionsPilotes,
 } from "../components/adresse/adresse";
 import { AdresseField } from "../components/adresse/adresse-field";
-import { Alert, MESSAGE_TYPE } from "../components/alert";
+import { Alert, AlertDescription, MESSAGE_TYPE } from "../components/alert";
 import { Field, FieldError, TextInput } from "../components/form";
 import { HeaderAccountSwitch } from "../components/prose";
 import { RegisterSectionTitle, TermsField } from "../components/registration-fields";
@@ -93,48 +93,50 @@ export default function IdpReviewUserProfile(props: EtapePageProps<IdpReviewKcCo
           summary={msgStr("etapeIdpReviewIdentityTitle")}
           isLive={false}
         >
-          <p className="text-foreground">{msg("etapeIdpReviewIdentityHint")}</p>
+          <AlertDescription>{msg("etapeIdpReviewIdentityHint")}</AlertDescription>
         </Alert>
 
         <StatusRegion
           message={form.shouldAnnounceIncomplete ? msgStr("etapeIdpReviewIncomplete") : ""}
         />
 
-        <FormSection className="gap-4">
-          <RegisterSectionTitle>{msg("etapeRegisterInformations")}</RegisterSectionTitle>
-          <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-5">
+          <FormSection className="gap-4">
+            <RegisterSectionTitle>{msg("etapeRegisterInformations")}</RegisterSectionTitle>
+            <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+              <BrokeredIdentityField
+                name={USER_PROFILE_ATTRIBUTE.FIRST_NAME}
+                label={msg("firstName")}
+                value={valueOf(USER_PROFILE_ATTRIBUTE.FIRST_NAME)}
+                serverError={serverErrorOf(USER_PROFILE_ATTRIBUTE.FIRST_NAME)}
+              />
+              <BrokeredIdentityField
+                name={USER_PROFILE_ATTRIBUTE.LAST_NAME}
+                label={msg("lastName")}
+                value={valueOf(USER_PROFILE_ATTRIBUTE.LAST_NAME)}
+                serverError={serverErrorOf(USER_PROFILE_ATTRIBUTE.LAST_NAME)}
+              />
+            </div>
             <BrokeredIdentityField
-              name={USER_PROFILE_ATTRIBUTE.FIRST_NAME}
-              label={msg("firstName")}
-              value={valueOf(USER_PROFILE_ATTRIBUTE.FIRST_NAME)}
-              serverError={serverErrorOf(USER_PROFILE_ATTRIBUTE.FIRST_NAME)}
+              name={USER_PROFILE_ATTRIBUTE.EMAIL}
+              label={msg("email")}
+              value={valueOf(USER_PROFILE_ATTRIBUTE.EMAIL)}
+              serverError={serverErrorOf(USER_PROFILE_ATTRIBUTE.EMAIL)}
+              isEmail
             />
-            <BrokeredIdentityField
-              name={USER_PROFILE_ATTRIBUTE.LAST_NAME}
-              label={msg("lastName")}
-              value={valueOf(USER_PROFILE_ATTRIBUTE.LAST_NAME)}
-              serverError={serverErrorOf(USER_PROFILE_ATTRIBUTE.LAST_NAME)}
-            />
-          </div>
-          <BrokeredIdentityField
-            name={USER_PROFILE_ATTRIBUTE.EMAIL}
-            label={msg("email")}
-            value={valueOf(USER_PROFILE_ATTRIBUTE.EMAIL)}
-            serverError={serverErrorOf(USER_PROFILE_ATTRIBUTE.EMAIL)}
-            isEmail
-          />
-        </FormSection>
+          </FormSection>
 
-        <FormSection className="gap-4">
-          <RegisterSectionTitle>{msg("etapeRegisterResidence")}</RegisterSectionTitle>
-          <AdresseField
-            field={adresseField}
-            serverError={adresseServerError}
-            shouldFocusOnMount={adresseServerError !== undefined}
-            reloadUrl={toReloadablePageUrl(url.loginAction)}
-            i18n={i18n}
-          />
-        </FormSection>
+          <FormSection className="gap-4">
+            <RegisterSectionTitle>{msg("etapeRegisterResidence")}</RegisterSectionTitle>
+            <AdresseField
+              field={adresseField}
+              serverError={adresseServerError}
+              shouldFocusOnMount={adresseServerError !== undefined}
+              reloadUrl={toReloadablePageUrl(url.loginAction)}
+              i18n={i18n}
+            />
+          </FormSection>
+        </div>
 
         <TermsField
           isChecked={hasAcceptedTerms}
@@ -161,7 +163,7 @@ export default function IdpReviewUserProfile(props: EtapePageProps<IdpReviewKcCo
           <p className="text-muted-foreground text-center text-sm">
             {msg("etapeRegisterActivationHint")}
           </p>
-          <Button variant="link" size="inline" asChild>
+          <Button variant="link-underlined" size="inline-lg" asChild>
             <a
               href={url.loginRestartFlowUrl}
               onClick={form.cancel}

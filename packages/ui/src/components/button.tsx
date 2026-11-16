@@ -23,6 +23,8 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:not-aria-disabled:bg-secondary/80",
         ghost: "text-secondary-foreground hover:not-aria-disabled:bg-secondary",
         link: "text-primary underline-offset-4 hover:not-aria-disabled:underline",
+        // Lien souligné au repos (Figma FRONT-OFFICE, « 01. SIGN-UP - FRANCE CONNECT »).
+        "link-underlined": "text-primary underline",
         // Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
         // CTA posés sur un fond coloré.
         inverse: "bg-background text-primary shadow-xs hover:not-aria-disabled:bg-background/90",
@@ -44,6 +46,8 @@ const buttonVariants = cva(
         inline: "gap-1.5",
         // `Variant=Link, Size=sm` du kit : libellé en 12 px.
         "inline-sm": "gap-1 text-xs",
+        // `Variant=Link, Size=MD` du kit : libellé en 16 px.
+        "inline-lg": "gap-1.5 text-base",
         lg: "h-9 gap-1.5 rounded-lg px-2.5",
         // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
         xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
