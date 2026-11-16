@@ -5,6 +5,7 @@ import { VOLET_PATH, VOLET_ROUTE_ID } from "@/navigation/paths";
 import { VOLET_ID } from "../domain/volet-id";
 import { findVoletPosition } from "../domain/volets";
 import { VOLETS_DOSSIER } from "../domain/volets-dossier";
+import { FuturMetierForm } from "../futur-metier/futur-metier-form";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useVoletHeadingFocus } from "../hooks/use-volet-heading-focus";
 import { InformationsForm } from "../informations/informations-form";
@@ -24,7 +25,8 @@ export function VoletScreen() {
 
   const isInformations = voletId === VOLET_ID.INFORMATIONS;
   const isSituationProfessionnelle = voletId === VOLET_ID.SITUATION_PROFESSIONNELLE;
-  const hasForm = isInformations || isSituationProfessionnelle;
+  const isFuturMetier = voletId === VOLET_ID.FUTUR_METIER;
+  const hasForm = isInformations || isSituationProfessionnelle || isFuturMetier;
 
   function goToNextVolet(): void {
     if (position?.next) {
@@ -53,6 +55,12 @@ export function VoletScreen() {
       ) : isSituationProfessionnelle ? (
         <SituationProfessionnelleForm
           formId={VOLET_ID.SITUATION_PROFESSIONNELLE}
+          onSubmitValid={goToNextVolet}
+        />
+      ) : isFuturMetier ? (
+        <FuturMetierForm
+          formId={VOLET_ID.FUTUR_METIER}
+          notice={position.current.notice}
           onSubmitValid={goToNextVolet}
         />
       ) : (
