@@ -56,6 +56,14 @@ const envSchema = z
     INSEE_API_KEY: z.string().min(1),
     /** Version comprise, sans slash final : `https://api.insee.fr/api-sirene/3.11`. */
     API_SIRENE_URL: z.url(),
+
+    /** Identifiant et clé de l'application déclarée sur francetravail.io. */
+    FRANCE_TRAVAIL_IO_ID: z.string().min(1),
+    FRANCE_TRAVAIL_IO_API_KEY: z.string().min(1),
+    /** Realm compris : `https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire`. */
+    FRANCE_TRAVAIL_TOKEN_URL: z.url(),
+    /** Version comprise, sans slash final : `https://api.francetravail.io/partenaire/rome-metiers/v1`. */
+    API_ROME_METIERS_URL: z.url(),
   })
   // Deux fronts sur le même hôte seraient indiscernables, et une API servie
   // ailleurs que sur l'origine de son front ne recevrait pas ses cookies.

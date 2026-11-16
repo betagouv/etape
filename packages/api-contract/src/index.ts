@@ -21,6 +21,17 @@ export {
   type SearchEtablissementsQuery,
   type SearchEtablissementsResponse,
 } from "./etablissement/etablissement.schemas.js";
+export { searchAppellationsRome } from "./metier-rome/metier-rome.routes.js";
+export {
+  APPELLATION_ROME_SEARCH_MAX_LENGTH,
+  APPELLATION_ROME_SEARCH_MIN_LENGTH,
+  AppellationRomeSchema,
+  SearchAppellationsRomeQuerySchema,
+  SearchAppellationsRomeResponseSchema,
+  type AppellationRome,
+  type SearchAppellationsRomeQuery,
+  type SearchAppellationsRomeResponse,
+} from "./metier-rome/metier-rome.schemas.js";
 export {
   HTTP_METHODS,
   type HttpMethod,

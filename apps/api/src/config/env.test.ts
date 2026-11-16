@@ -15,6 +15,11 @@ const validEnv = {
   DATABASE_URL: "postgresql://etape:etape@localhost:5432/etape",
   INSEE_API_KEY: "cle-insee",
   API_SIRENE_URL: "https://api.insee.fr/api-sirene/3.11",
+  FRANCE_TRAVAIL_IO_ID: "identifiant-france-travail",
+  FRANCE_TRAVAIL_IO_API_KEY: "cle-france-travail",
+  FRANCE_TRAVAIL_TOKEN_URL:
+    "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire",
+  API_ROME_METIERS_URL: "https://api.francetravail.io/partenaire/rome-metiers/v1",
 };
 
 describe("validateEnv", () => {
