@@ -11,7 +11,8 @@
   "files": [
     "base.js",
     "next.js",
-    "react-internal.js"
+    "react-internal.js",
+    "rules/"
   ],
   "dependencies": {
     "@eslint/js": "^9.39.5",
