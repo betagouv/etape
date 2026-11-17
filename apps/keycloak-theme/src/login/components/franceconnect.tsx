@@ -115,9 +115,9 @@ export function SocialProviders(props: {
 export function Separator(props: { label: string }) {
   return (
     <div className="flex items-center gap-4">
-      <span aria-hidden className="bg-divider h-px flex-1" />
+      <span aria-hidden className="bg-border h-px flex-1" />
       <span className="text-foreground text-sm">{props.label}</span>
-      <span aria-hidden className="bg-divider h-px flex-1" />
+      <span aria-hidden className="bg-border h-px flex-1" />
     </div>
   );
 }

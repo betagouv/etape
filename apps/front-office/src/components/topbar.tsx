@@ -12,7 +12,7 @@ import { LogoutDialog } from "./logout-dialog";
 /** Barre commune aux écrans de l'espace bénéficiaire. */
 export function Topbar() {
   return (
-    <header className="border-divider bg-background border-b">
+    <header className="bg-background border-b">
       <Container size="app" className="flex items-center justify-between gap-4 py-4">
         <Link to={HOME_PATH} className={cn("flex rounded-sm", focusRing)}>
           <img src={logoUrl} alt="Transitions Pro – Accueil" height={47} />

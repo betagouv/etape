@@ -25,7 +25,7 @@ const EXIT_HREF = "/";
 /** Barre commune aux écrans du simulateur. */
 export function Topbar() {
   return (
-    <header className="border-divider bg-background shrink-0 border-b">
+    <header className="bg-background shrink-0 border-b">
       <Container size="md" className="flex items-center justify-between gap-4 py-4">
         <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
           <span className="font-heading text-heading-sm text-primary">etape.</span>
