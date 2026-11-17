@@ -14,18 +14,22 @@ const DETAILS: SelectionCardDetail[] = [
 
 interface RenderOptions {
   isFocusRequested?: boolean;
-  onChange?: () => void;
+  onClick?: () => void;
+  className?: string;
 }
 
-function renderCard({ isFocusRequested = false, onChange = () => undefined }: RenderOptions = {}) {
-  render(
+function renderCard({
+  isFocusRequested = false,
+  onClick = () => undefined,
+  className,
+}: RenderOptions = {}) {
+  return render(
     <SelectionCard
       title="Boulangerie du Four"
-      changeLabel="Changer l’entreprise"
       details={DETAILS}
       source="Informations issues du répertoire Sirene de l’Insee"
-      isFocusRequested={isFocusRequested}
-      onChange={onChange}
+      changeButton={{ label: "Changer l’entreprise", isFocusRequested, onClick }}
+      className={className}
     />,
   );
 }
@@ -58,12 +62,12 @@ describe("SelectionCard", () => {
   });
 
   it("remet le choix en jeu au clic sur le bouton", () => {
-    const onChange = vi.fn();
-    renderCard({ onChange });
+    const onClick = vi.fn();
+    renderCard({ onClick });
 
     fireEvent.click(screen.getByRole("button", { name: "Changer l’entreprise" }));
 
-    expect(onChange).toHaveBeenCalledOnce();
+    expect(onClick).toHaveBeenCalledOnce();
   });
 
   it("donne le focus au bouton quand la carte vient de remplacer le champ", () => {
@@ -78,5 +82,13 @@ describe("SelectionCard", () => {
     renderCard();
 
     expect(document.activeElement).toBe(document.body);
+  });
+
+  it("porte son `data-slot` et ajoute la mise en page reçue aux classes de la carte", () => {
+    const { container } = renderCard({ className: "mt-4" });
+
+    const card = container.querySelector("[data-slot=selection-card]");
+    expect(card?.classList.contains("mt-4")).toBe(true);
+    expect(card?.classList.contains("bg-secondary")).toBe(true);
   });
 });

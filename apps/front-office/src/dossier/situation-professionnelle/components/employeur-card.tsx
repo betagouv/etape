@@ -18,7 +18,6 @@ export function EmployeurCard({ etablissement, isFocusRequested, onChange }: Emp
   return (
     <SelectionCard
       title={etablissement.denomination}
-      changeLabel="Changer l’entreprise"
       // Sirene ne donne pas toujours l'enseigne ni un secteur de la NAF rév. 2 : `null`, sans ligne.
       details={[
         { Icon: SignpostIcon, label: "Enseigne", value: etablissement.enseigne },
@@ -31,8 +30,7 @@ export function EmployeurCard({ etablissement, isFocusRequested, onChange }: Emp
         },
       ]}
       source="Informations issues du répertoire Sirene de l’Insee"
-      isFocusRequested={isFocusRequested}
-      onChange={onChange}
+      changeButton={{ label: "Changer l’entreprise", isFocusRequested, onClick: onChange }}
     />
   );
 }

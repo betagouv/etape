@@ -19,17 +19,23 @@ interface SelectionCardDetail {
   value: string | null;
 }
 
+/** Le bouton qui remet le choix en jeu. */
+interface SelectionCardChangeButton {
+  label: string;
+  /** Vrai quand la carte vient de remplacer le champ : le focus passe au bouton. */
+  isFocusRequested: boolean;
+  onClick: () => void;
+}
+
 /** Ce que reçoit `SelectionCard` : le choix à afficher, sa source et de quoi en changer. */
 interface SelectionCardProps {
   title: string;
-  /** Le libellé du bouton qui remet le choix en jeu. */
-  changeLabel: string;
   details: SelectionCardDetail[];
   /** D'où viennent les informations affichées. */
   source: string;
-  /** Vrai quand la carte vient de remplacer le champ : le focus passe au bouton. */
-  isFocusRequested: boolean;
-  onChange: () => void;
+  changeButton: SelectionCardChangeButton;
+  /** Mise en page seulement : largeur, marge. */
+  className?: string;
 }
 
 /**
@@ -37,16 +43,9 @@ interface SelectionCardProps {
  * `front-office-form-card` de la maquette FRONT-OFFICE. Le titre est un `h4`, sous le
  * titre de section du formulaire.
  */
-function SelectionCard({
-  title,
-  changeLabel,
-  details,
-  source,
-  isFocusRequested,
-  onChange,
-}: SelectionCardProps) {
+function SelectionCard({ title, details, source, changeButton, className }: SelectionCardProps) {
   return (
-    <Card variant="secondary">
+    <Card data-slot="selection-card" variant="secondary" className={className}>
       <div className="flex items-center justify-between gap-4">
         <CardTitle asChild>
           <h4>{title}</h4>
@@ -55,11 +54,11 @@ function SelectionCard({
           type="button"
           variant="outline"
           size="sm"
-          onClick={onChange}
-          autoFocus={isFocusRequested}
+          onClick={changeButton.onClick}
+          autoFocus={changeButton.isFocusRequested}
         >
           <PencilLineIcon aria-hidden="true" />
-          {changeLabel}
+          {changeButton.label}
         </Button>
       </div>
       <Separator />
@@ -84,4 +83,4 @@ function SelectionCard({
 }
 
 export { SelectionCard };
-export type { SelectionCardDetail, SelectionCardProps };
+export type { SelectionCardChangeButton, SelectionCardDetail, SelectionCardProps };

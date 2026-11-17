@@ -45,6 +45,8 @@ interface RemoteSearchFieldProps<TItem> {
   onManualEntry: () => void;
   /** Le contenu d'une ligne de résultat : un `ComboboxOptionTitle`, puis ses `ComboboxOptionDetail`. */
   renderOption: (item: TItem) => React.ReactNode;
+  /** Mise en page seulement : largeur, marge. */
+  className?: string;
 }
 
 /**
@@ -58,6 +60,7 @@ function RemoteSearchField<TItem>({
   control,
   onManualEntry,
   renderOption,
+  className,
 }: RemoteSearchFieldProps<TItem>) {
   const { id, label, maxLength, optionId, texts } = definition;
   const { fieldRef, onBlur, error, isFocusRequested } = control;
@@ -75,6 +78,8 @@ function RemoteSearchField<TItem>({
 
   return (
     <Field
+      data-slot="remote-search-field"
+      className={className}
       data-invalid={isInvalid}
       // On ne quitte le champ qu'en sortant de tout le groupe : la liste reste ouverte pour son bouton,
       // et « Relancer la recherche » ne déclenche pas la validation.

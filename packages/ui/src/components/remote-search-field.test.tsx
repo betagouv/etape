@@ -69,6 +69,7 @@ interface RenderOptions {
   error?: { message?: string };
   onBlur?: () => void;
   onManualEntry?: () => void;
+  className?: string;
 }
 
 function renderField(search: RemoteSearchState<Metier>, options: RenderOptions = {}) {
@@ -85,6 +86,7 @@ function renderField(search: RemoteSearchState<Metier>, options: RenderOptions =
         }}
         onManualEntry={options.onManualEntry ?? (() => undefined)}
         renderOption={(metier) => <ComboboxOptionTitle>{metier.libelle}</ComboboxOptionTitle>}
+        className={options.className}
       />
       <button type="button">Ailleurs</button>
     </>,
@@ -212,5 +214,14 @@ describe("RemoteSearchField", () => {
     fireEvent.blur(input, { relatedTarget: screen.getByRole("button", { name: "Ailleurs" }) });
     expect(close).toHaveBeenCalledOnce();
     expect(onBlur).toHaveBeenCalledOnce();
+  });
+
+  it("porte son `data-slot` et ajoute la mise en page reçue aux classes du champ", () => {
+    const input = renderField(IDLE, { className: "mt-4" });
+
+    const field = input.closest("[data-slot=remote-search-field]");
+    expect(field?.getAttribute("role")).toBe("group");
+    expect(field?.classList.contains("mt-4")).toBe(true);
+    expect(field?.classList.contains("flex")).toBe(true);
   });
 });

@@ -20,14 +20,12 @@ export function MetierViseCard({
   return (
     <SelectionCard
       title={appellationRome.libelle}
-      changeLabel="Changer de métier"
       details={[
         { Icon: FileTextIcon, label: "Fiche métier", value: appellationRome.metierRome.libelle },
         { Icon: FileDigitIcon, label: "Code ROME", value: appellationRome.metierRome.code },
       ]}
       source="Informations issues du référentiel ROME de France Travail"
-      isFocusRequested={isFocusRequested}
-      onChange={onChange}
+      changeButton={{ label: "Changer de métier", isFocusRequested, onClick: onChange }}
     />
   );
 }
