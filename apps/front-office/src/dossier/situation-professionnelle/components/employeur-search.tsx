@@ -196,7 +196,7 @@ export function EmployeurSearch({
             <Button
               type="button"
               variant="link"
-              size="inline-sm"
+              size="sm"
               // Pas de `disabled` : il ferait perdre le focus pendant l'appel.
               aria-disabled={isRetrying || undefined}
               aria-busy={isRetrying || undefined}

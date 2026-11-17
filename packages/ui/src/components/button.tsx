@@ -34,15 +34,17 @@ const buttonVariants = cva(
         // `LG` du kit sous 768 px, `MD` au-delà : les maquettes mobiles du simulateur.
         responsive:
           "h-12 gap-2 rounded-lg px-6 text-xl md:h-10 md:px-4 md:text-base [&_svg:not([class*='size-'])]:size-6 md:[&_svg:not([class*='size-'])]:size-5",
-        // Lien posé dans une phrase : ni hauteur ni padding.
-        inline: "gap-1.5",
-        "inline-sm": "gap-1 text-xs",
         // `Size=Icon SM`, `Icon MD (default)`, `Icon LG` du kit.
         "icon-sm": "size-8 rounded-md",
         icon: "size-10 rounded-lg [&_svg:not([class*='size-'])]:size-5",
         "icon-lg": "size-12 rounded-lg [&_svg:not([class*='size-'])]:size-6",
       },
     },
+    // `Variant=Link` du kit : les hauteurs des autres variantes, sans padding.
+    compoundVariants: [
+      { variant: "link", class: "px-0" },
+      { variant: "link", size: ["default", "lg"], class: "gap-1.5" },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",

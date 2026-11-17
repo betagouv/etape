@@ -53,7 +53,7 @@ export function DossierHeader({
 
   return (
     <header className="bg-surface-warm">
-      <Container size="app" className="relative flex flex-col gap-4 pt-9 pb-31">
+      <Container size="app" className="relative flex flex-col gap-4 pt-9 pb-26">
         <img
           src={illustrationUrl}
           alt=""
@@ -62,7 +62,7 @@ export function DossierHeader({
           className="absolute top-10.5 right-58 hidden xl:block"
         />
         <div className="flex flex-col items-start gap-2">
-          <Button asChild variant="link" size="inline">
+          <Button asChild variant="link">
             <Link to={HOME_PATH}>
               <ArrowLeftIcon aria-hidden="true" />
               Mes dossiers

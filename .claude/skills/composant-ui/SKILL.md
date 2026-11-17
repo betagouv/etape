@@ -12,7 +12,7 @@ Règles de fond : `docs/conventions/react.md` section 4. Ce skill est la procéd
 Dans l'ordre, s'arrêter dès qu'une réponse suffit :
 
 1. `packages/ui/src/components/` — le composant existe peut-être déjà (23 composants y vivent).
-2. Ses variantes — `cva` déclare souvent déjà le cas voulu : `button.tsx` a 7 variantes et 9 tailles, `card.tsx`, `section.tsx`, `container.tsx`, `badge.tsx`, `tabs.tsx` en ont aussi.
+2. Ses variantes — `cva` déclare souvent déjà le cas voulu : `button.tsx` a 7 variantes et 7 tailles, `card.tsx`, `section.tsx`, `container.tsx`, `badge.tsx`, `tabs.tsx` en ont aussi.
 3. Les tokens de `packages/ui/src/styles/globals.css` — pour un besoin de couleur, d'échelle typographique ou de rayon.
 4. Radix, qui fournit le comportement et l'accessibilité des composants complexes.
 

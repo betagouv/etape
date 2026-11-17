@@ -62,7 +62,7 @@ export function CreateAccountSwitch(props: {
 /** Lien de retour au-dessus du logo (Figma FRONT-OFFICE, écran 07). */
 export function BackLink(props: { href: string; label: ReactNode }) {
   return (
-    <Button asChild variant="link" size="inline" className="self-start">
+    <Button asChild variant="link" className="self-start">
       <a href={props.href}>
         <ArrowLeft aria-hidden />
         {props.label}

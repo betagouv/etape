@@ -265,13 +265,7 @@ export default function Register(props: RegisterProps) {
         onSubmit={form.submit}
       >
         {!isOnInformations && (
-          <Button
-            type="button"
-            variant="link"
-            size="inline"
-            onClick={form.goBack}
-            className="self-start"
-          >
+          <Button type="button" variant="link" onClick={form.goBack} className="self-start">
             <CircleArrowLeft aria-hidden />
             {msg("etapeRegisterBackToStepOne")}
           </Button>
