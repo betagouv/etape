@@ -20,7 +20,7 @@ export default function Error({ unstable_retry }: { unstable_retry: () => void }
           <Button type="button" onClick={unstable_retry}>
             Réessayer
           </Button>
-          <Button asChild variant="outline-primary">
+          <Button asChild variant="outline">
             <Link href="/">Retour à l’accueil</Link>
           </Button>
         </div>

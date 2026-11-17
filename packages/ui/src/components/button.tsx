@@ -16,24 +16,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:not-aria-disabled:bg-primary/90",
+        // Le kit tel quel : libellé à 4,14:1 sur ce fond, correction attendue dans le kit (#106).
         destructive:
-          "bg-destructive text-white hover:not-aria-disabled:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+          "bg-destructive/10 text-destructive hover:not-aria-disabled:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:not-aria-disabled:bg-destructive/30",
+        "destructive-subdued": "text-destructive",
         outline:
           "border bg-background text-secondary-foreground shadow-xs hover:not-aria-disabled:bg-secondary dark:border-input dark:bg-input/30 dark:hover:not-aria-disabled:bg-input/50",
         secondary: "bg-secondary text-secondary-foreground hover:not-aria-disabled:bg-secondary/80",
         ghost: "text-secondary-foreground hover:not-aria-disabled:bg-secondary",
         link: "text-primary underline-offset-4 hover:not-aria-disabled:underline",
-        // Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
-        // CTA posés sur un fond coloré.
-        inverse: "bg-background text-primary shadow-xs hover:not-aria-disabled:bg-background/90",
-        // Le `text-secondary-foreground` du survol n'est pas décoratif : sans lui, le
-        // libellé reste en `text-primary` sur le fond `secondary` du survol, et
-        // le contraste tombe de 5,70:1 à 4,65:1.
-        "outline-primary":
-          "border border-primary bg-background text-primary hover:not-aria-disabled:bg-secondary hover:not-aria-disabled:text-secondary-foreground",
-        // Écart au kit : libellé en `destructive-text` (7:1), `destructive` n'y fait que 4,1:1.
-        "destructive-subdued":
-          "bg-destructive/10 text-destructive-text hover:not-aria-disabled:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:not-aria-disabled:bg-destructive/30",
       },
       size: {
         // Tailles du kit (`Size=SM`, `MD (default)`, `LG`) : 32, 40 et 48 px.

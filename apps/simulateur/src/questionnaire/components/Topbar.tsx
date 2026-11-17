@@ -62,7 +62,7 @@ function ExitDialog() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction variant="destructive-subdued" asChild>
+          <AlertDialogAction variant="destructive" asChild>
             <Link href={EXIT_HREF}>Quitter</Link>
           </AlertDialogAction>
         </AlertDialogFooter>

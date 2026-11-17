@@ -37,7 +37,7 @@ export function DidYouKnow() {
           ))}
         </h2>
 
-        <Button asChild variant="outline-primary" className="w-full sm:w-auto">
+        <Button asChild variant="outline" className="w-full sm:w-auto">
           <a
             href={SIMULATEUR_URL}
             {...analyticsEventProps(
