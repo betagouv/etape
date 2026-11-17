@@ -21,10 +21,10 @@ const buttonVariants = cva(
           "bg-destructive/10 text-destructive hover:not-aria-disabled:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:not-aria-disabled:bg-destructive/30",
         "destructive-subdued": "text-destructive",
         outline:
-          "border bg-background text-secondary-foreground shadow-xs hover:not-aria-disabled:bg-secondary dark:border-input dark:bg-input/30 dark:hover:not-aria-disabled:bg-input/50",
+          "border bg-background text-secondary-foreground hover:not-aria-disabled:bg-secondary dark:border-input dark:bg-input/30 dark:hover:not-aria-disabled:bg-input/50",
         secondary: "bg-secondary text-secondary-foreground hover:not-aria-disabled:bg-secondary/80",
         ghost: "text-secondary-foreground hover:not-aria-disabled:bg-secondary",
-        link: "text-primary underline-offset-4 hover:not-aria-disabled:underline",
+        link: "text-primary underline underline-offset-4",
       },
       size: {
         // Tailles du kit (`Size=SM`, `MD (default)`, `LG`) : 32, 40 et 48 px.
