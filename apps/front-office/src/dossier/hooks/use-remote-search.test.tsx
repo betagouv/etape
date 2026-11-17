@@ -22,7 +22,10 @@ type FetchResults = RemoteSearchDefinition<Metier>["fetchResults"];
 const BOULANGER: Metier = { code: "1", libelle: "Boulanger" };
 const BOULISTE: Metier = { code: "2", libelle: "Bouliste" };
 
+const PLOMBIER: Metier = { code: "3", libelle: "Plombier" };
+
 const TWO_METIERS: RemoteSearchResults<Metier> = { items: [BOULANGER, BOULISTE], totalCount: 2 };
+const ONE_METIER: RemoteSearchResults<Metier> = { items: [PLOMBIER], totalCount: 1 };
 const NO_METIER: RemoteSearchResults<Metier> = { items: [], totalCount: 0 };
 
 const ERROR_TITLE = "La recherche ne répond pas";
@@ -81,6 +84,18 @@ function renderSearch(fetchResults: FetchResults, onSelect: (metier: Metier) => 
       <Harness definition={createDefinition(fetchResults)} onSelect={onSelect} />
     </QueryClientProvider>,
   );
+}
+
+/** Un appel dont le test décide quand il répond : ce qui s'affiche pendant l'appel se lit avant. */
+function createPendingCall(): {
+  promise: Promise<RemoteSearchResults<Metier>>;
+  respond: (results: RemoteSearchResults<Metier>) => void;
+} {
+  let respond: (results: RemoteSearchResults<Metier>) => void = () => undefined;
+  const promise = new Promise<RemoteSearchResults<Metier>>((resolve) => {
+    respond = resolve;
+  });
+  return { promise, respond };
 }
 
 function getInput(): HTMLElement {
@@ -232,5 +247,110 @@ describe("useRemoteSearch", () => {
     expect(fetchResults).toHaveBeenCalledTimes(2);
     expect(document.activeElement).toBe(getInput());
     expect(screen.queryByRole("button", { name: "Relancer la recherche" })).toBeNull();
+  });
+
+  it("garde la liste affichée pendant l'appel quand la recherche se précise", async () => {
+    const pendingCall = createPendingCall();
+    const fetchResults = vi
+      .fn<FetchResults>()
+      .mockResolvedValueOnce(TWO_METIERS)
+      .mockReturnValueOnce(pendingCall.promise);
+    renderSearch(fetchResults);
+    await search("boul");
+    await screen.findAllByRole("option");
+
+    await search("boula");
+
+    expect(fetchResults).toHaveBeenLastCalledWith("boula");
+    expect(listOptions()).toEqual(["Boulanger", "Bouliste"]);
+
+    pendingCall.respond(ONE_METIER);
+
+    expect(await screen.findByRole("option", { name: "Plombier" })).toBeDefined();
+    expect(listOptions()).toEqual(["Plombier"]);
+  });
+
+  it("après un choix, ne remontre pas l'ancienne liste pendant l'appel suivant", async () => {
+    const pendingCall = createPendingCall();
+    const fetchResults = vi
+      .fn<FetchResults>()
+      .mockResolvedValueOnce(TWO_METIERS)
+      .mockReturnValueOnce(pendingCall.promise);
+    const onSelect = vi.fn();
+    renderSearch(fetchResults, onSelect);
+    await search("boul");
+    await screen.findAllByRole("option");
+    fireEvent.keyDown(getInput(), { key: KEY.ARROW_DOWN });
+    fireEvent.keyDown(getInput(), { key: KEY.ENTER });
+
+    await search("plom");
+
+    expect(fetchResults).toHaveBeenLastCalledWith("plom");
+    expect(listOptions()).toEqual([]);
+    expect(getAnnouncement()).toBe("");
+
+    fireEvent.keyDown(getInput(), { key: KEY.ARROW_DOWN });
+    fireEvent.keyDown(getInput(), { key: KEY.ENTER });
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    pendingCall.respond(ONE_METIER);
+
+    expect(await screen.findByRole("option", { name: "Plombier" })).toBeDefined();
+    expect(getAnnouncement()).toBe("1 métier trouvé");
+  });
+
+  it("après un effacement, ne remontre pas l'ancienne liste pendant l'appel suivant", async () => {
+    const pendingCall = createPendingCall();
+    const fetchResults = vi
+      .fn<FetchResults>()
+      .mockResolvedValueOnce(TWO_METIERS)
+      .mockReturnValueOnce(pendingCall.promise);
+    renderSearch(fetchResults);
+    await search("boul");
+    await screen.findAllByRole("option");
+    fireEvent.click(screen.getByRole("button", { name: "Effacer la recherche" }));
+
+    await search("plom");
+
+    expect(listOptions()).toEqual([]);
+    expect(getAnnouncement()).toBe("");
+  });
+
+  it("après un passage sous le minimum, ne remontre pas l'ancienne liste pendant l'appel suivant", async () => {
+    const pendingCall = createPendingCall();
+    const fetchResults = vi
+      .fn<FetchResults>()
+      .mockResolvedValueOnce(TWO_METIERS)
+      .mockReturnValueOnce(pendingCall.promise);
+    renderSearch(fetchResults);
+    await search("boul");
+    await screen.findAllByRole("option");
+    await search("pl");
+
+    await search("plom");
+
+    expect(listOptions()).toEqual([]);
+    expect(getAnnouncement()).toBe("");
+  });
+
+  it("après une panne, ne remontre pas l'ancienne liste pendant l'appel suivant", async () => {
+    const pendingCall = createPendingCall();
+    const fetchResults = vi
+      .fn<FetchResults>()
+      .mockResolvedValueOnce(TWO_METIERS)
+      .mockRejectedValueOnce(new Error("panne"))
+      .mockReturnValueOnce(pendingCall.promise);
+    renderSearch(fetchResults);
+    await search("boul");
+    await screen.findAllByRole("option");
+    await search("boula");
+    await screen.findByRole("button", { name: "Relancer la recherche" });
+
+    await search("plom");
+
+    expect(fetchResults).toHaveBeenLastCalledWith("plom");
+    expect(listOptions()).toEqual([]);
+    expect(getAnnouncement()).toBe("");
   });
 });

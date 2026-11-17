@@ -50,6 +50,8 @@ export function useRemoteSearch<TItem>(
 ): UseRemoteSearchResult<TItem> {
   const [searchText, setSearchText] = useState("");
   const [isOpen, setOpen] = useState(false);
+  // Vrai quand la liste était déjà affichée à la dernière frappe : elle peut rester pendant l'appel suivant.
+  const [shouldKeepList, setShouldKeepList] = useState(false);
 
   const search = useDebouncedValue(searchText.trim(), SEARCH_DELAY_MS);
   // Le champ fait foi aussitôt qu'il passe sous le minimum : sans cela, l'ancienne recherche réapparaîtrait le temps du délai.
@@ -59,8 +61,9 @@ export function useRemoteSearch<TItem>(
     queryKey: [queryKey, search],
     queryFn: () => fetchResults(search),
     enabled: isSearching,
-    // La liste précédente reste affichée pendant l'appel, au lieu de se fermer puis de se rouvrir.
-    placeholderData: keepPreviousData,
+    // La liste précédente reste affichée pendant l'appel, au lieu de se fermer puis de se rouvrir ;
+    // pas après un choix ou un effacement : elle réapparaîtrait sous une autre recherche.
+    placeholderData: shouldKeepList ? keepPreviousData : undefined,
     // Chaque relance automatique entame un éventuel quota (clé Insee) et retarde l'alerte : « Relancer la recherche » suffit.
     retry: false,
     staleTime: SEARCH_STALE_TIME_MS,
@@ -79,14 +82,15 @@ export function useRemoteSearch<TItem>(
       ? texts.moreMessage
       : "";
 
+  const hasResponse = status === SEARCH_STATUS.RESULTS || status === SEARCH_STATUS.NO_RESULT;
+  const isPopupOpen = isOpen && hasResponse;
+
   function select(item: TItem): void {
     onSelect(item);
     setSearchText("");
+    setShouldKeepList(false);
     setOpen(false);
   }
-
-  const isPopupOpen =
-    isOpen && (status === SEARCH_STATUS.RESULTS || status === SEARCH_STATUS.NO_RESULT);
 
   const navigation = useListboxNavigation({
     items,
@@ -107,7 +111,9 @@ export function useRemoteSearch<TItem>(
     announcement: findSearchAnnouncement(status, resultLabel, moreMessage, texts),
     inputHandlers: {
       onChange: (event) => {
-        setSearchText(event.target.value);
+        const text = event.target.value;
+        setSearchText(text);
+        setShouldKeepList(hasResponse && text.trim().length >= minLength);
         setOpen(true);
         navigation.reset();
       },
@@ -117,6 +123,7 @@ export function useRemoteSearch<TItem>(
     select,
     clear: () => {
       setSearchText("");
+      setShouldKeepList(false);
       navigation.reset();
     },
     close: () => setOpen(false),
