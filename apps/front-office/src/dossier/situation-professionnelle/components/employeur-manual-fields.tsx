@@ -52,7 +52,9 @@ export function EmployeurManualFields({
               {...field}
               {...attributes}
               inputMode="numeric"
-              onChange={(e) => field.onChange(formatInputValue(e, formatSiret, isSiretDigit))}
+              onChange={(e) =>
+                field.onChange(formatInputValue(e, field.value, formatSiret, isSiretDigit))
+              }
             />
           )}
         />

@@ -23,7 +23,7 @@ pnpm --filter @etape/front-office run typecheck
 pnpm --filter @etape/front-office run test
 ```
 
-Les tests Vitest couvrent les fonctions pures de `domain/`, sans DOM, et les hooks, dans jsdom : leur fichier de test l'active par `// @vitest-environment jsdom` en première ligne.
+Les tests Vitest couvrent les fonctions pures de `domain/`, sans DOM, et ce qui a besoin d'un DOM (les hooks, `lib/format-input.ts`), dans jsdom : le fichier de test l'active par `// @vitest-environment jsdom` en première ligne.
 
 ## Où vivent les choses
 
