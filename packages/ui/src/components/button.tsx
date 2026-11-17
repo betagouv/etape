@@ -36,26 +36,20 @@ const buttonVariants = cva(
           "bg-destructive/10 text-destructive-text hover:not-aria-disabled:bg-destructive/20 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:not-aria-disabled:bg-destructive/30",
       },
       size: {
-        // Tailles du kit : 10px de côté, avec ou sans icône.
-        default: "h-8 gap-1.5 rounded-lg px-2.5",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1 rounded-md px-2.5 text-xs",
-        // Le `Variant=Link` du kit n'a ni hauteur ni padding.
+        // Tailles du kit (`Size=SM`, `MD (default)`, `LG`) : 32, 40 et 48 px.
+        sm: "h-8 gap-1 rounded-md px-3 text-sm [&_svg:not([class*='size-'])]:size-5",
+        default: "h-10 gap-2 rounded-lg px-4 text-base [&_svg:not([class*='size-'])]:size-5",
+        lg: "h-12 gap-2 rounded-lg px-6 text-xl [&_svg:not([class*='size-'])]:size-6",
+        // `LG` du kit sous 768 px, `MD` au-delà : les maquettes mobiles du simulateur.
+        responsive:
+          "h-12 gap-2 rounded-lg px-6 text-xl md:h-10 md:px-4 md:text-base [&_svg:not([class*='size-'])]:size-6 md:[&_svg:not([class*='size-'])]:size-5",
+        // Lien posé dans une phrase : ni hauteur ni padding.
         inline: "gap-1.5",
-        // `Variant=Link, Size=sm` du kit : libellé en 12 px.
         "inline-sm": "gap-1 text-xs",
-        lg: "h-9 gap-1.5 rounded-lg px-2.5",
-        // `Control/MD` (44px) : la hauteur de tous les boutons des maquettes.
-        xl: "h-11 rounded-md px-6 text-label-lg has-[>svg]:px-4",
-        // Bouton des formulaires de connexion (Figma FRONT-OFFICE, « 00. SIGN-IN ») : 40px, libellé 16px.
-        form: "h-10 rounded-lg px-6 text-base has-[>svg]:px-4",
-        responsive: "h-11 px-6 has-[>svg]:px-4 md:h-9 md:px-4 md:has-[>svg]:px-3",
-        "responsive-sm": "h-11 gap-1.5 px-4 has-[>svg]:px-3 md:h-8 md:px-3 md:has-[>svg]:px-2.5",
-        "icon-responsive-sm": "size-11 md:size-8",
-        icon: "size-8 rounded-lg",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-7",
-        "icon-lg": "size-9 rounded-lg",
+        // `Size=Icon SM`, `Icon MD (default)`, `Icon LG` du kit.
+        "icon-sm": "size-8 rounded-md",
+        icon: "size-10 rounded-lg [&_svg:not([class*='size-'])]:size-5",
+        "icon-lg": "size-12 rounded-lg [&_svg:not([class*='size-'])]:size-6",
       },
     },
     defaultVariants: {

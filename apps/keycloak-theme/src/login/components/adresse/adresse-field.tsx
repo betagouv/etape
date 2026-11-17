@@ -1,4 +1,5 @@
 import { Button } from "@etape/ui/components/button";
+import { InputGroupButton } from "@etape/ui/components/input-group";
 import {
   Combobox,
   ComboboxHeader,
@@ -77,7 +78,7 @@ export function AdresseField(props: AdresseFieldProps) {
           <p className="text-foreground">{i18n.msg("etapeAdresseUnavailableHint")}</p>
           <div className="flex flex-wrap items-center gap-2">
             <ManualButton onClick={switchToManual} i18n={i18n} />
-            <Button type="button" variant="ghost" onClick={field.retrySearch}>
+            <Button type="button" variant="ghost" size="sm" onClick={field.retrySearch}>
               <RefreshCw aria-hidden />
               {i18n.msg("etapeAdresseRetry")}
             </Button>
@@ -117,7 +118,7 @@ interface ManualButtonProps {
 
 function ManualButton(props: ManualButtonProps) {
   return (
-    <Button type="button" variant="outline" onClick={props.onClick}>
+    <Button type="button" variant="outline" size="sm" onClick={props.onClick}>
       <FilePenLine aria-hidden />
       {props.i18n.msg("etapeAdresseManual")}
     </Button>
@@ -144,7 +145,7 @@ function HorsRegionAlert(props: HorsRegionAlertProps) {
           ? i18n.msg("etapeAdresseHorsRegionUnknownHint")
           : i18n.msg("etapeAdresseHorsRegionHint", details.nom)}
       </p>
-      <Button variant="outline" className="self-start" asChild>
+      <Button variant="outline" size="sm" className="self-start" asChild>
         <a
           href={details?.transitionsProUrl ?? TRANSITIONS_PRO_CONTACTS_URL}
           target="_blank"
@@ -210,15 +211,13 @@ function AdresseSearch(props: AdresseSearchProps) {
           onBlur={search.handleBlur}
           trailing={
             search.text === "" ? undefined : (
-              <Button
-                type="button"
+              <InputGroupButton
                 variant="outline"
-                size="icon-xs"
                 onClick={field.clearSearch}
                 aria-label={msgStr("etapeAdresseClear")}
               >
                 <X aria-hidden />
-              </Button>
+              </InputGroupButton>
             )
           }
         />

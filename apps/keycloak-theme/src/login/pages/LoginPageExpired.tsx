@@ -30,12 +30,12 @@ export default function LoginPageExpired(
          * début est le cas courant ; poursuivre là où la session s'est
          * interrompue ne fonctionne que si l'étape en cours est encore valide.
          */}
-        <Button asChild size="xl" className="w-full rounded-lg">
+        <Button asChild className="w-full">
           <a id="loginRestartLink" href={url.loginRestartFlowUrl}>
             {msg("etapePageExpiredRestart")}
           </a>
         </Button>
-        <Button asChild variant="outline" size="xl" className="w-full rounded-lg">
+        <Button asChild variant="outline" className="w-full">
           <a id="loginContinueLink" href={url.loginAction}>
             {msg("etapePageExpiredContinue")}
           </a>

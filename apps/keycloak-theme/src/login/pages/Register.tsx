@@ -389,7 +389,6 @@ export default function Register(props: RegisterProps) {
         {isOnInformations ? (
           <Button
             type="submit"
-            size="form"
             aria-disabled={form.isContinueBlocked}
             aria-describedby={form.isStepIncomplete ? INCOMPLETE_HINT_ID : undefined}
             className="w-full"
@@ -401,7 +400,6 @@ export default function Register(props: RegisterProps) {
           <div className="flex flex-col gap-3">
             <Button
               type="submit"
-              size="form"
               aria-disabled={form.isSubmitBlocked}
               aria-busy={form.isSubmitting}
               aria-describedby={form.isStepIncomplete ? INCOMPLETE_HINT_ID : undefined}
