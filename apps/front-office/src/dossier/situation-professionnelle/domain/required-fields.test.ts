@@ -49,4 +49,10 @@ describe("findRequiredFields", () => {
     ]);
     expect(required.filledFields).toEqual(["denomination", "intitulePoste", "demission"]);
   });
+
+  it("ne contrôle que les champs exigés", () => {
+    const required = findRequiredFields(values);
+
+    expect(required.sectionValidatedFields).toEqual(required.sectionFields);
+  });
 });

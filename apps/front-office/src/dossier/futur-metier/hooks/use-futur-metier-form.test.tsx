@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import type { AppellationRome } from "@etape/api-contract";
 import { act, cleanup, renderHook } from "@testing-library/react";
+import type { UseFormRegisterReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { FUTUR_METIER_SECTION, METIER_VISE_ENTRY_MODE, type FuturMetierFormData } from "../schema";
@@ -20,10 +21,9 @@ function renderForm(): { current: UseFuturMetierFormResult } {
   return renderHook(() => useFuturMetierForm()).result;
 }
 
-/** Saisit l'intitulé du métier, puis quitte le champ : c'est sa sortie qui le valide. */
-async function fillAndLeaveIntitule(form: Form, value: string): Promise<void> {
+/** Saisit une valeur dans un champ de texte, puis le quitte : c'est sa sortie qui le valide. */
+async function fillAndLeave(field: UseFormRegisterReturn, value: string): Promise<void> {
   const input = document.createElement("input");
-  const field = form.register("intituleMetierVise");
   input.name = field.name;
   field.ref(input);
   input.value = value;
@@ -104,7 +104,7 @@ describe("useFuturMetierForm", () => {
     const result = renderForm();
     setValues(result.current.form, { metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL });
 
-    await fillAndLeaveIntitule(result.current.form, " ");
+    await fillAndLeave(result.current.form.register("intituleMetierVise"), " ");
 
     expect(result.current.errorAnnouncement).toBe(
       "Nom du métier que vous visez : Veuillez saisir le nom du métier que vous visez. " +
@@ -116,9 +116,82 @@ describe("useFuturMetierForm", () => {
     const result = renderForm();
     setValues(result.current.form, { metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL });
 
-    await fillAndLeaveIntitule(result.current.form, "Pâtissier");
+    await fillAndLeave(result.current.form.register("intituleMetierVise"), "Pâtissier");
 
     expect(result.current.errorAnnouncement).toBe("Mon futur métier : complet.");
+    expect(result.current.voletErrors).toEqual([]);
+  });
+
+  it("compte l'erreur d'un champ facultatif : un code ROME faux n'est pas un volet complet", async () => {
+    const result = renderForm();
+    setValues(result.current.form, {
+      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      intituleMetierVise: "Pâtissier",
+      codeRome: "M18",
+    });
+
+    await submit(result.current.form);
+
+    expect(result.current.progress).toEqual({
+      requiredFieldCount: 1,
+      filledFieldCount: 1,
+      remainingFieldCount: 0,
+      errorCount: 1,
+    });
+    expect(result.current.sections).toEqual({
+      [FUTUR_METIER_SECTION.METIER_VISE]: { remainingFieldCount: 0, errorCount: 1 },
+    });
+    expect(result.current.voletErrors).toEqual([
+      {
+        fieldId: "codeRome",
+        message: "Le code ROME comporte une lettre suivie de quatre chiffres, par exemple D1102.",
+      },
+    ]);
+  });
+
+  it("liste au résumé l'intitulé manquant avant le code ROME faux, dans l'ordre de la page", async () => {
+    const result = renderForm();
+    setValues(result.current.form, {
+      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      codeRome: "M18",
+    });
+
+    await submit(result.current.form);
+
+    expect(result.current.voletErrors.map(({ fieldId }) => fieldId)).toEqual([
+      "intituleMetierVise",
+      "codeRome",
+    ]);
+    expect(result.current.progress.errorCount).toBe(2);
+  });
+
+  it("annonce le code ROME faux qu'on vient de quitter, et le volet à corriger", async () => {
+    const result = renderForm();
+    setValues(result.current.form, {
+      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      intituleMetierVise: "Pâtissier",
+    });
+
+    await fillAndLeave(result.current.form.register("codeRome"), "M18");
+
+    expect(result.current.errorAnnouncement).toBe(
+      "Code ROME : Le code ROME comporte une lettre suivie de quatre chiffres, par exemple D1102. " +
+        "Mon futur métier : 1 erreur à corriger.",
+    );
+  });
+
+  it("ne compte plus l'erreur du code ROME une fois revenu à la recherche", async () => {
+    const result = renderForm();
+    setValues(result.current.form, {
+      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      intituleMetierVise: "Pâtissier",
+      codeRome: "M18",
+    });
+    await submit(result.current.form);
+
+    setValues(result.current.form, { metierViseEntryMode: METIER_VISE_ENTRY_MODE.SEARCH });
+
+    expect(result.current.progress.errorCount).toBe(0);
     expect(result.current.voletErrors).toEqual([]);
   });
 });

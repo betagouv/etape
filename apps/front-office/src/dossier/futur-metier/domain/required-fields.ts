@@ -1,6 +1,7 @@
 import { listFilledFields, type RequiredFields } from "../../domain/volet-progress";
 import {
   findSectionFields,
+  findSectionValidatedFields,
   type FuturMetierFieldName,
   type FuturMetierFormData,
   type FuturMetierSection,
@@ -12,5 +13,10 @@ export function findRequiredFields(
 ): RequiredFields<FuturMetierSection, FuturMetierFieldName> {
   const sectionFields = findSectionFields(values.metierViseEntryMode);
   const allFields = Object.values(sectionFields).flat();
-  return { sectionFields, allFields, filledFields: listFilledFields(values, allFields) };
+  return {
+    sectionFields,
+    allFields,
+    filledFields: listFilledFields(values, allFields),
+    sectionValidatedFields: findSectionValidatedFields(values.metierViseEntryMode),
+  };
 }

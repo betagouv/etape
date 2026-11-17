@@ -109,3 +109,12 @@ export function findSectionFields(
     [FUTUR_METIER_SECTION.METIER_VISE]: REQUIRED_METIER_VISE_FIELDS[mode],
   };
 }
+
+/** Le code ROME, facultatif, est contrôlé : faux, il compte parmi les erreurs du volet. */
+export function findSectionValidatedFields(
+  mode: MetierViseEntryMode,
+): Record<FuturMetierSection, readonly FuturMetierFieldName[]> {
+  return {
+    [FUTUR_METIER_SECTION.METIER_VISE]: METIER_VISE_FIELDS[mode],
+  };
+}

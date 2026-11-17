@@ -16,6 +16,9 @@ describe("findRequiredFields", () => {
     expect(required.sectionFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual(["metierVise"]);
     expect(required.allFields).toEqual(["metierVise"]);
     expect(required.filledFields).toEqual([]);
+    expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
+      "metierVise",
+    ]);
   });
 
   it("exige l'intitulé saisi à la main, pas le code ROME", () => {
@@ -27,5 +30,16 @@ describe("findRequiredFields", () => {
     });
     expect(required.allFields).toEqual(["intituleMetierVise"]);
     expect(required.filledFields).toEqual(["intituleMetierVise"]);
+  });
+
+  it("contrôle le code ROME en saisie manuelle, après l'intitulé comme sur la page", () => {
+    const required = findRequiredFields({
+      ...values,
+      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+    });
+    expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
+      "intituleMetierVise",
+      "codeRome",
+    ]);
   });
 });

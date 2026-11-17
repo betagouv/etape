@@ -3,14 +3,18 @@ import { useWatch, type FieldPath, type FieldValues, type UseFormReturn } from "
 import type { FieldErrors } from "../domain/field-error-announcement";
 import type { VoletProgress } from "../domain/statut-volet";
 import type { VoletId } from "../domain/volet-id";
-import { computeVoletProgress, type RequiredFields } from "../domain/volet-progress";
+import {
+  computeVoletProgress,
+  listValidatedFields,
+  type RequiredFields,
+} from "../domain/volet-progress";
 import { findVoletLabel } from "../domain/volets-dossier";
 import { listVoletErrors, type VoletError } from "../domain/volet-errors";
 import { useFieldErrorAnnouncement } from "./use-field-error-announcement";
 
 /** Ce qui se déduit du formulaire d'un volet pour l'écran. */
 export interface UseVoletProgressResult<TSection extends string> {
-  /** Les champs exigés et remplis : chaque volet en tire ses compteurs par section. */
+  /** Les champs exigés, remplis et contrôlés : chaque volet en tire ses compteurs par section. */
   requiredFields: RequiredFields<TSection>;
   progress: VoletProgress;
   voletErrors: VoletError[];
@@ -49,8 +53,8 @@ export function useVoletProgress<TFieldValues extends FieldValues, TSection exte
 
   return {
     requiredFields,
-    progress: computeVoletProgress(requiredFields.allFields, requiredFields.filledFields, errors),
-    voletErrors: listVoletErrors(requiredFields.allFields, errors),
+    progress: computeVoletProgress(requiredFields, errors),
+    voletErrors: listVoletErrors(listValidatedFields(requiredFields), errors),
     errorAnnouncement,
   };
 }
