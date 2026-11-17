@@ -24,7 +24,7 @@ Les conventions du projet sont écrites dans `docs/conventions/`. Ce document di
 | Convention       | Document              | Niveau 1 — bloquant                                                                                                  | Niveau 2 — règle                        | Niveau 3 — procédure       |
 | ---------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------------------- |
 | Nommage FR/EN    | `nommage.md`          | —                                                                                                                    | —                                       | Skill `convention-nommage` |
-| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax`                                       | `.claude/rules/typescript.md`           | —                          |
+| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax`, `etape/no-hardcoded-literal`         | `.claude/rules/typescript.md`           | —                          |
 | Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**                                               | `.claude/rules/accessibilite.md`        | —                          |
 | Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`                                         | `.claude/rules/react.md`                | Sous-agent `revue-front`   |
 | Design system    | `react.md` §4         | —                                                                                                                    | `.claude/rules/design-system.md`        | Skill `composant-ui`       |
@@ -105,7 +105,7 @@ Les `AGENTS.md` par workspace suivent la même logique, à l'échelle d'un dossi
 ### Automatisations
 
 - **`lint-staged`** ne lançait que Prettier ; il lance désormais aussi `eslint --fix` sur les `.ts` et `.tsx`, **une entrée par workspace** (`pnpm --filter @etape/… run lint --fix`). Le détour par pnpm n'est pas cosmétique : lint-staged exécute ses commandes depuis la racine, où ESLint ne trouve aucune configuration, puisque chaque app et chaque package a la sienne. Passer par le workspace place le répertoire de travail au bon endroit. **C'est le garde-fou qui compte** : il s'applique à tout le monde, à chaque commit.
-- **Hook `PostToolUse`** (`.claude/settings.json`) : après chaque écriture d'un `.ts`/`.tsx` par l'agent, `.claude/hooks/eslint-fix.sh` corrige ce qui est corrigeable. Il ne remplace pas `lint-staged` ; il évite simplement de laisser des écarts derrière soi en cours de session. **L'arbitrage a décidé de le garder** — c'était le point le plus discutable de la PR, puisque `lint-staged` suffirait et couvre tout le monde. Les deux coexistent donc, avec des rôles distincts : le hook travaille pendant la session, `lint-staged` est le garde-fou du commit. Si le hook devient gênant, c'est lui qu'on retire, pas `lint-staged`.
+- **Hook `PostToolUse`** (`.claude/settings.json`) : après chaque écriture d'un `.ts`/`.tsx` par l'agent, `.claude/hooks/eslint-fix.sh` corrige ce qui est corrigeable, **puis renvoie à l'agent les erreurs qui restent**. Il ne remplace pas `lint-staged` ; il évite de laisser des écarts derrière soi en cours de session. **L'arbitrage a décidé de le garder** — c'était le point le plus discutable de la PR, puisque `lint-staged` suffirait et couvre tout le monde. Les deux coexistent donc, avec des rôles distincts : le hook travaille pendant la session, `lint-staged` est le garde-fou du commit. Si le hook devient gênant, c'est lui qu'on retire, pas `lint-staged`.
 - **Permissions** : les commandes de vérification déjà utilisées en boucle (`pnpm run lint`, `typecheck`, `format:check`, `gh pr view`) sont autorisées d'avance, pour ne plus interrompre une session pour les valider une à une.
 
 <details><summary><strong>Exemple — pourquoi <code>lint-staged</code> passe par pnpm, et pas directement par <code>eslint</code></strong></summary>
@@ -134,28 +134,26 @@ Une entrée par workspace — les neuf qui ont un script `lint` y sont désormai
 
 </details>
 
-<details><summary><strong>Exemple — le hook, et pourquoi il ne bloque jamais</strong></summary>
+<details><summary><strong>Exemple — le hook, et pourquoi il renvoie les erreurs sans bloquer</strong></summary>
+
+Le script complet est `.claude/hooks/eslint-fix.sh`. L'essentiel :
 
 ```bash
-#!/usr/bin/env bash
-set -u
+cd "$workspace" # le dossier qui porte eslint.config.mjs
+erreurs=$(pnpm exec eslint --fix --quiet "$fichier" 2>/dev/null)
+statut=$?
 
-fichier=$(cat | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
-
-case "$fichier" in
-  *.ts | *.tsx) ;;
-  *) exit 0 ;;
-esac
-
-[ -f "$fichier" ] || exit 0
-
-cd "$(dirname "$fichier")" || exit 0
-pnpm exec eslint --fix "$fichier" >/dev/null 2>&1
+if [ "$statut" -eq 1 ] && [ -n "$erreurs" ]; then
+  # {"decision": "block", "reason": "<sortie d'ESLint>"}
+  printf '%s' "…$erreurs" | node -e '…JSON.stringify({ decision: "block", reason: s })…'
+fi
 
 exit 0
 ```
 
-Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour une erreur que `pnpm run lint` signalera de toute façon. Son seul rôle est d'éviter de laisser derrière soi des écarts que `--fix` sait régler.
+Il sort **toujours** en 0 : un hook qui échoue interromprait la session pour une erreur que `pnpm run lint` signalera de toute façon. Mais il ne se tait plus sur ce que `--fix` ne sait pas régler. Dans sa première version, il jetait la sortie d'ESLint : l'agent écrivait `status === "done"`, rien ne le lui disait, et l'écart n'apparaissait qu'en CI ou en revue — c'est ce qui donnait l'impression que les agents « ignoraient » les règles. Désormais, une erreur restante revient en JSON (`decision: "block"`) : Claude Code la montre à l'agent juste après l'écriture, et il la corrige dans la foulée. L'écriture du fichier, elle, a déjà eu lieu ; seul l'agent est relancé.
+
+Il lance ESLint depuis la racine du workspace et non depuis le dossier du fichier : la règle typée `etape/no-hardcoded-literal` ne trouve le tsconfig que de là.
 
 </details>
 

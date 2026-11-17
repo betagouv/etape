@@ -3,6 +3,7 @@ import turboPlugin from "eslint-plugin-turbo";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import { defineConfig, globalIgnores } from "eslint/config";
+import { noHardcodedLiteralConfig } from "./rules/no-hardcoded-literal.js";
 
 /**
  * Configuration ESLint pour les applications Next.js du monorepo.
@@ -75,6 +76,7 @@ export const nextConfig = defineConfig([
       "jsx-a11y/no-autofocus": "error",
     },
   },
+  noHardcodedLiteralConfig,
   // Doit rester en dernier : neutralise les règles en conflit avec Prettier.
   eslintConfigPrettier,
   // Reprend les ignores par défaut d'eslint-config-next.
