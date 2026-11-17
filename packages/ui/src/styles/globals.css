@@ -44,8 +44,7 @@
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
-  --surface-warm: #f4f2ed; /* extension ETAPE : bandeau des en-têtes du front-office (taupe-200) */
-  --surface-warm-muted: #f9f9f6; /* extension ETAPE : étape active de la barre latérale du front-office (taupe-50) */
+  --surface-warm: #f4f2ed; /* extension ETAPE : en-tête du dossier, volet survolé ou actif de la barre latérale (taupe-200) */
 
   /* Actions */
   --primary: #134e4a; /* base/primary (teal-900) */
@@ -129,7 +128,6 @@
   --popover: #262626;
   --popover-foreground: #fafafa;
   --surface-warm: #171717; /* neutral-900 */
-  --surface-warm-muted: #262626; /* neutral-800 */
 
   /* Actions */
   --primary: #e5e5e5; /* base/primary */
@@ -263,7 +261,6 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-surface-warm: var(--surface-warm);
-  --color-surface-warm-muted: var(--surface-warm-muted);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
