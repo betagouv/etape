@@ -20,6 +20,14 @@ const REQUIRED_MESSAGES = {
   intituleMetierVise: "Veuillez saisir le nom du métier que vous visez.",
 } as const;
 
+type RequiredFieldName = keyof typeof REQUIRED_MESSAGES;
+
+/** Les champs exigés par chaque mode : le code ROME de la saisie manuelle est facultatif (maquette 07). */
+const REQUIRED_METIER_VISE_FIELDS: Record<MetierViseEntryMode, readonly RequiredFieldName[]> = {
+  [METIER_VISE_ENTRY_MODE.SEARCH]: ["metierVise"],
+  [METIER_VISE_ENTRY_MODE.MANUAL]: ["intituleMetierVise"],
+};
+
 const baseFuturMetierSchema = z.object({
   metierViseEntryMode: z.enum(METIER_VISE_ENTRY_MODE),
   metierVise: AppellationRomeSchema.nullable(),
@@ -39,17 +47,14 @@ const refinedFieldsSchema = baseFuturMetierSchema.pick({
 /** Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours sont exigés. */
 export const futurMetierSchema = baseFuturMetierSchema.superRefine(
   (data, ctx) => {
-    const require = (path: keyof typeof REQUIRED_MESSAGES, isFilled: boolean): void => {
-      if (!isFilled)
-        ctx.addIssue({ code: "custom", path: [path], message: REQUIRED_MESSAGES[path] });
-    };
-
-    if (data.metierViseEntryMode === METIER_VISE_ENTRY_MODE.SEARCH) {
-      require("metierVise", data.metierVise !== null);
-      return;
+    for (const name of REQUIRED_METIER_VISE_FIELDS[data.metierViseEntryMode]) {
+      const value = data[name];
+      if (value === null || value === "")
+        ctx.addIssue({ code: "custom", path: [name], message: REQUIRED_MESSAGES[name] });
     }
 
-    require("intituleMetierVise", data.intituleMetierVise !== "");
+    if (data.metierViseEntryMode === METIER_VISE_ENTRY_MODE.SEARCH) return;
+
     // Facultatif : contrôlé seulement s'il est rempli.
     if (data.codeRome !== "" && !CODE_ROME_PATTERN.test(data.codeRome)) {
       ctx.addIssue({
@@ -94,12 +99,6 @@ export type FuturMetierSection = (typeof FUTUR_METIER_SECTION)[keyof typeof FUTU
 export const METIER_VISE_FIELDS: Record<MetierViseEntryMode, readonly FuturMetierFieldName[]> = {
   [METIER_VISE_ENTRY_MODE.SEARCH]: ["metierVise"],
   [METIER_VISE_ENTRY_MODE.MANUAL]: ["intituleMetierVise", "codeRome"],
-};
-
-/** Les champs exigés par chaque mode : le code ROME de la saisie manuelle est facultatif (maquette 07). */
-const REQUIRED_METIER_VISE_FIELDS: Record<MetierViseEntryMode, readonly FuturMetierFieldName[]> = {
-  [METIER_VISE_ENTRY_MODE.SEARCH]: ["metierVise"],
-  [METIER_VISE_ENTRY_MODE.MANUAL]: ["intituleMetierVise"],
 };
 
 /** Un seul champ exigé, en recherche comme en saisie manuelle (maquettes 01 et 07). */
