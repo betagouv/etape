@@ -8,7 +8,7 @@ import { cn } from "@etape/ui/lib/utils";
 /*
  * Composant « Tag » du kit Figma (page Tag) : statut × importance × taille.
  * Chaque statut fournit ses quatre couleurs en variables, que l'importance
- * consomme ; d'où 6 + 4 variantes au lieu de 24 combinaisons.
+ * consomme ; d'où 7 + 4 variantes au lieu de 28 combinaisons.
  */
 const tagVariants = cva(
   "inline-flex w-fit shrink-0 items-center justify-center overflow-hidden rounded-full border border-transparent font-medium whitespace-nowrap transition-[color,box-shadow] [&>svg]:pointer-events-none [&>svg]:size-4",
@@ -17,6 +17,9 @@ const tagVariants = cva(
       status: {
         neutral:
           "[--tag-fg:var(--color-content-strong)] [--tag-muted:var(--color-muted)] [--tag-solid:var(--color-content-strong)] [--tag-solid-fg:var(--color-background)]",
+        // Le neutre du kit sur un fond coloré : son fond adouci est blanc.
+        white:
+          "[--tag-fg:var(--color-content-strong)] [--tag-muted:var(--color-background)] [--tag-solid:var(--color-content-strong)] [--tag-solid-fg:var(--color-background)]",
         primary:
           "[--tag-fg:var(--color-primary)] [--tag-muted:var(--color-secondary)] [--tag-solid:var(--color-primary)] [--tag-solid-fg:var(--color-primary-foreground)]",
         success:

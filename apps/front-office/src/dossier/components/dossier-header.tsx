@@ -1,7 +1,6 @@
 import { useId, type ComponentProps } from "react";
 
 import { HOME_PATH } from "@etape/session";
-import { Badge } from "@etape/ui/components/badge";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 import { Progress } from "@etape/ui/components/progress";
@@ -73,10 +72,10 @@ export function DossierHeader({
           <p className="font-heading text-heading-md text-primary">{subtitle}</p>
         </div>
         <div className="flex items-center gap-5">
-          <Badge variant="inverse" size="xl">
+          <Tag status="white">
             <FolderOpenIcon aria-hidden="true" />
             Dossier n°{numero}
-          </Badge>
+          </Tag>
           <p
             role="status"
             className="text-content-strong flex items-center gap-2 text-sm font-medium"
