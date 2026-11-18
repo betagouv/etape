@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { findSectionFields, futurMetierSchema, METIER_VISE_ENTRY_MODE } from "./schema";
+import {
+  findSectionFields,
+  FUTUR_METIER_TEXT_MAX_LENGTH,
+  futurMetierSchema,
+  METIER_VISE_ENTRY_MODE,
+} from "./schema";
 
 function findMessages(data: Record<string, unknown>, field: string): string[] {
   const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
@@ -93,6 +98,21 @@ describe("futurMetierSchema, zones de texte", () => {
       "metierVise",
       "quotidienMetier",
     ]);
+  });
+
+  it("accepte une zone de texte à la limite, espaces autour compris", () => {
+    const atLimit = "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH);
+    expect(findMessages({ ...SEARCH_FORM, debouches: atLimit }, "debouches")).toEqual([]);
+    expect(findMessages({ ...SEARCH_FORM, debouches: ` ${atLimit}\n` }, "debouches")).toEqual([]);
+  });
+
+  it("refuse une zone de texte qui dépasse la limite, même venue d'ailleurs que la saisie", () => {
+    const overLimit = "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1);
+    for (const field of ["quotidienMetier", "conditionsEmploi", "debouches"]) {
+      expect(findMessages({ ...SEARCH_FORM, [field]: overLimit }, field)).toEqual([
+        "Votre texte ne doit pas dépasser 1000 caractères.",
+      ]);
+    }
   });
 
   it("n'exige pas la spécialisation", () => {

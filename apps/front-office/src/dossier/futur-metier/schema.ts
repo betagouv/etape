@@ -18,6 +18,9 @@ const CODE_ROME_PATTERN = /^[A-Z]\d{4}$/;
 /** La limite des trois zones de texte de la section « Le métier » (maquette 01 : « 0/1000 caractères »). */
 export const FUTUR_METIER_TEXT_MAX_LENGTH = 1000;
 
+// Le navigateur bloque la saisie à la limite ; le schéma la contrôle pour un texte venu d'ailleurs.
+const TEXT_MAX_LENGTH_MESSAGE = `Votre texte ne doit pas dépasser ${FUTUR_METIER_TEXT_MAX_LENGTH} caractères.`;
+
 const REQUIRED_MESSAGES = {
   metierVise: "Veuillez choisir le métier que vous visez.",
   intituleMetierVise: "Veuillez saisir le nom du métier que vous visez.",
@@ -38,15 +41,21 @@ const baseFuturMetierSchema = z.object({
   // Le champ n'est mis en forme qu'à sa sortie : un envoi par Entrée arrive avec la saisie brute.
   codeRome: z.string().transform(formatCodeRome),
   specialisation: z.string().trim(),
-  quotidienMetier: z.string().trim().min(1, "Veuillez décrire le quotidien de ce métier."),
+  quotidienMetier: z
+    .string()
+    .trim()
+    .min(1, "Veuillez décrire le quotidien de ce métier.")
+    .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
   conditionsEmploi: z
     .string()
     .trim()
-    .min(1, "Veuillez indiquer les conditions habituelles d’emploi dans le métier visé."),
+    .min(1, "Veuillez indiquer les conditions habituelles d’emploi dans le métier visé.")
+    .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
   debouches: z
     .string()
     .trim()
-    .min(1, "Veuillez indiquer ce que vous savez des débouchés dans ce métier."),
+    .min(1, "Veuillez indiquer ce que vous savez des débouchés dans ce métier.")
+    .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
 });
 
 /** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */
