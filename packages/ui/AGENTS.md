@@ -42,4 +42,4 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 
 ## Pièges
 
-- `dialog`, `dropdown-menu`, `field`, `form-field`, `tabs` et `textarea` existent mais aucune app ne les importe encore : les réutiliser plutôt que d'en écrire d'autres. Un formulaire react-hook-form passe par `FormField`, qui relie libellé, description et erreur au champ.
+- `dialog`, `dropdown-menu`, `tabs` et `textarea` existent mais aucune app ne les importe encore (`textarea` sert seulement à `input-group`) : les réutiliser plutôt que d'en écrire d'autres. Un formulaire react-hook-form passe par `FormField`, qui relie libellé, description et erreur au champ.
