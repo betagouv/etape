@@ -35,6 +35,10 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
       metierVise: null,
       intituleMetierVise: "",
       codeRome: "",
+      specialisation: "",
+      quotidienMetier: "",
+      conditionsEmploi: "",
+      debouches: "",
     },
   });
 

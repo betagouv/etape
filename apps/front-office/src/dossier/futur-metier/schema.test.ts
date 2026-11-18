@@ -12,27 +12,39 @@ const EMPTY_FORM = {
   metierVise: null,
   intituleMetierVise: "",
   codeRome: "",
+  specialisation: "",
+  quotidienMetier: "",
+  conditionsEmploi: "",
+  debouches: "",
+};
+
+/** Les trois zones de texte remplies : il ne manque que le métier visé. */
+const SEARCH_FORM = {
+  ...EMPTY_FORM,
+  quotidienMetier: "Pétrir, façonner et cuire le pain, tôt le matin.",
+  conditionsEmploi: "Surtout des CDI, en boulangerie artisanale.",
+  debouches: "De nombreuses offres non pourvues dans ma région.",
 };
 
 const MANUAL_FORM = {
-  ...EMPTY_FORM,
+  ...SEARCH_FORM,
   metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
   intituleMetierVise: "Boulanger",
 };
 
 describe("futurMetierSchema", () => {
   it("signale le métier manquant en recherche, sans exiger l'intitulé saisi à la main", () => {
-    const issues = futurMetierSchema.safeParse(EMPTY_FORM).error?.issues ?? [];
+    const issues = futurMetierSchema.safeParse(SEARCH_FORM).error?.issues ?? [];
 
     expect(issues.map(({ path }) => path.join("."))).toEqual(["metierVise"]);
-    expect(findMessages(EMPTY_FORM, "metierVise")).toEqual([
+    expect(findMessages(SEARCH_FORM, "metierVise")).toEqual([
       "Veuillez choisir le métier que vous visez.",
     ]);
   });
 
   it("accepte le métier choisi dans le référentiel", () => {
     const result = futurMetierSchema.safeParse({
-      ...EMPTY_FORM,
+      ...SEARCH_FORM,
       metierVise: {
         code: "11573",
         libelle: "Boulanger / Boulangère",
@@ -50,6 +62,41 @@ describe("futurMetierSchema", () => {
     expect(findMessages(data, "intituleMetierVise")).toEqual([
       "Veuillez saisir le nom du métier que vous visez.",
     ]);
+  });
+});
+
+describe("futurMetierSchema, zones de texte", () => {
+  it("exige le quotidien, les conditions d'emploi et les débouchés", () => {
+    expect(findMessages(EMPTY_FORM, "quotidienMetier")).toEqual([
+      "Veuillez décrire le quotidien de ce métier.",
+    ]);
+    expect(findMessages(EMPTY_FORM, "conditionsEmploi")).toEqual([
+      "Veuillez indiquer les conditions habituelles d’emploi dans le métier visé.",
+    ]);
+    expect(findMessages(EMPTY_FORM, "debouches")).toEqual([
+      "Veuillez indiquer ce que vous savez des débouchés dans ce métier.",
+    ]);
+  });
+
+  it("refuse une zone de texte faite d'espaces", () => {
+    expect(findMessages({ ...SEARCH_FORM, quotidienMetier: " \n " }, "quotidienMetier")).toEqual([
+      "Veuillez décrire le quotidien de ce métier.",
+    ]);
+  });
+
+  it("signale le métier manquant au même envoi que les zones de texte vides", () => {
+    const issues = futurMetierSchema.safeParse(EMPTY_FORM).error?.issues ?? [];
+
+    expect(issues.map(({ path }) => path.join(".")).sort()).toEqual([
+      "conditionsEmploi",
+      "debouches",
+      "metierVise",
+      "quotidienMetier",
+    ]);
+  });
+
+  it("n'exige pas la spécialisation", () => {
+    expect(findMessages(EMPTY_FORM, "specialisation")).toEqual([]);
   });
 });
 
@@ -76,20 +123,20 @@ describe("futurMetierSchema, code ROME", () => {
   });
 
   it("ne contrôle pas le code en recherche", () => {
-    expect(findMessages({ ...EMPTY_FORM, codeRome: "D110" }, "codeRome")).toEqual([]);
+    expect(findMessages({ ...SEARCH_FORM, codeRome: "D110" }, "codeRome")).toEqual([]);
   });
 });
 
 describe("findSectionFields", () => {
-  it("exige le métier choisi en recherche", () => {
+  it("exige le métier choisi en recherche, puis les trois zones de texte", () => {
     expect(findSectionFields(METIER_VISE_ENTRY_MODE.SEARCH)).toEqual({
-      "metier-vise": ["metierVise"],
+      "metier-vise": ["metierVise", "quotidienMetier", "conditionsEmploi", "debouches"],
     });
   });
 
-  it("exige l'intitulé en saisie manuelle, pas le code ROME", () => {
+  it("exige l'intitulé en saisie manuelle, pas le code ROME ni la spécialisation", () => {
     expect(findSectionFields(METIER_VISE_ENTRY_MODE.MANUAL)).toEqual({
-      "metier-vise": ["intituleMetierVise"],
+      "metier-vise": ["intituleMetierVise", "quotidienMetier", "conditionsEmploi", "debouches"],
     });
   });
 });
