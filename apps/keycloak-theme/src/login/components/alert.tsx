@@ -1,6 +1,7 @@
 import { kcSanitize } from "keycloakify/lib/kcSanitize";
 import { AlertTriangle, CircleAlert, CircleCheck, Info, type LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { cn } from "@etape/ui/lib/utils";
+import type { ComponentProps, ReactNode } from "react";
 
 export const MESSAGE_TYPE = {
   SUCCESS: "success",
@@ -71,5 +72,16 @@ export function Alert(props: AlertProps) {
         {children}
       </div>
     </div>
+  );
+}
+
+/** Texte sous le résumé d'`Alert`, à 2 px de lui comme dans le kit (les actions suivent à 8 px). */
+export function AlertDescription({ className, ...props }: ComponentProps<"p">) {
+  return (
+    <p
+      data-slot="alert-description"
+      className={cn("text-accent-foreground -mt-1.5", className)}
+      {...props}
+    />
   );
 }

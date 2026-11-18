@@ -64,21 +64,26 @@ export function Field(props: {
  * Le focus est porté par le conteneur (`focus-within`) et non par l'`input`,
  * sans quoi l'anneau de focus s'afficherait à l'intérieur de la bordure.
  */
-function InputShell(props: {
+interface InputShellProps {
   icon?: IconComponent;
   trailing?: ReactNode;
   invalid?: boolean;
+  isReadOnly?: boolean;
   children: ReactNode;
-}) {
-  const { icon: Icon, trailing, invalid = false, children } = props;
+}
+
+function InputShell(props: InputShellProps) {
+  const { icon: Icon, trailing, invalid = false, isReadOnly = false, children } = props;
 
   return (
     <div
       data-invalid={invalid || undefined}
+      data-read-only={isReadOnly || undefined}
       className={cn(
-        "border-input bg-background flex min-h-11 w-full items-center gap-1.5 rounded-lg border px-4 transition-[color,box-shadow]",
+        "border-input bg-background flex min-h-10 w-full items-center gap-1.5 rounded-lg border px-4 transition-[color,box-shadow]",
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
         "data-invalid:border-destructive data-invalid:ring-destructive/20 data-invalid:ring-[3px]",
+        "data-read-only:bg-muted data-read-only:text-muted-foreground",
       )}
     >
       {Icon !== undefined && <Icon aria-hidden className="text-muted-foreground size-4 shrink-0" />}
@@ -107,7 +112,7 @@ export function TextInput({
   ...props
 }: TextInputProps) {
   return (
-    <InputShell icon={icon} invalid={invalid} trailing={trailing}>
+    <InputShell icon={icon} invalid={invalid} isReadOnly={props.readOnly} trailing={trailing}>
       <input
         {...props}
         aria-invalid={invalid || ariaInvalid}
@@ -199,7 +204,7 @@ export function CheckboxField(props: CheckboxFieldProps) {
         id={id}
         type="checkbox"
         className={cn(
-          "accent-primary focus-visible:outline-ring size-5 shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2",
+          "accent-primary focus-visible:outline-ring size-4 shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2",
           className,
         )}
       />

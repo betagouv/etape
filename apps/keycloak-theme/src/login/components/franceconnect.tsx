@@ -10,13 +10,21 @@ import type { I18n } from "../i18n";
  * son alias pour lui appliquer le bouton officiel. Tout autre fournisseur (un
  * ProConnect ajouté plus tard, par exemple) retombe sur le bouton générique.
  */
-const FRANCECONNECT_ALIAS = "franceconnect";
+export const FRANCECONNECT_ALIAS = "franceconnect";
 
 type Provider = {
   alias: string;
   displayName: string;
   loginUrl: string;
 };
+
+/** Props de `FranceConnectButton`. */
+export interface FranceConnectButtonProps {
+  loginUrl: string;
+  /** Appelé au clic, avant de quitter la page. */
+  onSelect?: () => void;
+  i18n: I18n;
+}
 
 /**
  * Bouton FranceConnect, conforme au kit d'implémentation.
@@ -28,8 +36,8 @@ type Provider = {
  *
  * @see https://gouvfr.atlassian.net/wiki/spaces/DB/pages/967868417/
  */
-export function FranceConnectButton(props: { loginUrl: string; i18n: I18n }) {
-  const { loginUrl, i18n } = props;
+export function FranceConnectButton(props: FranceConnectButtonProps) {
+  const { loginUrl, onSelect, i18n } = props;
   const { msgStr } = i18n;
 
   return (
@@ -37,6 +45,7 @@ export function FranceConnectButton(props: { loginUrl: string; i18n: I18n }) {
       <a
         id={`social-${FRANCECONNECT_ALIAS}`}
         href={loginUrl}
+        onClick={onSelect}
         className="bg-france-blue focus-visible:outline-france-blue flex items-center justify-center gap-3 px-3 py-1 focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <img src={franceConnectLogo} alt="" aria-hidden className="h-12 w-10" />
@@ -76,6 +85,15 @@ function GenericProviderButton(props: { provider: Provider }) {
   );
 }
 
+/** Props de `SocialProviders`. */
+export interface SocialProvidersProps {
+  providers: Provider[] | undefined;
+  separatorLabel: string;
+  /** Appelé au choix de FranceConnect, avant de quitter la page. */
+  onProviderSelect?: () => void;
+  i18n: I18n;
+}
+
 /**
  * Bloc « fournisseurs d'identité », suivi du séparateur qui introduit le
  * formulaire email / mot de passe.
@@ -84,12 +102,8 @@ function GenericProviderButton(props: { provider: Provider }) {
  * libellé qui annonce le formulaire, et son absence laisserait la carte
  * démarrer sans transition.
  */
-export function SocialProviders(props: {
-  providers: Provider[] | undefined;
-  separatorLabel: string;
-  i18n: I18n;
-}) {
-  const { providers, separatorLabel, i18n } = props;
+export function SocialProviders(props: SocialProvidersProps) {
+  const { providers, separatorLabel, onProviderSelect, i18n } = props;
 
   const franceConnect = providers?.find((provider) => provider.alias === FRANCECONNECT_ALIAS);
   const others = providers?.filter((provider) => provider.alias !== FRANCECONNECT_ALIAS) ?? [];
@@ -99,7 +113,11 @@ export function SocialProviders(props: {
       {(franceConnect !== undefined || others.length !== 0) && (
         <div id="kc-social-providers" className="flex flex-col items-start gap-4">
           {franceConnect !== undefined && (
-            <FranceConnectButton loginUrl={franceConnect.loginUrl} i18n={i18n} />
+            <FranceConnectButton
+              loginUrl={franceConnect.loginUrl}
+              onSelect={onProviderSelect}
+              i18n={i18n}
+            />
           )}
           {others.map((provider) => (
             <GenericProviderButton key={provider.alias} provider={provider} />

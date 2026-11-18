@@ -30,7 +30,7 @@ export interface AdresseFieldProps {
   field: UseAdresseFieldResult;
   serverError: string | undefined;
   shouldFocusOnMount: boolean;
-  /** Page d'inscription à recharger si la saisie manuelle ne se charge pas. */
+  /** Page à recharger si la saisie manuelle ne se charge pas. */
   reloadUrl: string;
   i18n: I18n;
 }

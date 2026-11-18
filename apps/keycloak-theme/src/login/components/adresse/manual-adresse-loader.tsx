@@ -32,7 +32,7 @@ class LoadFailureBoundary extends Component<LoadFailureBoundaryProps, { hasFaile
 
 /** Props de `ManualAdresseLoader`. */
 export interface ManualAdresseLoaderProps {
-  /** Page d'inscription rechargée si le formulaire ne se charge pas. */
+  /** Page rechargée si le formulaire ne se charge pas. */
   reloadUrl: string;
   i18n: I18n;
   children: (Form: ComponentType<ManualAdresseFormProps>) => ReactNode;

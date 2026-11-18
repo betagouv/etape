@@ -11,6 +11,7 @@ const UserProfileFormFields = lazy(() => import("keycloakify/login/UserProfileFo
 const doMakeUserConfirmPassword = false;
 
 const Error = lazy(() => import("./pages/Error"));
+const IdpReviewUserProfile = lazy(() => import("./pages/IdpReviewUserProfile"));
 const Info = lazy(() => import("./pages/Info"));
 const Login = lazy(() => import("./pages/Login"));
 const LoginIdpLinkConfirm = lazy(() => import("./pages/LoginIdpLinkConfirm"));
@@ -57,6 +58,8 @@ export default function KcPage(props: { kcContext: KcContext }) {
                 doMakeUserConfirmPassword={doMakeUserConfirmPassword}
               />
             );
+          case "idp-review-user-profile.ftl":
+            return <IdpReviewUserProfile {...common} kcContext={kcContext} />;
           case "login-reset-password.ftl":
             return kcContext.etapeResetLinkSent === true ? (
               <ResetPasswordEmailSent {...common} kcContext={kcContext} />

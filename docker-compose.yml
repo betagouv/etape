@@ -88,6 +88,7 @@ services:
       - ./apps/keycloak-theme/dist_keycloak:/theme:ro
       - ./keycloak/extensions/altcha/target:/altcha:ro
       - ./keycloak/extensions/reset-credentials/target:/reset-credentials:ro
+      - ./keycloak/extensions/first-broker-login/target:/first-broker-login:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -134,6 +135,15 @@ services:
           echo "  mvn -f keycloak/extensions/reset-credentials/pom.xml package pour l'obtenir."
         fi
 
+        rm -f /providers/etape-keycloak-first-broker-login.jar
+        if [ -f /first-broker-login/etape-keycloak-first-broker-login.jar ]; then
+          cp /first-broker-login/etape-keycloak-first-broker-login.jar /providers/
+          echo "extension « première connexion FranceConnect » installée."
+        else
+          echo "extension « première connexion FranceConnect » non construite — FranceConnect créera les comptes sans adresse ni CGU."
+          echo "  mvn -f keycloak/extensions/first-broker-login/pom.xml package pour l'obtenir."
+        fi
+
   # Applique après import ce qu'un fichier de realm ne peut pas porter. Deux
   # raisons distinctes, et le développement seulement :
   #
@@ -174,6 +184,7 @@ services:
       - ./deploy/keycloak-altcha.sh:/opt/keycloak/bin/etape-altcha.sh:ro
       - ./deploy/keycloak-reset-credentials.sh:/opt/keycloak/bin/etape-reset-credentials.sh:ro
       - ./deploy/keycloak-registration.sh:/opt/keycloak/bin/etape-registration.sh:ro
+      - ./deploy/keycloak-first-broker-login.sh:/opt/keycloak/bin/etape-first-broker-login.sh:ro
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -231,6 +242,9 @@ services:
 
         bash /opt/keycloak/bin/etape-registration.sh \
           || echo "inscription : profil et conditions générales non configurés."
+
+        bash /opt/keycloak/bin/etape-first-broker-login.sh \
+          || echo "franceconnect : « Finaliser la création » non branché — l'extension est-elle construite ?"
 
         if [ -n "$$FRANCECONNECT_CLIENT_ID" ]; then
           $$KCADM update identity-provider/instances/franceconnect -r etape \

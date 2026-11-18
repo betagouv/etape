@@ -4,7 +4,9 @@ import { StatusRegion } from "@etape/ui/components/status-region";
 import { Alert, MESSAGE_TYPE } from "../components/alert";
 import { Field, FieldError, PasswordInput, TextInput } from "../components/form";
 import { SocialProviders } from "../components/franceconnect";
+import { forgetRegistrationReturn } from "../components/registration-return";
 import { HeaderAccountSwitch } from "../components/prose";
+import { useRegistrationReturn } from "../hooks/use-registration-return";
 import { LOGIN_FIELD, useLoginForm } from "../hooks/use-login-form";
 import type { EtapePageProps } from "./PageProps";
 import type { KcContext } from "../KcContext";
@@ -50,6 +52,10 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
 
   const isRegistrationAllowed = realm.registrationAllowed && !registrationDisabled;
 
+  const isReturningToRegistration = useRegistrationReturn(
+    isRegistrationAllowed ? url.registrationUrl : undefined,
+  );
+
   const usernameLabel = !realm.loginWithEmailAllowed
     ? msg("username")
     : !realm.registrationEmailAsUsername
@@ -61,6 +67,8 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
     : hasCredentialsError
       ? CREDENTIALS_ERROR_ID
       : undefined;
+
+  if (isReturningToRegistration) return null;
 
   return (
     <Template
@@ -83,6 +91,7 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
         <SocialProviders
           providers={social?.providers}
           separatorLabel={msgStr("etapeOrCredentials")}
+          onProviderSelect={forgetRegistrationReturn}
           i18n={i18n}
         />
       }

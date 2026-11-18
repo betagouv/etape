@@ -4,7 +4,7 @@ Thème Keycloak d'ETAPE — écrans de connexion et gabarits d'email, écrits en
 React avec [Keycloakify](https://keycloakify.dev).
 
 La connexion et le mot de passe oublié suivent la section « 00. SIGN-IN » du
-Figma _FRONT-OFFICE_ (écrans 01 à 06, ticket Notion 191 ; écrans 07 à 10, ticket 192), l'inscription sa section « 01. SIGN-UP » (ticket 202) ; les autres écrans suivent encore les maquettes
+Figma _FRONT-OFFICE_ (écrans 01 à 06, ticket Notion 191 ; écrans 07 à 10, ticket 192), l'inscription sa section « 01. SIGN-UP » (ticket 202), l'inscription avec FranceConnect sa section « 01. SIGN-UP - FRANCE CONNECT » (ticket 204) ; les autres écrans suivent encore les maquettes
 `login-proposition-2` du Figma _Dépôt de dossier_. Ils réutilisent les variables
 de `@etape/ui` — couleurs, rayons, échelle typographique — plutôt que de les
 recopier : ce qui bouge dans le design system se propage ici au prochain build.
@@ -52,6 +52,7 @@ parcours normal atteint rarement.
 | ---------------------------------------------------- | -------------------------------------------- |
 | Connexion                                            | `src/login/pages/Login.tsx`                  |
 | Inscription                                          | `src/login/pages/Register.tsx`               |
+| Finaliser la création (FranceConnect)                | `src/login/pages/IdpReviewUserProfile.tsx`   |
 | Mot de passe oublié                                  | `src/login/pages/LoginResetPassword.tsx`     |
 | E-mail de réinitialisation envoyé                    | `src/login/pages/ResetPasswordEmailSent.tsx` |
 | Nouveau mot de passe                                 | `src/login/pages/LoginUpdatePassword.tsx`    |
@@ -157,9 +158,9 @@ formulaire envoyé (`src/login/components/submitted-form.ts`) :
 
 - **connexion** → écran 05 de la maquette : « Votre espace n'est pas encore
   activé », alerte rouge, bouton de renvoi ;
-- **inscription, ou rien de retenu** (stockage refusé, arrivée par
-  FranceConnect) → « Confirmez votre adresse », l'écran neutre d'avant la
-  maquette, qui convient aux deux cas.
+- **inscription, y compris par FranceConnect, ou rien de retenu** (stockage
+  refusé, compte existant lié par FranceConnect) → « Confirmez votre adresse »,
+  l'écran neutre d'avant la maquette, qui convient aux deux cas.
 
 L'écran de connexion efface la marque à son affichage : un essai raté suivi
 d'une arrivée par FranceConnect ne garde pas « connexion ».
@@ -239,6 +240,25 @@ manuelle et le contrôle de la région.
 Les liens des conditions générales et de la politique de confidentialité sont dans
 `components/legal-documents.ts`. Tant qu'une URL manque, le libellé reste du texte.
 
+## Inscription avec FranceConnect
+
+À la première arrivée par FranceConnect, Keycloak affiche `idp-review-user-profile.ftl`,
+rendu par `IdpReviewUserProfile.tsx` : « Finaliser la création de votre espace ». Le flow
+`etape-first-broker-login` et son extension (`keycloak/extensions/first-broker-login`)
+ne le montrent qu'à une création : un compte existant passe directement à la liaison.
+
+- **Prénom, nom et e-mail** sont envoyés en lecture seule (`readOnly`, jamais
+  `disabled`, qui ne serait pas envoyé). L'extension les réimpose de toute façon.
+- **Adresse et conditions générales** reprennent les composants de l'inscription
+  (`AdresseField`, `TermsField`) ; les CGU sont aussi exigées côté serveur.
+- **Retours vers l'inscription.** Keycloak rend la connexion après « Revenir sur
+  Transitions Pro » chez FranceConnect, et après « Annuler et revenir à
+  l'inscription », qui passe par `loginRestartFlowUrl` pour effacer l'identité
+  transmise (sans quoi un nouveau clic sur FranceConnect est vu comme un flow
+  imbriqué). Une marque dans le `sessionStorage` (`components/registration-return.ts`)
+  dit à la connexion de renvoyer aussitôt à l'étape 1. Stockage refusé : on reste sur
+  la connexion, d'où « Créer mon espace » reste à un clic.
+
 ## Case « Je ne suis pas un robot »
 
 `src/login/components/altcha/`, avec le hook `src/login/hooks/use-altcha-widget.ts`, affiche le widget ALTCHA sur l'inscription et
@@ -283,4 +303,5 @@ doit pas dépendre d'un tiers.
 - **Attributs multivalués non gérés** dans `UserProfileField` — le profil du
   realm n'en contient aucun. En ajouter un demanderait d'étendre le composant.
 - **Un attribut ajouté au profil n'apparaît pas tout seul à l'inscription** :
-  `Register.tsx` place chaque champ à son étape.
+  `Register.tsx` place chaque champ à son étape, et `IdpReviewUserProfile.tsx` les
+  siens.
