@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { findRegionByCodeCommune, isRegionPilote } from "./region";
+import { findRegionByCodeCommune, isRegionPilote, type RegionCode } from "./region";
+
+const NOUVELLE_AQUITAINE: RegionCode = "75";
+const PAYS_DE_LA_LOIRE: RegionCode = "52";
 
 describe("findRegionByCodeCommune", () => {
   it.each([
@@ -23,15 +26,15 @@ describe("findRegionByCodeCommune", () => {
 
 describe("isRegionPilote", () => {
   it("accepte une région de la liste", () => {
-    expect(isRegionPilote("75", ["75"])).toBe(true);
+    expect(isRegionPilote(NOUVELLE_AQUITAINE, [NOUVELLE_AQUITAINE])).toBe(true);
   });
 
   it("refuse une autre région, ou une commune sans région", () => {
-    expect(isRegionPilote("52", ["75"])).toBe(false);
-    expect(isRegionPilote(undefined, ["75"])).toBe(false);
+    expect(isRegionPilote(PAYS_DE_LA_LOIRE, [NOUVELLE_AQUITAINE])).toBe(false);
+    expect(isRegionPilote(undefined, [NOUVELLE_AQUITAINE])).toBe(false);
   });
 
   it("ne refuse rien quand le profil ne déclare aucune liste", () => {
-    expect(isRegionPilote("52", [])).toBe(true);
+    expect(isRegionPilote(PAYS_DE_LA_LOIRE, [])).toBe(true);
   });
 });
