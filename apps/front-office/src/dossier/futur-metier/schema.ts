@@ -2,6 +2,7 @@ import { AppellationRomeSchema } from "@etape/api-contract";
 import { z } from "zod";
 
 import { OUI_NON } from "../domain/oui-non";
+import { requireFilled } from "../domain/require-filled";
 import { findDemarcheFields, TYPE_DEMARCHE } from "./domain/demarche";
 import { formatCodeRome } from "./domain/format-code-rome";
 
@@ -91,18 +92,15 @@ const refinedFieldsSchema = baseFuturMetierSchema.pick({
  */
 export const futurMetierSchema = baseFuturMetierSchema.superRefine(
   (data, ctx) => {
-    const requireFilled = (names: readonly RequiredFieldName[]): void => {
-      for (const name of names) {
-        const value = data[name];
-        if (value === null || value === undefined || value === "")
-          ctx.addIssue({ code: "custom", path: [name], message: REQUIRED_MESSAGES[name] });
-      }
-    };
-
     if (data.demarcheDecouverte === OUI_NON.OUI)
-      requireFilled(findDemarcheFields(data.typeDemarche));
+      requireFilled(ctx, data, findDemarcheFields(data.typeDemarche), REQUIRED_MESSAGES);
 
-    requireFilled(REQUIRED_METIER_VISE_FIELDS[data.metierViseEntryMode]);
+    requireFilled(
+      ctx,
+      data,
+      REQUIRED_METIER_VISE_FIELDS[data.metierViseEntryMode],
+      REQUIRED_MESSAGES,
+    );
     if (data.metierViseEntryMode === METIER_VISE_ENTRY_MODE.SEARCH) return;
 
     // Facultatif : contrôlé seulement s'il est rempli.

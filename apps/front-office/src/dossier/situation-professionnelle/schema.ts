@@ -2,6 +2,7 @@ import { EtablissementSchema } from "@etape/api-contract";
 import { z } from "zod";
 
 import { OUI_NON } from "../domain/oui-non";
+import { requireFilled } from "../domain/require-filled";
 import { isDateDemissionInFuture } from "./domain/date-demission";
 
 /** L'employeur se choisit dans Sirene, ou se saisit à la main quand la recherche échoue. */
@@ -60,16 +61,8 @@ const refinedFieldsSchema = baseSituationProfessionnelleSchema.pick({
 /** Le schéma du formulaire « Ma situation professionnelle » ; seuls les champs du mode en cours sont exigés. */
 export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema.superRefine(
   (data, ctx) => {
-    const requireFilled = (names: readonly RequiredFieldName[]): void => {
-      for (const name of names) {
-        const value = data[name];
-        if (value === null || value === "")
-          ctx.addIssue({ code: "custom", path: [name], message: REQUIRED_MESSAGES[name] });
-      }
-    };
-
     if (data.demission === OUI_NON.OUI) {
-      requireFilled(REQUIRED_DEMISSION_FIELDS);
+      requireFilled(ctx, data, REQUIRED_DEMISSION_FIELDS, REQUIRED_MESSAGES);
       if (isDateDemissionInFuture(data.dateDemission, new Date())) {
         ctx.addIssue({
           code: "custom",
@@ -79,7 +72,7 @@ export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema
       }
     }
 
-    requireFilled(REQUIRED_EMPLOYEUR_FIELDS[data.employeurEntryMode]);
+    requireFilled(ctx, data, REQUIRED_EMPLOYEUR_FIELDS[data.employeurEntryMode], REQUIRED_MESSAGES);
     if (data.employeurEntryMode === EMPLOYEUR_ENTRY_MODE.SEARCH) return;
 
     if (!SIRET_PATTERN.test(data.siret.replace(/\s/g, ""))) {
