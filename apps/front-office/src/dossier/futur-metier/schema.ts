@@ -1,6 +1,7 @@
 import { AppellationRomeSchema } from "@etape/api-contract";
 import { z } from "zod";
 
+import { OUI_NON } from "../domain/oui-non";
 import { formatCodeRome } from "./domain/format-code-rome";
 
 /** Le métier visé se choisit dans le référentiel ROME, ou se saisit à la main quand la recherche échoue. */
@@ -56,6 +57,10 @@ const baseFuturMetierSchema = z.object({
     .trim()
     .min(1, "Veuillez indiquer ce que vous savez des débouchés dans ce métier.")
     .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
+  demarcheDecouverte: z.enum(
+    OUI_NON,
+    "Veuillez indiquer si vous avez entrepris des démarches pour découvrir ce métier.",
+  ),
 });
 
 /** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */
@@ -111,6 +116,7 @@ export const FUTUR_METIER_FIELD_LABEL: Record<
   quotidienMetier: "À quoi ressemble le quotidien de ce métier ?",
   conditionsEmploi: "Quelles sont les conditions habituelles d’emploi dans le métier visé ?",
   debouches: "Que savez-vous des débouchés dans ce métier ?",
+  demarcheDecouverte: "Avez-vous entrepris des démarches pour découvrir ce métier ?",
 };
 
 /** Les sections du volet qui portent un compteur. */
@@ -132,9 +138,10 @@ const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
   "quotidienMetier",
   "conditionsEmploi",
   "debouches",
+  "demarcheDecouverte",
 ];
 
-/** Un champ pour le métier visé, en recherche comme en saisie manuelle, puis les trois zones de texte (maquettes 01 et 07). */
+/** Un champ pour le métier visé, en recherche comme en saisie manuelle, puis les trois zones de texte et la question sur les démarches (maquettes 01, 07 et 09). */
 export function findSectionFields(
   mode: MetierViseEntryMode,
 ): Record<FuturMetierSection, readonly FuturMetierFieldName[]> {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { OUI_NON } from "../domain/oui-non";
 import {
   findSectionFields,
   FUTUR_METIER_TEXT_MAX_LENGTH,
@@ -23,12 +24,13 @@ const EMPTY_FORM = {
   debouches: "",
 };
 
-/** Les trois zones de texte remplies : il ne manque que le métier visé. */
+/** Les trois zones de texte remplies et la question sur les démarches répondue : il ne manque que le métier visé. */
 const SEARCH_FORM = {
   ...EMPTY_FORM,
   quotidienMetier: "Pétrir, façonner et cuire le pain, tôt le matin.",
   conditionsEmploi: "Surtout des CDI, en boulangerie artisanale.",
   debouches: "De nombreuses offres non pourvues dans ma région.",
+  demarcheDecouverte: OUI_NON.NON,
 };
 
 const MANUAL_FORM = {
@@ -89,12 +91,13 @@ describe("futurMetierSchema, zones de texte", () => {
     ]);
   });
 
-  it("signale le métier manquant au même envoi que les zones de texte vides", () => {
+  it("signale le métier manquant au même envoi que les zones de texte vides et la question sans réponse", () => {
     const issues = futurMetierSchema.safeParse(EMPTY_FORM).error?.issues ?? [];
 
     expect(issues.map(({ path }) => path.join(".")).sort()).toEqual([
       "conditionsEmploi",
       "debouches",
+      "demarcheDecouverte",
       "metierVise",
       "quotidienMetier",
     ]);
@@ -147,16 +150,42 @@ describe("futurMetierSchema, code ROME", () => {
   });
 });
 
+describe("futurMetierSchema, démarches de découverte", () => {
+  it("exige la réponse à la question sur les démarches", () => {
+    expect(findMessages(EMPTY_FORM, "demarcheDecouverte")).toEqual([
+      "Veuillez indiquer si vous avez entrepris des démarches pour découvrir ce métier.",
+    ]);
+  });
+
+  it("accepte « oui » comme « non »", () => {
+    for (const demarcheDecouverte of Object.values(OUI_NON)) {
+      expect(findMessages({ ...EMPTY_FORM, demarcheDecouverte }, "demarcheDecouverte")).toEqual([]);
+    }
+  });
+});
+
 describe("findSectionFields", () => {
-  it("exige le métier choisi en recherche, puis les trois zones de texte", () => {
+  it("exige le métier choisi en recherche, puis les trois zones de texte et la question sur les démarches", () => {
     expect(findSectionFields(METIER_VISE_ENTRY_MODE.SEARCH)).toEqual({
-      "metier-vise": ["metierVise", "quotidienMetier", "conditionsEmploi", "debouches"],
+      "metier-vise": [
+        "metierVise",
+        "quotidienMetier",
+        "conditionsEmploi",
+        "debouches",
+        "demarcheDecouverte",
+      ],
     });
   });
 
   it("exige l'intitulé en saisie manuelle, pas le code ROME ni la spécialisation", () => {
     expect(findSectionFields(METIER_VISE_ENTRY_MODE.MANUAL)).toEqual({
-      "metier-vise": ["intituleMetierVise", "quotidienMetier", "conditionsEmploi", "debouches"],
+      "metier-vise": [
+        "intituleMetierVise",
+        "quotidienMetier",
+        "conditionsEmploi",
+        "debouches",
+        "demarcheDecouverte",
+      ],
     });
   });
 });
