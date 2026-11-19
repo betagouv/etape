@@ -1,4 +1,4 @@
-import { listFilledFields, type RequiredFields } from "../../domain/volet-progress";
+import { buildRequiredFields, type RequiredFields } from "../../domain/volet-progress";
 import {
   type FuturMetierFieldName,
   type FuturMetierFormData,
@@ -11,16 +11,9 @@ export function findRequiredFields(
   values: FuturMetierFormData,
 ): RequiredFields<FuturMetierSection, FuturMetierFieldName> {
   const { metierViseEntryMode, demarcheDecouverte, typeDemarche } = values;
-  const sectionFields = findSectionFields(metierViseEntryMode, demarcheDecouverte, typeDemarche);
-  const allFields = Object.values(sectionFields).flat();
-  return {
-    sectionFields,
-    allFields,
-    filledFields: listFilledFields(values, allFields),
-    sectionValidatedFields: findSectionValidatedFields(
-      metierViseEntryMode,
-      demarcheDecouverte,
-      typeDemarche,
-    ),
-  };
+  return buildRequiredFields(
+    values,
+    findSectionFields(metierViseEntryMode, demarcheDecouverte, typeDemarche),
+    findSectionValidatedFields(metierViseEntryMode, demarcheDecouverte, typeDemarche),
+  );
 }
