@@ -14,6 +14,8 @@ const cardVariants = cva("flex flex-col py-6", {
       /** Récapitulatif dans un formulaire, `front-office-form-card` de la maquette FRONT-OFFICE. */
       secondary:
         "bg-secondary text-card-foreground gap-3 rounded-xl border px-4 py-3 [&_[data-slot=card-title]]:text-primary [&_[data-slot=card-title]]:text-base [&_[data-slot=card-title]]:leading-6",
+      /** Carte de saisie dans un formulaire (maquette FRONT-OFFICE, « Démarche 1 ») : un cadre fin, sans fond. */
+      form: "text-card-foreground gap-4 rounded-md border px-3 py-3 [&_[data-slot=card-title]]:text-primary [&_[data-slot=card-title]]:text-sm [&_[data-slot=card-title]]:leading-5 [&_[data-slot=card-title]]:font-medium [&_[data-slot=card-description]]:leading-5",
       // Les enfants passent sur fond `primary` : le `muted-foreground` de
       // `CardDescription` y tomberait à 2:1, le filet `border` y trancherait.
       primary:
