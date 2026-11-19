@@ -85,7 +85,8 @@ function FormRadioGroup<TFieldValues extends FieldValues, TName extends FieldPat
             aria-describedby={fieldState.invalid ? errorId : undefined}
           >
             {Object.entries<string>(options).map(([value, optionLabel], index) => (
-              <div key={value} className="flex items-center gap-2">
+              // 24 px de haut, comme la ligne d'un bouton radio du kit.
+              <div key={value} className="flex min-h-6 items-center gap-2">
                 <RadioGroupItem
                   value={value}
                   id={`${name}-${value}`}
@@ -93,7 +94,10 @@ function FormRadioGroup<TFieldValues extends FieldValues, TName extends FieldPat
                   // Un seul élément peut porter le ref du champ : le premier bouton radio.
                   ref={index === 0 ? field.ref : undefined}
                 />
-                <Label htmlFor={`${name}-${value}`}>{optionLabel}</Label>
+                {/* Texte courant, comme l'option d'un bouton radio du kit : seule la légende est en gras. */}
+                <Label htmlFor={`${name}-${value}`} className="font-normal">
+                  {optionLabel}
+                </Label>
               </div>
             ))}
           </RadioGroup>
