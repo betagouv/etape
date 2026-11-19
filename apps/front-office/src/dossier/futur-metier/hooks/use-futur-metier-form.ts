@@ -40,6 +40,9 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
       conditionsEmploi: "",
       debouches: "",
       demarcheDecouverte: undefined,
+      typeDemarche: undefined,
+      precisionTypeDemarche: "",
+      apportDemarche: "",
     },
   });
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { OUI_NON } from "../../domain/oui-non";
+import { TYPE_DEMARCHE } from "./demarche";
 import { FUTUR_METIER_SECTION, METIER_VISE_ENTRY_MODE, type FuturMetierFormData } from "../schema";
 import { findRequiredFields } from "./required-fields";
 
@@ -14,6 +15,8 @@ const values: FuturMetierFormData = {
   conditionsEmploi: "",
   debouches: "",
   demarcheDecouverte: OUI_NON.NON,
+  precisionTypeDemarche: "",
+  apportDemarche: "",
 };
 
 /** Exigés quel que soit le mode de saisie : les trois zones de texte, puis la question sur les démarches. */
@@ -49,6 +52,33 @@ describe("findRequiredFields", () => {
   it("compte une zone de texte remplie", () => {
     const required = findRequiredFields({ ...values, debouches: "De nombreuses offres." });
     expect(required.filledFields).toEqual(["debouches", ...ANSWERED_FIELDS]);
+  });
+
+  it("exige et contrôle le type et l'apport de la démarche après un « oui »", () => {
+    const required = findRequiredFields({ ...values, demarcheDecouverte: OUI_NON.OUI });
+    const expected = ["metierVise", ...COMMON_FIELDS, "typeDemarche", "apportDemarche"];
+    expect(required.allFields).toEqual(expected);
+    expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual(expected);
+    expect(required.filledFields).toEqual(ANSWERED_FIELDS);
+  });
+
+  it("exige la précision pour « Autre », et compte les champs de la démarche remplis", () => {
+    const required = findRequiredFields({
+      ...values,
+      demarcheDecouverte: OUI_NON.OUI,
+      typeDemarche: TYPE_DEMARCHE.AUTRE,
+      precisionTypeDemarche: "Stage chez un artisan",
+    });
+    expect(required.allFields.slice(-3)).toEqual([
+      "typeDemarche",
+      "precisionTypeDemarche",
+      "apportDemarche",
+    ]);
+    expect(required.filledFields).toEqual([
+      ...ANSWERED_FIELDS,
+      "typeDemarche",
+      "precisionTypeDemarche",
+    ]);
   });
 
   it("exige l'intitulé saisi à la main, pas le code ROME", () => {

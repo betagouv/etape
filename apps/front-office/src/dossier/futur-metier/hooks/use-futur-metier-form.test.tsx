@@ -5,6 +5,7 @@ import type { UseFormRegisterReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { OUI_NON } from "../../domain/oui-non";
+import { TYPE_DEMARCHE } from "../domain/demarche";
 import { FUTUR_METIER_SECTION, METIER_VISE_ENTRY_MODE, type FuturMetierFormData } from "../schema";
 import { useFuturMetierForm, type UseFuturMetierFormResult } from "./use-futur-metier-form";
 
@@ -98,13 +99,71 @@ describe("useFuturMetierForm", () => {
     expect(result.current.sections[FUTUR_METIER_SECTION.METIER_VISE].remainingFieldCount).toBe(0);
   });
 
-  it("ne compte plus la question sur les démarches une fois répondue, par « oui » comme par « non »", () => {
+  it("ne compte plus la question sur les démarches une fois répondue « non »", () => {
     const result = renderForm();
 
-    for (const demarcheDecouverte of Object.values(OUI_NON)) {
-      setValues(result.current.form, { demarcheDecouverte });
-      expect(result.current.progress.remainingFieldCount).toBe(4);
-    }
+    setValues(result.current.form, { demarcheDecouverte: OUI_NON.NON });
+
+    expect(result.current.progress.remainingFieldCount).toBe(4);
+  });
+
+  it("après un « oui », compte le type et l'apport de la démarche : cinq champs restants une fois le métier choisi (maquette 10)", () => {
+    const result = renderForm();
+
+    setValues(result.current.form, { metierVise: BOULANGER, demarcheDecouverte: OUI_NON.OUI });
+
+    expect(result.current.sections[FUTUR_METIER_SECTION.METIER_VISE].remainingFieldCount).toBe(5);
+  });
+
+  it("compte la précision à remplir une fois « Autre » choisi", () => {
+    const result = renderForm();
+    setValues(result.current.form, { ...FILLED_TEXTS, metierVise: BOULANGER });
+
+    setValues(result.current.form, {
+      demarcheDecouverte: OUI_NON.OUI,
+      typeDemarche: TYPE_DEMARCHE.AUTRE,
+    });
+    expect(result.current.progress.remainingFieldCount).toBe(2);
+
+    setValues(result.current.form, {
+      precisionTypeDemarche: "Stage chez un artisan",
+      apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+    });
+    expect(result.current.progress.remainingFieldCount).toBe(0);
+  });
+
+  it("à l'envoi après un « oui », liste les champs de la démarche à la fin du résumé", async () => {
+    const result = renderForm();
+    setValues(result.current.form, {
+      ...FILLED_TEXTS,
+      metierVise: BOULANGER,
+      demarcheDecouverte: OUI_NON.OUI,
+    });
+
+    await submit(result.current.form);
+
+    expect(result.current.voletErrors).toEqual([
+      { fieldId: "typeDemarche", message: "Veuillez choisir le type de démarche." },
+      {
+        fieldId: "apportDemarche",
+        message: "Veuillez indiquer ce que la démarche vous a apporté.",
+      },
+    ]);
+  });
+
+  it("ne compte plus les erreurs de la démarche après un retour à « non »", async () => {
+    const result = renderForm();
+    setValues(result.current.form, {
+      ...FILLED_TEXTS,
+      metierVise: BOULANGER,
+      demarcheDecouverte: OUI_NON.OUI,
+    });
+    await submit(result.current.form);
+
+    setValues(result.current.form, { demarcheDecouverte: OUI_NON.NON });
+
+    expect(result.current.progress.errorCount).toBe(0);
+    expect(result.current.voletErrors).toEqual([]);
   });
 
   it("en saisie manuelle, demande l'intitulé et pas le code ROME", () => {

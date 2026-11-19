@@ -7,16 +7,21 @@ import {
   type FuturMetierSection,
 } from "../schema";
 
-/** Ne change qu'avec le mode de saisie, ou le passage d'un champ de vide à rempli. */
+/** Ne change qu'avec le mode de saisie, la réponse sur les démarches, le type de démarche, ou le passage d'un champ de vide à rempli. */
 export function findRequiredFields(
   values: FuturMetierFormData,
 ): RequiredFields<FuturMetierSection, FuturMetierFieldName> {
-  const sectionFields = findSectionFields(values.metierViseEntryMode);
+  const { metierViseEntryMode, demarcheDecouverte, typeDemarche } = values;
+  const sectionFields = findSectionFields(metierViseEntryMode, demarcheDecouverte, typeDemarche);
   const allFields = Object.values(sectionFields).flat();
   return {
     sectionFields,
     allFields,
     filledFields: listFilledFields(values, allFields),
-    sectionValidatedFields: findSectionValidatedFields(values.metierViseEntryMode),
+    sectionValidatedFields: findSectionValidatedFields(
+      metierViseEntryMode,
+      demarcheDecouverte,
+      typeDemarche,
+    ),
   };
 }

@@ -1,7 +1,8 @@
 import { AppellationRomeSchema } from "@etape/api-contract";
 import { z } from "zod";
 
-import { OUI_NON } from "../domain/oui-non";
+import { OUI_NON, type OuiNon } from "../domain/oui-non";
+import { findDemarcheFields, TYPE_DEMARCHE, type TypeDemarche } from "./domain/demarche";
 import { formatCodeRome } from "./domain/format-code-rome";
 
 /** Le métier visé se choisit dans le référentiel ROME, ou se saisit à la main quand la recherche échoue. */
@@ -16,7 +17,7 @@ export type MetierViseEntryMode =
 
 const CODE_ROME_PATTERN = /^[A-Z]\d{4}$/;
 
-/** La limite des trois zones de texte de la section « Le métier » (maquette 01 : « 0/1000 caractères »). */
+/** La limite des zones de texte de la section « Le métier » (maquettes 01 et 10 : « 0/1000 caractères »). */
 export const FUTUR_METIER_TEXT_MAX_LENGTH = 1000;
 
 // Le navigateur bloque la saisie à la limite ; le schéma la contrôle pour un texte venu d'ailleurs.
@@ -25,6 +26,9 @@ const TEXT_MAX_LENGTH_MESSAGE = `Votre texte ne doit pas dépasser ${FUTUR_METIE
 const REQUIRED_MESSAGES = {
   metierVise: "Veuillez choisir le métier que vous visez.",
   intituleMetierVise: "Veuillez saisir le nom du métier que vous visez.",
+  typeDemarche: "Veuillez choisir le type de démarche.",
+  precisionTypeDemarche: "Veuillez préciser le type de démarche.",
+  apportDemarche: "Veuillez indiquer ce que la démarche vous a apporté.",
 } as const;
 
 type RequiredFieldName = keyof typeof REQUIRED_MESSAGES;
@@ -61,6 +65,10 @@ const baseFuturMetierSchema = z.object({
     OUI_NON,
     "Veuillez indiquer si vous avez entrepris des démarches pour découvrir ce métier.",
   ),
+  // La démarche en cours de saisie : ses champs ne sont exigés qu'après un « oui ».
+  typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
+  precisionTypeDemarche: z.string().trim(),
+  apportDemarche: z.string().trim().max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
 });
 
 /** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */
@@ -69,17 +77,29 @@ const refinedFieldsSchema = baseFuturMetierSchema.pick({
   metierVise: true,
   intituleMetierVise: true,
   codeRome: true,
+  typeDemarche: true,
+  precisionTypeDemarche: true,
+  apportDemarche: true,
 });
 
-/** Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours sont exigés. */
+/**
+ * Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours, et ceux de
+ * la démarche après un « oui », sont exigés.
+ */
 export const futurMetierSchema = baseFuturMetierSchema.superRefine(
   (data, ctx) => {
-    for (const name of REQUIRED_METIER_VISE_FIELDS[data.metierViseEntryMode]) {
-      const value = data[name];
-      if (value === null || value === "")
-        ctx.addIssue({ code: "custom", path: [name], message: REQUIRED_MESSAGES[name] });
-    }
+    const requireFilled = (names: readonly RequiredFieldName[]): void => {
+      for (const name of names) {
+        const value = data[name];
+        if (value === null || value === undefined || value === "")
+          ctx.addIssue({ code: "custom", path: [name], message: REQUIRED_MESSAGES[name] });
+      }
+    };
 
+    if (data.demarcheDecouverte === OUI_NON.OUI)
+      requireFilled(findDemarcheFields(data.typeDemarche));
+
+    requireFilled(REQUIRED_METIER_VISE_FIELDS[data.metierViseEntryMode]);
     if (data.metierViseEntryMode === METIER_VISE_ENTRY_MODE.SEARCH) return;
 
     // Facultatif : contrôlé seulement s'il est rempli.
@@ -117,6 +137,9 @@ export const FUTUR_METIER_FIELD_LABEL: Record<
   conditionsEmploi: "Quelles sont les conditions habituelles d’emploi dans le métier visé ?",
   debouches: "Que savez-vous des débouchés dans ce métier ?",
   demarcheDecouverte: "Avez-vous entrepris des démarches pour découvrir ce métier ?",
+  typeDemarche: "Type de démarche",
+  precisionTypeDemarche: "Précisez le type de démarche",
+  apportDemarche: "Ce que la démarche vous a apporté",
 };
 
 /** Les sections du volet qui portent un compteur. */
@@ -141,14 +164,29 @@ const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
   "demarcheDecouverte",
 ];
 
-/** Un champ pour le métier visé, en recherche comme en saisie manuelle, puis les trois zones de texte et la question sur les démarches (maquettes 01, 07 et 09). */
+/** Les champs de la démarche en cours de saisie ne sont demandés qu'après un « oui » (maquettes 09 et 10). */
+function findOpenDemarcheFields(
+  demarcheDecouverte: OuiNon | undefined,
+  typeDemarche: TypeDemarche | undefined,
+): readonly FuturMetierFieldName[] {
+  return demarcheDecouverte === OUI_NON.OUI ? findDemarcheFields(typeDemarche) : [];
+}
+
+/**
+ * Un champ pour le métier visé, en recherche comme en saisie manuelle, puis les trois zones de
+ * texte, la question sur les démarches et, après un « oui », la démarche en cours de saisie
+ * (maquettes 01, 07, 09 et 10).
+ */
 export function findSectionFields(
   mode: MetierViseEntryMode,
+  demarcheDecouverte: OuiNon | undefined,
+  typeDemarche: TypeDemarche | undefined,
 ): Record<FuturMetierSection, readonly FuturMetierFieldName[]> {
   return {
     [FUTUR_METIER_SECTION.METIER_VISE]: [
       ...REQUIRED_METIER_VISE_FIELDS[mode],
       ...ALWAYS_REQUIRED_FIELDS,
+      ...findOpenDemarcheFields(demarcheDecouverte, typeDemarche),
     ],
   };
 }
@@ -156,8 +194,14 @@ export function findSectionFields(
 /** Le code ROME, facultatif, est contrôlé : faux, il compte parmi les erreurs du volet. */
 export function findSectionValidatedFields(
   mode: MetierViseEntryMode,
+  demarcheDecouverte: OuiNon | undefined,
+  typeDemarche: TypeDemarche | undefined,
 ): Record<FuturMetierSection, readonly FuturMetierFieldName[]> {
   return {
-    [FUTUR_METIER_SECTION.METIER_VISE]: [...METIER_VISE_FIELDS[mode], ...ALWAYS_REQUIRED_FIELDS],
+    [FUTUR_METIER_SECTION.METIER_VISE]: [
+      ...METIER_VISE_FIELDS[mode],
+      ...ALWAYS_REQUIRED_FIELDS,
+      ...findOpenDemarcheFields(demarcheDecouverte, typeDemarche),
+    ],
   };
 }
