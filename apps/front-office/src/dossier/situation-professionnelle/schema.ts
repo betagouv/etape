@@ -1,7 +1,7 @@
 import { EtablissementSchema } from "@etape/api-contract";
 import { z } from "zod";
 
-import { OUI_NON, type OuiNon } from "../domain/oui-non";
+import { OUI_NON } from "../domain/oui-non";
 import { isDateDemissionInFuture } from "./domain/date-demission";
 
 /** L'employeur se choisit dans Sirene, ou se saisit à la main quand la recherche échoue. */
@@ -136,16 +136,3 @@ export const EMPLOYEUR_FIELDS: Record<
   [EMPLOYEUR_ENTRY_MODE.SEARCH]: ["employeur"],
   [EMPLOYEUR_ENTRY_MODE.MANUAL]: ["denomination", "siret", "secteurActivite", "adresse"],
 };
-
-/** La date n'est exigée qu'après un « oui » (maquette 10). */
-export function findSectionFields(
-  mode: EmployeurEntryMode,
-  demission: OuiNon | undefined,
-): Record<SituationProfessionnelleSection, readonly SituationProfessionnelleFieldName[]> {
-  return {
-    // 2 champs en recherche, 5 en saisie manuelle (maquettes 01 et 07).
-    [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: [...EMPLOYEUR_FIELDS[mode], "intitulePoste"],
-    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]:
-      demission === OUI_NON.OUI ? ["demission", "dateDemission"] : ["demission"],
-  };
-}

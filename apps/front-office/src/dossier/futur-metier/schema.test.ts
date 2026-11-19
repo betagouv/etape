@@ -2,12 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { OUI_NON } from "../domain/oui-non";
 import { TYPE_DEMARCHE } from "./domain/demarche";
-import {
-  findSectionFields,
-  FUTUR_METIER_TEXT_MAX_LENGTH,
-  futurMetierSchema,
-  METIER_VISE_ENTRY_MODE,
-} from "./schema";
+import { FUTUR_METIER_TEXT_MAX_LENGTH, futurMetierSchema, METIER_VISE_ENTRY_MODE } from "./schema";
 
 function findMessages(data: Record<string, unknown>, field: string): string[] {
   const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
@@ -226,62 +221,5 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
     expect(findMessages(data, "apportDemarche")).toEqual([
       `Votre texte ne doit pas dépasser ${FUTUR_METIER_TEXT_MAX_LENGTH} caractères.`,
     ]);
-  });
-});
-
-describe("findSectionFields", () => {
-  it("exige le métier choisi en recherche, puis les trois zones de texte et la question sur les démarches", () => {
-    expect(findSectionFields(METIER_VISE_ENTRY_MODE.SEARCH, undefined, undefined)).toEqual({
-      "metier-vise": [
-        "metierVise",
-        "quotidienMetier",
-        "conditionsEmploi",
-        "debouches",
-        "demarcheDecouverte",
-      ],
-    });
-  });
-
-  it("exige l'intitulé en saisie manuelle, pas le code ROME ni la spécialisation", () => {
-    expect(findSectionFields(METIER_VISE_ENTRY_MODE.MANUAL, OUI_NON.NON, undefined)).toEqual({
-      "metier-vise": [
-        "intituleMetierVise",
-        "quotidienMetier",
-        "conditionsEmploi",
-        "debouches",
-        "demarcheDecouverte",
-      ],
-    });
-  });
-
-  it("ajoute le type et l'apport de la démarche après un « oui » (maquette 10)", () => {
-    const fields = findSectionFields(METIER_VISE_ENTRY_MODE.SEARCH, OUI_NON.OUI, undefined);
-    expect(fields["metier-vise"].slice(-3)).toEqual([
-      "demarcheDecouverte",
-      "typeDemarche",
-      "apportDemarche",
-    ]);
-  });
-
-  it("ajoute la précision pour « Autre », entre le type et l'apport", () => {
-    const fields = findSectionFields(
-      METIER_VISE_ENTRY_MODE.SEARCH,
-      OUI_NON.OUI,
-      TYPE_DEMARCHE.AUTRE,
-    );
-    expect(fields["metier-vise"].slice(-3)).toEqual([
-      "typeDemarche",
-      "precisionTypeDemarche",
-      "apportDemarche",
-    ]);
-  });
-
-  it("ne demande rien de la démarche après un « non », même si un type reste saisi", () => {
-    const fields = findSectionFields(
-      METIER_VISE_ENTRY_MODE.SEARCH,
-      OUI_NON.NON,
-      TYPE_DEMARCHE.AUTRE,
-    );
-    expect(fields["metier-vise"].at(-1)).toBe("demarcheDecouverte");
   });
 });

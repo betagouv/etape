@@ -1,10 +1,10 @@
 import { listFilledFields, type RequiredFields } from "../../domain/volet-progress";
 import {
-  INFORMATIONS_SECTION_FIELDS,
   type InformationsFieldName,
   type InformationsFormData,
   type InformationsSection,
 } from "../schema";
+import { INFORMATIONS_SECTION_FIELDS } from "./section-fields";
 
 const ALL_REQUIRED_FIELDS = Object.values(INFORMATIONS_SECTION_FIELDS).flat();
 

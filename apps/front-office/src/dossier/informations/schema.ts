@@ -104,12 +104,3 @@ export const INFORMATIONS_SECTION = {
 
 /** Une section du volet, parmi celles d'`INFORMATIONS_SECTION`. */
 export type InformationsSection = (typeof INFORMATIONS_SECTION)[keyof typeof INFORMATIONS_SECTION];
-
-/** Champs obligatoires de chaque section ; les champs préremplis n'y figurent pas. */
-export const INFORMATIONS_SECTION_FIELDS: Record<
-  InformationsSection,
-  readonly InformationsFieldName[]
-> = {
-  [INFORMATIONS_SECTION.IDENTITE]: ["civilite", "dateNaissance", "nationalite", "nir", "cleNir"],
-  [INFORMATIONS_SECTION.CONTACT]: ["telephone"],
-};
