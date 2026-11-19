@@ -1,22 +1,8 @@
 import { EtablissementSchema } from "@etape/api-contract";
 import { z } from "zod";
 
+import { OUI_NON, type OuiNon } from "../domain/oui-non";
 import { isDateDemissionInFuture } from "./domain/date-demission";
-
-/** Les réponses à la question sur la démission. */
-export const DEMISSION = {
-  OUI: "oui",
-  NON: "non",
-} as const;
-
-/** Une réponse, parmi celles de `DEMISSION`. */
-export type Demission = (typeof DEMISSION)[keyof typeof DEMISSION];
-
-/** Libellé de chaque réponse. */
-export const DEMISSION_LABEL: Record<Demission, string> = {
-  [DEMISSION.OUI]: "Oui",
-  [DEMISSION.NON]: "Non",
-};
 
 /** L'employeur se choisit dans Sirene, ou se saisit à la main quand la recherche échoue. */
 export const EMPLOYEUR_ENTRY_MODE = {
@@ -56,7 +42,7 @@ const baseSituationProfessionnelleSchema = z.object({
   secteurActivite: z.string(),
   adresse: z.string().trim(),
   intitulePoste: z.string().trim().min(1, "Veuillez saisir l’intitulé de votre poste."),
-  demission: z.enum(DEMISSION, "Veuillez indiquer si vous avez remis votre démission."),
+  demission: z.enum(OUI_NON, "Veuillez indiquer si vous avez remis votre démission."),
   dateDemission: z.string(),
 });
 
@@ -82,7 +68,7 @@ export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema
       }
     };
 
-    if (data.demission === DEMISSION.OUI) {
+    if (data.demission === OUI_NON.OUI) {
       requireFilled(REQUIRED_DEMISSION_FIELDS);
       if (isDateDemissionInFuture(data.dateDemission, new Date())) {
         ctx.addIssue({
@@ -154,12 +140,12 @@ export const EMPLOYEUR_FIELDS: Record<
 /** La date n'est exigée qu'après un « oui » (maquette 10). */
 export function findSectionFields(
   mode: EmployeurEntryMode,
-  demission: Demission | undefined,
+  demission: OuiNon | undefined,
 ): Record<SituationProfessionnelleSection, readonly SituationProfessionnelleFieldName[]> {
   return {
     // 2 champs en recherche, 5 en saisie manuelle (maquettes 01 et 07).
     [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: [...EMPLOYEUR_FIELDS[mode], "intitulePoste"],
     [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]:
-      demission === DEMISSION.OUI ? ["demission", "dateDemission"] : ["demission"],
+      demission === OUI_NON.OUI ? ["demission", "dateDemission"] : ["demission"],
   };
 }
