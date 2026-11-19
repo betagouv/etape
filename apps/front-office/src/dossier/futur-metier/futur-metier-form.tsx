@@ -1,3 +1,5 @@
+import { useWatch } from "react-hook-form";
+
 import { FormField } from "@etape/ui/components/form-field";
 import { FormRadioGroup } from "@etape/ui/components/form-radio-group";
 import {
@@ -12,11 +14,13 @@ import { CharacterCountField } from "../components/character-count-field";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
-import { OUI_NON_LABEL } from "../domain/oui-non";
+import { OUI_NON, OUI_NON_LABEL } from "../domain/oui-non";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
+import { DemarcheFields } from "./components/demarche-fields";
 import { MetierViseField } from "./components/metier-vise-field";
+import { DEMARCHE_FIELDS } from "./domain/demarche";
 import {
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_SECTION,
@@ -35,6 +39,7 @@ export interface FuturMetierFormProps {
 export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFormProps) {
   const { form, sections, voletErrors, errorAnnouncement } = useDossierVolets().futurMetier;
   const { submitCount } = form.formState;
+  const demarcheDecouverte = useWatch({ control: form.control, name: "demarcheDecouverte" });
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
 
   return (
@@ -98,7 +103,15 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             label={FUTUR_METIER_FIELD_LABEL.demarcheDecouverte}
             description="Exemples : Immersion en entreprise, rencontres avec des professionnels, salons, recherches…"
             options={OUI_NON_LABEL}
+            // Après « non », la démarche n'est plus demandée : ses erreurs ne doivent pas rester au résumé.
+            onValueChange={(value) => {
+              if (value === OUI_NON.NON) form.clearErrors([...DEMARCHE_FIELDS]);
+            }}
           />
+
+          {demarcheDecouverte === OUI_NON.OUI && (
+            <DemarcheFields control={form.control} title="Démarche 1" />
+          )}
         </FormSection>
       </form>
     </>
