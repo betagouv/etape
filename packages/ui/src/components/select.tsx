@@ -29,6 +29,9 @@ const selectTriggerVariants = cva(
         // Champ des formulaires de connexion et d'inscription (Figma FRONT-OFFICE, « 01. SIGN-UP ») :
         // 44 px sur fond `background`, aligné sur leurs champs texte.
         form: "bg-background h-11 shadow-none",
+        // Champ d'un volet du front-office (maquette FRONT-OFFICE, « Type de démarche ») : le cadre
+        // d'un `InputGroup`, 32 px sur fond `background`, mêmes marges des deux côtés.
+        field: "bg-background h-8 pr-2.5",
       },
     },
     defaultVariants: {
@@ -36,6 +39,21 @@ const selectTriggerVariants = cva(
     },
   },
 );
+
+const selectIconVariants = cva("size-4", {
+  variants: {
+    size: {
+      sm: "opacity-50",
+      default: "opacity-50",
+      form: "opacity-50",
+      // Chevron plein, en `foreground`, comme sur la maquette.
+      field: "text-foreground",
+    },
+  },
+  defaultVariants: {
+    size: "default",
+  },
+});
 
 const selectContentVariants = cva(
   "bg-popover text-popover-foreground data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto border shadow-md",
@@ -69,7 +87,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
+        <ChevronDownIcon className={selectIconVariants({ size })} />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
