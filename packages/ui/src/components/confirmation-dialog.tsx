@@ -14,6 +14,12 @@ import {
   AlertDialogTitle,
 } from "@etape/ui/components/alert-dialog";
 
+/** Les textes de la fenêtre : son titre, puis ce que l'action va faire. */
+interface ConfirmationDialogText {
+  title: string;
+  description: string;
+}
+
 /** Le bouton qui referme la fenêtre sans rien faire ; Échap fait de même. */
 interface ConfirmationDialogCancel {
   label: string;
@@ -33,8 +39,7 @@ interface ConfirmationDialogConfirm {
 /** Ce que reçoit `ConfirmationDialog` : son ouverture, ses textes, ses deux boutons et, en enfants, son contenu. */
 interface ConfirmationDialogProps {
   isOpen: boolean;
-  title: string;
-  description: string;
+  text: ConfirmationDialogText;
   cancel: ConfirmationDialogCancel;
   confirm: ConfirmationDialogConfirm;
   /**
@@ -53,8 +58,7 @@ interface ConfirmationDialogProps {
  */
 function ConfirmationDialog({
   isOpen,
-  title,
-  description,
+  text,
   cancel,
   confirm,
   onCloseFocus,
@@ -80,8 +84,8 @@ function ConfirmationDialog({
         }}
       >
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogTitle>{text.title}</AlertDialogTitle>
+          <AlertDialogDescription>{text.description}</AlertDialogDescription>
         </AlertDialogHeader>
         {children && <AlertDialogBody>{children}</AlertDialogBody>}
         <AlertDialogFooter>
@@ -103,4 +107,9 @@ function ConfirmationDialog({
 }
 
 export { ConfirmationDialog };
-export type { ConfirmationDialogCancel, ConfirmationDialogConfirm, ConfirmationDialogProps };
+export type {
+  ConfirmationDialogCancel,
+  ConfirmationDialogConfirm,
+  ConfirmationDialogProps,
+  ConfirmationDialogText,
+};

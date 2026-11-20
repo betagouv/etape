@@ -18,8 +18,10 @@ function Removal({ onCancel, onConfirm, onCloseFocus = () => undefined }: Remova
   return (
     <ConfirmationDialog
       isOpen={isOpen}
-      title="Supprimer votre document"
-      description="Le document suivant sera supprimé de votre dossier."
+      text={{
+        title: "Supprimer votre document",
+        description: "Le document suivant sera supprimé de votre dossier.",
+      }}
       cancel={{
         label: "Garder",
         onClick: () => {
@@ -97,8 +99,7 @@ describe("ConfirmationDialog", () => {
     render(
       <ConfirmationDialog
         isOpen
-        title="Quitter ?"
-        description="Vos réponses sont conservées."
+        text={{ title: "Quitter ?", description: "Vos réponses sont conservées." }}
         cancel={{ label: "Rester", onClick: vi.fn() }}
         confirm={{ label: "Quitter", onClick: vi.fn() }}
         onCloseFocus={vi.fn()}
