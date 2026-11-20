@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -74,5 +75,27 @@ describe("AlertDialog", () => {
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("prend la taille de la fenêtre du front-office, avec un corps entre l'en-tête et le pied", () => {
+    render(
+      <AlertDialog open>
+        <AlertDialogContent size="md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer votre démarche</AlertDialogTitle>
+            <AlertDialogDescription>La démarche suivante sera supprimée.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogBody>Démarche 1</AlertDialogBody>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>,
+    );
+
+    const dialog = screen.getByRole("alertdialog", { name: "Supprimer votre démarche" });
+    expect(dialog.getAttribute("data-size")).toBe("md");
+    expect(dialog.querySelector("[data-slot=alert-dialog-body]")?.textContent).toBe("Démarche 1");
   });
 });

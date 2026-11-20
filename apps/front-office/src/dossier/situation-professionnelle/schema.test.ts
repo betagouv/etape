@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  DEMISSION,
-  EMPLOYEUR_ENTRY_MODE,
-  findSectionFields,
-  situationProfessionnelleSchema,
-} from "./schema";
+import { OUI_NON } from "../domain/oui-non";
+import { EMPLOYEUR_ENTRY_MODE, situationProfessionnelleSchema } from "./schema";
 
 function findDateDemissionMessages(data: Record<string, unknown>): string[] {
   const issues = situationProfessionnelleSchema.safeParse(data).error?.issues ?? [];
@@ -56,7 +52,7 @@ describe("situationProfessionnelleSchema, date de démission", () => {
     expect(
       findDateDemissionMessages({
         ...EMPTY_FORM,
-        demission: DEMISSION.OUI,
+        demission: OUI_NON.OUI,
         dateDemission: "12/11/2026",
       }),
     ).toEqual(["La date de votre démission ne peut pas être dans le futur."]);
@@ -66,7 +62,7 @@ describe("situationProfessionnelleSchema, date de démission", () => {
     expect(
       findDateDemissionMessages({
         ...EMPTY_FORM,
-        demission: DEMISSION.OUI,
+        demission: OUI_NON.OUI,
         dateDemission: "11/11/2026",
       }),
     ).toEqual([]);
@@ -76,25 +72,9 @@ describe("situationProfessionnelleSchema, date de démission", () => {
     expect(
       findDateDemissionMessages({
         ...EMPTY_FORM,
-        demission: DEMISSION.NON,
+        demission: OUI_NON.NON,
         dateDemission: "12/11/2026",
       }),
     ).toEqual([]);
-  });
-});
-
-describe("findSectionFields", () => {
-  it("exige l'employeur choisi et le poste en recherche", () => {
-    expect(findSectionFields(EMPLOYEUR_ENTRY_MODE.SEARCH, undefined)).toEqual({
-      emploi: ["employeur", "intitulePoste"],
-      demission: ["demission"],
-    });
-  });
-
-  it("exige les quatre champs de l'employeur, le poste et la date après un « oui »", () => {
-    expect(findSectionFields(EMPLOYEUR_ENTRY_MODE.MANUAL, DEMISSION.OUI)).toEqual({
-      emploi: ["denomination", "siret", "secteurActivite", "adresse", "intitulePoste"],
-      demission: ["demission", "dateDemission"],
-    });
   });
 });

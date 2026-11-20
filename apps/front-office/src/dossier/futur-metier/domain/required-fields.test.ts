@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { OUI_NON } from "../../domain/oui-non";
+import { TYPE_DEMARCHE } from "./demarche";
 import { FUTUR_METIER_SECTION, METIER_VISE_ENTRY_MODE, type FuturMetierFormData } from "../schema";
 import { findRequiredFields } from "./required-fields";
 
@@ -12,29 +14,40 @@ const values: FuturMetierFormData = {
   quotidienMetier: "",
   conditionsEmploi: "",
   debouches: "",
+  demarcheDecouverte: OUI_NON.NON,
+  precisionTypeDemarche: "",
+  apportDemarche: "",
+  piecesJustificatives: [],
+  hasCurrentDemarche: true,
+  currentDemarcheId: null,
+  demarches: [],
 };
 
-const TEXT_FIELDS = ["quotidienMetier", "conditionsEmploi", "debouches"];
+/** Exigés quel que soit le mode de saisie : les trois zones de texte, puis la question sur les démarches. */
+const COMMON_FIELDS = ["quotidienMetier", "conditionsEmploi", "debouches", "demarcheDecouverte"];
+
+/** La question sur les démarches est répondue dans `values`. */
+const ANSWERED_FIELDS = ["demarcheDecouverte"];
 
 describe("findRequiredFields", () => {
-  it("exige le métier choisi en recherche, puis les trois zones de texte", () => {
+  it("exige le métier choisi en recherche, puis les trois zones de texte et la question sur les démarches", () => {
     const required = findRequiredFields(values);
     expect(required.sectionFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
       "metierVise",
-      ...TEXT_FIELDS,
+      ...COMMON_FIELDS,
     ]);
-    expect(required.allFields).toEqual(["metierVise", ...TEXT_FIELDS]);
-    expect(required.filledFields).toEqual([]);
+    expect(required.allFields).toEqual(["metierVise", ...COMMON_FIELDS]);
+    expect(required.filledFields).toEqual(ANSWERED_FIELDS);
     expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
       "metierVise",
-      ...TEXT_FIELDS,
+      ...COMMON_FIELDS,
     ]);
   });
 
   it("n'exige ni ne contrôle la spécialisation, même remplie", () => {
     const required = findRequiredFields({ ...values, specialisation: "pâtisserie" });
     expect(required.allFields).not.toContain("specialisation");
-    expect(required.filledFields).toEqual([]);
+    expect(required.filledFields).toEqual(ANSWERED_FIELDS);
     expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).not.toContain(
       "specialisation",
     );
@@ -42,7 +55,43 @@ describe("findRequiredFields", () => {
 
   it("compte une zone de texte remplie", () => {
     const required = findRequiredFields({ ...values, debouches: "De nombreuses offres." });
-    expect(required.filledFields).toEqual(["debouches"]);
+    expect(required.filledFields).toEqual(["debouches", ...ANSWERED_FIELDS]);
+  });
+
+  it("exige et contrôle le type et l'apport de la démarche après un « oui »", () => {
+    const required = findRequiredFields({ ...values, demarcheDecouverte: OUI_NON.OUI });
+    const expected = ["metierVise", ...COMMON_FIELDS, "typeDemarche", "apportDemarche"];
+    expect(required.allFields).toEqual(expected);
+    expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual(expected);
+    expect(required.filledFields).toEqual(ANSWERED_FIELDS);
+  });
+
+  it("n'exige plus rien de la démarche une fois sa carte de saisie fermée (maquette 12)", () => {
+    const required = findRequiredFields({
+      ...values,
+      demarcheDecouverte: OUI_NON.OUI,
+      hasCurrentDemarche: false,
+    });
+    expect(required.allFields).toEqual(["metierVise", ...COMMON_FIELDS]);
+  });
+
+  it("exige la précision pour « Autre », et compte les champs de la démarche remplis", () => {
+    const required = findRequiredFields({
+      ...values,
+      demarcheDecouverte: OUI_NON.OUI,
+      typeDemarche: TYPE_DEMARCHE.AUTRE,
+      precisionTypeDemarche: "Stage chez un artisan",
+    });
+    expect(required.allFields.slice(-3)).toEqual([
+      "typeDemarche",
+      "precisionTypeDemarche",
+      "apportDemarche",
+    ]);
+    expect(required.filledFields).toEqual([
+      ...ANSWERED_FIELDS,
+      "typeDemarche",
+      "precisionTypeDemarche",
+    ]);
   });
 
   it("exige l'intitulé saisi à la main, pas le code ROME", () => {
@@ -52,8 +101,8 @@ describe("findRequiredFields", () => {
       intituleMetierVise: "Boulanger",
       codeRome: "D1102",
     });
-    expect(required.allFields).toEqual(["intituleMetierVise", ...TEXT_FIELDS]);
-    expect(required.filledFields).toEqual(["intituleMetierVise"]);
+    expect(required.allFields).toEqual(["intituleMetierVise", ...COMMON_FIELDS]);
+    expect(required.filledFields).toEqual(["intituleMetierVise", ...ANSWERED_FIELDS]);
   });
 
   it("contrôle le code ROME en saisie manuelle, entre l'intitulé et les zones de texte comme sur la page", () => {
@@ -64,7 +113,7 @@ describe("findRequiredFields", () => {
     expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
       "intituleMetierVise",
       "codeRome",
-      ...TEXT_FIELDS,
+      ...COMMON_FIELDS,
     ]);
   });
 });

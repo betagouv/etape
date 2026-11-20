@@ -13,7 +13,8 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
       data-slot="field-set"
       className={cn(
         "flex flex-col gap-6",
-        "has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
+        // Groupe radio : 8 px, comme entre libellé, contrôle et aide d'un `Field` (kit, formulaire du front-office).
+        "has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-2",
         className,
       )}
       {...props}
@@ -21,11 +22,12 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   );
 }
 
-const fieldLegendVariants = cva("mb-3 font-medium", {
+const fieldLegendVariants = cva("font-medium", {
   variants: {
     variant: {
-      legend: "text-base",
-      label: "text-sm",
+      legend: "mb-3 text-base",
+      // La légende qui tient lieu de libellé garde l'écart d'un libellé de `Field` : 8 px.
+      label: "mb-2 text-sm",
     },
   },
   defaultVariants: {

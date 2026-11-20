@@ -5,6 +5,7 @@ import { Card } from "@etape/ui/components/card";
 import { Container } from "@etape/ui/components/container";
 import { SectionHeader } from "@etape/ui/components/section";
 import { Separator } from "@etape/ui/components/separator";
+import { keepFocus } from "@etape/ui/lib/keep-focus";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
 import type { VoletProgress } from "../domain/statut-volet";
@@ -35,7 +36,7 @@ export function FormLayout({
   const { index, current, previous, next } = position;
 
   return (
-    <Container size="app" className="relative -mt-22">
+    <Container size="app" className="relative -mt-22 pb-8">
       <Card variant="panel" className="grid lg:grid-cols-[auto_auto_minmax(0,1fr)]">
         <FormSidebar volets={volets} voletProgress={voletProgress} />
         <Separator orientation="vertical" className="hidden lg:block" />
@@ -50,9 +51,10 @@ export function FormLayout({
             subtext={current.description}
           />
           {children}
+          {/* Sous un formulaire, le clic ne prend pas le focus au champ en cours (`keepFocus`). */}
           <div className="flex justify-end border-t pt-5">
             {previous && (
-              <Button asChild variant="secondary" className="mr-auto">
+              <Button asChild variant="secondary" className="mr-auto" onMouseDown={keepFocus}>
                 <VoletLink voletId={previous.id}>
                   <ArrowLeftIcon aria-hidden="true" />
                   Étape précédente
@@ -61,7 +63,7 @@ export function FormLayout({
             )}
             {next &&
               (formId ? (
-                <Button type="submit" form={formId}>
+                <Button type="submit" form={formId} onMouseDown={keepFocus}>
                   Étape suivante
                   <ArrowRightIcon aria-hidden="true" />
                 </Button>

@@ -9,9 +9,12 @@ import {
   type FieldValues,
 } from "react-hook-form";
 
-import { FieldError, FieldLegend, FieldSet } from "@etape/ui/components/field";
+import { FieldDescription, FieldError, FieldLegend, FieldSet } from "@etape/ui/components/field";
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
+import { joinIds } from "@etape/ui/lib/join-ids";
+import { formatOptionId } from "@etape/ui/lib/option-id";
+import { isOptionValue } from "@etape/ui/lib/option-value";
 
 /** Une valeur que le champ `TName` peut prendre, parmi celles qu'on propose en options. */
 type OptionValue<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = Extract<
@@ -27,18 +30,12 @@ interface FormRadioGroupProps<
   name: TName;
   control: Control<TFieldValues>;
   label: React.ReactNode;
+  /** Aide affichée sous la légende ; elle reste en place quand le groupe est en erreur. */
+  description?: React.ReactNode;
   /** Le libellé de chaque valeur du champ, dans l'ordre d'affichage. */
   options: Record<OptionValue<TFieldValues, TName>, string>;
   /** Appelé après le choix, pour ce qui en dépend ailleurs dans le formulaire. */
   onValueChange?: (value: OptionValue<TFieldValues, TName>) => void;
-}
-
-/** Radix rend la valeur cochée en `string` : on la ramène au type du champ. */
-function isOptionValue<TValue extends string>(
-  options: Record<TValue, string>,
-  value: string,
-): value is TValue {
-  return Object.hasOwn(options, value);
 }
 
 /**
@@ -50,10 +47,12 @@ function FormRadioGroup<TFieldValues extends FieldValues, TName extends FieldPat
   name,
   control,
   label,
+  description,
   options,
   onValueChange,
 }: FormRadioGroupProps<TFieldValues, TName>) {
   const legendId = `${name}-legend`;
+  const descriptionId = `${name}-description`;
   const errorId = `${name}-error`;
 
   return (
@@ -65,10 +64,12 @@ function FormRadioGroup<TFieldValues extends FieldValues, TName extends FieldPat
           <FieldLegend id={legendId} variant="label" required>
             {label}
           </FieldLegend>
+          {description && <FieldDescription id={descriptionId}>{description}</FieldDescription>}
           <RadioGroup
             id={name}
             value={typeof field.value === "string" ? field.value : ""}
             onValueChange={(value) => {
+              // Radix rend la valeur cochée en `string` : on la ramène au type du champ.
               if (!isOptionValue(options, value)) return;
               field.onChange(value);
               onValueChange?.(value);
@@ -82,18 +83,26 @@ function FormRadioGroup<TFieldValues extends FieldValues, TName extends FieldPat
             // La légende nomme le `fieldset`, pas le `radiogroup` de Radix.
             aria-labelledby={legendId}
             aria-invalid={fieldState.invalid}
-            aria-describedby={fieldState.invalid ? errorId : undefined}
+            // L'aide d'abord, puis l'erreur.
+            aria-describedby={joinIds([
+              Boolean(description) && descriptionId,
+              fieldState.invalid && errorId,
+            ])}
           >
             {Object.entries<string>(options).map(([value, optionLabel], index) => (
-              <div key={value} className="flex items-center gap-2">
+              // 24 px de haut, comme la ligne d'un bouton radio du kit.
+              <div key={value} className="flex min-h-6 items-center gap-2">
                 <RadioGroupItem
                   value={value}
-                  id={`${name}-${value}`}
+                  id={formatOptionId(name, value)}
                   aria-invalid={fieldState.invalid}
                   // Un seul élément peut porter le ref du champ : le premier bouton radio.
                   ref={index === 0 ? field.ref : undefined}
                 />
-                <Label htmlFor={`${name}-${value}`}>{optionLabel}</Label>
+                {/* Texte courant, comme l'option d'un bouton radio du kit : seule la légende est en gras. */}
+                <Label htmlFor={formatOptionId(name, value)} className="font-normal">
+                  {optionLabel}
+                </Label>
               </div>
             ))}
           </RadioGroup>

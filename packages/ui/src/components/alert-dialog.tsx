@@ -60,7 +60,11 @@ function AlertDialogContent({
   placement = "center",
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
-  size?: "default" | "sm";
+  /**
+   * `md` : la fenêtre du front-office (`front-office-dialog-modal` du kit, `Size=MD`,
+   * `Align=left`) — 448 px, marges de 20 px, titre en `heading-sm`, pied blanc.
+   */
+  size?: "default" | "sm" | "md";
   placement?: AlertDialogPlacement;
 }) {
   return (
@@ -71,7 +75,9 @@ function AlertDialogContent({
         data-size={size}
         data-placement={placement}
         className={cn(
-          "group/alert-dialog-content bg-background data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 border-foreground/10 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-xl border shadow-lg duration-200 data-[size=sm]:max-w-xs motion-reduce:animate-none! data-[size=default]:sm:max-w-sm",
+          "group/alert-dialog-content bg-background data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 border-foreground/10 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-xl border shadow-lg duration-200 data-[size=sm]:max-w-xs motion-reduce:animate-none! data-[size=default]:sm:max-w-sm data-[size=md]:sm:max-w-md",
+          // Un contenu long défile entre l'en-tête et le pied, qui restent à l'écran.
+          "data-[size=md]:max-h-[calc(100dvh-2rem)] data-[size=md]:grid-rows-[auto_minmax(0,1fr)_auto]",
           alertDialogPlacements[placement].content,
           className,
         )}
@@ -87,6 +93,21 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
       data-slot="alert-dialog-header"
       className={cn(
         "grid grid-rows-[auto_1fr] place-items-center gap-1.5 p-4 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
+        "group-data-[size=md]/alert-dialog-content:place-items-start group-data-[size=md]/alert-dialog-content:gap-4 group-data-[size=md]/alert-dialog-content:p-5 group-data-[size=md]/alert-dialog-content:text-left",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/** Entre l'en-tête et le pied : ce que la fenêtre montre de ce qu'elle va toucher (taille `md`). */
+function AlertDialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-dialog-body"
+      className={cn(
+        "flex flex-col gap-4 overflow-y-auto px-4 pb-4 group-data-[size=md]/alert-dialog-content:px-5 group-data-[size=md]/alert-dialog-content:pb-5",
         className,
       )}
       {...props}
@@ -95,12 +116,14 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
 }
 
 // Pied du kit : neutral-100 à 50 % sur blanc, soit exactement notre `--muted`.
+// En taille `md`, il est blanc et ses deux boutons font 140 px.
 function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-dialog-footer"
       className={cn(
         "border-border bg-muted flex flex-col-reverse gap-2 border-t p-4 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
+        "group-data-[size=md]/alert-dialog-content:bg-background group-data-[size=md]/alert-dialog-content:p-5 sm:group-data-[size=md]/alert-dialog-content:*:w-35",
         className,
       )}
       {...props}
@@ -117,6 +140,7 @@ function AlertDialogTitle({
       data-slot="alert-dialog-title"
       className={cn(
         "text-body-lg text-foreground font-medium sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
+        "group-data-[size=md]/alert-dialog-content:font-heading group-data-[size=md]/alert-dialog-content:text-heading-sm group-data-[size=md]/alert-dialog-content:font-semibold",
         className,
       )}
       {...props}
@@ -205,6 +229,7 @@ function AlertDialogCancel({
 export {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,

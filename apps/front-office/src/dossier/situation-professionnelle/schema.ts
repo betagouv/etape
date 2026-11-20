@@ -1,22 +1,9 @@
 import { EtablissementSchema } from "@etape/api-contract";
 import { z } from "zod";
 
+import { OUI_NON } from "../domain/oui-non";
+import { requireFilled } from "../domain/require-filled";
 import { isDateDemissionInFuture } from "./domain/date-demission";
-
-/** Les réponses à la question sur la démission. */
-export const DEMISSION = {
-  OUI: "oui",
-  NON: "non",
-} as const;
-
-/** Une réponse, parmi celles de `DEMISSION`. */
-export type Demission = (typeof DEMISSION)[keyof typeof DEMISSION];
-
-/** Libellé de chaque réponse. */
-export const DEMISSION_LABEL: Record<Demission, string> = {
-  [DEMISSION.OUI]: "Oui",
-  [DEMISSION.NON]: "Non",
-};
 
 /** L'employeur se choisit dans Sirene, ou se saisit à la main quand la recherche échoue. */
 export const EMPLOYEUR_ENTRY_MODE = {
@@ -56,7 +43,7 @@ const baseSituationProfessionnelleSchema = z.object({
   secteurActivite: z.string(),
   adresse: z.string().trim(),
   intitulePoste: z.string().trim().min(1, "Veuillez saisir l’intitulé de votre poste."),
-  demission: z.enum(DEMISSION, "Veuillez indiquer si vous avez remis votre démission."),
+  demission: z.enum(OUI_NON, "Veuillez indiquer si vous avez remis votre démission."),
   dateDemission: z.string(),
 });
 
@@ -74,16 +61,8 @@ const refinedFieldsSchema = baseSituationProfessionnelleSchema.pick({
 /** Le schéma du formulaire « Ma situation professionnelle » ; seuls les champs du mode en cours sont exigés. */
 export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema.superRefine(
   (data, ctx) => {
-    const requireFilled = (names: readonly RequiredFieldName[]): void => {
-      for (const name of names) {
-        const value = data[name];
-        if (value === null || value === "")
-          ctx.addIssue({ code: "custom", path: [name], message: REQUIRED_MESSAGES[name] });
-      }
-    };
-
-    if (data.demission === DEMISSION.OUI) {
-      requireFilled(REQUIRED_DEMISSION_FIELDS);
+    if (data.demission === OUI_NON.OUI) {
+      requireFilled(ctx, data, REQUIRED_DEMISSION_FIELDS, REQUIRED_MESSAGES);
       if (isDateDemissionInFuture(data.dateDemission, new Date())) {
         ctx.addIssue({
           code: "custom",
@@ -93,7 +72,7 @@ export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema
       }
     }
 
-    requireFilled(REQUIRED_EMPLOYEUR_FIELDS[data.employeurEntryMode]);
+    requireFilled(ctx, data, REQUIRED_EMPLOYEUR_FIELDS[data.employeurEntryMode], REQUIRED_MESSAGES);
     if (data.employeurEntryMode === EMPLOYEUR_ENTRY_MODE.SEARCH) return;
 
     if (!SIRET_PATTERN.test(data.siret.replace(/\s/g, ""))) {
@@ -150,16 +129,3 @@ export const EMPLOYEUR_FIELDS: Record<
   [EMPLOYEUR_ENTRY_MODE.SEARCH]: ["employeur"],
   [EMPLOYEUR_ENTRY_MODE.MANUAL]: ["denomination", "siret", "secteurActivite", "adresse"],
 };
-
-/** La date n'est exigée qu'après un « oui » (maquette 10). */
-export function findSectionFields(
-  mode: EmployeurEntryMode,
-  demission: Demission | undefined,
-): Record<SituationProfessionnelleSection, readonly SituationProfessionnelleFieldName[]> {
-  return {
-    // 2 champs en recherche, 5 en saisie manuelle (maquettes 01 et 07).
-    [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: [...EMPLOYEUR_FIELDS[mode], "intitulePoste"],
-    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]:
-      demission === DEMISSION.OUI ? ["demission", "dateDemission"] : ["demission"],
-  };
-}
