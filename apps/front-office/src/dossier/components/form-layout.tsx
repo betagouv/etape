@@ -52,7 +52,7 @@ export function FormLayout({
           {children}
           <div className="flex justify-end border-t pt-5">
             {previous && (
-              <Button asChild variant="secondary" size="lg" className="mr-auto">
+              <Button asChild variant="secondary" className="mr-auto">
                 <VoletLink voletId={previous.id}>
                   <ArrowLeftIcon aria-hidden="true" />
                   Étape précédente
@@ -61,12 +61,12 @@ export function FormLayout({
             )}
             {next &&
               (formId ? (
-                <Button type="submit" form={formId} size="lg">
+                <Button type="submit" form={formId}>
                   Étape suivante
                   <ArrowRightIcon aria-hidden="true" />
                 </Button>
               ) : (
-                <Button asChild size="lg">
+                <Button asChild>
                   <VoletLink voletId={next.id}>
                     Étape suivante
                     <ArrowRightIcon aria-hidden="true" />

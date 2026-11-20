@@ -109,7 +109,6 @@ export default function LoginUpdatePassword(
         <div className="flex flex-col gap-4">
           <Button
             type="submit"
-            size="form"
             className="w-full"
             aria-disabled={form.isSubmitBlocked}
             aria-busy={form.isSubmitting}
@@ -122,7 +121,6 @@ export default function LoginUpdatePassword(
               name={CANCEL_FIELD}
               value="true"
               variant="outline"
-              size="form"
               className="w-full"
             >
               {msg("doCancel")}

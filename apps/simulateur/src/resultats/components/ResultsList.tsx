@@ -34,13 +34,7 @@ export function ResultsList({ resultats }: ResultsListProps) {
       </TooltipProvider>
 
       {hiddenCount > 0 && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="responsive-sm"
-          onClick={showMore}
-          className="self-center"
-        >
+        <Button type="button" variant="ghost" onClick={showMore} className="self-center">
           Afficher plus de résultats
           <CircleArrowDownIcon aria-hidden="true" />
         </Button>

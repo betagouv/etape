@@ -100,7 +100,7 @@ export function MainNav() {
         id={panelId}
         className={cn(
           // Mobile : panneau ancré sous l'en-tête, qui porte `relative`.
-          "border-divider bg-background absolute inset-x-0 top-full z-40 flex-col gap-1 border-b px-4 py-2 shadow-sm sm:px-6",
+          "bg-background absolute inset-x-0 top-full z-40 flex-col gap-1 border-b px-4 py-2 shadow-sm sm:px-6",
           // À partir de md : simple rangée dans le flux de l'en-tête.
           "md:static md:z-auto md:flex md:flex-row md:items-center md:gap-8 md:border-0 md:p-0 md:shadow-none",
           isOpen ? "flex" : "hidden",

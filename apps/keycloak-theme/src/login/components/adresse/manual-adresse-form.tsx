@@ -136,6 +136,7 @@ export default function ManualAdresseForm(props: ManualAdresseFormProps) {
           <Button
             type="button"
             variant="outline"
+            size="sm"
             className="self-start"
             onClick={() => {
               manual.retryCommunes();

@@ -18,7 +18,7 @@ export function FinalCta() {
       </h2>
       <p className="text-body-lg text-muted-foreground max-w-2xl">{finalCta.subtext}</p>
 
-      <Button asChild size="xl" className="w-full sm:w-auto">
+      <Button asChild className="w-full sm:w-auto">
         <a
           href={SIMULATEUR_URL}
           {...analyticsEventProps(

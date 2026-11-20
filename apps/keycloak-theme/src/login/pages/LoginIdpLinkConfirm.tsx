@@ -35,8 +35,7 @@ export default function LoginIdpLinkConfirm(
             name="submitAction"
             id="linkAccount"
             value="linkAccount"
-            size="xl"
-            className="w-full rounded-lg"
+            className="w-full"
           >
             {msg("confirmLinkIdpContinue", idpAlias)}
           </Button>
@@ -46,8 +45,7 @@ export default function LoginIdpLinkConfirm(
             id="updateProfile"
             value="updateProfile"
             variant="outline"
-            size="xl"
-            className="w-full rounded-lg"
+            className="w-full"
           >
             {msg("confirmLinkIdpReviewProfile")}
           </Button>

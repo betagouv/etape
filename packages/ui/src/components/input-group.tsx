@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { Button } from "@etape/ui/components/button";
 import { Input } from "@etape/ui/components/input";
 import { Textarea } from "@etape/ui/components/textarea";
 import { cn } from "@etape/ui/lib/utils";
@@ -146,4 +147,31 @@ function InputGroupTrigger({ className, ...props }: React.ComponentProps<"button
   );
 }
 
-export { InputGroup, InputGroupAddon, InputGroupInput, InputGroupTextarea, InputGroupTrigger };
+/**
+ * Bouton posé dans le cadre d'un champ (effacer la saisie) : 24 px, la variante
+ * `Button` de `InputGroup / Addon Inline` dans le kit. `Button` n'a pas cette taille.
+ */
+function InputGroupButton({
+  className,
+  type = "button",
+  variant = "ghost",
+  ...props
+}: Omit<React.ComponentProps<typeof Button>, "size">) {
+  return (
+    <Button
+      type={type}
+      variant={variant}
+      className={cn("size-6 rounded-md p-0 [&_svg:not([class*='size-'])]:size-3", className)}
+      {...props}
+    />
+  );
+}
+
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupTextarea,
+  InputGroupTrigger,
+};

@@ -26,13 +26,7 @@ export default function LogoutConfirm(
         </Prose>
         <form action={url.logoutConfirmAction} method="POST" className="flex flex-col gap-4">
           <input type="hidden" name="session_code" value={logoutConfirm.code} readOnly />
-          <Button
-            type="submit"
-            name="confirmLogout"
-            id="kc-logout"
-            size="xl"
-            className="w-full rounded-lg"
-          >
+          <Button type="submit" name="confirmLogout" id="kc-logout" className="w-full">
             {msg("doLogout")}
           </Button>
           {!logoutConfirm.skipLink && Boolean(client.baseUrl) && (

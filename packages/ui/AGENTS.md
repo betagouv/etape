@@ -36,7 +36,7 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 ## Conventions
 
 - `docs/conventions/react.md` §4. Résumé chargé automatiquement : `.claude/rules/design-system.md`.
-- **Étendre, ne pas modifier** : un besoin d'apparence devient une variante `cva` dans le composant (voir `inverse` et `outline-primary` dans `button.tsx`). Une app ne passe en `className` que de la mise en page.
+- **Étendre, ne pas modifier** : un besoin d'apparence devient une variante `cva` dans le composant (voir la taille `responsive` de `button.tsx`). Une app ne passe en `className` que de la mise en page.
 - Aucune couleur hors tokens : ni hexadécimal, ni `rgb()`.
 - ESLint `@etape/eslint-config/react-internal` : **les règles `jsx-a11y` ne s'appliquent pas ici** (point ouvert de `outillage-agent.md`). Le focus et l'annonce se vérifient à la main (`accessibilite.md`).
 
