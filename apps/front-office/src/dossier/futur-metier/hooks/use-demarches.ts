@@ -6,6 +6,7 @@ import {
   createDemarche,
   DEMARCHE_FIELDS,
   findDemarcheFields,
+  formatAnnulationAnnouncement,
   formatDemarcheAnnouncement,
   isDemarcheFilled,
   type Demarche,
@@ -32,18 +33,24 @@ export interface UseDemarchesResult {
   isCurrentDemarcheFilled: boolean;
   /** Faux quand le nombre maximal de démarches est atteint. */
   canAdd: boolean;
+  /** Vrai pour une saisie qu'on peut abandonner : celle d'une démarche de plus (maquette 13). */
+  canCancel: boolean;
+  /** Vrai quand la carte de saisie vient de s'ouvrir, tant que le focus ne l'a pas quittée. */
+  isHighlighted: boolean;
   /** Pour la région `role="status"` de l'écran. */
   announcement: string;
   /** Le bouton d'ajout : il prend le focus quand la carte de saisie se referme. */
   addButtonRef: RefObject<HTMLButtonElement | null>;
   validateDemarche: () => Promise<void>;
   addDemarche: () => void;
+  cancelDemarche: () => void;
+  removeHighlight: () => void;
 }
 
 /**
  * Les démarches de découverte du volet : valider la saisie en cours l'ajoute à la liste et
- * referme sa carte ; en ajouter une autre la rouvre, vide. Tout vit dans le formulaire du
- * volet, que ses compteurs lisent.
+ * referme sa carte ; en ajouter une autre la rouvre, vide, et l'annuler la referme. Tout vit
+ * dans le formulaire du volet, que ses compteurs lisent.
  */
 export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemarchesResult {
   const { control } = form;
@@ -52,6 +59,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   // Calculé dans l'abonnement : la carte n'est pas re-rendue à chaque frappe.
   const isCurrentDemarcheFilled = useWatch({ control, compute: isDemarcheFilled });
   const [announcement, setAnnouncement] = useState("");
+  const [isHighlighted, setHighlighted] = useState(false);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const pendingFocus = useRef<DemarcheFocus>(null);
 
@@ -61,6 +69,20 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     if (pendingFocus.current === DEMARCHE_FOCUS.TYPE_FIELD) form.setFocus(TYPE_FIELD);
     pendingFocus.current = null;
   });
+
+  /** Referme la carte de saisie sur des champs vides, et rend le focus au bouton d'ajout. */
+  const closeCurrentDemarche = (): void => {
+    pendingFocus.current = DEMARCHE_FOCUS.ADD_BUTTON;
+    form.setValue("hasCurrentDemarche", false);
+    // Pas de `resetField` : il rendrait les valeurs de départ du formulaire, qui seront un jour
+    // celles du dossier enregistré.
+    form.setValue(TYPE_FIELD, undefined);
+    form.setValue("precisionTypeDemarche", "");
+    form.setValue("apportDemarche", "");
+    form.setValue("piecesJustificatives", []);
+    form.clearErrors([...DEMARCHE_FIELDS]);
+    setHighlighted(false);
+  };
 
   const validateDemarche = async (): Promise<void> => {
     const isValid = await form.trigger([...DEMARCHE_FIELDS]);
@@ -77,15 +99,8 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     const demarche = createDemarche(crypto.randomUUID(), values);
     if (demarche === undefined) return;
 
-    pendingFocus.current = DEMARCHE_FOCUS.ADD_BUTTON;
     form.setValue("demarches", [...values.demarches, demarche]);
-    form.setValue("hasCurrentDemarche", false);
-    // La prochaine saisie repart de champs vides. Pas de `resetField` : il rendrait les valeurs
-    // de départ du formulaire, qui seront un jour celles du dossier enregistré.
-    form.setValue(TYPE_FIELD, undefined);
-    form.setValue("precisionTypeDemarche", "");
-    form.setValue("apportDemarche", "");
-    form.setValue("piecesJustificatives", []);
+    closeCurrentDemarche();
     setAnnouncement(formatDemarcheAnnouncement(values.demarches.length));
   };
 
@@ -93,6 +108,14 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     if (!canAddDemarche(demarches.length)) return;
     pendingFocus.current = DEMARCHE_FOCUS.TYPE_FIELD;
     form.setValue("hasCurrentDemarche", true);
+    setHighlighted(true);
+    // Vidée : la même annonce, redite après une autre saisie, serait sinon passée sous silence.
+    setAnnouncement("");
+  };
+
+  const cancelDemarche = (): void => {
+    closeCurrentDemarche();
+    setAnnouncement(formatAnnulationAnnouncement(demarches.length));
   };
 
   return {
@@ -100,9 +123,13 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     hasCurrentDemarche,
     isCurrentDemarcheFilled,
     canAdd: canAddDemarche(demarches.length),
+    canCancel: demarches.length > 0,
+    isHighlighted,
     announcement,
     addButtonRef,
     validateDemarche,
     addDemarche,
+    cancelDemarche,
+    removeHighlight: () => setHighlighted(false),
   };
 }

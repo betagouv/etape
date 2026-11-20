@@ -99,6 +99,38 @@ describe("useDemarches", () => {
     expect(countFields()).toBe(openCount);
   });
 
+  it("fait ressortir la carte d'une démarche de plus, jusqu'à ce que le focus la quitte", async () => {
+    const result = renderDemarches(IMMERSION);
+    expect(result.current.isHighlighted).toBe(false);
+    expect(result.current.canCancel).toBe(false);
+    await act(() => result.current.validateDemarche());
+
+    act(() => result.current.addDemarche());
+    expect(result.current.isHighlighted).toBe(true);
+    expect(result.current.canCancel).toBe(true);
+
+    act(() => result.current.removeHighlight());
+    expect(result.current.isHighlighted).toBe(false);
+  });
+
+  it("annule la saisie d'une démarche de plus : carte refermée, saisie et erreurs effacées, sans toucher aux démarches validées", async () => {
+    const result = renderDemarches(IMMERSION);
+    await act(() => result.current.validateDemarche());
+    act(() => result.current.addDemarche());
+    act(() => result.current.form.setValue("typeDemarche", TYPE_DEMARCHE.AUTRE));
+    await act(() => result.current.validateDemarche());
+    expect(result.current.form.formState.errors.apportDemarche).toBeDefined();
+
+    act(() => result.current.cancelDemarche());
+
+    expect(result.current.demarches).toHaveLength(1);
+    expect(result.current.hasCurrentDemarche).toBe(false);
+    expect(result.current.isHighlighted).toBe(false);
+    expect(result.current.announcement).toBe("Saisie de la démarche 2 annulée.");
+    expect(result.current.form.getValues("typeDemarche")).toBeUndefined();
+    expect(result.current.form.formState.errors.apportDemarche).toBeUndefined();
+  });
+
   it("n'ouvre plus de saisie quand le nombre maximal de démarches est atteint", () => {
     const result = renderDemarches({
       demarches: createDemarches(NOMBRE_MAX_DEMARCHES),

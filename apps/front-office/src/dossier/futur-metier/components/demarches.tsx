@@ -3,6 +3,7 @@ import { useWatch, type UseFormReturn } from "react-hook-form";
 import { PlusIcon } from "lucide-react";
 
 import { Button } from "@etape/ui/components/button";
+import { FormCardActions } from "@etape/ui/components/form-card-actions";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { OUI_NON } from "../../domain/oui-non";
@@ -19,7 +20,7 @@ export interface DemarchesProps {
 
 /**
  * Après un « oui » : les démarches validées, puis la carte de saisie ou, une fois celle-ci
- * validée, le bouton qui en ouvre une autre (maquettes 10 à 12).
+ * validée ou annulée, le bouton qui en ouvre une autre (maquettes 10 à 13).
  */
 export function Demarches({ form }: DemarchesProps) {
   const limitId = useId();
@@ -29,10 +30,14 @@ export function Demarches({ form }: DemarchesProps) {
     hasCurrentDemarche,
     isCurrentDemarcheFilled,
     canAdd,
+    canCancel,
+    isHighlighted,
     announcement,
     addButtonRef,
     validateDemarche,
     addDemarche,
+    cancelDemarche,
+    removeHighlight,
   } = useDemarches(form);
 
   return (
@@ -51,9 +56,17 @@ export function Demarches({ form }: DemarchesProps) {
             <DemarcheFields
               control={form.control}
               title={formatDemarcheLabel(demarches.length)}
-              isFilled={isCurrentDemarcheFilled}
-              onValidate={validateDemarche}
-            />
+              isHighlighted={isHighlighted}
+              onFocusLeave={removeHighlight}
+            >
+              <FormCardActions
+                validateLabel="Valider la démarche"
+                isFilled={isCurrentDemarcheFilled}
+                onValidate={validateDemarche}
+                // La première démarche ne s'annule pas : on répond « non » (maquettes 10 et 13).
+                cancel={canCancel ? { label: "Annuler", onClick: cancelDemarche } : undefined}
+              />
+            </DemarcheFields>
           ) : (
             <div className="flex flex-col items-start gap-2">
               {/* Au maximum, le bouton reste atteignable et dit pourquoi il n'ajoute plus rien. */}

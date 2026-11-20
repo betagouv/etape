@@ -1,11 +1,11 @@
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { Controller, useWatch, type Control } from "react-hook-form";
 
-import { Button } from "@etape/ui/components/button";
 import { Card, CardDescription, CardTitle } from "@etape/ui/components/card";
 import { FormField } from "@etape/ui/components/form-field";
 import { FormSelect } from "@etape/ui/components/form-select";
 import { Input } from "@etape/ui/components/input";
+import { useFocusLeave } from "@etape/ui/hooks/use-focus-leave";
 
 import { CharacterCountField } from "../../components/character-count-field";
 import { PiecesJustificativesField } from "../../components/pieces-justificatives-field";
@@ -20,22 +20,37 @@ import {
   type FuturMetierFormData,
 } from "../schema";
 
-/** Ce que reçoit `DemarcheFields` : le contrôle du formulaire, le titre de la carte et sa validation. */
+/** Ce que reçoit `DemarcheFields` : le contrôle du formulaire, le titre de la carte, sa surbrillance et ses boutons. */
 export interface DemarcheFieldsProps {
   control: Control<FuturMetierFormData>;
   title: string;
-  /** Faux tant qu'un champ exigé est vide : le bouton de validation est grisé (maquette 10). */
-  isFilled: boolean;
-  onValidate: () => void;
+  /** Vrai quand la carte vient de s'ouvrir : elle ressort, jusqu'à ce que le focus la quitte (maquette 13). */
+  isHighlighted: boolean;
+  onFocusLeave: () => void;
+  /** Les boutons du bas de la carte : `FormCardActions`. */
+  children: ReactNode;
 }
 
 /** La démarche en cours de saisie : son type, précisé pour « Autre », ce qu'elle a apporté et ses justificatifs. */
-export function DemarcheFields({ control, title, isFilled, onValidate }: DemarcheFieldsProps) {
+export function DemarcheFields({
+  control,
+  title,
+  isHighlighted,
+  onFocusLeave,
+  children,
+}: DemarcheFieldsProps) {
+  const focusLeave = useFocusLeave(onFocusLeave);
   const titleId = useId();
   const typeDemarche = useWatch({ control, name: "typeDemarche" });
 
   return (
-    <Card variant="form" role="group" aria-labelledby={titleId}>
+    <Card
+      variant="form"
+      role="group"
+      aria-labelledby={titleId}
+      data-highlighted={isHighlighted}
+      {...focusLeave}
+    >
       <div className="flex flex-col gap-2">
         <CardTitle asChild>
           <h4 id={titleId}>{title}</h4>
@@ -87,18 +102,7 @@ export function DemarcheFields({ control, title, isFilled, onValidate }: Demarch
         />
       </div>
 
-      <div className="flex justify-end">
-        {/* Grisé, il reste cliquable : un clic montre ce qui manque. `px-4` : les 16 px de la maquette. */}
-        <Button
-          type="button"
-          size="form"
-          className="px-4"
-          aria-disabled={!isFilled}
-          onClick={onValidate}
-        >
-          Valider la démarche
-        </Button>
-      </div>
+      {children}
     </Card>
   );
 }

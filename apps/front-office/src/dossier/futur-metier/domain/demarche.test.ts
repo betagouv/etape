@@ -6,6 +6,7 @@ import {
   DEMARCHE_FIELDS,
   findDemarcheFields,
   findDemarcheIntitule,
+  formatAnnulationAnnouncement,
   formatDemarcheAnnouncement,
   formatDemarcheLabel,
   isDemarcheFilled,
@@ -128,5 +129,11 @@ describe("canAddDemarche", () => {
 describe("formatDemarcheAnnouncement", () => {
   it("annonce la démarche validée par son rang", () => {
     expect(formatDemarcheAnnouncement(1)).toBe("Démarche 2 enregistrée.");
+  });
+});
+
+describe("formatAnnulationAnnouncement", () => {
+  it("annonce la saisie abandonnée par le rang qu'aurait eu la démarche", () => {
+    expect(formatAnnulationAnnouncement(1)).toBe("Saisie de la démarche 2 annulée.");
   });
 });

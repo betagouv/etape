@@ -125,3 +125,8 @@ export function canAddDemarche(demarcheCount: number): boolean {
 export function formatDemarcheAnnouncement(index: number): string {
   return `${formatDemarcheLabel(index)} enregistrée.`;
 }
+
+/** Pour la région `role="status"` : « Saisie de la démarche 2 annulée. » */
+export function formatAnnulationAnnouncement(index: number): string {
+  return `Saisie de la démarche ${index + 1} annulée.`;
+}
