@@ -35,7 +35,7 @@ export function FormLayout({
   const { index, current, previous, next } = position;
 
   return (
-    <Container size="app" className="relative -mt-22">
+    <Container size="app" className="relative -mt-22 pb-8">
       <Card variant="panel" className="grid lg:grid-cols-[auto_auto_minmax(0,1fr)]">
         <FormSidebar volets={volets} voletProgress={voletProgress} />
         <Separator orientation="vertical" className="hidden lg:block" />
