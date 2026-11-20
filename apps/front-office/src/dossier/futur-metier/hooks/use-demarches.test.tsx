@@ -320,6 +320,40 @@ describe("useDemarches", () => {
     });
   });
 
+  it("n'ajoute pas une saisie restée ouverte quand le maximum est déjà atteint", async () => {
+    const demarches = createDemarches(NOMBRE_MAX_DEMARCHES);
+    const result = renderDemarches({ demarches, ...IMMERSION });
+
+    await act(() => result.current.validateDemarche());
+
+    expect(result.current.demarches).toHaveLength(NOMBRE_MAX_DEMARCHES);
+  });
+
+  it("ne demande pas de supprimer une démarche qui n'est pas dans la liste", () => {
+    const [salon, absente] = createDemarches(2);
+    const result = renderDemarches({ demarches: [salon], hasCurrentDemarche: false });
+
+    act(() => result.current.requestRemoval(absente));
+
+    expect(result.current.isRemovalOpen).toBe(false);
+    expect(result.current.removal).toBeNull();
+  });
+
+  it("redit une annonce identique à la précédente", () => {
+    const demarches = createDemarches(3);
+    const result = renderDemarches({ demarches, hasCurrentDemarche: false });
+    act(() => result.current.requestRemoval(demarches[0]));
+    act(() => result.current.confirmRemoval());
+    const first = result.current.announcement;
+
+    act(() => result.current.requestRemoval(demarches[1]));
+    act(() => result.current.confirmRemoval());
+
+    expect(first).toBe("Démarche 1 supprimée.");
+    expect(result.current.announcement).not.toBe(first);
+    expect(result.current.announcement.trim()).toBe(first);
+  });
+
   it("n'ouvre plus de saisie quand le nombre maximal de démarches est atteint", () => {
     const result = renderDemarches({
       demarches: createDemarches(NOMBRE_MAX_DEMARCHES),

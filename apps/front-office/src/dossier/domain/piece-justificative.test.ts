@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ACCEPT_PIECE_JUSTIFICATIVE,
+  canPreviewFichier,
   checkFichiers,
   findFormatFichier,
   formatAddAnnouncement,
@@ -106,6 +107,27 @@ describe("checkFichiers", () => {
     ]);
   });
 
+  it("dit une taille qui dépasse visiblement le maximum, même d'un octet", () => {
+    const { rejected } = checkFichiers([
+      createFichier("a.pdf", 10 * MO + 1),
+      createFichier("b.pdf", 10_485_760),
+    ]);
+
+    expect(rejected.map(({ message }) => message.slice(0, 24))).toEqual([
+      "Ce fichier fait 10,1 Mo,",
+      "Ce fichier fait 10,5 Mo,",
+    ]);
+  });
+
+  it("refuse un fichier vide", () => {
+    const { accepted, rejected } = checkFichiers([createFichier("vide.pdf", 0)]);
+
+    expect(accepted).toEqual([]);
+    expect(rejected).toEqual([
+      { name: "vide.pdf", reason: REJECTION_REASON.EMPTY, message: "Ce fichier est vide." },
+    ]);
+  });
+
   it("regarde le format avant la taille", () => {
     const { rejected } = checkFichiers([createFichier("video.mov", 80 * MO)]);
 
@@ -133,5 +155,25 @@ describe("annonces", () => {
 
   it("nomme la pièce retirée", () => {
     expect(formatRemoveAnnouncement("a.pdf")).toBe("a.pdf retiré.");
+  });
+});
+
+describe("canPreviewFichier", () => {
+  it("ouvre dans un onglet les PDF et les images, sans regarder la casse", () => {
+    expect(["a.pdf", "a.JPG", "a.jpeg", "a.png"].map(canPreviewFichier)).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ]);
+  });
+
+  it("fait télécharger ce que le navigateur n'affiche pas", () => {
+    expect(["a.docx", "a.xlsx", "a.csv", "sans-extension"].map(canPreviewFichier)).toEqual([
+      false,
+      false,
+      false,
+      false,
+    ]);
   });
 });

@@ -56,6 +56,29 @@ describe("usePiecesJustificatives", () => {
     expect(result.current.announcement).toContain("photo.heic refusé : Ce format");
   });
 
+  it("garde les refus affichés quand un dépôt n'apporte aucun fichier", () => {
+    const { result, onChange } = renderField();
+    act(() => result.current.addFichiers([createFichier("photo.heic", MO)]));
+    const announcement = result.current.announcement;
+
+    act(() => result.current.addFichiers([]));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(result.current.rejections).toHaveLength(1);
+    expect(result.current.announcement).toBe(announcement);
+  });
+
+  it("redit le même ajout fait deux fois de suite", () => {
+    const { result } = renderField();
+    act(() => result.current.addFichiers([createFichier("a.pdf", MO)]));
+    const first = result.current.announcement;
+
+    act(() => result.current.addFichiers([createFichier("a.pdf", MO)]));
+
+    expect(result.current.announcement).not.toBe(first);
+    expect(result.current.announcement.trim()).toBe(first);
+  });
+
   it("remplace les refus du précédent ajout", () => {
     const { result } = renderField();
     act(() => result.current.addFichiers([createFichier("photo.heic", MO)]));

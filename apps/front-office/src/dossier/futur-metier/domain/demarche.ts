@@ -61,7 +61,7 @@ export function findDemarcheFields(
 }
 
 /** Le nombre de démarches qu'un dossier peut porter (décision du 2026-11-20, à revoir). */
-export const NOMBRE_MAX_DEMARCHES = 5;
+export const NOMBRE_MAX_DEMARCHES = 20;
 
 /** Sous le bouton d'ajout, quand le maximum est atteint. */
 export const MAX_DEMARCHES_MESSAGE = `Vous pouvez déclarer ${NOMBRE_MAX_DEMARCHES} démarches au maximum.`;

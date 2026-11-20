@@ -22,6 +22,9 @@ export const FORMATS_PIECE_JUSTIFICATIVE = [
 /** « PDF, JPG, JPEG, PNG, DOCX, XLSX, CSV », pour les textes d'aide et d'erreur. */
 export const FORMATS_PIECE_JUSTIFICATIVE_LABEL = FORMATS_PIECE_JUSTIFICATIVE.join(", ");
 
+/** Les formats que le navigateur sait afficher dans un onglet ; les autres se téléchargent. */
+const PREVIEWABLE_FORMATS: readonly string[] = ["PDF", "JPG", "JPEG", "PNG"];
+
 /** L'attribut `accept` du sélecteur de fichiers : « .pdf,.jpg… ». */
 export const ACCEPT_PIECE_JUSTIFICATIVE = FORMATS_PIECE_JUSTIFICATIVE.map(
   (format) => `.${format.toLowerCase()}`,
@@ -32,6 +35,7 @@ export const TAILLE_MAX_PIECE_MO = 10;
 
 const BYTES_PER_KB = 1_000;
 const BYTES_PER_MB = 1_000_000;
+const TENTHS = 10;
 
 const EXTENSION_SEPARATOR = ".";
 const DETAILS_SEPARATOR = " · ";
@@ -44,6 +48,11 @@ export function findFormatFichier(name: string): string {
   // Un nom qui commence par un point (« .pdf ») n'a pas d'extension.
   if (separatorIndex <= 0) return "";
   return name.slice(separatorIndex + 1).toUpperCase();
+}
+
+/** Vrai pour un fichier qui s'ouvre dans un onglet ; faux pour celui qu'il faut télécharger (DOCX, XLSX, CSV). */
+export function canPreviewFichier(name: string): boolean {
+  return PREVIEWABLE_FORMATS.includes(findFormatFichier(name));
 }
 
 /** La taille telle qu'elle s'affiche : « 1,2 Mo », ou en Ko en dessous de 1 Mo. */
@@ -65,6 +74,7 @@ export function formatPieceDetails({ fichier, dateDepot }: PieceJustificative): 
 /** Pourquoi un fichier est refusé. */
 export const REJECTION_REASON = {
   FORMAT: "format",
+  EMPTY: "empty",
   SIZE: "size",
 } as const;
 
@@ -84,11 +94,21 @@ export interface CheckedFichiers {
   rejected: RejectedFichier[];
 }
 
-/** Le message d'un refus, repris du kit (`upload-file`). */
+/**
+ * La taille d'un fichier trop lourd, arrondie au dixième de Mo supérieur : à peine au-dessus
+ * du maximum, il s'afficherait sinon « 10 Mo, au-delà de la taille maximale de 10 Mo ».
+ */
+function formatOversize(octets: number): string {
+  const tenths = Math.ceil((octets / BYTES_PER_MB) * TENTHS);
+  return `${SIZE_FORMAT.format(tenths / TENTHS)} Mo`;
+}
+
+/** Le message d'un refus ; celui du format et celui de la taille reprennent le kit (`upload-file`). */
 function formatRejectionMessage(reason: RejectionReason, fichier: File): string {
   const messages: Record<RejectionReason, string> = {
     [REJECTION_REASON.FORMAT]: `Ce format n’est pas accepté. Formats acceptés : ${FORMATS_PIECE_JUSTIFICATIVE_LABEL}.`,
-    [REJECTION_REASON.SIZE]: `Ce fichier fait ${formatSize(fichier.size)}, au-delà de la taille maximale de ${TAILLE_MAX_PIECE_MO} Mo. Réduisez sa taille, ou déposez le document en plusieurs fichiers.`,
+    [REJECTION_REASON.EMPTY]: "Ce fichier est vide.",
+    [REJECTION_REASON.SIZE]: `Ce fichier fait ${formatOversize(fichier.size)}, au-delà de la taille maximale de ${TAILLE_MAX_PIECE_MO} Mo. Réduisez sa taille, ou déposez le document en plusieurs fichiers.`,
   };
   return messages[reason];
 }
@@ -97,11 +117,12 @@ function formatRejectionMessage(reason: RejectionReason, fichier: File): string 
 function findRejectionReason(fichier: File): RejectionReason | undefined {
   const formats: readonly string[] = FORMATS_PIECE_JUSTIFICATIVE;
   if (!formats.includes(findFormatFichier(fichier.name))) return REJECTION_REASON.FORMAT;
+  if (fichier.size === 0) return REJECTION_REASON.EMPTY;
   if (fichier.size > TAILLE_MAX_PIECE_MO * BYTES_PER_MB) return REJECTION_REASON.SIZE;
   return undefined;
 }
 
-/** Contrôle des fichiers ajoutés, dans l'ordre : format, puis taille du fichier. */
+/** Contrôle des fichiers ajoutés, dans l'ordre : format, fichier vide, puis taille du fichier. */
 export function checkFichiers(fichiers: readonly File[]): CheckedFichiers {
   const checked: CheckedFichiers = { accepted: [], rejected: [] };
   for (const fichier of fichiers) {

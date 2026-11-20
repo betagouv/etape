@@ -237,6 +237,14 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
     expect(findPaths({ ...OPEN_DEMARCHE_FORM, typeDemarche: "stage" })).toContain("typeDemarche");
   });
 
+  it("signale le type manquant au même envoi qu'un apport trop long", () => {
+    const data = {
+      ...OPEN_DEMARCHE_FORM,
+      apportDemarche: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+    };
+    expect(findPaths(data).sort()).toEqual(["apportDemarche", "typeDemarche"]);
+  });
+
   it("refuse un apport au-delà de la limite", () => {
     const data = {
       ...OPEN_DEMARCHE_FORM,

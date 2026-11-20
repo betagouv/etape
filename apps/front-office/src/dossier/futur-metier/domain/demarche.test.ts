@@ -129,11 +129,11 @@ describe("createDemarche", () => {
 });
 
 describe("canAddDemarche", () => {
-  it("accepte une démarche de plus jusqu'à cinq", () => {
-    expect(NOMBRE_MAX_DEMARCHES).toBe(5);
-    expect(canAddDemarche(4)).toBe(true);
-    expect(canAddDemarche(5)).toBe(false);
-    expect(MAX_DEMARCHES_MESSAGE).toBe("Vous pouvez déclarer 5 démarches au maximum.");
+  it("accepte une démarche de plus jusqu'à vingt", () => {
+    expect(NOMBRE_MAX_DEMARCHES).toBe(20);
+    expect(canAddDemarche(19)).toBe(true);
+    expect(canAddDemarche(20)).toBe(false);
+    expect(MAX_DEMARCHES_MESSAGE).toBe("Vous pouvez déclarer 20 démarches au maximum.");
   });
 });
 

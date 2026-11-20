@@ -97,17 +97,21 @@ const baseFuturMetierSchema = z.object({
   ),
 });
 
-/** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */
-const refinedFieldsSchema = baseFuturMetierSchema.pick({
-  metierViseEntryMode: true,
-  metierVise: true,
-  intituleMetierVise: true,
-  codeRome: true,
-  typeDemarche: true,
-  precisionTypeDemarche: true,
-  apportDemarche: true,
-  hasCurrentDemarche: true,
-});
+/**
+ * Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type.
+ * L'apport n'y garde que son type : trop long, il couperait sinon le contrôle des autres champs.
+ */
+const refinedFieldsSchema = baseFuturMetierSchema
+  .pick({
+    metierViseEntryMode: true,
+    metierVise: true,
+    intituleMetierVise: true,
+    codeRome: true,
+    typeDemarche: true,
+    precisionTypeDemarche: true,
+    hasCurrentDemarche: true,
+  })
+  .extend({ apportDemarche: z.string() });
 
 /**
  * Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours, et ceux de

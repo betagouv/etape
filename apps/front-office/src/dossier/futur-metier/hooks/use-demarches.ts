@@ -19,6 +19,8 @@ import {
   type Demarche,
   type DemarcheFieldName,
 } from "../domain/demarche";
+import { useAnnouncement } from "@etape/ui/hooks/use-announcement";
+
 import { OUI_NON, type OuiNon } from "../../domain/oui-non";
 import type { FuturMetierFormData } from "../schema";
 
@@ -98,7 +100,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   const currentDemarcheId = useWatch({ control, name: "currentDemarcheId" });
   // Calculé dans l'abonnement : la carte n'est pas re-rendue à chaque frappe.
   const isCurrentDemarcheFilled = useWatch({ control, compute: isDemarcheFilled });
-  const [announcement, setAnnouncement] = useState("");
+  const { message: announcement, announce } = useAnnouncement();
   const [isHighlighted, setHighlighted] = useState(false);
   const [blockedDemarcheId, setBlockedDemarcheId] = useState<string | null>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
@@ -159,13 +161,15 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     if (demarche === undefined) return;
 
     if (values.currentDemarcheId === null) {
+      // Le bouton d'ajout s'arrête au maximum ; une saisie restée ouverte au-delà ne s'ajoute pas non plus.
+      if (!canAddDemarche(values.demarches.length)) return;
       form.setValue("demarches", [...values.demarches, demarche]);
       closeCurrentDemarche(focusAddButton);
-      setAnnouncement(formatDemarcheAnnouncement(currentDemarcheIndex));
+      announce(formatDemarcheAnnouncement(currentDemarcheIndex));
     } else {
       form.setValue("demarches", replaceDemarche(values.demarches, demarche));
       closeCurrentDemarche(focusEditButton(demarche.id));
-      setAnnouncement(formatEditAnnouncement(currentDemarcheIndex));
+      announce(formatEditAnnouncement(currentDemarcheIndex));
     }
   };
 
@@ -175,14 +179,14 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     form.setValue("hasCurrentDemarche", true);
     setHighlighted(true);
     // Vidée : la même annonce, redite après une autre saisie, serait sinon passée sous silence.
-    setAnnouncement("");
+    announce("");
   };
 
   const editDemarche = (demarche: Demarche): void => {
     if (hasCurrentDemarche) {
       // Une seule saisie à la fois : la carte de la démarche dit quoi faire d'abord.
       setBlockedDemarcheId(demarche.id);
-      setAnnouncement(EDIT_BLOCKED_MESSAGE);
+      announce(EDIT_BLOCKED_MESSAGE);
       return;
     }
     pendingFocus.current = focusTypeField;
@@ -192,22 +196,23 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     form.setValue("piecesJustificatives", demarche.piecesJustificatives);
     form.setValue("currentDemarcheId", demarche.id);
     form.setValue("hasCurrentDemarche", true);
-    setAnnouncement("");
+    announce("");
   };
 
   const cancelDemarche = (): void => {
     if (currentDemarcheId !== null && isEditing) {
       closeCurrentDemarche(focusEditButton(currentDemarcheId));
-      setAnnouncement(formatEditCancelAnnouncement(currentDemarcheIndex));
+      announce(formatEditCancelAnnouncement(currentDemarcheIndex));
     } else {
       closeCurrentDemarche(focusAddButton);
-      setAnnouncement(formatCancelAnnouncement(currentDemarcheIndex));
+      announce(formatCancelAnnouncement(currentDemarcheIndex));
     }
   };
 
   const requestRemoval = (demarche: Demarche): void => {
     // Par son `id` : le formulaire rend des copies, pas les objets qu'on lui a confiés.
     const index = demarches.findIndex(({ id }) => id === demarche.id);
+    if (index < 0) return;
     setRemoval({ items: [{ demarche, index }], isAnswerNon: false });
     setRemovalOpen(true);
   };
@@ -253,7 +258,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     form.setValue(ANSWER_FIELD, OUI_NON.NON, { shouldValidate: true });
     setHighlighted(false);
     removalFocus.current = () => document.getElementById(ANSWER_NON_ID)?.focus();
-    setAnnouncement(formatAllRemovedAnnouncement(demarcheCount));
+    announce(formatAllRemovedAnnouncement(demarcheCount));
   };
 
   /** Une démarche, par sa corbeille : les suivantes remontent d'un rang. */
@@ -270,7 +275,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
       if (target) target.focus();
       else focusTypeField();
     };
-    setAnnouncement(formatRemovalAnnouncement(index));
+    announce(formatRemovalAnnouncement(index));
   };
 
   const confirmRemoval = (): void => {

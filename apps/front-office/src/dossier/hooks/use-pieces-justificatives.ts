@@ -1,5 +1,7 @@
 import { useRef, useState, type RefObject } from "react";
 
+import { useAnnouncement } from "@etape/ui/hooks/use-announcement";
+
 import {
   checkFichiers,
   formatAddAnnouncement,
@@ -36,9 +38,11 @@ export function usePiecesJustificatives(
 ): UsePiecesJustificativesResult {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [rejections, setRejections] = useState<readonly DisplayedRejection[]>([]);
-  const [announcement, setAnnouncement] = useState("");
+  const { message: announcement, announce } = useAnnouncement();
 
   const addFichiers = (fichiers: File[]): void => {
+    // Un dépôt sans fichier ne dit rien : les refus affichés restent.
+    if (fichiers.length === 0) return;
     const checked = checkFichiers(fichiers);
     const dateDepot = new Date();
     if (checked.accepted.length > 0) {
@@ -49,12 +53,12 @@ export function usePiecesJustificatives(
     }
     // Les refus d'un ajout remplacent ceux du précédent : ils ne concernent plus ce qu'on vient de faire.
     setRejections(checked.rejected.map((item) => ({ ...item, id: crypto.randomUUID() })));
-    setAnnouncement(formatAddAnnouncement(checked));
+    announce(formatAddAnnouncement(checked));
   };
 
   const removePiece = (piece: PieceJustificative): void => {
     onChange(pieces.filter(({ id }) => id !== piece.id));
-    setAnnouncement(formatRemoveAnnouncement(piece.fichier.name));
+    announce(formatRemoveAnnouncement(piece.fichier.name));
     // La ligne disparaît avec son bouton : sans cela, le focus retombe sur la page.
     triggerRef.current?.focus();
   };
