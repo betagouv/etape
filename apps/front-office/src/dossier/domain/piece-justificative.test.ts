@@ -4,26 +4,26 @@ import {
   ACCEPT_PIECE_JUSTIFICATIVE,
   checkFichiers,
   findFormatFichier,
-  formatAjoutAnnouncement,
+  formatAddAnnouncement,
   formatPieceDetails,
-  formatRetraitAnnouncement,
-  formatTaille,
+  formatRemoveAnnouncement,
+  formatSize,
   FORMATS_PIECE_JUSTIFICATIVE_LABEL,
-  MOTIF_REFUS,
+  REJECTION_REASON,
   type PieceJustificative,
 } from "./piece-justificative";
 
 const MO = 1_000_000;
 
 /** Un fichier de la taille voulue, sans en écrire le contenu. */
-function createFichier(nom: string, taille: number): File {
-  const fichier = new File([], nom);
-  Object.defineProperty(fichier, "size", { value: taille });
+function createFichier(name: string, size: number): File {
+  const fichier = new File([], name);
+  Object.defineProperty(fichier, "size", { value: size });
   return fichier;
 }
 
-function createPiece(nom: string, taille: number): PieceJustificative {
-  return { id: nom, fichier: createFichier(nom, taille), dateDepot: new Date(2026, 8, 24) };
+function createPiece(name: string, size: number): PieceJustificative {
+  return { id: name, fichier: createFichier(name, size), dateDepot: new Date(2026, 8, 24) };
 }
 
 describe("formats acceptés", () => {
@@ -46,17 +46,17 @@ describe("findFormatFichier", () => {
   });
 });
 
-describe("formatTaille", () => {
+describe("formatSize", () => {
   it("affiche les Mo avec une décimale au plus, à la française", () => {
-    expect(formatTaille(1_200_000)).toBe("1,2 Mo");
-    expect(formatTaille(14 * MO)).toBe("14 Mo");
-    expect(formatTaille(1_249_000)).toBe("1,2 Mo");
+    expect(formatSize(1_200_000)).toBe("1,2 Mo");
+    expect(formatSize(14 * MO)).toBe("14 Mo");
+    expect(formatSize(1_249_000)).toBe("1,2 Mo");
   });
 
   it("affiche les Ko en dessous de 1 Mo, arrondis au Ko supérieur", () => {
-    expect(formatTaille(850_000)).toBe("850 Ko");
-    expect(formatTaille(1)).toBe("1 Ko");
-    expect(formatTaille(999_001)).toBe("1000 Ko");
+    expect(formatSize(850_000)).toBe("850 Ko");
+    expect(formatSize(1)).toBe("1 Ko");
+    expect(formatSize(999_001)).toBe("1000 Ko");
   });
 });
 
@@ -72,17 +72,17 @@ describe("checkFichiers", () => {
   it("garde les fichiers d'un format accepté, sans regarder la casse de l'extension", () => {
     const fichiers = [createFichier("a.pdf", MO), createFichier("b.JPEG", MO)];
 
-    expect(checkFichiers(fichiers)).toEqual({ accepted: fichiers, refus: [] });
+    expect(checkFichiers(fichiers)).toEqual({ accepted: fichiers, rejected: [] });
   });
 
   it("refuse un format hors de la liste, avec le message du kit", () => {
-    const { accepted, refus } = checkFichiers([createFichier("photo.heic", MO)]);
+    const { accepted, rejected } = checkFichiers([createFichier("photo.heic", MO)]);
 
     expect(accepted).toEqual([]);
-    expect(refus).toEqual([
+    expect(rejected).toEqual([
       {
-        nom: "photo.heic",
-        motif: MOTIF_REFUS.FORMAT,
+        name: "photo.heic",
+        reason: REJECTION_REASON.FORMAT,
         message:
           "Ce format n’est pas accepté. Formats acceptés : PDF, JPG, JPEG, PNG, DOCX, XLSX, CSV.",
       },
@@ -90,16 +90,16 @@ describe("checkFichiers", () => {
   });
 
   it("refuse un fichier de plus de 10 Mo, en disant sa taille, et accepte 10 Mo tout juste", () => {
-    const { accepted, refus } = checkFichiers([
+    const { accepted, rejected } = checkFichiers([
       createFichier("scan.pdf", 14 * MO),
       createFichier("limite.pdf", 10 * MO),
     ]);
 
     expect(accepted.map(({ name }) => name)).toEqual(["limite.pdf"]);
-    expect(refus).toEqual([
+    expect(rejected).toEqual([
       {
-        nom: "scan.pdf",
-        motif: MOTIF_REFUS.TAILLE,
+        name: "scan.pdf",
+        reason: REJECTION_REASON.SIZE,
         message:
           "Ce fichier fait 14 Mo, au-delà de la taille maximale de 10 Mo. Réduisez sa taille, ou déposez le document en plusieurs fichiers.",
       },
@@ -107,9 +107,9 @@ describe("checkFichiers", () => {
   });
 
   it("regarde le format avant la taille", () => {
-    const { refus } = checkFichiers([createFichier("video.mov", 80 * MO)]);
+    const { rejected } = checkFichiers([createFichier("video.mov", 80 * MO)]);
 
-    expect(refus.map(({ motif }) => motif)).toEqual([MOTIF_REFUS.FORMAT]);
+    expect(rejected.map(({ reason }) => reason)).toEqual([REJECTION_REASON.FORMAT]);
   });
 });
 
@@ -118,20 +118,20 @@ describe("annonces", () => {
     const a = createFichier("a.pdf", MO);
     const b = createFichier("b.pdf", MO);
 
-    expect(formatAjoutAnnouncement({ accepted: [a], refus: [] })).toBe("a.pdf ajouté.");
-    expect(formatAjoutAnnouncement({ accepted: [a, b], refus: [] })).toBe("2 fichiers ajoutés.");
-    expect(formatAjoutAnnouncement({ accepted: [], refus: [] })).toBe("");
+    expect(formatAddAnnouncement({ accepted: [a], rejected: [] })).toBe("a.pdf ajouté.");
+    expect(formatAddAnnouncement({ accepted: [a, b], rejected: [] })).toBe("2 fichiers ajoutés.");
+    expect(formatAddAnnouncement({ accepted: [], rejected: [] })).toBe("");
   });
 
   it("dit chaque fichier refusé et pourquoi, après les fichiers ajoutés", () => {
     const checked = checkFichiers([createFichier("a.pdf", MO), createFichier("photo.heic", MO)]);
 
-    expect(formatAjoutAnnouncement(checked)).toBe(
+    expect(formatAddAnnouncement(checked)).toBe(
       "a.pdf ajouté. photo.heic refusé : Ce format n’est pas accepté. Formats acceptés : PDF, JPG, JPEG, PNG, DOCX, XLSX, CSV.",
     );
   });
 
   it("nomme la pièce retirée", () => {
-    expect(formatRetraitAnnouncement("a.pdf")).toBe("a.pdf retiré.");
+    expect(formatRemoveAnnouncement("a.pdf")).toBe("a.pdf retiré.");
   });
 });

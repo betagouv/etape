@@ -6,14 +6,14 @@ import {
   createDemarche,
   DEMARCHE_FIELDS,
   findDemarcheFields,
-  formatAnnulationAnnouncement,
-  formatAnnulationModificationAnnouncement,
+  formatCancelAnnouncement,
+  formatEditCancelAnnouncement,
   formatDemarcheAnnouncement,
-  formatModificationAnnouncement,
-  formatSuppressionAnnouncement,
-  formatSuppressionsAnnouncement,
+  formatEditAnnouncement,
+  formatRemovalAnnouncement,
+  formatAllRemovedAnnouncement,
   isDemarcheFilled,
-  MESSAGE_SAISIE_EN_COURS,
+  EDIT_BLOCKED_MESSAGE,
   removeDemarche,
   replaceDemarche,
   type Demarche,
@@ -165,7 +165,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     } else {
       form.setValue("demarches", replaceDemarche(values.demarches, demarche));
       closeCurrentDemarche(focusEditButton(demarche.id));
-      setAnnouncement(formatModificationAnnouncement(currentDemarcheIndex));
+      setAnnouncement(formatEditAnnouncement(currentDemarcheIndex));
     }
   };
 
@@ -182,7 +182,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     if (hasCurrentDemarche) {
       // Une seule saisie à la fois : la carte de la démarche dit quoi faire d'abord.
       setBlockedDemarcheId(demarche.id);
-      setAnnouncement(MESSAGE_SAISIE_EN_COURS);
+      setAnnouncement(EDIT_BLOCKED_MESSAGE);
       return;
     }
     pendingFocus.current = focusTypeField;
@@ -198,10 +198,10 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   const cancelDemarche = (): void => {
     if (currentDemarcheId !== null && isEditing) {
       closeCurrentDemarche(focusEditButton(currentDemarcheId));
-      setAnnouncement(formatAnnulationModificationAnnouncement(currentDemarcheIndex));
+      setAnnouncement(formatEditCancelAnnouncement(currentDemarcheIndex));
     } else {
       closeCurrentDemarche(focusAddButton);
-      setAnnouncement(formatAnnulationAnnouncement(currentDemarcheIndex));
+      setAnnouncement(formatCancelAnnouncement(currentDemarcheIndex));
     }
   };
 
@@ -253,7 +253,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     form.setValue(ANSWER_FIELD, OUI_NON.NON, { shouldValidate: true });
     setHighlighted(false);
     removalFocus.current = () => document.getElementById(ANSWER_NON_ID)?.focus();
-    setAnnouncement(formatSuppressionsAnnouncement(demarcheCount));
+    setAnnouncement(formatAllRemovedAnnouncement(demarcheCount));
   };
 
   /** Une démarche, par sa corbeille : les suivantes remontent d'un rang. */
@@ -270,7 +270,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
       if (target) target.focus();
       else focusTypeField();
     };
-    setAnnouncement(formatSuppressionAnnouncement(index));
+    setAnnouncement(formatRemovalAnnouncement(index));
   };
 
   const confirmRemoval = (): void => {

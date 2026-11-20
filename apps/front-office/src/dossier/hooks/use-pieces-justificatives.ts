@@ -2,28 +2,28 @@ import { useRef, useState, type RefObject } from "react";
 
 import {
   checkFichiers,
-  formatAjoutAnnouncement,
-  formatRetraitAnnouncement,
+  formatAddAnnouncement,
+  formatRemoveAnnouncement,
   type PieceJustificative,
-  type RefusFichier,
+  type RejectedFichier,
 } from "../domain/piece-justificative";
 
 /** Un refus affiché : son `id` sert à le retrouver quand on ferme son message. */
-export interface DisplayedRefus extends RefusFichier {
+export interface DisplayedRejection extends RejectedFichier {
   id: string;
 }
 
 /** Ce que renvoie `usePiecesJustificatives` : les refus à afficher, l'annonce et les actions de l'écran. */
 export interface UsePiecesJustificativesResult {
   /** Les fichiers refusés au dernier ajout, tant que leur message n'est pas fermé. */
-  refus: readonly DisplayedRefus[];
+  rejections: readonly DisplayedRejection[];
   /** Pour la région `role="status"` de l'écran : ajout, refus ou retrait. */
   announcement: string;
   /** Le bouton d'ajout : il reprend le focus quand un fichier ou un message disparaît. */
   triggerRef: RefObject<HTMLButtonElement | null>;
   addFichiers: (fichiers: File[]) => void;
   removePiece: (piece: PieceJustificative) => void;
-  dismissRefus: (id: string) => void;
+  dismissRejection: (id: string) => void;
 }
 
 /**
@@ -35,7 +35,7 @@ export function usePiecesJustificatives(
   onChange: (pieces: PieceJustificative[]) => void,
 ): UsePiecesJustificativesResult {
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [refus, setRefus] = useState<readonly DisplayedRefus[]>([]);
+  const [rejections, setRejections] = useState<readonly DisplayedRejection[]>([]);
   const [announcement, setAnnouncement] = useState("");
 
   const addFichiers = (fichiers: File[]): void => {
@@ -48,21 +48,21 @@ export function usePiecesJustificatives(
       ]);
     }
     // Les refus d'un ajout remplacent ceux du précédent : ils ne concernent plus ce qu'on vient de faire.
-    setRefus(checked.refus.map((item) => ({ ...item, id: crypto.randomUUID() })));
-    setAnnouncement(formatAjoutAnnouncement(checked));
+    setRejections(checked.rejected.map((item) => ({ ...item, id: crypto.randomUUID() })));
+    setAnnouncement(formatAddAnnouncement(checked));
   };
 
   const removePiece = (piece: PieceJustificative): void => {
     onChange(pieces.filter(({ id }) => id !== piece.id));
-    setAnnouncement(formatRetraitAnnouncement(piece.fichier.name));
+    setAnnouncement(formatRemoveAnnouncement(piece.fichier.name));
     // La ligne disparaît avec son bouton : sans cela, le focus retombe sur la page.
     triggerRef.current?.focus();
   };
 
-  const dismissRefus = (id: string): void => {
-    setRefus((current) => current.filter((item) => item.id !== id));
+  const dismissRejection = (id: string): void => {
+    setRejections((current) => current.filter((item) => item.id !== id));
     triggerRef.current?.focus();
   };
 
-  return { refus, announcement, triggerRef, addFichiers, removePiece, dismissRefus };
+  return { rejections, announcement, triggerRef, addFichiers, removePiece, dismissRejection };
 }

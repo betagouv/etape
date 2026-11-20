@@ -9,9 +9,9 @@ afterEach(cleanup);
 
 const MO = 1_000_000;
 
-function createFichier(nom: string, taille: number): File {
-  const fichier = new File([], nom);
-  Object.defineProperty(fichier, "size", { value: taille });
+function createFichier(name: string, size: number): File {
+  const fichier = new File([], name);
+  Object.defineProperty(fichier, "size", { value: size });
   return fichier;
 }
 
@@ -40,7 +40,7 @@ describe("usePiecesJustificatives", () => {
     expect(pieces?.[1]?.fichier).toBe(compteRendu);
     expect(pieces?.[1]?.dateDepot).toBeInstanceOf(Date);
     expect(pieces?.[1]?.id).not.toBe("");
-    expect(result.current.refus).toEqual([]);
+    expect(result.current.rejections).toEqual([]);
     expect(result.current.announcement).toBe("compte-rendu.docx ajouté.");
   });
 
@@ -50,7 +50,7 @@ describe("usePiecesJustificatives", () => {
     act(() => result.current.addFichiers([createFichier("photo.heic", MO)]));
 
     expect(onChange).not.toHaveBeenCalled();
-    expect(result.current.refus.map(({ nom, motif }) => [nom, motif])).toEqual([
+    expect(result.current.rejections.map(({ name, reason }) => [name, reason])).toEqual([
       ["photo.heic", "format"],
     ]);
     expect(result.current.announcement).toContain("photo.heic refusé : Ce format");
@@ -62,7 +62,7 @@ describe("usePiecesJustificatives", () => {
 
     act(() => result.current.addFichiers([createFichier("a.pdf", MO)]));
 
-    expect(result.current.refus).toEqual([]);
+    expect(result.current.rejections).toEqual([]);
   });
 
   it("retire une pièce, l'annonce et rend le focus au bouton d'ajout", () => {
@@ -87,11 +87,11 @@ describe("usePiecesJustificatives", () => {
     act(() =>
       result.current.addFichiers([createFichier("photo.heic", MO), createFichier("b.mov", MO)]),
     );
-    const [first] = result.current.refus;
+    const [first] = result.current.rejections;
 
-    act(() => result.current.dismissRefus(first?.id ?? ""));
+    act(() => result.current.dismissRejection(first?.id ?? ""));
 
-    expect(result.current.refus.map(({ nom }) => nom)).toEqual(["b.mov"]);
+    expect(result.current.rejections.map(({ name }) => name)).toEqual(["b.mov"]);
     expect(document.activeElement).toBe(button);
     button.remove();
   });

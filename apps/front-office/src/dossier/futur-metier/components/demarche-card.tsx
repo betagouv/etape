@@ -13,7 +13,7 @@ import { FileUploadList } from "@etape/ui/components/file-upload";
 import { Separator } from "@etape/ui/components/separator";
 
 import { PieceJustificativeItem } from "../../components/piece-justificative-item";
-import { formatModifierLabel, formatSupprimerLabel, type Demarche } from "../domain/demarche";
+import { formatEditLabel, formatRemoveLabel, type Demarche } from "../domain/demarche";
 import { DemarcheTitle } from "./demarche-title";
 
 /** La modification de la démarche : son action, et ce qui la fait attendre. */
@@ -66,12 +66,12 @@ export function DemarcheCard({
           <EditRemoveActions
             edit={{
               label: "Modifier",
-              accessibleLabel: formatModifierLabel(index),
+              accessibleLabel: formatEditLabel(index),
               onClick: edit.onClick,
               isDisabled: edit.isDisabled,
               describedBy: edit.notice ? noticeId : undefined,
             }}
-            remove={{ accessibleLabel: formatSupprimerLabel(index), onClick: onRemove }}
+            remove={{ accessibleLabel: formatRemoveLabel(index), onClick: onRemove }}
             editRef={editButtonRef}
             removeRef={removeButtonRef}
           />

@@ -10,8 +10,8 @@ import { StatusRegion } from "@etape/ui/components/status-region";
 import { OUI_NON, OUI_NON_LABEL } from "../../domain/oui-non";
 import {
   formatDemarcheLabel,
-  MESSAGE_NOMBRE_MAX_DEMARCHES,
-  MESSAGE_SAISIE_EN_COURS,
+  MAX_DEMARCHES_MESSAGE,
+  EDIT_BLOCKED_MESSAGE,
 } from "../domain/demarche";
 import { useDemarches } from "../hooks/use-demarches";
 import { FUTUR_METIER_FIELD_LABEL, type FuturMetierFormData } from "../schema";
@@ -104,7 +104,7 @@ export function Demarches({ form }: DemarchesProps) {
                 edit={{
                   onClick: () => editDemarche(demarche),
                   isDisabled: hasCurrentDemarche,
-                  notice: demarche.id === blockedDemarcheId ? MESSAGE_SAISIE_EN_COURS : undefined,
+                  notice: demarche.id === blockedDemarcheId ? EDIT_BLOCKED_MESSAGE : undefined,
                 }}
                 onRemove={() => requestRemoval(demarche)}
                 editButtonRef={registerEditButton(demarche.id)}
@@ -132,7 +132,7 @@ export function Demarches({ form }: DemarchesProps) {
               </Button>
               {!canAdd && (
                 <p id={limitId} className="text-muted-foreground text-sm">
-                  {MESSAGE_NOMBRE_MAX_DEMARCHES}
+                  {MAX_DEMARCHES_MESSAGE}
                 </p>
               )}
             </div>

@@ -4,7 +4,7 @@ import { Card } from "@etape/ui/components/card";
 import { ConfirmationDialog } from "@etape/ui/components/confirmation-dialog";
 import { Separator } from "@etape/ui/components/separator";
 
-import { formatSuppressionMessage, formatSuppressionTitle } from "../domain/demarche";
+import { formatRemovalMessage, formatRemovalTitle } from "../domain/demarche";
 import type { DemarcheRemoval } from "../hooks/use-demarches";
 import { DemarcheTitle } from "./demarche-title";
 
@@ -35,8 +35,8 @@ export function DemarcheRemovalDialog({
   return (
     <ConfirmationDialog
       isOpen={isOpen}
-      title={formatSuppressionTitle(items.length)}
-      description={formatSuppressionMessage(items.length)}
+      title={formatRemovalTitle(items.length)}
+      description={formatRemovalMessage(items.length)}
       cancel={{ label: "Annuler", onClick: onCancel }}
       confirm={{
         label: "Supprimer",

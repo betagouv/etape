@@ -6,19 +6,19 @@ import {
   DEMARCHE_FIELDS,
   findDemarcheFields,
   findDemarcheIntitule,
-  formatAnnulationAnnouncement,
-  formatAnnulationModificationAnnouncement,
+  formatCancelAnnouncement,
+  formatEditCancelAnnouncement,
   formatDemarcheAnnouncement,
   formatDemarcheLabel,
-  formatModificationAnnouncement,
-  formatModifierLabel,
-  formatSuppressionAnnouncement,
-  formatSuppressionMessage,
-  formatSuppressionsAnnouncement,
-  formatSuppressionTitle,
-  formatSupprimerLabel,
+  formatEditAnnouncement,
+  formatEditLabel,
+  formatRemovalAnnouncement,
+  formatRemovalMessage,
+  formatAllRemovedAnnouncement,
+  formatRemovalTitle,
+  formatRemoveLabel,
   isDemarcheFilled,
-  MESSAGE_NOMBRE_MAX_DEMARCHES,
+  MAX_DEMARCHES_MESSAGE,
   NOMBRE_MAX_DEMARCHES,
   removeDemarche,
   replaceDemarche,
@@ -133,7 +133,7 @@ describe("canAddDemarche", () => {
     expect(NOMBRE_MAX_DEMARCHES).toBe(5);
     expect(canAddDemarche(4)).toBe(true);
     expect(canAddDemarche(5)).toBe(false);
-    expect(MESSAGE_NOMBRE_MAX_DEMARCHES).toBe("Vous pouvez déclarer 5 démarches au maximum.");
+    expect(MAX_DEMARCHES_MESSAGE).toBe("Vous pouvez déclarer 5 démarches au maximum.");
   });
 });
 
@@ -143,9 +143,9 @@ describe("formatDemarcheAnnouncement", () => {
   });
 });
 
-describe("formatAnnulationAnnouncement", () => {
+describe("formatCancelAnnouncement", () => {
   it("annonce la saisie abandonnée par le rang qu'aurait eu la démarche", () => {
-    expect(formatAnnulationAnnouncement(1)).toBe("Saisie de la démarche 2 annulée.");
+    expect(formatCancelAnnouncement(1)).toBe("Saisie de la démarche 2 annulée.");
   });
 });
 
@@ -172,11 +172,9 @@ describe("replaceDemarche", () => {
 
 describe("modification d'une démarche", () => {
   it("nomme le bouton et annonce la modification par le rang de la démarche", () => {
-    expect(formatModifierLabel(0)).toBe("Modifier la démarche 1");
-    expect(formatModificationAnnouncement(0)).toBe("Démarche 1 modifiée.");
-    expect(formatAnnulationModificationAnnouncement(2)).toBe(
-      "Modification de la démarche 3 annulée.",
-    );
+    expect(formatEditLabel(0)).toBe("Modifier la démarche 1");
+    expect(formatEditAnnouncement(0)).toBe("Démarche 1 modifiée.");
+    expect(formatEditCancelAnnouncement(2)).toBe("Modification de la démarche 3 annulée.");
   });
 });
 
@@ -196,21 +194,21 @@ describe("suppression d'une démarche", () => {
   });
 
   it("nomme la corbeille et annonce la suppression par le rang de la démarche", () => {
-    expect(formatSupprimerLabel(1)).toBe("Supprimer la démarche 2");
-    expect(formatSuppressionAnnouncement(1)).toBe("Démarche 2 supprimée.");
+    expect(formatRemoveLabel(1)).toBe("Supprimer la démarche 2");
+    expect(formatRemovalAnnouncement(1)).toBe("Démarche 2 supprimée.");
   });
 
   it("parle d'une démarche dans la fenêtre ouverte par la corbeille", () => {
-    expect(formatSuppressionTitle(1)).toBe("Supprimer votre démarche");
-    expect(formatSuppressionMessage(1)).toBe(
+    expect(formatRemovalTitle(1)).toBe("Supprimer votre démarche");
+    expect(formatRemovalMessage(1)).toBe(
       "En cliquant sur «\u00a0Supprimer\u00a0», la démarche suivante et ses justificatifs seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».",
     );
   });
 
   it("parle de toutes les démarches dans la fenêtre ouverte par un « non »", () => {
-    expect(formatSuppressionTitle(3)).toBe("Supprimer vos démarches");
-    expect(formatSuppressionMessage(3)).toContain("les démarches suivantes et leurs justificatifs");
-    expect(formatSuppressionsAnnouncement(3)).toBe("Vos démarches ont été supprimées.");
-    expect(formatSuppressionsAnnouncement(1)).toBe("Votre démarche a été supprimée.");
+    expect(formatRemovalTitle(3)).toBe("Supprimer vos démarches");
+    expect(formatRemovalMessage(3)).toContain("les démarches suivantes et leurs justificatifs");
+    expect(formatAllRemovedAnnouncement(3)).toBe("Vos démarches ont été supprimées.");
+    expect(formatAllRemovedAnnouncement(1)).toBe("Votre démarche a été supprimée.");
   });
 });

@@ -29,7 +29,7 @@ export function PiecesJustificativesField({
   title,
   description,
 }: PiecesJustificativesFieldProps) {
-  const { refus, announcement, triggerRef, addFichiers, removePiece, dismissRefus } =
+  const { rejections, announcement, triggerRef, addFichiers, removePiece, dismissRejection } =
     usePiecesJustificatives(pieces, onChange);
 
   return (
@@ -49,12 +49,12 @@ export function PiecesJustificativesField({
         </FileUploadList>
       )}
 
-      {refus.map(({ id, nom, message }) => (
+      {rejections.map(({ id, name, message }) => (
         <FileUploadError
           key={id}
-          title={nom}
-          dismissLabel={`Fermer le message sur ${nom}`}
-          onDismiss={() => dismissRefus(id)}
+          title={name}
+          dismissLabel={`Fermer le message sur ${name}`}
+          onDismiss={() => dismissRejection(id)}
         >
           {message}
         </FileUploadError>
