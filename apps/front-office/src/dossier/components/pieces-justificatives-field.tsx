@@ -1,26 +1,18 @@
-import { EyeIcon, Trash2Icon } from "lucide-react";
-
-import { Button } from "@etape/ui/components/button";
 import {
   FileUpload,
   FileUploadDescription,
   FileUploadError,
   FileUploadHeader,
   FileUploadHeading,
-  FileUploadItem,
   FileUploadList,
   FileUploadTitle,
   FileUploadTrigger,
 } from "@etape/ui/components/file-upload";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
-import { openFile } from "@/lib/open-file";
-import {
-  ACCEPT_PIECE_JUSTIFICATIVE,
-  formatPieceDetails,
-  type PieceJustificative,
-} from "../domain/piece-justificative";
+import { ACCEPT_PIECE_JUSTIFICATIVE, type PieceJustificative } from "../domain/piece-justificative";
 import { usePiecesJustificatives } from "../hooks/use-pieces-justificatives";
+import { PieceJustificativeItem } from "./piece-justificative-item";
 
 /** Ce que reçoit `PiecesJustificativesField` : les pièces du champ, leur mise à jour, son titre et son aide. */
 export interface PiecesJustificativesFieldProps {
@@ -52,30 +44,7 @@ export function PiecesJustificativesField({
       {pieces.length > 0 && (
         <FileUploadList aria-label="Fichiers déposés">
           {pieces.map((piece) => (
-            <FileUploadItem
-              key={piece.id}
-              name={piece.fichier.name}
-              details={formatPieceDetails(piece)}
-            >
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={`Voir ${piece.fichier.name}`}
-                onClick={() => openFile(piece.fichier)}
-              >
-                <EyeIcon aria-hidden="true" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={`Retirer ${piece.fichier.name}`}
-                onClick={() => removePiece(piece)}
-              >
-                <Trash2Icon aria-hidden="true" />
-              </Button>
-            </FileUploadItem>
+            <PieceJustificativeItem key={piece.id} piece={piece} onRemove={removePiece} />
           ))}
         </FileUploadList>
       )}
