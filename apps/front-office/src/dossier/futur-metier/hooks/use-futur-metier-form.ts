@@ -43,6 +43,7 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
       typeDemarche: undefined,
       precisionTypeDemarche: "",
       apportDemarche: "",
+      piecesJustificatives: [],
     },
   });
 

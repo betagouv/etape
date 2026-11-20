@@ -20,6 +20,7 @@ const EMPTY_FORM = {
   debouches: "",
   precisionTypeDemarche: "",
   apportDemarche: "",
+  piecesJustificatives: [],
 };
 
 /** Les trois zones de texte remplies et la question sur les démarches répondue : il ne manque que le métier visé. */

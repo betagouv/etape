@@ -1,3 +1,8 @@
+import {
+  FORMATS_PIECE_JUSTIFICATIVE_LABEL,
+  TAILLE_MAX_PIECE_MO,
+} from "../../domain/piece-justificative";
+
 /** Les types de démarche proposés, dans l'ordre de la liste (transmise le 2026-11-18). */
 export const TYPE_DEMARCHE = {
   IMMERSION: "immersion",
@@ -28,6 +33,9 @@ export const TYPE_DEMARCHE_LABEL: Record<TypeDemarche, string> = {
     "Recherches documentaires (fiches métiers, vidéos, sites spécialisés)",
   [TYPE_DEMARCHE.AUTRE]: "Autre",
 };
+
+/** L'aide du dépôt des justificatifs d'une démarche (maquette 10, formats et taille transmis le 2026-11-18). */
+export const PIECES_DEMARCHE_DESCRIPTION = `Attestation, compte-rendu ou tout autre document qui atteste cette démarche. Vous les retrouverez aussi dans «\u00a0Mes documents\u00a0». Formats acceptés : ${FORMATS_PIECE_JUSTIFICATIVE_LABEL}, ${TAILLE_MAX_PIECE_MO} Mo maximum par fichier.`;
 
 /** Nom d'un champ de la démarche en cours de saisie. */
 export type DemarcheFieldName = "typeDemarche" | "precisionTypeDemarche" | "apportDemarche";

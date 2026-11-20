@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { useWatch, type Control } from "react-hook-form";
+import { Controller, useWatch, type Control } from "react-hook-form";
 
 import { Card, CardDescription, CardTitle } from "@etape/ui/components/card";
 import { FormField } from "@etape/ui/components/form-field";
@@ -7,7 +7,12 @@ import { FormSelect } from "@etape/ui/components/form-select";
 import { Input } from "@etape/ui/components/input";
 
 import { CharacterCountField } from "../../components/character-count-field";
-import { TYPE_DEMARCHE, TYPE_DEMARCHE_LABEL } from "../domain/demarche";
+import { PiecesJustificativesField } from "../../components/pieces-justificatives-field";
+import {
+  PIECES_DEMARCHE_DESCRIPTION,
+  TYPE_DEMARCHE,
+  TYPE_DEMARCHE_LABEL,
+} from "../domain/demarche";
 import {
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_TEXT_MAX_LENGTH,
@@ -20,7 +25,7 @@ export interface DemarcheFieldsProps {
   title: string;
 }
 
-/** La démarche en cours de saisie : son type, précisé pour « Autre », et ce qu'elle a apporté. */
+/** La démarche en cours de saisie : son type, précisé pour « Autre », ce qu'elle a apporté et ses justificatifs. */
 export function DemarcheFields({ control, title }: DemarcheFieldsProps) {
   const titleId = useId();
   const typeDemarche = useWatch({ control, name: "typeDemarche" });
@@ -62,6 +67,19 @@ export function DemarcheFields({ control, title }: DemarcheFieldsProps) {
           required
           description="Ce que vous avez appris sur vous ou sur votre projet."
           maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
+        />
+
+        <Controller
+          name="piecesJustificatives"
+          control={control}
+          render={({ field }) => (
+            <PiecesJustificativesField
+              pieces={field.value}
+              onChange={field.onChange}
+              title={FUTUR_METIER_FIELD_LABEL.piecesJustificatives}
+              description={PIECES_DEMARCHE_DESCRIPTION}
+            />
+          )}
         />
       </div>
     </Card>

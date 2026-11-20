@@ -73,6 +73,10 @@ const baseFuturMetierSchema = z.object({
   typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
   precisionTypeDemarche: z.string().trim(),
   apportDemarche: z.string().trim().max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
+  // Facultatives ; format et taille sont contrôlés à l'ajout (`checkFichiers`).
+  piecesJustificatives: z.array(
+    z.object({ id: z.string(), fichier: z.instanceof(File), dateDepot: z.date() }),
+  ),
 });
 
 /** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */
@@ -141,6 +145,7 @@ export const FUTUR_METIER_FIELD_LABEL: Record<
   typeDemarche: "Type de démarche",
   precisionTypeDemarche: "Précisez le type de démarche",
   apportDemarche: "Ce que la démarche vous a apporté",
+  piecesJustificatives: "Justificatifs",
 };
 
 /** Les sections du volet qui portent un compteur. */

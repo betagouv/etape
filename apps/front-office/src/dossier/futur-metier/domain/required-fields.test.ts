@@ -17,6 +17,7 @@ const values: FuturMetierFormData = {
   demarcheDecouverte: OUI_NON.NON,
   precisionTypeDemarche: "",
   apportDemarche: "",
+  piecesJustificatives: [],
 };
 
 /** Exigés quel que soit le mode de saisie : les trois zones de texte, puis la question sur les démarches. */
