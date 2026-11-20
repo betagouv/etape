@@ -5,7 +5,7 @@ import { ConfirmationDialog } from "@etape/ui/components/confirmation-dialog";
 import { Separator } from "@etape/ui/components/separator";
 
 import { formatRemovalMessage, formatRemovalTitle } from "../domain/demarche";
-import type { DemarcheRemoval } from "../hooks/use-demarches";
+import type { DemarcheRemoval } from "../hooks/use-demarche-removal";
 import { DemarcheTitle } from "./demarche-title";
 
 /** Ce que reçoit `DemarcheRemovalDialog` : la suppression à confirmer et ses trois issues. */

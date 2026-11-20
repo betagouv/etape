@@ -74,6 +74,13 @@ export interface CurrentDemarche {
   piecesJustificatives: PieceJustificative[];
 }
 
+/** La saisie telle qu'elle s'ouvre pour une nouvelle démarche, et telle qu'elle se referme : sans type, vide. */
+export const EMPTY_CURRENT_DEMARCHE: CurrentDemarche = {
+  precisionTypeDemarche: "",
+  apportDemarche: "",
+  piecesJustificatives: [],
+};
+
 /** Une démarche validée. */
 export interface Demarche extends CurrentDemarche {
   id: string;
@@ -120,6 +127,11 @@ export function createDemarche(id: string, current: CurrentDemarche): Demarche |
 /** Vrai tant que le dossier peut recevoir une démarche de plus. */
 export function canAddDemarche(demarcheCount: number): boolean {
   return demarcheCount < NOMBRE_MAX_DEMARCHES;
+}
+
+/** Vrai pour une saisie qu'on peut abandonner : dès qu'une démarche est validée. La première ne s'annule pas, on répond « non » (maquettes 10 et 13). */
+export function canCancelDemarche(demarcheCount: number): boolean {
+  return demarcheCount > 0;
 }
 
 /** Pour la région `role="status"` : « Démarche 1 enregistrée. » */

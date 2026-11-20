@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   canAddDemarche,
+  canCancelDemarche,
   createDemarche,
   DEMARCHE_FIELDS,
+  EMPTY_CURRENT_DEMARCHE,
   findDemarcheFields,
   findDemarcheIntitule,
   formatCancelAnnouncement,
@@ -134,6 +136,20 @@ describe("canAddDemarche", () => {
     expect(canAddDemarche(19)).toBe(true);
     expect(canAddDemarche(20)).toBe(false);
     expect(MAX_DEMARCHES_MESSAGE).toBe("Vous pouvez déclarer 20 démarches au maximum.");
+  });
+});
+
+describe("canCancelDemarche", () => {
+  it("laisse annuler une saisie dès qu'une démarche est validée, pas la première", () => {
+    expect(canCancelDemarche(0)).toBe(false);
+    expect(canCancelDemarche(1)).toBe(true);
+  });
+});
+
+describe("EMPTY_CURRENT_DEMARCHE", () => {
+  it("est une saisie sans type, que le bouton de validation tient pour incomplète", () => {
+    expect(EMPTY_CURRENT_DEMARCHE.typeDemarche).toBeUndefined();
+    expect(isDemarcheFilled(EMPTY_CURRENT_DEMARCHE)).toBe(false);
   });
 });
 
