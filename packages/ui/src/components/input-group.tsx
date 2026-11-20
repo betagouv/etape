@@ -5,6 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { Button } from "@etape/ui/components/button";
 import { Input } from "@etape/ui/components/input";
+import { Textarea } from "@etape/ui/components/textarea";
 import { cn } from "@etape/ui/lib/utils";
 
 /*
@@ -17,6 +18,8 @@ const inputGroupVariants = cva(
     "group/input-group border-input bg-background dark:bg-input/30 relative flex w-full min-w-0 items-center border shadow-xs transition-[color,box-shadow] outline-none",
     "has-[>[data-align=inline-start]]:[&>:is(input,button)]:pl-1.5",
     "has-[>[data-align=inline-end]]:[&>:is(input,button)]:pr-1.5",
+    // Zone de texte, complément en bas du cadre : le cadre suit la hauteur de son contenu.
+    "has-[>textarea]:h-auto has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col",
     "has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot=input-group-control]:focus-visible]:ring-[3px]",
     "has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40 has-[[data-slot][aria-invalid=true]]:ring-[3px]",
   ],
@@ -56,6 +59,8 @@ const inputGroupAddonVariants = cva(
       align: {
         "inline-start": "order-first pl-2.5 group-data-[size=lg]/input-group:pl-4",
         "inline-end": "order-last pr-2.5 group-data-[size=lg]/input-group:pr-4",
+        // Sous la zone de texte (kit, « InputGroup / Addon Block », Align=End) : 40 px, marges 10 et 8 px.
+        "block-end": "order-last min-h-10 w-full justify-between px-2.5 py-2",
       },
     },
     defaultVariants: {
@@ -105,6 +110,21 @@ function InputGroupInput({ className, ...props }: React.ComponentProps<"input">)
   );
 }
 
+/** Zone de texte du cadre (kit, « InputGroup », Type=Textarea) : elle grandit avec son contenu. */
+function InputGroupTextarea({ className, ...props }: React.ComponentProps<"textarea">) {
+  return (
+    <Textarea
+      data-slot="input-group-control"
+      className={cn(
+        // 62 px : les 64 px du kit moins la bordure du cadre, pour un cadre de 104 px avec son complément.
+        "min-h-15.5 flex-1 resize-none rounded-none border-0 bg-transparent px-2.5 py-2 shadow-none focus-visible:ring-0 aria-invalid:ring-0 dark:bg-transparent",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 /**
  * Bouton qui tient lieu de champ dans le cadre (date, choix dans une liste) : même
  * cadre, même focus, valeur ou placeholder (`data-placeholder` quand il n'y a pas de
@@ -147,4 +167,11 @@ function InputGroupButton({
   );
 }
 
-export { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGroupTrigger };
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupTextarea,
+  InputGroupTrigger,
+};

@@ -5,6 +5,7 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
+  InputGroupTextarea,
   InputGroupTrigger,
 } from "@etape/ui/components/input-group";
 
@@ -39,5 +40,20 @@ describe("InputGroup", () => {
 
     expect(onClick).toHaveBeenCalledOnce();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "JJ/MM/AAAA" }));
+  });
+
+  it("donne le focus à la zone de texte au clic sur le complément placé dessous", () => {
+    render(
+      <InputGroup>
+        <InputGroupTextarea aria-label="Quotidien du métier" />
+        <InputGroupAddon align="block-end">0/1000 caractères</InputGroupAddon>
+      </InputGroup>,
+    );
+
+    fireEvent.click(screen.getByText("0/1000 caractères"));
+
+    expect(document.activeElement).toBe(
+      screen.getByRole("textbox", { name: "Quotidien du métier" }),
+    );
   });
 });
