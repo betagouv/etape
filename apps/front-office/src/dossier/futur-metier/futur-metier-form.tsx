@@ -1,5 +1,3 @@
-import { useWatch } from "react-hook-form";
-
 import { FormField } from "@etape/ui/components/form-field";
 import { FormRadioGroup } from "@etape/ui/components/form-radio-group";
 import {
@@ -18,7 +16,7 @@ import { OUI_NON, OUI_NON_LABEL } from "../domain/oui-non";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
-import { DemarcheFields } from "./components/demarche-fields";
+import { Demarches } from "./components/demarches";
 import { MetierViseField } from "./components/metier-vise-field";
 import { DEMARCHE_FIELDS } from "./domain/demarche";
 import {
@@ -39,7 +37,6 @@ export interface FuturMetierFormProps {
 export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFormProps) {
   const { form, sections, voletErrors, errorAnnouncement } = useDossierVolets().futurMetier;
   const { submitCount } = form.formState;
-  const demarcheDecouverte = useWatch({ control: form.control, name: "demarcheDecouverte" });
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
 
   return (
@@ -109,9 +106,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             }}
           />
 
-          {demarcheDecouverte === OUI_NON.OUI && (
-            <DemarcheFields control={form.control} title="Démarche 1" />
-          )}
+          <Demarches form={form} />
         </FormSection>
       </form>
     </>

@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Controller, useWatch, type Control } from "react-hook-form";
 
+import { Button } from "@etape/ui/components/button";
 import { Card, CardDescription, CardTitle } from "@etape/ui/components/card";
 import { FormField } from "@etape/ui/components/form-field";
 import { FormSelect } from "@etape/ui/components/form-select";
@@ -19,14 +20,17 @@ import {
   type FuturMetierFormData,
 } from "../schema";
 
-/** Ce que reçoit `DemarcheFields` : le contrôle du formulaire et le titre de la carte. */
+/** Ce que reçoit `DemarcheFields` : le contrôle du formulaire, le titre de la carte et sa validation. */
 export interface DemarcheFieldsProps {
   control: Control<FuturMetierFormData>;
   title: string;
+  /** Faux tant qu'un champ exigé est vide : le bouton de validation est grisé (maquette 10). */
+  isFilled: boolean;
+  onValidate: () => void;
 }
 
 /** La démarche en cours de saisie : son type, précisé pour « Autre », ce qu'elle a apporté et ses justificatifs. */
-export function DemarcheFields({ control, title }: DemarcheFieldsProps) {
+export function DemarcheFields({ control, title, isFilled, onValidate }: DemarcheFieldsProps) {
   const titleId = useId();
   const typeDemarche = useWatch({ control, name: "typeDemarche" });
 
@@ -81,6 +85,19 @@ export function DemarcheFields({ control, title }: DemarcheFieldsProps) {
             />
           )}
         />
+      </div>
+
+      <div className="flex justify-end">
+        {/* Grisé, il reste cliquable : un clic montre ce qui manque. `px-4` : les 16 px de la maquette. */}
+        <Button
+          type="button"
+          size="form"
+          className="px-4"
+          aria-disabled={!isFilled}
+          onClick={onValidate}
+        >
+          Valider la démarche
+        </Button>
       </div>
     </Card>
   );
