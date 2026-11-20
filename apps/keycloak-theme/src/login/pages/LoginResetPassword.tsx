@@ -105,7 +105,7 @@ export default function LoginResetPassword(
             i18n={i18n}
           />
 
-          <Button type="submit" size="form" className="w-full">
+          <Button type="submit" className="w-full">
             {msg("etapeResetPasswordCta")}
           </Button>
         </form>

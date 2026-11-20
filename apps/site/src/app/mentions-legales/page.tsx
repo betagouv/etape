@@ -89,7 +89,7 @@ function renderBlock(block: Block, key: number) {
 export default function MentionsLegales() {
   return (
     <>
-      <Section className="border-divider border-b">
+      <Section className="border-b">
         <h1 className="font-heading text-heading-md text-foreground text-balance">
           {MENTIONS_LEGALES_TITLE}
         </h1>

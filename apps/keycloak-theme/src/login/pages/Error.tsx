@@ -48,7 +48,7 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
         {(resetCredentialsUrl ?? backToApplicationUrl) !== undefined && (
           <div className="flex flex-col gap-4">
             {resetCredentialsUrl !== undefined && (
-              <Button asChild size="xl" className="w-full rounded-lg">
+              <Button asChild className="w-full">
                 <a id="resetPasswordLink" href={resetCredentialsUrl}>
                   {msg("etapeExpiredLinkRestart")}
                 </a>
@@ -58,8 +58,7 @@ export default function Error(props: EtapePageProps<Extract<KcContext, { pageId:
               <Button
                 asChild
                 variant={resetCredentialsUrl !== undefined ? "outline" : "default"}
-                size="xl"
-                className="w-full rounded-lg"
+                className="w-full"
               >
                 <a id="backToApplication" href={backToApplicationUrl}>
                   {msg("backToApplication")}

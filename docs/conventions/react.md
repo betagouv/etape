@@ -293,6 +293,8 @@ Cette chaîne redéfinissait la bordure, la couleur, le survol, la hauteur, le r
 
 Ce qui est en place : `<Button variant="outline-primary" size="xl" className="w-full">`. Le `w-full` reste dans l'app : c'est de la mise en page, pas de l'apparence (4.3). Le choix de la variante selon le rôle de l'action passe par un `Record` (`ACTION_VARIANTS`), pas par un ternaire — [`typescript.md`](./typescript.md), règle 4.
 
+Depuis l’issue #106 (novembre 2026), le kit Figma fait foi et ces deux noms n’existent plus : `outline-primary` et `xl` ont été retirés de `button.tsx`. Un bouton de ce genre s’écrit `<Button variant="outline" className="w-full">`, à la taille par défaut (40 px).
+
 `apps/simulateur/src/app/error.tsx` et le bouton « Recommencer la simulation » de `ResultsScreen.tsx` portaient le même défaut sans être cités dans la question posée en arbitrage. Ils sont repris aussi.
 
 **Ce que le remplacement change à l'écran**, **mesuré dans le navigateur** et non déduit — supposer que `min-h-11` valait déjà 44 px aurait été faux, et supposer que `rounded-lg` valait 8 px aussi :

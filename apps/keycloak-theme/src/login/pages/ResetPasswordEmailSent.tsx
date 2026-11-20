@@ -109,14 +109,13 @@ export default function ResetPasswordEmailSent(
                 name={RESET_EMAIL_ACTION.EDIT_EMAIL}
                 value="true"
                 variant="link"
-                size="inline"
               >
                 {msg("etapeEditEmail")}
               </Button>
             </InlineAction>
           </form>
           <InlineAction question={msg("etapeNoEmailAccess")}>
-            <Button asChild variant="link" size="inline">
+            <Button asChild variant="link">
               <a href={`mailto:${SUPPORT_EMAIL}`}>{msg("etapeContactSupport")}</a>
             </Button>
           </InlineAction>

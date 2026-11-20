@@ -20,7 +20,12 @@ import {
   ComboboxOptionTitle,
 } from "@etape/ui/components/combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/components/field";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@etape/ui/components/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@etape/ui/components/input-group";
 import { Separator } from "@etape/ui/components/separator";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
@@ -103,10 +108,8 @@ export function EmployeurSearch({
           />
           {search.searchText && (
             <InputGroupAddon align="inline-end">
-              <Button
-                type="button"
+              <InputGroupButton
                 variant="secondary"
-                size="icon-xs"
                 aria-label="Effacer la recherche"
                 onClick={() => {
                   search.clear();
@@ -115,7 +118,7 @@ export function EmployeurSearch({
                 }}
               >
                 <CircleXIcon aria-hidden="true" />
-              </Button>
+              </InputGroupButton>
             </InputGroupAddon>
           )}
         </InputGroup>
@@ -193,7 +196,7 @@ export function EmployeurSearch({
             <Button
               type="button"
               variant="link"
-              size="inline-sm"
+              size="sm"
               // Pas de `disabled` : il ferait perdre le focus pendant l'appel.
               aria-disabled={isRetrying || undefined}
               aria-busy={isRetrying || undefined}

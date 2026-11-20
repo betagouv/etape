@@ -40,7 +40,7 @@ export function ResultCard({ resultat, headingRef }: ResultCardProps) {
         </CardContent>
 
         <CardFooter>
-          <Button asChild variant="secondary" size="responsive-sm">
+          <Button asChild variant="secondary">
             <a
               href={url}
               target="_blank"

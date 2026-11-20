@@ -40,7 +40,7 @@ export function Hero() {
 
         <p className="text-body-lg text-content-secondary">{hero.subtext}</p>
 
-        <Button asChild size="xl" className="w-full sm:w-auto">
+        <Button asChild className="w-full sm:w-auto">
           <a
             href={SIMULATEUR_URL}
             {...analyticsEventProps(

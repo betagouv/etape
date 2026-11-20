@@ -265,13 +265,7 @@ export default function Register(props: RegisterProps) {
         onSubmit={form.submit}
       >
         {!isOnInformations && (
-          <Button
-            type="button"
-            variant="link"
-            size="inline"
-            onClick={form.goBack}
-            className="self-start"
-          >
+          <Button type="button" variant="link" onClick={form.goBack} className="self-start">
             <CircleArrowLeft aria-hidden />
             {msg("etapeRegisterBackToStepOne")}
           </Button>
@@ -389,7 +383,6 @@ export default function Register(props: RegisterProps) {
         {isOnInformations ? (
           <Button
             type="submit"
-            size="form"
             aria-disabled={form.isContinueBlocked}
             aria-describedby={form.isStepIncomplete ? INCOMPLETE_HINT_ID : undefined}
             className="w-full"
@@ -401,7 +394,6 @@ export default function Register(props: RegisterProps) {
           <div className="flex flex-col gap-3">
             <Button
               type="submit"
-              size="form"
               aria-disabled={form.isSubmitBlocked}
               aria-busy={form.isSubmitting}
               aria-describedby={form.isStepIncomplete ? INCOMPLETE_HINT_ID : undefined}
