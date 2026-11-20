@@ -26,16 +26,19 @@ export function DossierScreen() {
     <DossierVoletsContext
       value={{ informations, situationProfessionnelle, futurMetier, voletProgress }}
     >
-      {/* Numéro, horodatage : en attendant l'API. */}
-      <DossierHeader
-        title="Démission-reconversion"
-        subtitle="Projet de formation"
-        numero=""
-        statut={STATUT_DOSSIER.BROUILLON}
-        updatedAtLabel={null}
-        progress={{ completed, total: VOLETS_DOSSIER.length }}
-      />
-      <Outlet />
+      {/* Le fond de page de la maquette : le cadre blanc du volet s'en détache. */}
+      <div className="bg-surface-page flex-1">
+        {/* Numéro, horodatage : en attendant l'API. */}
+        <DossierHeader
+          title="Démission-reconversion"
+          subtitle="Projet de formation"
+          numero=""
+          statut={STATUT_DOSSIER.BROUILLON}
+          updatedAtLabel={null}
+          progress={{ completed, total: VOLETS_DOSSIER.length }}
+        />
+        <Outlet />
+      </div>
     </DossierVoletsContext>
   );
 }

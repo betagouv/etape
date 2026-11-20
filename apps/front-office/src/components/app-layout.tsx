@@ -7,7 +7,8 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen flex-col">
       <Topbar />
-      <main className="flex-1">
+      {/* En colonne : un écran qui a son propre fond l'étire jusqu'au bas de la fenêtre. */}
+      <main className="flex flex-1 flex-col">
         <Outlet />
       </main>
     </div>
