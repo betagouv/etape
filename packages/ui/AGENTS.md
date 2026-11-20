@@ -30,7 +30,7 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 - `src/styles/globals.css` — **les tokens** : la seule source de couleur du dépôt.
 - `src/lib/utils.ts` (`cn`), `src/lib/focus.ts`, `src/lib/keys.ts` (`KEY`, les touches du clavier), `src/lib/join-ids.ts` (`joinIds`, les `id` d'un `aria-describedby`), `src/lib/option-value.ts` (`isOptionValue`, une chaîne ramenée au type des valeurs proposées), `src/lib/dragged-files.ts` (`hasDraggedFiles`, ce qu'on glisse contient-il des fichiers).
 - `src/lib/remote-search.ts` — le contrat de `remote-search-field.tsx` (états `SEARCH_STATUS`, état de la recherche, textes) : l'app calcule l'état, le composant l'affiche.
-- `src/hooks/` — `use-listbox-navigation.ts` : flèches, Entrée et Échap d'une liste d'options, le comportement qui va avec les parties de `combobox.tsx` ; `use-entry-mode.ts` : le passage d'un mode de saisie à l'autre (recherche ou saisie manuelle) autour de `remote-search-field.tsx` ; `use-file-upload.ts` : le contexte que lisent les parties de `file-upload.tsx`. Import : `@etape/ui/hooks/<nom>`.
+- `src/hooks/` — `use-listbox-navigation.ts` : flèches, Entrée et Échap d'une liste d'options, le comportement qui va avec les parties de `combobox.tsx` ; `use-entry-mode.ts` : le passage d'un mode de saisie à l'autre (recherche ou saisie manuelle) autour de `remote-search-field.tsx` ; `use-file-upload.ts` : le contexte que lisent les parties de `file-upload.tsx` ; `use-focus-leave.ts` : prévenir quand le focus quitte un conteneur pour de bon, portails compris. Import : `@etape/ui/hooks/<nom>`.
 - `components.json` — configuration shadcn.
 
 ## Conventions

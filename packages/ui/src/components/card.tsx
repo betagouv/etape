@@ -14,8 +14,12 @@ const cardVariants = cva("flex flex-col py-6", {
       /** Récapitulatif dans un formulaire, `front-office-form-card` de la maquette FRONT-OFFICE. */
       secondary:
         "bg-secondary text-card-foreground gap-3 rounded-xl border px-4 py-3 [&_[data-slot=card-title]]:text-primary [&_[data-slot=card-title]]:text-base [&_[data-slot=card-title]]:leading-6",
-      /** Carte de saisie dans un formulaire (maquette FRONT-OFFICE, « Démarche 1 ») : un cadre fin, sans fond. */
-      form: "text-card-foreground gap-4 rounded-md border px-3 py-3 [&_[data-slot=card-title]]:text-primary [&_[data-slot=card-title]]:text-sm [&_[data-slot=card-title]]:leading-5 [&_[data-slot=card-title]]:font-medium [&_[data-slot=card-description]]:leading-5",
+      /**
+       * Carte de saisie dans un formulaire (maquette FRONT-OFFICE, « Démarche 1 ») : un cadre fin,
+       * sans fond. `data-highlighted` la fait ressortir quand elle vient d'apparaître
+       * (« Démarche 2 - Highlight ») : bordure `primary` et halo de 2 px.
+       */
+      form: "text-card-foreground data-[highlighted=true]:border-primary data-[highlighted=true]:bg-card data-[highlighted=true]:shadow-primary gap-4 rounded-md border px-3 py-3 data-[highlighted=true]:shadow-[0_0_2px] [&_[data-slot=card-description]]:leading-5 [&_[data-slot=card-title]]:text-primary [&_[data-slot=card-title]]:text-sm [&_[data-slot=card-title]]:leading-5 [&_[data-slot=card-title]]:font-medium",
       // Les enfants passent sur fond `primary` : le `muted-foreground` de
       // `CardDescription` y tomberait à 2:1, le filet `border` y trancherait.
       primary:
