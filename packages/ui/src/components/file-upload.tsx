@@ -243,6 +243,9 @@ function FileUploadTrigger({ label, hint, dropLabel, ref, className }: FileUploa
           type="button"
           variant="outline"
           aria-describedby={descriptionId}
+          // Le clic ne prend pas le focus au champ en cours : sa sortie le contrôlerait, son erreur
+          // déplacerait le bouton et le clic serait perdu.
+          onMouseDown={(event) => event.preventDefault()}
           onClick={() => inputRef.current?.click()}
         >
           <UploadIcon aria-hidden="true" className="size-5" />

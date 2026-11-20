@@ -136,6 +136,15 @@ describe("FileUpload", () => {
     expect(click).toHaveBeenCalledOnce();
   });
 
+  it("ne prend pas le focus au champ en cours quand on clique le bouton", () => {
+    render(<Justificatifs />);
+
+    // `fireEvent` rend faux quand l'événement a été annulé.
+    expect(fireEvent.mouseDown(screen.getByRole("button", { name: "Ajouter un fichier" }))).toBe(
+      false,
+    );
+  });
+
   it("invite à relâcher pendant un glisser-déposer de fichiers, sans démonter le bouton", () => {
     render(<Justificatifs />);
 
