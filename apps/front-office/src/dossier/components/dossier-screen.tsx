@@ -1,5 +1,7 @@
 import { Outlet } from "@tanstack/react-router";
 
+import { Surface } from "@etape/ui/components/surface";
+
 import { computeDossierProgress } from "../domain/progress";
 import { STATUT_DOSSIER } from "../domain/statut-dossier";
 import { VOLET_ID } from "../domain/volet-id";
@@ -26,8 +28,7 @@ export function DossierScreen() {
     <DossierVoletsContext
       value={{ informations, situationProfessionnelle, futurMetier, voletProgress }}
     >
-      {/* Le fond de page de la maquette : le cadre blanc du volet s'en détache. */}
-      <div className="bg-surface-page flex-1">
+      <Surface surface="page" className="flex-1">
         {/* Numéro, horodatage : en attendant l'API. */}
         <DossierHeader
           title="Démission-reconversion"
@@ -38,7 +39,7 @@ export function DossierScreen() {
           progress={{ completed, total: VOLETS_DOSSIER.length }}
         />
         <Outlet />
-      </div>
+      </Surface>
     </DossierVoletsContext>
   );
 }
