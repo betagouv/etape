@@ -1,6 +1,5 @@
-import * as React from "react";
-
 import { Button } from "@etape/ui/components/button";
+import { keepFocus } from "@etape/ui/lib/keep-focus";
 import { cn } from "@etape/ui/lib/utils";
 
 /** Le bouton qui abandonne la saisie de la carte. */
@@ -22,19 +21,14 @@ interface FormCardActionsProps {
   className?: string;
 }
 
-// Le clic ne prend pas le focus au champ en cours : sa sortie le contrôlerait, son erreur
-// apparaîtrait ou disparaîtrait, le bouton se déplacerait et le clic serait perdu.
-function keepFocus(event: React.MouseEvent): void {
-  event.preventDefault();
-}
-
 /**
  * Les boutons du bas d'une carte de saisie (`Card` en variante `form`) : annuler, s'il y a
  * lieu, et valider (maquette FRONT-OFFICE, « Démarche 1 » et « Démarche 2 »).
  *
  * Grisé tant que la saisie est incomplète, le bouton de validation reste atteignable et
- * cliquable : `onValidate` montre alors ce qui manque. `px-4` : les 16 px de la maquette, que
- * la taille `form` ne donne qu'avec une icône.
+ * cliquable : `onValidate` montre alors ce qui manque. Un clic ne prend pas le focus au champ
+ * en cours (`keepFocus`). `px-4` : les 16 px de la maquette, que la taille `form` ne donne
+ * qu'avec une icône.
  */
 function FormCardActions({
   validateLabel,

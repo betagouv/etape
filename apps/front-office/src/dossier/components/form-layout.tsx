@@ -5,6 +5,7 @@ import { Card } from "@etape/ui/components/card";
 import { Container } from "@etape/ui/components/container";
 import { SectionHeader } from "@etape/ui/components/section";
 import { Separator } from "@etape/ui/components/separator";
+import { keepFocus } from "@etape/ui/lib/keep-focus";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
 import type { VoletProgress } from "../domain/statut-volet";
@@ -50,10 +51,7 @@ export function FormLayout({
             subtext={current.description}
           />
           {children}
-          {/*
-            Sous un formulaire, le clic ne prend pas le focus au champ en cours : sa sortie le
-            contrôlerait, son erreur déplacerait ces boutons et le clic serait perdu.
-          */}
+          {/* Sous un formulaire, le clic ne prend pas le focus au champ en cours (`keepFocus`). */}
           <div className="flex justify-end border-t pt-5">
             {previous && (
               <Button
@@ -61,7 +59,7 @@ export function FormLayout({
                 variant="secondary"
                 size="lg"
                 className="mr-auto"
-                onMouseDown={(event) => event.preventDefault()}
+                onMouseDown={keepFocus}
               >
                 <VoletLink voletId={previous.id}>
                   <ArrowLeftIcon aria-hidden="true" />
@@ -71,12 +69,7 @@ export function FormLayout({
             )}
             {next &&
               (formId ? (
-                <Button
-                  type="submit"
-                  form={formId}
-                  size="lg"
-                  onMouseDown={(event) => event.preventDefault()}
-                >
+                <Button type="submit" form={formId} size="lg" onMouseDown={keepFocus}>
                   Étape suivante
                   <ArrowRightIcon aria-hidden="true" />
                 </Button>

@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@etape/ui/components/alert"
 import { Button } from "@etape/ui/components/button";
 import { FileUploadContext, useFileUpload } from "@etape/ui/hooks/use-file-upload";
 import { hasDraggedFiles } from "@etape/ui/lib/dragged-files";
+import { keepFocus } from "@etape/ui/lib/keep-focus";
 import { cn } from "@etape/ui/lib/utils";
 
 /*
@@ -243,9 +244,7 @@ function FileUploadTrigger({ label, hint, dropLabel, ref, className }: FileUploa
           type="button"
           variant="outline"
           aria-describedby={descriptionId}
-          // Le clic ne prend pas le focus au champ en cours : sa sortie le contrôlerait, son erreur
-          // déplacerait le bouton et le clic serait perdu.
-          onMouseDown={(event) => event.preventDefault()}
+          onMouseDown={keepFocus}
           onClick={() => inputRef.current?.click()}
         >
           <UploadIcon aria-hidden="true" className="size-5" />

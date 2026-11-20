@@ -13,6 +13,7 @@ import { FieldDescription, FieldError, FieldLegend, FieldSet } from "@etape/ui/c
 import { Label } from "@etape/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@etape/ui/components/radio-group";
 import { joinIds } from "@etape/ui/lib/join-ids";
+import { formatOptionId } from "@etape/ui/lib/option-id";
 import { isOptionValue } from "@etape/ui/lib/option-value";
 
 /** Une valeur que le champ `TName` peut prendre, parmi celles qu'on propose en options. */
@@ -93,13 +94,13 @@ function FormRadioGroup<TFieldValues extends FieldValues, TName extends FieldPat
               <div key={value} className="flex min-h-6 items-center gap-2">
                 <RadioGroupItem
                   value={value}
-                  id={`${name}-${value}`}
+                  id={formatOptionId(name, value)}
                   aria-invalid={fieldState.invalid}
                   // Un seul élément peut porter le ref du champ : le premier bouton radio.
                   ref={index === 0 ? field.ref : undefined}
                 />
                 {/* Texte courant, comme l'option d'un bouton radio du kit : seule la légende est en gras. */}
-                <Label htmlFor={`${name}-${value}`} className="font-normal">
+                <Label htmlFor={formatOptionId(name, value)} className="font-normal">
                   {optionLabel}
                 </Label>
               </div>
