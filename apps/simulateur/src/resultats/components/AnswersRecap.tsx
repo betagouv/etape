@@ -38,7 +38,7 @@ export function AnswersRecap({ entries, onEdit }: AnswersRecapProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon-responsive-sm"
+                  size="icon"
                   onClick={() => onEdit(entry.questionId)}
                   aria-label={`Modifier : ${entry.question}`}
                   {...analyticsEventProps(

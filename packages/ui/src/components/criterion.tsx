@@ -18,7 +18,7 @@ const criterionMarkVariants = cva("flex shrink-0 rounded-full p-1 [&_svg]:size-2
   variants: {
     status: {
       [CRITERION_STATUS.MET]: "bg-success text-success-foreground",
-      [CRITERION_STATUS.UNMET]: "bg-divider text-muted-foreground",
+      [CRITERION_STATUS.UNMET]: "bg-border text-muted-foreground",
     },
   },
 });

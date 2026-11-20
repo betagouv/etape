@@ -17,10 +17,10 @@ export default function Error({ unstable_retry }: { unstable_retry: () => void }
           les réponses déjà saisies.
         </p>
         <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-          <Button type="button" size="xl" onClick={unstable_retry}>
+          <Button type="button" onClick={unstable_retry}>
             Réessayer
           </Button>
-          <Button asChild variant="outline-primary" size="xl">
+          <Button asChild variant="outline">
             <Link href="/">Retour à l’accueil</Link>
           </Button>
         </div>

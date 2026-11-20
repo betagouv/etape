@@ -35,7 +35,7 @@ export function Audience() {
         </h2>
         <p className="text-body-lg">{audience.subtext}</p>
 
-        <Button asChild variant="inverse" size="xl" className="w-full sm:w-auto">
+        <Button asChild variant="secondary" className="w-full sm:w-auto">
           <a
             href={SIMULATEUR_URL}
             {...analyticsEventProps(

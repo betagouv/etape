@@ -12,7 +12,7 @@ Règles de fond : `docs/conventions/react.md` section 4. Ce skill est la procéd
 Dans l'ordre, s'arrêter dès qu'une réponse suffit :
 
 1. `packages/ui/src/components/` — le composant existe peut-être déjà (23 composants y vivent).
-2. Ses variantes — `cva` déclare souvent déjà le cas voulu : `button.tsx` a 8 variantes et 9 tailles, `card.tsx`, `section.tsx`, `container.tsx`, `badge.tsx`, `tabs.tsx` en ont aussi.
+2. Ses variantes — `cva` déclare souvent déjà le cas voulu : `button.tsx` a 7 variantes et 7 tailles, `card.tsx`, `section.tsx`, `container.tsx`, `badge.tsx`, `tabs.tsx` en ont aussi.
 3. Les tokens de `packages/ui/src/styles/globals.css` — pour un besoin de couleur, d'échelle typographique ou de rayon.
 4. Radix, qui fournit le comportement et l'accessibilité des composants complexes.
 
@@ -33,7 +33,7 @@ Adapter ensuite la source aux conventions du dépôt, sans la recopier telle que
 
 ## 4. Étendre par variante, jamais par `className`
 
-Un besoin d'apparence non couvert s'ajoute **dans le composant**, comme variante `cva`, avec un commentaire qui dit d'où elle vient (maquette, besoin métier) — c'est ce que font déjà `inverse` et `outline-primary` dans `button.tsx`.
+Un besoin d'apparence non couvert s'ajoute **dans le composant**, comme variante `cva`, avec un commentaire qui dit d'où elle vient (maquette, besoin métier) — c’est ce que fait déjà la taille `responsive` de `button.tsx`.
 
 Ce qui est interdit : passer depuis une app un `className` qui change couleur, fond, bordure, rayon ou hauteur. Le `className` d'une app ne fait que de la mise en page.
 
