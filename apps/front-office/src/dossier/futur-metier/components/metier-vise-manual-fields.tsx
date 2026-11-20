@@ -53,7 +53,14 @@ export function MetierViseManualFields({
         />
       </div>
 
-      <Button type="button" variant="link" size="lg" className="self-start" onClick={onSearch}>
+      <Button
+        type="button"
+        variant="link"
+        size="lg"
+        multiline
+        className="self-start"
+        onClick={onSearch}
+      >
         <SearchIcon aria-hidden="true" />
         Rechercher le métier dans le référentiel ROME de France Travail
       </Button>
