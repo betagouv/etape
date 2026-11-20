@@ -50,9 +50,19 @@ export function FormLayout({
             subtext={current.description}
           />
           {children}
+          {/*
+            Sous un formulaire, le clic ne prend pas le focus au champ en cours : sa sortie le
+            contrôlerait, son erreur déplacerait ces boutons et le clic serait perdu.
+          */}
           <div className="flex justify-end border-t pt-5">
             {previous && (
-              <Button asChild variant="secondary" size="lg" className="mr-auto">
+              <Button
+                asChild
+                variant="secondary"
+                size="lg"
+                className="mr-auto"
+                onMouseDown={(event) => event.preventDefault()}
+              >
                 <VoletLink voletId={previous.id}>
                   <ArrowLeftIcon aria-hidden="true" />
                   Étape précédente
@@ -61,7 +71,12 @@ export function FormLayout({
             )}
             {next &&
               (formId ? (
-                <Button type="submit" form={formId} size="lg">
+                <Button
+                  type="submit"
+                  form={formId}
+                  size="lg"
+                  onMouseDown={(event) => event.preventDefault()}
+                >
                   Étape suivante
                   <ArrowRightIcon aria-hidden="true" />
                 </Button>
