@@ -131,6 +131,73 @@ describe("useDemarches", () => {
     expect(result.current.form.formState.errors.apportDemarche).toBeUndefined();
   });
 
+  it("rouvre une démarche validée en saisie, préremplie, à son rang", () => {
+    const [salon, autre] = createDemarches(2);
+    const result = renderDemarches({ demarches: [salon, autre], hasCurrentDemarche: false });
+
+    act(() => result.current.editDemarche(salon));
+
+    expect(result.current.hasCurrentDemarche).toBe(true);
+    expect(result.current.currentDemarcheId).toBe(salon.id);
+    expect(result.current.currentDemarcheIndex).toBe(0);
+    expect(result.current.canCancel).toBe(true);
+    expect(result.current.isHighlighted).toBe(false);
+    expect(result.current.form.getValues()).toMatchObject({
+      typeDemarche: TYPE_DEMARCHE.SALON,
+      apportDemarche: "J’ai rencontré trois artisans.",
+    });
+  });
+
+  it("valide une modification : la démarche est mise à jour à sa place, sans en ajouter", async () => {
+    const [salon, autre] = createDemarches(2);
+    const result = renderDemarches({ demarches: [salon, autre], hasCurrentDemarche: false });
+    act(() => result.current.editDemarche(salon));
+    act(() => result.current.form.setValue("apportDemarche", "J’en ai rencontré cinq."));
+
+    await act(() => result.current.validateDemarche());
+
+    expect(result.current.demarches).toEqual([
+      { ...salon, apportDemarche: "J’en ai rencontré cinq." },
+      autre,
+    ]);
+    expect(result.current.hasCurrentDemarche).toBe(false);
+    expect(result.current.currentDemarcheId).toBeNull();
+    expect(result.current.announcement).toBe("Démarche 1 modifiée.");
+    expect(result.current.form.getValues("apportDemarche")).toBe("");
+  });
+
+  it("annule une modification : la démarche reste telle qu'elle était", () => {
+    const demarches = createDemarches(2);
+    const result = renderDemarches({ demarches, hasCurrentDemarche: false });
+    act(() => result.current.editDemarche(demarches[1]));
+    act(() => result.current.form.setValue("apportDemarche", "Autre chose."));
+
+    act(() => result.current.cancelDemarche());
+
+    expect(result.current.demarches).toEqual(demarches);
+    expect(result.current.hasCurrentDemarche).toBe(false);
+    expect(result.current.currentDemarcheId).toBeNull();
+    expect(result.current.announcement).toBe("Modification de la démarche 2 annulée.");
+  });
+
+  it("ne rouvre pas une démarche tant qu'une autre saisie est ouverte, et dit quoi faire d'abord", () => {
+    const [salon] = createDemarches(1);
+    const result = renderDemarches({ demarches: [salon], ...IMMERSION });
+
+    act(() => result.current.editDemarche(salon));
+
+    expect(result.current.currentDemarcheId).toBeNull();
+    expect(result.current.blockedDemarcheId).toBe(salon.id);
+    expect(result.current.announcement).toBe(
+      "Validez ou annulez la démarche en cours avant de modifier celle-ci.",
+    );
+    // La saisie en cours n'a pas bougé.
+    expect(result.current.form.getValues("typeDemarche")).toBe(TYPE_DEMARCHE.IMMERSION);
+
+    act(() => result.current.cancelDemarche());
+    expect(result.current.blockedDemarcheId).toBeNull();
+  });
+
   it("n'ouvre plus de saisie quand le nombre maximal de démarches est atteint", () => {
     const result = renderDemarches({
       demarches: createDemarches(NOMBRE_MAX_DEMARCHES),
