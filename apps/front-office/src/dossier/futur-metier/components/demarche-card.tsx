@@ -7,6 +7,7 @@ import {
   CardDetailLabel,
   CardDetails,
   CardDetailValue,
+  CardTitle,
 } from "@etape/ui/components/card";
 import { EditRemoveActions } from "@etape/ui/components/edit-remove-actions";
 import { FileUploadList } from "@etape/ui/components/file-upload";
@@ -59,9 +60,11 @@ export function DemarcheCard({
     <Card variant="secondary" role="group" aria-labelledby={titleId}>
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4">
-          <h4 id={titleId} className="text-primary min-w-0 text-sm leading-5 font-medium">
-            <DemarcheTitle index={index} demarche={demarche} />
-          </h4>
+          <CardTitle variant="label" asChild>
+            <h4 id={titleId} className="min-w-0">
+              <DemarcheTitle index={index} demarche={demarche} />
+            </h4>
+          </CardTitle>
           {/* Grisé pendant une autre saisie, « Modifier » reste cliquable : un clic dit quoi faire d'abord. */}
           <EditRemoveActions
             edit={{
@@ -84,13 +87,13 @@ export function DemarcheCard({
       </div>
       <Separator />
       <CardDetails>
-        <CardDetail className="flex-col items-stretch gap-2">
-          <CardDetailLabel className="font-medium">
+        <CardDetail orientation="vertical">
+          <CardDetailLabel>
             <FileTextIcon aria-hidden="true" />
             Ce que la démarche m’a apporté
           </CardDetailLabel>
           {/* Les retours à la ligne de la saisie sont gardés. */}
-          <CardDetailValue className="text-left break-words whitespace-pre-line">
+          <CardDetailValue className="break-words whitespace-pre-line">
             {apportDemarche}
           </CardDetailValue>
         </CardDetail>
@@ -99,12 +102,12 @@ export function DemarcheCard({
         <>
           <Separator />
           <CardDetails>
-            <CardDetail className="flex-col items-stretch gap-2">
-              <CardDetailLabel className="font-medium">
+            <CardDetail orientation="vertical">
+              <CardDetailLabel>
                 <PaperclipIcon aria-hidden="true" />
                 Justificatifs
               </CardDetailLabel>
-              <CardDetailValue className="text-left">
+              <CardDetailValue>
                 {/* 8 px entre deux fichiers dans cette carte (maquette 12), 12 dans le dépôt. */}
                 <FileUploadList className="gap-2">
                   {piecesJustificatives.map((piece) => (

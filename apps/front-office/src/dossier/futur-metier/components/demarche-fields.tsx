@@ -52,7 +52,7 @@ export function DemarcheFields({
       {...focusLeave}
     >
       <div className="flex flex-col gap-2">
-        <CardTitle asChild>
+        <CardTitle variant="label" asChild>
           <h4 id={titleId}>{title}</h4>
         </CardTitle>
         <CardDescription>

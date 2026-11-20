@@ -9,6 +9,7 @@ import {
   CardDetails,
   CardDetailValue,
   CardTitle,
+  CardTitleValue,
 } from "@etape/ui/components/card";
 
 afterEach(cleanup);
@@ -58,5 +59,49 @@ describe("Card", () => {
 
     expect(screen.getByRole("term").textContent).toBe("SIRET");
     expect(screen.getByRole("definition").textContent).toBe("652 014 051 00732");
+  });
+
+  it("porte dans le titre lui-même la taille et la couleur de son type de carte", () => {
+    render(
+      <Card variant="secondary">
+        <CardTitle variant="label" asChild>
+          <h4>
+            Démarche 1 : <CardTitleValue>Salon</CardTitleValue>
+          </h4>
+        </CardTitle>
+        <CardTitle variant="summary">CARREFOUR</CardTitle>
+        <CardTitle>Par défaut</CardTitle>
+      </Card>,
+    );
+
+    const label = screen.getByRole("heading", { level: 4 });
+    expect(label.className).toContain("text-sm");
+    expect(label.className).toContain("font-medium");
+    expect(screen.getByText("Salon").getAttribute("data-slot")).toBe("card-title-value");
+    expect(screen.getByText("CARREFOUR").className).toContain("text-base");
+    expect(screen.getByText("Par défaut").className).toBe("leading-none font-semibold");
+  });
+
+  it("pose le libellé d'une ligne au-dessus de sa valeur, à la demande", () => {
+    render(
+      <CardDetails>
+        <CardDetail orientation="vertical">
+          <CardDetailLabel>Apport</CardDetailLabel>
+          <CardDetailValue>Un texte long.</CardDetailValue>
+        </CardDetail>
+        <CardDetail>
+          <CardDetailLabel>SIRET</CardDetailLabel>
+          <CardDetailValue>652 014 051 00732</CardDetailValue>
+        </CardDetail>
+      </CardDetails>,
+    );
+
+    const [vertical, horizontal] = screen
+      .getAllByRole("term")
+      .map((term) => term.closest("[data-slot=card-detail]"));
+    expect(vertical?.getAttribute("data-orientation")).toBe("vertical");
+    expect(vertical?.className).toContain("flex-col");
+    expect(horizontal?.getAttribute("data-orientation")).toBe("horizontal");
+    expect(horizontal?.className).toContain("justify-between");
   });
 });

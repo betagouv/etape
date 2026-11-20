@@ -9,6 +9,7 @@ import {
   FileUploadHeader,
   FileUploadHeading,
   FileUploadItem,
+  FileUploadLine,
   FileUploadList,
   FileUploadTitle,
   FileUploadTrigger,
@@ -205,5 +206,18 @@ describe("FileUpload", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fermer le message sur photo.heic" }));
 
     expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
+  it("cite un fichier sans action, hors d'un dépôt", () => {
+    render(
+      <FileUploadList aria-label="Fichiers de la démarche">
+        <FileUploadLine name="attestation.pdf" />
+      </FileUploadList>,
+    );
+
+    const [line] = screen.getAllByRole("listitem");
+    expect(line?.textContent).toBe("attestation.pdf");
+    expect(line?.querySelector("button")).toBeNull();
+    expect(line?.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 });

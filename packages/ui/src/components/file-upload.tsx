@@ -174,6 +174,25 @@ function FileUploadItem({ className, name, details, children, ...props }: FileUp
   );
 }
 
+/** Ce que reçoit `FileUploadLine` : le nom du fichier cité. */
+interface FileUploadLineProps extends React.ComponentProps<"li"> {
+  name: string;
+}
+
+/** Un fichier simplement cité, sans action : son icône et son nom, dans une `FileUploadList`. */
+function FileUploadLine({ className, name, ...props }: FileUploadLineProps) {
+  return (
+    <li
+      data-slot="file-upload-line"
+      className={cn("text-primary flex items-center gap-1 text-sm leading-5", className)}
+      {...props}
+    >
+      <FileDownIcon aria-hidden="true" className="size-5 shrink-0" />
+      <span className="min-w-0 truncate">{name}</span>
+    </li>
+  );
+}
+
 /** Ce que reçoit `FileUploadError` : le fichier refusé, la raison en enfants et la fermeture de l'alerte. */
 interface FileUploadErrorProps extends Omit<React.ComponentProps<"div">, "title"> {
   /** Le nom du fichier refusé. */
@@ -288,8 +307,15 @@ export {
   FileUploadHeader,
   FileUploadHeading,
   FileUploadItem,
+  FileUploadLine,
   FileUploadList,
   FileUploadTitle,
   FileUploadTrigger,
 };
-export type { FileUploadErrorProps, FileUploadItemProps, FileUploadProps, FileUploadTriggerProps };
+export type {
+  FileUploadErrorProps,
+  FileUploadItemProps,
+  FileUploadLineProps,
+  FileUploadProps,
+  FileUploadTriggerProps,
+};

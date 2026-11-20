@@ -1,7 +1,8 @@
-import { FileDownIcon, Trash2Icon } from "lucide-react";
+import { Trash2Icon } from "lucide-react";
 
-import { Card } from "@etape/ui/components/card";
+import { Card, CardTitle } from "@etape/ui/components/card";
 import { ConfirmationDialog } from "@etape/ui/components/confirmation-dialog";
+import { FileUploadLine, FileUploadList } from "@etape/ui/components/file-upload";
 import { Separator } from "@etape/ui/components/separator";
 
 import { formatRemovalMessage, formatRemovalTitle } from "../domain/demarche";
@@ -50,23 +51,19 @@ export function DemarcheRemovalDialog({
         {items.map(({ demarche, index }) => (
           <Card key={demarche.id} variant="secondary" asChild>
             <li>
-              <p className="text-primary text-sm leading-5 font-medium">
-                <DemarcheTitle index={index} demarche={demarche} />
-              </p>
+              <CardTitle variant="label" asChild>
+                <p>
+                  <DemarcheTitle index={index} demarche={demarche} />
+                </p>
+              </CardTitle>
               {demarche.piecesJustificatives.length > 0 && (
                 <>
                   <Separator />
-                  <ul className="flex flex-col gap-3">
+                  <FileUploadList>
                     {demarche.piecesJustificatives.map(({ id, fichier }) => (
-                      <li
-                        key={id}
-                        className="text-primary flex items-center gap-1 text-sm leading-5"
-                      >
-                        <FileDownIcon aria-hidden="true" className="size-5 shrink-0" />
-                        <span className="min-w-0 truncate">{fichier.name}</span>
-                      </li>
+                      <FileUploadLine key={id} name={fichier.name} />
                     ))}
-                  </ul>
+                  </FileUploadList>
                 </>
               )}
             </li>

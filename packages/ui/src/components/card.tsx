@@ -11,15 +11,14 @@ const cardVariants = cva("flex flex-col py-6", {
       muted: "bg-muted text-card-foreground gap-3 rounded-sm lg:gap-4",
       outline: "bg-card text-card-foreground gap-4 rounded-xl border",
       panel: "bg-card text-card-foreground gap-5 rounded-2xl border px-5",
-      /** Récapitulatif dans un formulaire, `front-office-form-card` de la maquette FRONT-OFFICE. */
-      secondary:
-        "bg-secondary text-card-foreground gap-3 rounded-xl border px-4 py-3 [&_[data-slot=card-title]]:text-primary [&_[data-slot=card-title]]:text-base [&_[data-slot=card-title]]:leading-6",
+      /** Récapitulatif dans un formulaire, `front-office-form-card` du kit ; son titre prend la variante de `CardTitle` de son type. */
+      secondary: "bg-secondary text-card-foreground gap-3 rounded-xl border px-4 py-3",
       /**
        * Carte de saisie dans un formulaire (maquette FRONT-OFFICE, « Démarche 1 ») : un cadre fin,
        * sans fond. `data-highlighted` la fait ressortir quand elle vient d'apparaître
        * (« Démarche 2 - Highlight ») : bordure `primary` et halo de 2 px.
        */
-      form: "text-card-foreground data-[highlighted=true]:border-primary data-[highlighted=true]:bg-card data-[highlighted=true]:shadow-primary gap-4 rounded-md border px-3 py-3 data-[highlighted=true]:shadow-[0_0_2px] [&_[data-slot=card-description]]:leading-5 [&_[data-slot=card-title]]:text-primary [&_[data-slot=card-title]]:text-sm [&_[data-slot=card-title]]:leading-5 [&_[data-slot=card-title]]:font-medium",
+      form: "text-card-foreground data-[highlighted=true]:border-primary data-[highlighted=true]:bg-card data-[highlighted=true]:shadow-primary gap-4 rounded-md border px-3 py-3 data-[highlighted=true]:shadow-[0_0_2px] [&_[data-slot=card-description]]:leading-5",
       // Les enfants passent sur fond `primary` : le `muted-foreground` de
       // `CardDescription` y tomberait à 2:1, le filet `border` y trancherait.
       primary:
@@ -65,17 +64,44 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+const cardTitleVariants = cva("", {
+  variants: {
+    variant: {
+      default: "leading-none font-semibold",
+      /** Titre d'un récapitulatif de formulaire (`front-office-form-card` du kit, `Type=compagny & job`) : 16/24, en `primary`. */
+      summary: "text-primary text-base leading-6 font-semibold",
+      /** Titre d'une carte de saisie et d'une démarche validée (`Type=démarche`) : 14/20, graisse 500, en `primary`. */
+      label: "text-primary text-sm leading-5 font-medium",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
 function CardTitle({
   className,
+  variant,
   asChild = false,
   ...props
-}: React.ComponentProps<"div"> & { asChild?: boolean }) {
+}: React.ComponentProps<"div"> & VariantProps<typeof cardTitleVariants> & { asChild?: boolean }) {
   const Comp = asChild ? Slot.Root : "div";
 
   return (
     <Comp
       data-slot="card-title"
-      className={cn("leading-none font-semibold", className)}
+      className={cn(cardTitleVariants({ variant }), className)}
+      {...props}
+    />
+  );
+}
+
+/** Dans un titre `label` : ce qui nomme l'élément, après son libellé (« Démarche 1 : **Salon** »). */
+function CardTitleValue({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="card-title-value"
+      className={cn("text-foreground font-semibold", className)}
       {...props}
     />
   );
@@ -126,12 +152,31 @@ function CardDetails({ className, ...props }: React.ComponentProps<"dl">) {
   );
 }
 
-/** Une ligne de `CardDetails` : le libellé à gauche, la valeur à droite. */
-function CardDetail({ className, ...props }: React.ComponentProps<"div">) {
+const cardDetailVariants = cva("flex", {
+  variants: {
+    orientation: {
+      horizontal: "items-center justify-between gap-4",
+      /** Le libellé au-dessus de sa valeur, pour un texte long ou une liste (`front-office-form-card`, `Type=démarche`). */
+      vertical:
+        "flex-col gap-2 [&>[data-slot=card-detail-label]]:font-medium [&>[data-slot=card-detail-value]]:text-left",
+    },
+  },
+  defaultVariants: {
+    orientation: "horizontal",
+  },
+});
+
+/** Une ligne de `CardDetails` : le libellé à gauche et la valeur à droite, ou l'un au-dessus de l'autre. */
+function CardDetail({
+  className,
+  orientation,
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof cardDetailVariants>) {
   return (
     <div
       data-slot="card-detail"
-      className={cn("flex items-center justify-between gap-4", className)}
+      data-orientation={orientation ?? "horizontal"}
+      className={cn(cardDetailVariants({ orientation }), className)}
       {...props}
     />
   );
@@ -158,6 +203,7 @@ export {
   CardHeader,
   CardFooter,
   CardTitle,
+  CardTitleValue,
   CardAction,
   CardDescription,
   CardContent,
