@@ -1,7 +1,9 @@
 import {
   FORMATS_PIECE_JUSTIFICATIVE_LABEL,
   TAILLE_MAX_PIECE_MO,
+  type PieceJustificative,
 } from "../../domain/piece-justificative";
+import { listFilledFields } from "../../domain/volet-progress";
 
 /** Les types de démarche proposés, dans l'ordre de la liste (transmise le 2026-11-18). */
 export const TYPE_DEMARCHE = {
@@ -55,4 +57,71 @@ export function findDemarcheFields(
 ): readonly DemarcheFieldName[] {
   if (typeDemarche === TYPE_DEMARCHE.AUTRE) return DEMARCHE_FIELDS;
   return DEMARCHE_FIELDS.filter((name) => name !== PRECISION_FIELD);
+}
+
+/** Le nombre de démarches qu'un dossier peut porter (décision du 2026-11-20, à revoir). */
+export const NOMBRE_MAX_DEMARCHES = 5;
+
+/** Sous le bouton d'ajout, quand le maximum est atteint. */
+export const MESSAGE_NOMBRE_MAX_DEMARCHES = `Vous pouvez déclarer ${NOMBRE_MAX_DEMARCHES} démarches au maximum.`;
+
+/** La démarche en cours de saisie, telle que le formulaire la porte. */
+export interface CurrentDemarche {
+  typeDemarche?: TypeDemarche;
+  precisionTypeDemarche: string;
+  apportDemarche: string;
+  piecesJustificatives: PieceJustificative[];
+}
+
+/** Une démarche validée. */
+export interface Demarche extends CurrentDemarche {
+  id: string;
+  typeDemarche: TypeDemarche;
+}
+
+/** « Démarche 1 » : le titre de la carte, d'après le rang de la démarche dans la liste. */
+export function formatDemarcheLabel(index: number): string {
+  return `Démarche ${index + 1}`;
+}
+
+/** Ce qui nomme une démarche validée : le libellé de son type, ou sa précision pour « Autre » (maquette 12). */
+export function findDemarcheIntitule({
+  typeDemarche,
+  precisionTypeDemarche,
+}: Pick<Demarche, "typeDemarche" | "precisionTypeDemarche">): string {
+  return typeDemarche === TYPE_DEMARCHE.AUTRE
+    ? precisionTypeDemarche
+    : TYPE_DEMARCHE_LABEL[typeDemarche];
+}
+
+/** Vrai quand tous les champs exigés de la démarche en cours sont remplis : le bouton de validation n'est plus grisé. */
+export function isDemarcheFilled(values: Pick<CurrentDemarche, DemarcheFieldName>): boolean {
+  const fields = findDemarcheFields(values.typeDemarche);
+  return listFilledFields(values, fields).length === fields.length;
+}
+
+/**
+ * La démarche validée à partir de la saisie en cours ; rien tant qu'aucun type n'est choisi.
+ * La précision ne se garde que pour « Autre » : celle d'un type quitté ne suit pas.
+ */
+export function createDemarche(id: string, current: CurrentDemarche): Demarche | undefined {
+  const { typeDemarche, precisionTypeDemarche, apportDemarche, piecesJustificatives } = current;
+  if (typeDemarche === undefined) return undefined;
+  return {
+    id,
+    typeDemarche,
+    precisionTypeDemarche: typeDemarche === TYPE_DEMARCHE.AUTRE ? precisionTypeDemarche.trim() : "",
+    apportDemarche: apportDemarche.trim(),
+    piecesJustificatives,
+  };
+}
+
+/** Vrai tant que le dossier peut recevoir une démarche de plus. */
+export function canAddDemarche(demarcheCount: number): boolean {
+  return demarcheCount < NOMBRE_MAX_DEMARCHES;
+}
+
+/** Pour la région `role="status"` : « Démarche 1 enregistrée. » */
+export function formatDemarcheAnnouncement(index: number): string {
+  return `${formatDemarcheLabel(index)} enregistrée.`;
 }

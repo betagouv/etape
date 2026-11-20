@@ -43,6 +43,12 @@ export const REQUIRED_METIER_VISE_FIELDS: Record<
   [METIER_VISE_ENTRY_MODE.MANUAL]: ["intituleMetierVise"],
 };
 
+const pieceJustificativeSchema = z.object({
+  id: z.string(),
+  fichier: z.instanceof(File),
+  dateDepot: z.date(),
+});
+
 const baseFuturMetierSchema = z.object({
   metierViseEntryMode: z.enum(METIER_VISE_ENTRY_MODE),
   metierVise: AppellationRomeSchema.nullable(),
@@ -74,8 +80,18 @@ const baseFuturMetierSchema = z.object({
   precisionTypeDemarche: z.string().trim(),
   apportDemarche: z.string().trim().max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
   // Facultatives ; format et taille sont contrôlés à l'ajout (`checkFichiers`).
-  piecesJustificatives: z.array(
-    z.object({ id: z.string(), fichier: z.instanceof(File), dateDepot: z.date() }),
+  piecesJustificatives: z.array(pieceJustificativeSchema),
+  // Vrai tant que la carte de saisie est ouverte : elle se referme sur chaque démarche validée.
+  hasCurrentDemarche: z.boolean(),
+  // Les démarches validées, contrôlées à leur validation (`createDemarche`).
+  demarches: z.array(
+    z.object({
+      id: z.string(),
+      typeDemarche: z.enum(TYPE_DEMARCHE),
+      precisionTypeDemarche: z.string(),
+      apportDemarche: z.string(),
+      piecesJustificatives: z.array(pieceJustificativeSchema),
+    }),
   ),
 });
 
@@ -88,15 +104,16 @@ const refinedFieldsSchema = baseFuturMetierSchema.pick({
   typeDemarche: true,
   precisionTypeDemarche: true,
   apportDemarche: true,
+  hasCurrentDemarche: true,
 });
 
 /**
  * Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours, et ceux de
- * la démarche après un « oui », sont exigés.
+ * la démarche en cours de saisie après un « oui », sont exigés.
  */
 export const futurMetierSchema = baseFuturMetierSchema.superRefine(
   (data, ctx) => {
-    if (data.demarcheDecouverte === OUI_NON.OUI)
+    if (data.demarcheDecouverte === OUI_NON.OUI && data.hasCurrentDemarche)
       requireFilled(ctx, data, findDemarcheFields(data.typeDemarche), REQUIRED_MESSAGES);
 
     requireFilled(
@@ -131,7 +148,7 @@ export type FuturMetierFieldName = keyof FuturMetierFormData;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
 export const FUTUR_METIER_FIELD_LABEL: Record<
-  Exclude<FuturMetierFieldName, "metierViseEntryMode">,
+  Exclude<FuturMetierFieldName, "metierViseEntryMode" | "hasCurrentDemarche" | "demarches">,
   string
 > = {
   metierVise: "Quel métier visez-vous ?",

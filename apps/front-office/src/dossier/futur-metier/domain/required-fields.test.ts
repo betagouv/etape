@@ -18,6 +18,8 @@ const values: FuturMetierFormData = {
   precisionTypeDemarche: "",
   apportDemarche: "",
   piecesJustificatives: [],
+  hasCurrentDemarche: true,
+  demarches: [],
 };
 
 /** Exigés quel que soit le mode de saisie : les trois zones de texte, puis la question sur les démarches. */
@@ -61,6 +63,15 @@ describe("findRequiredFields", () => {
     expect(required.allFields).toEqual(expected);
     expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual(expected);
     expect(required.filledFields).toEqual(ANSWERED_FIELDS);
+  });
+
+  it("n'exige plus rien de la démarche une fois sa carte de saisie fermée (maquette 12)", () => {
+    const required = findRequiredFields({
+      ...values,
+      demarcheDecouverte: OUI_NON.OUI,
+      hasCurrentDemarche: false,
+    });
+    expect(required.allFields).toEqual(["metierVise", ...COMMON_FIELDS]);
   });
 
   it("exige la précision pour « Autre », et compte les champs de la démarche remplis", () => {

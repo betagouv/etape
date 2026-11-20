@@ -17,12 +17,28 @@ const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
   "demarcheDecouverte",
 ];
 
-/** Les champs de la démarche en cours de saisie ne sont demandés qu'après un « oui » (maquettes 09 et 10). */
-function findOpenDemarcheFields(
-  demarcheDecouverte: OuiNon | undefined,
-  typeDemarche: TypeDemarche | undefined,
-): readonly FuturMetierFieldName[] {
-  return demarcheDecouverte === OUI_NON.OUI ? findDemarcheFields(typeDemarche) : [];
+/** Ce qui décide des champs de la section : le mode de saisie du métier, et où en sont les démarches. */
+export interface SectionFieldsAnswers {
+  metierViseEntryMode: MetierViseEntryMode;
+  /** Absente tant que la question n'a pas de réponse. */
+  demarcheDecouverte?: OuiNon;
+  typeDemarche?: TypeDemarche;
+  /** Vrai tant que la carte de saisie d'une démarche est ouverte. */
+  hasCurrentDemarche: boolean;
+}
+
+/**
+ * Les champs de la démarche en cours de saisie ne sont demandés qu'après un « oui », et tant que
+ * sa carte est ouverte : une démarche validée ne compte plus (maquettes 09, 10 et 12).
+ */
+function findOpenDemarcheFields({
+  demarcheDecouverte,
+  typeDemarche,
+  hasCurrentDemarche,
+}: SectionFieldsAnswers): readonly FuturMetierFieldName[] {
+  return demarcheDecouverte === OUI_NON.OUI && hasCurrentDemarche
+    ? findDemarcheFields(typeDemarche)
+    : [];
 }
 
 /**
@@ -31,30 +47,26 @@ function findOpenDemarcheFields(
  * (maquettes 01, 07, 09 et 10).
  */
 export function findSectionFields(
-  mode: MetierViseEntryMode,
-  demarcheDecouverte: OuiNon | undefined,
-  typeDemarche: TypeDemarche | undefined,
+  answers: SectionFieldsAnswers,
 ): Record<FuturMetierSection, readonly FuturMetierFieldName[]> {
   return {
     [FUTUR_METIER_SECTION.METIER_VISE]: [
-      ...REQUIRED_METIER_VISE_FIELDS[mode],
+      ...REQUIRED_METIER_VISE_FIELDS[answers.metierViseEntryMode],
       ...ALWAYS_REQUIRED_FIELDS,
-      ...findOpenDemarcheFields(demarcheDecouverte, typeDemarche),
+      ...findOpenDemarcheFields(answers),
     ],
   };
 }
 
 /** Le code ROME, facultatif, est contrôlé : faux, il compte parmi les erreurs du volet. */
 export function findSectionValidatedFields(
-  mode: MetierViseEntryMode,
-  demarcheDecouverte: OuiNon | undefined,
-  typeDemarche: TypeDemarche | undefined,
+  answers: SectionFieldsAnswers,
 ): Record<FuturMetierSection, readonly FuturMetierFieldName[]> {
   return {
     [FUTUR_METIER_SECTION.METIER_VISE]: [
-      ...METIER_VISE_FIELDS[mode],
+      ...METIER_VISE_FIELDS[answers.metierViseEntryMode],
       ...ALWAYS_REQUIRED_FIELDS,
-      ...findOpenDemarcheFields(demarcheDecouverte, typeDemarche),
+      ...findOpenDemarcheFields(answers),
     ],
   };
 }

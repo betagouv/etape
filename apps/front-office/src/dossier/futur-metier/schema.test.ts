@@ -21,6 +21,8 @@ const EMPTY_FORM = {
   precisionTypeDemarche: "",
   apportDemarche: "",
   piecesJustificatives: [],
+  hasCurrentDemarche: true,
+  demarches: [],
 };
 
 /** Les trois zones de texte remplies et la question sur les démarches répondue : il ne manque que le métier visé. */
@@ -174,6 +176,27 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
 
   it("n'exige rien de la démarche après un « non »", () => {
     expect(futurMetierSchema.safeParse(MANUAL_FORM).success).toBe(true);
+  });
+
+  it("n'exige rien de la démarche en cours quand sa carte de saisie est fermée", () => {
+    const data = { ...OPEN_DEMARCHE_FORM, hasCurrentDemarche: false };
+    expect(futurMetierSchema.safeParse(data).success).toBe(true);
+  });
+
+  it("garde les démarches validées telles quelles", () => {
+    const demarche = {
+      id: "a",
+      typeDemarche: TYPE_DEMARCHE.SALON,
+      precisionTypeDemarche: "",
+      apportDemarche: "J’ai rencontré trois artisans.",
+      piecesJustificatives: [],
+    };
+    const result = futurMetierSchema.safeParse({
+      ...OPEN_DEMARCHE_FORM,
+      hasCurrentDemarche: false,
+      demarches: [demarche],
+    });
+    expect(result.data?.demarches).toEqual([demarche]);
   });
 
   it("exige le type et l'apport après un « oui », pas la précision", () => {
