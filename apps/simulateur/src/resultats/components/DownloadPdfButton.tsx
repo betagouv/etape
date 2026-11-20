@@ -18,7 +18,6 @@ export function DownloadPdfButton({ label, isGenerating, download }: DownloadPdf
     <Button
       type="button"
       variant="outline"
-      size="responsive-sm"
       onClick={download}
       aria-disabled={isGenerating}
       aria-busy={isGenerating}

@@ -56,7 +56,8 @@ export function MetierViseManualFields({
       <Button
         type="button"
         variant="link"
-        size="inline-lg"
+        size="lg"
+        multiline
         className="self-start"
         onClick={onSearch}
       >

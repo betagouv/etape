@@ -28,7 +28,7 @@ export function PieceJustificativeItem({ piece, onRemove }: PieceJustificativeIt
         <Button
           type="button"
           variant="outline"
-          size="icon"
+          size="icon-sm"
           aria-label={`Voir ${name}`}
           onClick={() => openFile(piece.fichier)}
         >
@@ -39,7 +39,7 @@ export function PieceJustificativeItem({ piece, onRemove }: PieceJustificativeIt
         <Button
           type="button"
           variant="outline"
-          size="icon"
+          size="icon-sm"
           aria-label={`Télécharger ${name}`}
           onClick={() => downloadFile(piece.fichier)}
         >
@@ -50,7 +50,7 @@ export function PieceJustificativeItem({ piece, onRemove }: PieceJustificativeIt
         <Button
           type="button"
           variant="outline"
-          size="icon"
+          size="icon-sm"
           aria-label={`Retirer ${name}`}
           onClick={() => onRemove(piece)}
         >

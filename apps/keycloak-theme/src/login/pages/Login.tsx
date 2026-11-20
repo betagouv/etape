@@ -175,7 +175,6 @@ export default function Login(props: EtapePageProps<Extract<KcContext, { pageId:
             type="submit"
             id="kc-login"
             name="login"
-            size="form"
             aria-disabled={!form.isSubmittable || form.isSubmitting}
             aria-busy={form.isSubmitting}
             aria-describedby={form.isSubmittable ? undefined : INCOMPLETE_HINT_ID}

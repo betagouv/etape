@@ -44,7 +44,7 @@ export default function Info(props: EtapePageProps<Extract<KcContext, { pageId: 
           )}
         </Prose>
         {!skipLink && continueUrl !== undefined && (
-          <Button asChild size="xl" className="w-full rounded-lg">
+          <Button asChild className="w-full">
             <a href={continueUrl}>{continueLabel}</a>
           </Button>
         )}

@@ -29,7 +29,7 @@
  * `-contrast`, collection « 2. Theme »), sous nos noms de tokens. Le kit ne
  * les décline pas encore en Light / Dark : le thème sombre garde les siennes.
  *
- * Les tokens hors shadcn (`content-*`, `border-*`, `divider`, statuts,
+ * Les tokens hors shadcn (`content-*`, `border-*`, statuts,
  * voiles) n'ont pas d'équivalent dans le kit : ce sont des extensions ETAPE,
  * alignées sur sa gamme.
  */
@@ -44,8 +44,7 @@
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
-  --surface-warm: #f4f2ed; /* extension ETAPE : bandeau des en-têtes du front-office (taupe-200) */
-  --surface-warm-muted: #f9f9f6; /* extension ETAPE : étape active de la barre latérale du front-office (taupe-50) */
+  --surface-warm: #f4f2ed; /* extension ETAPE : en-tête du dossier, volet survolé ou actif de la barre latérale (taupe-200) */
   --surface-page: #f9faf9; /* extension ETAPE : fond de page du dossier et du profil du front-office (teal-50) */
 
   /* Actions */
@@ -62,9 +61,8 @@
   --destructive-foreground: #ffffff; /* écart : kit #fef2f2 */
 
   /* Bordures & focus */
-  --border: #92b5b2; /* base/border (teal-400) */
+  --border: #d3e2e0; /* base/border (teal-200) */
   --border-strong: #2b6f6b; /* extension ETAPE : bord marqué (teal-700) */
-  --divider: #d3e2e0; /* extension ETAPE (teal-200) */
   --input: #8f8f8f; /* base/input (neutral-400) — 3,23:1 sur blanc */
   --ring: #2b6f6b; /* base/ring (teal-700) */
 
@@ -131,7 +129,6 @@
   --popover: #262626;
   --popover-foreground: #fafafa;
   --surface-warm: #171717; /* neutral-900 */
-  --surface-warm-muted: #262626; /* neutral-800 */
   --surface-page: #0a0a0a; /* comme base/background, faute de maquette sombre */
 
   /* Actions */
@@ -150,7 +147,6 @@
   /* Bordures & focus */
   --border: rgba(255, 255, 255, 0.1); /* base/border */
   --border-strong: #737373; /* écart : bord des contrôles (neutral-500, 4,2:1) */
-  --divider: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.15); /* base/input */
   --ring: #737373; /* base/ring (neutral-500, 4,2:1) */
 
@@ -267,7 +263,6 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-surface-warm: var(--surface-warm);
-  --color-surface-warm-muted: var(--surface-warm-muted);
   --color-surface-page: var(--surface-page);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -285,7 +280,6 @@
   --color-destructive-text: var(--destructive-text);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
-  --color-divider: var(--divider);
   --color-input: var(--input);
   --color-ring: var(--ring);
 

@@ -122,7 +122,6 @@ export function Demarches({ form }: DemarchesProps) {
                 ref={addButtonRef}
                 type="button"
                 variant="outline"
-                size="form"
                 aria-disabled={!canAdd}
                 aria-describedby={canAdd ? undefined : limitId}
                 onClick={addDemarche}

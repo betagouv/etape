@@ -27,8 +27,7 @@ interface FormCardActionsProps {
  *
  * Grisé tant que la saisie est incomplète, le bouton de validation reste atteignable et
  * cliquable : `onValidate` montre alors ce qui manque. Un clic ne prend pas le focus au champ
- * en cours (`keepFocus`). `px-4` : les 16 px de la maquette, que la taille `form` ne donne
- * qu'avec une icône.
+ * en cours (`keepFocus`).
  */
 function FormCardActions({
   validateLabel,
@@ -43,25 +42,11 @@ function FormCardActions({
       className={cn("flex flex-wrap justify-end gap-4", className)}
     >
       {cancel && (
-        <Button
-          type="button"
-          variant="secondary"
-          size="form"
-          className="px-4"
-          onMouseDown={keepFocus}
-          onClick={cancel.onClick}
-        >
+        <Button type="button" variant="secondary" onMouseDown={keepFocus} onClick={cancel.onClick}>
           {cancel.label}
         </Button>
       )}
-      <Button
-        type="button"
-        size="form"
-        className="px-4"
-        aria-disabled={!isFilled}
-        onMouseDown={keepFocus}
-        onClick={onValidate}
-      >
+      <Button type="button" aria-disabled={!isFilled} onMouseDown={keepFocus} onClick={onValidate}>
         {validateLabel}
       </Button>
     </div>

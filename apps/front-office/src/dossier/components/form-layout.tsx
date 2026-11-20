@@ -54,13 +54,7 @@ export function FormLayout({
           {/* Sous un formulaire, le clic ne prend pas le focus au champ en cours (`keepFocus`). */}
           <div className="flex justify-end border-t pt-5">
             {previous && (
-              <Button
-                asChild
-                variant="secondary"
-                size="lg"
-                className="mr-auto"
-                onMouseDown={keepFocus}
-              >
+              <Button asChild variant="secondary" className="mr-auto" onMouseDown={keepFocus}>
                 <VoletLink voletId={previous.id}>
                   <ArrowLeftIcon aria-hidden="true" />
                   Étape précédente
@@ -69,12 +63,12 @@ export function FormLayout({
             )}
             {next &&
               (formId ? (
-                <Button type="submit" form={formId} size="lg" onMouseDown={keepFocus}>
+                <Button type="submit" form={formId} onMouseDown={keepFocus}>
                   Étape suivante
                   <ArrowRightIcon aria-hidden="true" />
                 </Button>
               ) : (
-                <Button asChild size="lg">
+                <Button asChild>
                   <VoletLink voletId={next.id}>
                     Étape suivante
                     <ArrowRightIcon aria-hidden="true" />

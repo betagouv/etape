@@ -57,6 +57,7 @@ export function ManualAdresseLoader(props: ManualAdresseLoaderProps) {
           <Button
             type="button"
             variant="outline"
+            size="sm"
             className="self-start"
             autoFocus
             aria-describedby={`${LOAD_FAILED_ID} ${LOAD_FAILED_HINT_ID}`}

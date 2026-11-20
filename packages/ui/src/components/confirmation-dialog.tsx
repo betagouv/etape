@@ -85,10 +85,9 @@ function ConfirmationDialog({
         </AlertDialogHeader>
         {children && <AlertDialogBody>{children}</AlertDialogBody>}
         <AlertDialogFooter>
-          <AlertDialogCancel size="form">{cancel.label}</AlertDialogCancel>
+          <AlertDialogCancel>{cancel.label}</AlertDialogCancel>
           <AlertDialogAction
-            variant={confirm.isDestructive ? "destructive-subdued" : "default"}
-            size="form"
+            variant={confirm.isDestructive ? "destructive" : "default"}
             onClick={() => {
               isConfirmed.current = true;
               confirm.onClick();

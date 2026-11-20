@@ -224,8 +224,8 @@ function FileUploadError({
       <AlertDescription>{children}</AlertDescription>
       <Button
         type="button"
-        variant="destructive-subdued"
-        size="icon"
+        variant="destructive"
+        size="icon-sm"
         className="absolute top-2 right-2.5"
         aria-label={dismissLabel}
         onClick={onDismiss}
@@ -262,6 +262,7 @@ function FileUploadTrigger({ label, hint, dropLabel, ref, className }: FileUploa
           ref={ref}
           type="button"
           variant="outline"
+          size="sm"
           aria-describedby={descriptionId}
           onMouseDown={keepFocus}
           onClick={() => inputRef.current?.click()}

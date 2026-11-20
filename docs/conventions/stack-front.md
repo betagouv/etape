@@ -257,16 +257,15 @@ export async function callApi<R extends RouteDefinition>(
 
 <details><summary><strong>Exemple — étendre par variante, comme le dépôt le fait déjà</strong></summary>
 
-Code réel, `packages/ui/src/components/button.tsx`. Deux variantes n'existent pas chez shadcn ; le commentaire dit d'où elles viennent, ce qui évite qu'on les prenne un jour pour une erreur de copie.
+Code réel, `packages/ui/src/components/button.tsx`. Une taille n’existe ni chez shadcn ni dans le kit ; le commentaire dit d’où elle vient, ce qui évite qu’on la prenne un jour pour une erreur de copie.
 
 ```ts
-// Variantes ETAPE (hors shadcn) : surface claire, libellé teal, pour les
-// CTA posés sur un fond coloré.
-inverse: "bg-background text-primary shadow-xs hover:bg-background/90",
-"outline-primary": "border border-primary bg-background text-primary hover:bg-secondary",
+// `LG` du kit sous 768 px, `MD` au-delà : les maquettes mobiles du simulateur.
+responsive:
+  "h-12 gap-2 rounded-lg px-6 text-xl md:h-10 md:px-4 md:text-base [&_svg:not([class*='size-'])]:size-6 md:[&_svg:not([class*='size-'])]:size-5",
 ```
 
-Et les tokens qu'elles utilisent portent leur équivalent Figma :
+Et les tokens portent leur équivalent Figma :
 
 ```css
 --primary: #134e4a; /* base/primary (teal-900) */

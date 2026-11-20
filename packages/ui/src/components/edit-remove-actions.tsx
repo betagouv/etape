@@ -58,6 +58,7 @@ function EditRemoveActions({
         ref={editRef}
         type="button"
         variant="outline"
+        size="sm"
         aria-label={edit.accessibleLabel}
         aria-disabled={edit.isDisabled ?? false}
         aria-describedby={edit.describedBy}
@@ -70,7 +71,7 @@ function EditRemoveActions({
         ref={removeRef}
         type="button"
         variant="outline"
-        size="icon"
+        size="icon-sm"
         aria-label={remove.accessibleLabel}
         onClick={remove.onClick}
       >
