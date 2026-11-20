@@ -3,6 +3,7 @@ import { useWatch, type UseFormReturn } from "react-hook-form";
 import { PlusIcon } from "lucide-react";
 
 import { Button } from "@etape/ui/components/button";
+import { FieldDescription } from "@etape/ui/components/field";
 import { FormCardActions } from "@etape/ui/components/form-card-actions";
 import { FormRadioGroup } from "@etape/ui/components/form-radio-group";
 import { StatusRegion } from "@etape/ui/components/status-region";
@@ -129,11 +130,7 @@ export function Demarches({ form }: DemarchesProps) {
                 <PlusIcon aria-hidden="true" className="size-5" />
                 Ajouter une autre démarche
               </Button>
-              {!canAdd && (
-                <p id={limitId} className="text-muted-foreground text-sm">
-                  {MAX_DEMARCHES_MESSAGE}
-                </p>
-              )}
+              {!canAdd && <FieldDescription id={limitId}>{MAX_DEMARCHES_MESSAGE}</FieldDescription>}
             </div>
           )}
         </>

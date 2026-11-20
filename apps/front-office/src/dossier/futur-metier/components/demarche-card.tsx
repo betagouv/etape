@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@etape/ui/components/card";
 import { EditRemoveActions } from "@etape/ui/components/edit-remove-actions";
+import { FieldDescription } from "@etape/ui/components/field";
 import { FileUploadList } from "@etape/ui/components/file-upload";
 import { Separator } from "@etape/ui/components/separator";
 
@@ -79,11 +80,7 @@ export function DemarcheCard({
             removeRef={removeButtonRef}
           />
         </div>
-        {edit.notice && (
-          <p id={noticeId} className="text-muted-foreground text-sm">
-            {edit.notice}
-          </p>
-        )}
+        {edit.notice && <FieldDescription id={noticeId}>{edit.notice}</FieldDescription>}
       </div>
       <Separator />
       <CardDetails>
