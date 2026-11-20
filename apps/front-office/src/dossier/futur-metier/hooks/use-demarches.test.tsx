@@ -198,6 +198,128 @@ describe("useDemarches", () => {
     expect(result.current.blockedDemarcheId).toBeNull();
   });
 
+  it("demande confirmation avant de supprimer une démarche, et ne touche à rien si on abandonne", () => {
+    const demarches = createDemarches(2);
+    const result = renderDemarches({ demarches, hasCurrentDemarche: false });
+
+    act(() => result.current.requestRemoval(demarches[1]));
+    expect(result.current.isRemovalOpen).toBe(true);
+    expect(result.current.removal).toEqual({
+      items: [{ demarche: demarches[1], index: 1 }],
+      isAnswerNon: false,
+    });
+
+    act(() => result.current.cancelRemoval());
+    expect(result.current.isRemovalOpen).toBe(false);
+    expect(result.current.demarches).toEqual(demarches);
+  });
+
+  it("supprime la démarche confirmée, une seule, et l'annonce par son rang", () => {
+    const [salon, autre, derniere] = createDemarches(3);
+    const result = renderDemarches({
+      demarches: [salon, autre, derniere],
+      hasCurrentDemarche: false,
+    });
+    act(() => result.current.requestRemoval(autre));
+
+    act(() => result.current.confirmRemoval());
+
+    expect(result.current.demarches).toEqual([salon, derniere]);
+    expect(result.current.isRemovalOpen).toBe(false);
+    expect(result.current.hasCurrentDemarche).toBe(false);
+    expect(result.current.announcement).toBe("Démarche 2 supprimée.");
+  });
+
+  it("rouvre la saisie de la première démarche quand la dernière est supprimée", () => {
+    const [salon] = createDemarches(1);
+    const result = renderDemarches({ demarches: [salon], hasCurrentDemarche: false });
+    act(() => result.current.requestRemoval(salon));
+
+    act(() => result.current.confirmRemoval());
+
+    expect(result.current.demarches).toEqual([]);
+    expect(result.current.hasCurrentDemarche).toBe(true);
+    expect(result.current.currentDemarcheIndex).toBe(0);
+    expect(result.current.canCancel).toBe(false);
+  });
+
+  it("supprime une démarche sans toucher à la saisie en cours", () => {
+    const [salon] = createDemarches(1);
+    const result = renderDemarches({ demarches: [salon], ...IMMERSION });
+    act(() => result.current.requestRemoval(salon));
+
+    act(() => result.current.confirmRemoval());
+
+    expect(result.current.demarches).toEqual([]);
+    expect(result.current.hasCurrentDemarche).toBe(true);
+    expect(result.current.form.getValues("typeDemarche")).toBe(TYPE_DEMARCHE.IMMERSION);
+  });
+
+  /** Le formulaire reçoit la réponse, puis le hook en est prévenu, comme le fait `FormRadioGroup`. */
+  function answer(
+    result: { current: Result },
+    value: FuturMetierFormData["demarcheDecouverte"],
+  ): void {
+    act(() => {
+      result.current.form.setValue("demarcheDecouverte", value);
+      result.current.changeAnswer(value);
+    });
+  }
+
+  it("fait confirmer un « non » qui emporterait des démarches validées : la réponse reste « oui »", () => {
+    const demarches = createDemarches(2);
+    const result = renderDemarches({ demarches, hasCurrentDemarche: false });
+
+    answer(result, OUI_NON.NON);
+
+    expect(result.current.form.getValues("demarcheDecouverte")).toBe(OUI_NON.OUI);
+    expect(result.current.isRemovalOpen).toBe(true);
+    expect(result.current.removal).toEqual({
+      items: [
+        { demarche: demarches[0], index: 0 },
+        { demarche: demarches[1], index: 1 },
+      ],
+      isAnswerNon: true,
+    });
+
+    act(() => result.current.cancelRemoval());
+    expect(result.current.isRemovalOpen).toBe(false);
+    expect(result.current.form.getValues("demarcheDecouverte")).toBe(OUI_NON.OUI);
+    expect(result.current.demarches).toEqual(demarches);
+  });
+
+  it("supprime toutes les démarches quand le « non » est confirmé, et repart d'une saisie vide", () => {
+    const [salon, autre] = createDemarches(2);
+    const result = renderDemarches({ demarches: [salon, autre], hasCurrentDemarche: false });
+    act(() => result.current.editDemarche(salon));
+    answer(result, OUI_NON.NON);
+
+    act(() => result.current.confirmRemoval());
+
+    expect(result.current.form.getValues()).toMatchObject({
+      demarcheDecouverte: OUI_NON.NON,
+      demarches: [],
+      currentDemarcheId: null,
+      hasCurrentDemarche: true,
+      typeDemarche: undefined,
+      apportDemarche: "",
+    });
+    expect(result.current.isRemovalOpen).toBe(false);
+    expect(result.current.announcement).toBe("Vos démarches ont été supprimées.");
+  });
+
+  it("accepte un « non » sans fenêtre quand aucune démarche n'est validée, en gardant la saisie en cours", () => {
+    const result = renderDemarches(IMMERSION);
+
+    answer(result, OUI_NON.NON);
+
+    expect(result.current.isRemovalOpen).toBe(false);
+    expect(result.current.form.getValues()).toMatchObject({
+      demarcheDecouverte: OUI_NON.NON,
+      typeDemarche: TYPE_DEMARCHE.IMMERSION,
+    });
+  });
+
   it("n'ouvre plus de saisie quand le nombre maximal de démarches est atteint", () => {
     const result = renderDemarches({
       demarches: createDemarches(NOMBRE_MAX_DEMARCHES),

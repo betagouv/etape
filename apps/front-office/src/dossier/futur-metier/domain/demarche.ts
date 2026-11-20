@@ -154,3 +154,39 @@ export function formatModificationAnnouncement(index: number): string {
 export function formatAnnulationModificationAnnouncement(index: number): string {
   return `Modification de la démarche ${index + 1} annulée.`;
 }
+
+/** Le titre de la fenêtre qui confirme une suppression : une démarche par la corbeille, toutes après un « non » (maquettes 14 et 15). */
+export function formatSuppressionTitle(demarcheCount: number): string {
+  return demarcheCount > 1 ? "Supprimer vos démarches" : "Supprimer votre démarche";
+}
+
+/** Sous ce titre : ce que la suppression emporte. */
+export function formatSuppressionMessage(demarcheCount: number): string {
+  const subject =
+    demarcheCount > 1
+      ? "les démarches suivantes et leurs justificatifs"
+      : "la démarche suivante et ses justificatifs";
+  return `En cliquant sur «\u00a0Supprimer\u00a0», ${subject} seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».`;
+}
+
+/** Le nom accessible de la corbeille d'une démarche validée : « Supprimer la démarche 1 ». */
+export function formatSupprimerLabel(index: number): string {
+  return `Supprimer la démarche ${index + 1}`;
+}
+
+/** La liste sans la démarche qui porte cet `id` : les suivantes remontent d'un rang. */
+export function removeDemarche(demarches: readonly Demarche[], demarcheId: string): Demarche[] {
+  return demarches.filter(({ id }) => id !== demarcheId);
+}
+
+/** Pour la région `role="status"` : « Démarche 1 supprimée. » */
+export function formatSuppressionAnnouncement(index: number): string {
+  return `${formatDemarcheLabel(index)} supprimée.`;
+}
+
+/** Pour la région `role="status"`, après un « non » confirmé : toutes les démarches sont supprimées. */
+export function formatSuppressionsAnnouncement(demarcheCount: number): string {
+  return demarcheCount > 1
+    ? "Vos démarches ont été supprimées."
+    : "Votre démarche a été supprimée.";
+}

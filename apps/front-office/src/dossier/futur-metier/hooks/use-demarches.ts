@@ -10,15 +10,35 @@ import {
   formatAnnulationModificationAnnouncement,
   formatDemarcheAnnouncement,
   formatModificationAnnouncement,
+  formatSuppressionAnnouncement,
+  formatSuppressionsAnnouncement,
   isDemarcheFilled,
   MESSAGE_SAISIE_EN_COURS,
+  removeDemarche,
   replaceDemarche,
   type Demarche,
   type DemarcheFieldName,
 } from "../domain/demarche";
+import { OUI_NON, type OuiNon } from "../../domain/oui-non";
 import type { FuturMetierFormData } from "../schema";
 
 const TYPE_FIELD = "typeDemarche" satisfies DemarcheFieldName;
+const ANSWER_FIELD = "demarcheDecouverte";
+// `FormRadioGroup` donne à chaque bouton l'`id` « <champ>-<valeur> ».
+const ANSWER_NON_ID = `${ANSWER_FIELD}-${OUI_NON.NON}`;
+
+/** Une démarche que la fenêtre de confirmation montre, et son rang. */
+export interface DemarcheRemovalItem {
+  demarche: Demarche;
+  index: number;
+}
+
+/** La suppression qui attend sa confirmation : une démarche par sa corbeille, ou toutes après un « non ». */
+export interface DemarcheRemoval {
+  items: readonly DemarcheRemovalItem[];
+  /** Vrai quand la suppression répond à un « non » : confirmée, la réponse devient « non ». */
+  isAnswerNon: boolean;
+}
 
 /** Ce que renvoie `useDemarches` : les démarches validées, l'état de la saisie et les actions de l'écran. */
 export interface UseDemarchesResult {
@@ -45,6 +65,18 @@ export interface UseDemarchesResult {
   addButtonRef: RefObject<HTMLButtonElement | null>;
   /** Le bouton « Modifier » d'une démarche validée : il reprend le focus quand sa modification se referme. */
   registerEditButton: (demarcheId: string) => RefCallback<HTMLButtonElement>;
+  /** La corbeille d'une démarche validée : elle reprend le focus quand sa suppression est abandonnée. */
+  registerRemoveButton: (demarcheId: string) => RefCallback<HTMLButtonElement>;
+  /** La suppression à confirmer ; gardée après la fermeture de la fenêtre, le temps qu'elle disparaisse. */
+  removal: DemarcheRemoval | null;
+  isRemovalOpen: boolean;
+  requestRemoval: (demarche: Demarche) => void;
+  /** Après la réponse à la question : un « non » qui emporterait des démarches validées demande confirmation. */
+  changeAnswer: (answer: OuiNon) => void;
+  cancelRemoval: () => void;
+  confirmRemoval: () => void;
+  /** À la fermeture de la fenêtre : le focus va là où la suppression, ou son abandon, l'a prévu. */
+  restoreFocusAfterRemoval: () => void;
   validateDemarche: () => Promise<void>;
   addDemarche: () => void;
   editDemarche: (demarche: Demarche) => void;
@@ -55,8 +87,9 @@ export interface UseDemarchesResult {
 /**
  * Les démarches de découverte du volet : valider la saisie en cours l'ajoute à la liste, ou
  * met à jour la démarche qu'elle modifie, et referme sa carte ; en ajouter ou en modifier une
- * la rouvre, et l'annuler la referme. Une seule saisie à la fois ; tout vit dans le formulaire
- * du volet, que ses compteurs lisent.
+ * la rouvre, et l'annuler la referme. Une démarche validée se supprime par sa corbeille, et
+ * toutes par un « non », chaque fois après confirmation. Une seule saisie à la fois ; tout vit
+ * dans le formulaire du volet, que ses compteurs lisent.
  */
 export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemarchesResult {
   const { control } = form;
@@ -69,8 +102,13 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   const [isHighlighted, setHighlighted] = useState(false);
   const [blockedDemarcheId, setBlockedDemarcheId] = useState<string | null>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
+  const [removal, setRemoval] = useState<DemarcheRemoval | null>(null);
+  const [isRemovalOpen, setRemovalOpen] = useState(false);
   const editButtons = useRef(new Map<string, HTMLButtonElement>());
+  const removeButtons = useRef(new Map<string, HTMLButtonElement>());
   const pendingFocus = useRef<(() => void) | null>(null);
+  // La fenêtre de confirmation retient le focus tant qu'elle est là : il se place à sa fermeture.
+  const removalFocus = useRef<(() => void) | null>(null);
 
   const editedIndex = demarches.findIndex(({ id }) => id === currentDemarcheId);
   const isEditing = editedIndex >= 0;
@@ -167,11 +205,100 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     }
   };
 
+  const requestRemoval = (demarche: Demarche): void => {
+    // Par son `id` : le formulaire rend des copies, pas les objets qu'on lui a confiés.
+    const index = demarches.findIndex(({ id }) => id === demarche.id);
+    setRemoval({ items: [{ demarche, index }], isAnswerNon: false });
+    setRemovalOpen(true);
+  };
+
+  const changeAnswer = (answer: OuiNon): void => {
+    if (answer === OUI_NON.OUI) return;
+    if (demarches.length === 0) {
+      // La saisie en cours n'est plus demandée : ses erreurs ne restent pas au résumé.
+      form.clearErrors([...DEMARCHE_FIELDS]);
+      return;
+    }
+    // Le « non » emporterait les démarches validées : la réponse reste « oui » jusqu'à la confirmation.
+    form.setValue(ANSWER_FIELD, OUI_NON.OUI);
+    setRemoval({
+      items: demarches.map((demarche, index) => ({ demarche, index })),
+      isAnswerNon: true,
+    });
+    setRemovalOpen(true);
+  };
+
+  const cancelRemoval = (): void => {
+    if (removal === null) return;
+    const [first] = removal.items;
+    // Le focus revient d'où part la suppression : la question, ou la corbeille.
+    removalFocus.current =
+      removal.isAnswerNon || first === undefined
+        ? () => form.setFocus(ANSWER_FIELD)
+        : () => removeButtons.current.get(first.demarche.id)?.focus();
+    setRemovalOpen(false);
+  };
+
+  /** Tout ce qui touche aux démarches repart de zéro, et la réponse devient « non ». */
+  const confirmAnswerNon = (demarcheCount: number): void => {
+    form.setValue("demarches", []);
+    form.setValue("currentDemarcheId", null);
+    form.setValue(TYPE_FIELD, undefined);
+    form.setValue("precisionTypeDemarche", "");
+    form.setValue("apportDemarche", "");
+    form.setValue("piecesJustificatives", []);
+    // Un « oui » à venir rouvrira la saisie de la première démarche.
+    form.setValue("hasCurrentDemarche", true);
+    form.clearErrors([...DEMARCHE_FIELDS]);
+    form.setValue(ANSWER_FIELD, OUI_NON.NON, { shouldValidate: true });
+    setHighlighted(false);
+    removalFocus.current = () => document.getElementById(ANSWER_NON_ID)?.focus();
+    setAnnouncement(formatSuppressionsAnnouncement(demarcheCount));
+  };
+
+  /** Une démarche, par sa corbeille : les suivantes remontent d'un rang. */
+  const confirmDemarcheRemoval = ({ demarche, index }: DemarcheRemovalItem): void => {
+    const remaining = removeDemarche(demarches, demarche.id);
+    form.setValue("demarches", remaining);
+    // Sans démarche ni saisie ouverte, le « oui » n'aurait plus rien à montrer : la saisie se rouvre.
+    if (remaining.length === 0 && !hasCurrentDemarche) form.setValue("hasCurrentDemarche", true);
+
+    // La démarche qui prend la place, sinon le bouton d'ajout, sinon la saisie ouverte.
+    const nextId = remaining[index]?.id;
+    removalFocus.current = () => {
+      const target = (nextId && editButtons.current.get(nextId)) || addButtonRef.current;
+      if (target) target.focus();
+      else focusTypeField();
+    };
+    setAnnouncement(formatSuppressionAnnouncement(index));
+  };
+
+  const confirmRemoval = (): void => {
+    if (removal === null) return;
+    const [first] = removal.items;
+    if (removal.isAnswerNon) confirmAnswerNon(removal.items.length);
+    else if (first !== undefined) confirmDemarcheRemoval(first);
+    setRemovalOpen(false);
+    setBlockedDemarcheId(null);
+  };
+
+  const restoreFocusAfterRemoval = (): void => {
+    removalFocus.current?.();
+    removalFocus.current = null;
+  };
+
   const registerEditButton =
     (demarcheId: string): RefCallback<HTMLButtonElement> =>
     (button) => {
       if (button) editButtons.current.set(demarcheId, button);
       else editButtons.current.delete(demarcheId);
+    };
+
+  const registerRemoveButton =
+    (demarcheId: string): RefCallback<HTMLButtonElement> =>
+    (button) => {
+      if (button) removeButtons.current.set(demarcheId, button);
+      else removeButtons.current.delete(demarcheId);
     };
 
   return {
@@ -187,6 +314,14 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     announcement,
     addButtonRef,
     registerEditButton,
+    registerRemoveButton,
+    removal,
+    isRemovalOpen,
+    requestRemoval,
+    changeAnswer,
+    cancelRemoval,
+    confirmRemoval,
+    restoreFocusAfterRemoval,
     validateDemarche,
     addDemarche,
     editDemarche,

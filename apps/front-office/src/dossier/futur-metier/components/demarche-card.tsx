@@ -1,7 +1,6 @@
 import { useId, type Ref } from "react";
-import { FileTextIcon, PaperclipIcon, PencilLineIcon } from "lucide-react";
+import { FileTextIcon, PaperclipIcon } from "lucide-react";
 
-import { Button } from "@etape/ui/components/button";
 import {
   Card,
   CardDetail,
@@ -9,43 +8,48 @@ import {
   CardDetails,
   CardDetailValue,
 } from "@etape/ui/components/card";
+import { EditRemoveActions } from "@etape/ui/components/edit-remove-actions";
 import { FileUploadList } from "@etape/ui/components/file-upload";
 import { Separator } from "@etape/ui/components/separator";
 
 import { PieceJustificativeItem } from "../../components/piece-justificative-item";
-import {
-  findDemarcheIntitule,
-  formatDemarcheLabel,
-  formatModifierLabel,
-  type Demarche,
-} from "../domain/demarche";
+import { formatModifierLabel, formatSupprimerLabel, type Demarche } from "../domain/demarche";
+import { DemarcheTitle } from "./demarche-title";
 
-/** Ce que reçoit `DemarcheCard` : la démarche validée, son rang et de quoi la modifier. */
+/** La modification de la démarche : son action, et ce qui la fait attendre. */
+export interface DemarcheCardEdit {
+  onClick: () => void;
+  /** Vrai tant qu'une autre saisie est ouverte : « Modifier » est grisé. */
+  isDisabled: boolean;
+  /** Ce qu'il faut faire d'abord, affiché quand on a cliqué « Modifier » grisé. */
+  notice?: string;
+}
+
+/** Ce que reçoit `DemarcheCard` : la démarche validée, son rang et de quoi la modifier ou la supprimer. */
 export interface DemarcheCardProps {
   /** Le rang de la démarche dans la liste, à partir de 0. */
   index: number;
   demarche: Demarche;
-  /** Le bouton « Modifier » : il reprend le focus quand la modification se referme. */
+  edit: DemarcheCardEdit;
+  onRemove: () => void;
+  /** « Modifier » reprend le focus quand la modification se referme. */
   editButtonRef: Ref<HTMLButtonElement>;
-  onEdit: () => void;
-  /** Vrai tant qu'une autre saisie est ouverte : « Modifier » est grisé. */
-  isEditDisabled: boolean;
-  /** Ce qu'il faut faire d'abord, affiché quand on a cliqué « Modifier » grisé. */
-  editNotice?: string;
+  /** La corbeille reprend le focus quand la suppression est abandonnée. */
+  removeButtonRef: Ref<HTMLButtonElement>;
 }
 
 /**
  * Une démarche validée, à la place de sa carte de saisie : `front-office-form-card` de la
  * maquette FRONT-OFFICE (frame 12). Sans justificatif, la carte n'en affiche pas la rubrique.
- * « Modifier » la rouvre en saisie.
+ * « Modifier » la rouvre en saisie ; la corbeille demande confirmation avant de la supprimer.
  */
 export function DemarcheCard({
   index,
   demarche,
+  edit,
+  onRemove,
   editButtonRef,
-  onEdit,
-  isEditDisabled,
-  editNotice,
+  removeButtonRef,
 }: DemarcheCardProps) {
   const titleId = useId();
   const noticeId = useId();
@@ -56,26 +60,25 @@ export function DemarcheCard({
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4">
           <h4 id={titleId} className="text-primary min-w-0 text-sm leading-5 font-medium">
-            {formatDemarcheLabel(index)} :{" "}
-            <span className="text-foreground font-semibold">{findDemarcheIntitule(demarche)}</span>
+            <DemarcheTitle index={index} demarche={demarche} />
           </h4>
-          {/* Grisé pendant une autre saisie, il reste cliquable : un clic dit quoi faire d'abord. */}
-          <Button
-            ref={editButtonRef}
-            type="button"
-            variant="outline"
-            aria-label={formatModifierLabel(index)}
-            aria-disabled={isEditDisabled}
-            aria-describedby={editNotice ? noticeId : undefined}
-            onClick={onEdit}
-          >
-            <PencilLineIcon aria-hidden="true" className="size-5" />
-            Modifier
-          </Button>
+          {/* Grisé pendant une autre saisie, « Modifier » reste cliquable : un clic dit quoi faire d'abord. */}
+          <EditRemoveActions
+            edit={{
+              label: "Modifier",
+              accessibleLabel: formatModifierLabel(index),
+              onClick: edit.onClick,
+              isDisabled: edit.isDisabled,
+              describedBy: edit.notice ? noticeId : undefined,
+            }}
+            remove={{ accessibleLabel: formatSupprimerLabel(index), onClick: onRemove }}
+            editRef={editButtonRef}
+            removeRef={removeButtonRef}
+          />
         </div>
-        {editNotice && (
+        {edit.notice && (
           <p id={noticeId} className="text-muted-foreground text-sm">
-            {editNotice}
+            {edit.notice}
           </p>
         )}
       </div>

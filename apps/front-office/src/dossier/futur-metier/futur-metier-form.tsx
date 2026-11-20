@@ -1,5 +1,4 @@
 import { FormField } from "@etape/ui/components/form-field";
-import { FormRadioGroup } from "@etape/ui/components/form-radio-group";
 import {
   FormSection,
   FormSectionHeader,
@@ -12,13 +11,11 @@ import { CharacterCountField } from "../components/character-count-field";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
-import { OUI_NON, OUI_NON_LABEL } from "../domain/oui-non";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { Demarches } from "./components/demarches";
 import { MetierViseField } from "./components/metier-vise-field";
-import { DEMARCHE_FIELDS } from "./domain/demarche";
 import {
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_SECTION,
@@ -92,18 +89,6 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             required
             description="Nombre d’offres d’emploi, offres non pourvues, candidats par offre…"
             maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
-          />
-
-          <FormRadioGroup
-            name="demarcheDecouverte"
-            control={form.control}
-            label={FUTUR_METIER_FIELD_LABEL.demarcheDecouverte}
-            description="Exemples : Immersion en entreprise, rencontres avec des professionnels, salons, recherches…"
-            options={OUI_NON_LABEL}
-            // Après « non », la démarche n'est plus demandée : ses erreurs ne doivent pas rester au résumé.
-            onValueChange={(value) => {
-              if (value === OUI_NON.NON) form.clearErrors([...DEMARCHE_FIELDS]);
-            }}
           />
 
           <Demarches form={form} />

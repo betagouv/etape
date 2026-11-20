@@ -4,18 +4,20 @@ import { PlusIcon } from "lucide-react";
 
 import { Button } from "@etape/ui/components/button";
 import { FormCardActions } from "@etape/ui/components/form-card-actions";
+import { FormRadioGroup } from "@etape/ui/components/form-radio-group";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
-import { OUI_NON } from "../../domain/oui-non";
+import { OUI_NON, OUI_NON_LABEL } from "../../domain/oui-non";
 import {
   formatDemarcheLabel,
   MESSAGE_NOMBRE_MAX_DEMARCHES,
   MESSAGE_SAISIE_EN_COURS,
 } from "../domain/demarche";
 import { useDemarches } from "../hooks/use-demarches";
-import type { FuturMetierFormData } from "../schema";
+import { FUTUR_METIER_FIELD_LABEL, type FuturMetierFormData } from "../schema";
 import { DemarcheCard } from "./demarche-card";
 import { DemarcheFields } from "./demarche-fields";
+import { DemarcheRemovalDialog } from "./demarche-removal-dialog";
 
 /** Ce que reçoit `Demarches` : le formulaire du volet. */
 export interface DemarchesProps {
@@ -23,9 +25,11 @@ export interface DemarchesProps {
 }
 
 /**
- * Après un « oui » : les démarches validées, puis la carte de saisie ou, une fois celle-ci
- * validée ou annulée, le bouton qui en ouvre une autre (maquettes 10 à 13). Une démarche qu'on
- * modifie redevient carte de saisie, à sa place.
+ * La question sur les démarches de découverte et, après un « oui » : les démarches validées,
+ * puis la carte de saisie ou, une fois celle-ci validée ou annulée, le bouton qui en ouvre une
+ * autre (maquettes 09 à 13). Une démarche qu'on modifie redevient carte de saisie, à sa place ;
+ * sa corbeille, comme un « non » quand des démarches sont validées, ouvre la fenêtre de
+ * confirmation (maquettes 15 et 14).
  */
 export function Demarches({ form }: DemarchesProps) {
   const limitId = useId();
@@ -43,6 +47,14 @@ export function Demarches({ form }: DemarchesProps) {
     announcement,
     addButtonRef,
     registerEditButton,
+    registerRemoveButton,
+    removal,
+    isRemovalOpen,
+    requestRemoval,
+    changeAnswer,
+    cancelRemoval,
+    confirmRemoval,
+    restoreFocusAfterRemoval,
     validateDemarche,
     addDemarche,
     editDemarche,
@@ -70,6 +82,15 @@ export function Demarches({ form }: DemarchesProps) {
 
   return (
     <>
+      <FormRadioGroup
+        name="demarcheDecouverte"
+        control={form.control}
+        label={FUTUR_METIER_FIELD_LABEL.demarcheDecouverte}
+        description="Exemples : Immersion en entreprise, rencontres avec des professionnels, salons, recherches…"
+        options={OUI_NON_LABEL}
+        onValueChange={changeAnswer}
+      />
+
       {demarcheDecouverte === OUI_NON.OUI && (
         <>
           {demarches.map((demarche, index) =>
@@ -80,10 +101,14 @@ export function Demarches({ form }: DemarchesProps) {
                 key={demarche.id}
                 index={index}
                 demarche={demarche}
+                edit={{
+                  onClick: () => editDemarche(demarche),
+                  isDisabled: hasCurrentDemarche,
+                  notice: demarche.id === blockedDemarcheId ? MESSAGE_SAISIE_EN_COURS : undefined,
+                }}
+                onRemove={() => requestRemoval(demarche)}
                 editButtonRef={registerEditButton(demarche.id)}
-                onEdit={() => editDemarche(demarche)}
-                isEditDisabled={hasCurrentDemarche}
-                editNotice={demarche.id === blockedDemarcheId ? MESSAGE_SAISIE_EN_COURS : undefined}
+                removeButtonRef={registerRemoveButton(demarche.id)}
               />
             ),
           )}
@@ -114,6 +139,13 @@ export function Demarches({ form }: DemarchesProps) {
           )}
         </>
       )}
+      <DemarcheRemovalDialog
+        isOpen={isRemovalOpen}
+        removal={removal}
+        onCancel={cancelRemoval}
+        onConfirm={confirmRemoval}
+        onCloseFocus={restoreFocusAfterRemoval}
+      />
       <StatusRegion message={announcement} />
     </>
   );

@@ -12,9 +12,15 @@ import {
   formatDemarcheLabel,
   formatModificationAnnouncement,
   formatModifierLabel,
+  formatSuppressionAnnouncement,
+  formatSuppressionMessage,
+  formatSuppressionsAnnouncement,
+  formatSuppressionTitle,
+  formatSupprimerLabel,
   isDemarcheFilled,
   MESSAGE_NOMBRE_MAX_DEMARCHES,
   NOMBRE_MAX_DEMARCHES,
+  removeDemarche,
   replaceDemarche,
   TYPE_DEMARCHE,
   TYPE_DEMARCHE_LABEL,
@@ -171,5 +177,40 @@ describe("modification d'une démarche", () => {
     expect(formatAnnulationModificationAnnouncement(2)).toBe(
       "Modification de la démarche 3 annulée.",
     );
+  });
+});
+
+describe("suppression d'une démarche", () => {
+  const salon: Demarche = {
+    id: "a",
+    typeDemarche: TYPE_DEMARCHE.SALON,
+    precisionTypeDemarche: "",
+    apportDemarche: "J’ai rencontré trois artisans.",
+    piecesJustificatives: [],
+  };
+  const immersion: Demarche = { ...salon, id: "b", typeDemarche: TYPE_DEMARCHE.IMMERSION };
+
+  it("retire la démarche de cet `id` et garde les autres dans l'ordre", () => {
+    expect(removeDemarche([salon, immersion], "a")).toEqual([immersion]);
+    expect(removeDemarche([salon, immersion], "inconnu")).toEqual([salon, immersion]);
+  });
+
+  it("nomme la corbeille et annonce la suppression par le rang de la démarche", () => {
+    expect(formatSupprimerLabel(1)).toBe("Supprimer la démarche 2");
+    expect(formatSuppressionAnnouncement(1)).toBe("Démarche 2 supprimée.");
+  });
+
+  it("parle d'une démarche dans la fenêtre ouverte par la corbeille", () => {
+    expect(formatSuppressionTitle(1)).toBe("Supprimer votre démarche");
+    expect(formatSuppressionMessage(1)).toBe(
+      "En cliquant sur «\u00a0Supprimer\u00a0», la démarche suivante et ses justificatifs seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».",
+    );
+  });
+
+  it("parle de toutes les démarches dans la fenêtre ouverte par un « non »", () => {
+    expect(formatSuppressionTitle(3)).toBe("Supprimer vos démarches");
+    expect(formatSuppressionMessage(3)).toContain("les démarches suivantes et leurs justificatifs");
+    expect(formatSuppressionsAnnouncement(3)).toBe("Vos démarches ont été supprimées.");
+    expect(formatSuppressionsAnnouncement(1)).toBe("Votre démarche a été supprimée.");
   });
 });
