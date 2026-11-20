@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { formatVoletErrorsTitle, listVoletErrors } from "./volet-errors";
 
 describe("listVoletErrors", () => {
-  it("liste les erreurs dans l'ordre des champs demandés, pas dans celui où elles arrivent", () => {
+  it("liste les erreurs dans l'ordre des champs contrôlés, pas dans celui où elles arrivent", () => {
     const errors = { telephone: { message: "Téléphone" }, cleNir: { message: "Clé" } };
 
     expect(listVoletErrors(["civilite", "cleNir", "telephone"], errors)).toEqual([
@@ -12,7 +12,7 @@ describe("listVoletErrors", () => {
     ]);
   });
 
-  it("laisse de côté une erreur qui ne porte pas sur un champ demandé", () => {
+  it("laisse de côté une erreur qui ne porte pas sur un champ contrôlé", () => {
     const errors = { dateDemission: { message: "Date" }, root: { message: "Serveur" } };
 
     expect(listVoletErrors(["demission"], errors)).toEqual([]);

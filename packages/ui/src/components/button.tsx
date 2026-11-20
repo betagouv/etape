@@ -39,15 +39,27 @@ const buttonVariants = cva(
         icon: "size-10 rounded-lg [&_svg:not([class*='size-'])]:size-5",
         "icon-lg": "size-12 rounded-lg [&_svg:not([class*='size-'])]:size-6",
       },
+      // Extension ETAPE, hors kit : un libellé plus large que son conteneur passe à la ligne.
+      // Le kit le garde sur une ligne, et aucune maquette mobile ne montre un libellé aussi long.
+      multiline: {
+        true: "h-auto text-left whitespace-normal",
+        false: null,
+      },
     },
-    // `Variant=Link` du kit : les hauteurs des autres variantes, sans padding.
     compoundVariants: [
+      // `Variant=Link` du kit : les hauteurs des autres variantes, sans padding.
       { variant: "link", class: "px-0" },
       { variant: "link", size: ["default", "lg"], class: "gap-1.5" },
+      // Sur une ligne, un bouton `multiline` garde la hauteur du kit.
+      { multiline: true, size: "sm", class: "min-h-8" },
+      { multiline: true, size: "default", class: "min-h-10" },
+      { multiline: true, size: "lg", class: "min-h-12" },
+      { multiline: true, size: "responsive", class: "min-h-12 md:h-auto md:min-h-10" },
     ],
     defaultVariants: {
       variant: "default",
       size: "default",
+      multiline: false,
     },
   },
 );
@@ -56,6 +68,7 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  multiline = false,
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
@@ -69,7 +82,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, multiline, className }))}
       {...props}
     />
   );

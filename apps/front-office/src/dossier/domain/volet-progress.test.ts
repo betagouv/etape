@@ -5,6 +5,7 @@ import {
   computeVoletProgress,
   describeVoletStatut,
   listFilledFields,
+  listValidatedFields,
   type RequiredFields,
 } from "./volet-progress";
 
@@ -18,6 +19,12 @@ describe("listFilledFields", () => {
     ]);
   });
 
+  it("ne compte pas comme remplie une saisie faite seulement d'espaces", () => {
+    expect(
+      listFilledFields({ denomination: "   ", siret: " 1 " }, ["denomination", "siret"]),
+    ).toEqual(["siret"]);
+  });
+
   it("compte l'employeur choisi comme rempli, pas l'absence d'employeur", () => {
     expect(listFilledFields({ employeur: null }, ["employeur"])).toEqual([]);
     expect(listFilledFields({ employeur: { siret: "50393256800010" } }, ["employeur"])).toEqual([
@@ -26,12 +33,46 @@ describe("listFilledFields", () => {
   });
 });
 
+/** Un volet sans champ facultatif contrôlé : ses champs contrôlés sont ses champs demandés. */
+function createRequiredFields(
+  sectionFields: Record<string, readonly string[]>,
+  filledFields: readonly string[],
+): RequiredFields {
+  return {
+    sectionFields,
+    allFields: Object.values(sectionFields).flat(),
+    filledFields,
+    sectionValidatedFields: sectionFields,
+  };
+}
+
+/** En saisie manuelle du métier visé : l'intitulé est demandé, le code ROME seulement contrôlé. */
+const MANUAL_METIER_VISE: RequiredFields = {
+  sectionFields: { "metier-vise": ["intituleMetierVise"] },
+  allFields: ["intituleMetierVise"],
+  filledFields: ["intituleMetierVise"],
+  sectionValidatedFields: { "metier-vise": ["intituleMetierVise", "codeRome"] },
+};
+
+describe("listValidatedFields", () => {
+  it("liste les champs contrôlés de toutes les sections, dans l'ordre de la page", () => {
+    expect(
+      listValidatedFields({
+        ...MANUAL_METIER_VISE,
+        sectionValidatedFields: { emploi: ["siret", "adresse"], demission: ["demission"] },
+      }),
+    ).toEqual(["siret", "adresse", "demission"]);
+  });
+});
+
 describe("computeVoletProgress", () => {
   it("compte les champs demandés, ceux qui sont remplis et ceux qui restent", () => {
     expect(
       computeVoletProgress(
-        ["civilite", "dateNaissance", "telephone"],
-        ["civilite", "telephone"],
+        createRequiredFields({ identite: ["civilite", "dateNaissance"], contact: ["telephone"] }, [
+          "civilite",
+          "telephone",
+        ]),
         {},
       ),
     ).toEqual({
@@ -44,8 +85,7 @@ describe("computeVoletProgress", () => {
 
   it("ne compte pas un champ rempli qui n'est pas demandé", () => {
     const progress = computeVoletProgress(
-      ["intitulePoste", "adresse"],
-      ["intitulePoste", "siret"],
+      createRequiredFields({ emploi: ["intitulePoste", "adresse"] }, ["intitulePoste", "siret"]),
       {},
     );
 
@@ -53,24 +93,35 @@ describe("computeVoletProgress", () => {
     expect(progress.remainingFieldCount).toBe(1);
   });
 
-  it("ne compte que les erreurs des champs demandés", () => {
+  it("ne compte que les erreurs des champs contrôlés", () => {
     const errors = {
       cleNir: { message: "x" },
       telephone: { message: "y" },
       root: { message: "z" },
     };
 
-    expect(computeVoletProgress(["cleNir", "civilite"], [], errors).errorCount).toBe(1);
+    expect(
+      computeVoletProgress(createRequiredFields({ identite: ["cleNir", "civilite"] }, []), errors)
+        .errorCount,
+    ).toBe(1);
+  });
+
+  it("compte l'erreur d'un champ facultatif, sans le compter parmi les champs demandés", () => {
+    expect(computeVoletProgress(MANUAL_METIER_VISE, { codeRome: { message: "x" } })).toEqual({
+      requiredFieldCount: 1,
+      filledFieldCount: 1,
+      remainingFieldCount: 0,
+      errorCount: 1,
+    });
   });
 });
 
 describe("computeSectionProgress", () => {
   it("compte les champs de la section qui restent à remplir, et ses erreurs", () => {
-    const requiredFields: RequiredFields = {
-      sectionFields: { emploi: ["siret", "adresse", "intitulePoste"], demission: ["demission"] },
-      allFields: ["siret", "adresse", "intitulePoste", "demission"],
-      filledFields: ["intitulePoste", "employeur"],
-    };
+    const requiredFields = createRequiredFields(
+      { emploi: ["siret", "adresse", "intitulePoste"], demission: ["demission"] },
+      ["intitulePoste", "employeur"],
+    );
 
     expect(
       computeSectionProgress(requiredFields, "emploi", {
@@ -79,16 +130,21 @@ describe("computeSectionProgress", () => {
       }),
     ).toEqual({ remainingFieldCount: 2, errorCount: 1 });
   });
+
+  it("compte l'erreur d'un champ facultatif de la section, sans champ restant", () => {
+    expect(
+      computeSectionProgress(MANUAL_METIER_VISE, "metier-vise", { codeRome: { message: "x" } }),
+    ).toEqual({ remainingFieldCount: 0, errorCount: 1 });
+  });
 });
 
 describe("describeVoletStatut", () => {
-  const requiredFields: RequiredFields = {
-    sectionFields: { identite: ["civilite", "cleNir"], contact: ["telephone"] },
-    allFields: ["civilite", "cleNir", "telephone"],
-    filledFields: ["civilite", "cleNir"],
-  };
+  const requiredFields = createRequiredFields(
+    { identite: ["civilite", "cleNir"], contact: ["telephone"] },
+    ["civilite", "cleNir"],
+  );
 
-  it("annonce les erreurs des champs demandés et les champs qui restent", () => {
+  it("annonce les erreurs des champs contrôlés et les champs qui restent", () => {
     expect(
       describeVoletStatut("Mes informations", requiredFields, { cleNir: { message: "x" } }),
     ).toBe("Mes informations : 1 erreur à corriger et 1 champ restant.");
@@ -102,5 +158,11 @@ describe("describeVoletStatut", () => {
         {},
       ),
     ).toBe("Mes informations : complet.");
+  });
+
+  it("n'annonce pas complet un volet rempli dont un champ facultatif est en erreur", () => {
+    expect(
+      describeVoletStatut("Mon futur métier", MANUAL_METIER_VISE, { codeRome: { message: "x" } }),
+    ).toBe("Mon futur métier : 1 erreur à corriger.");
   });
 });

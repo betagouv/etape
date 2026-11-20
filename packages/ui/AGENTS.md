@@ -26,10 +26,11 @@ Pas de dev server propre : on vérifie un composant dans une app qui l'utilise.
 
 ## Où vivent les choses
 
-- `src/components/` — un fichier par composant : accordion, back-to-top, badge, button, calendar, callout, card, checkbox, combobox, container, dialog, dropdown-menu, field, form-field, form-radio-group, form-section, input, input-group, label, popover, prose, radio-group, section, select, separator, skip-links, sonner, tabs, tag, textarea, theme-provider.
+- `src/components/` — un fichier par composant : accordion, back-to-top, badge, button, calendar, callout, card, checkbox, combobox, container, dialog, dropdown-menu, field, form-field, form-radio-group, form-section, input, input-group, label, popover, prose, radio-group, remote-search-field, section, select, selection-card, separator, skip-links, sonner, tabs, tag, textarea, theme-provider.
 - `src/styles/globals.css` — **les tokens** : la seule source de couleur du dépôt.
 - `src/lib/utils.ts` (`cn`), `src/lib/focus.ts`, `src/lib/keys.ts` (`KEY`, les touches du clavier).
-- `src/hooks/` — `use-listbox-navigation.ts` : flèches, Entrée et Échap d'une liste d'options, le comportement qui va avec les parties de `combobox.tsx`. Import : `@etape/ui/hooks/<nom>`.
+- `src/lib/remote-search.ts` — le contrat de `remote-search-field.tsx` (états `SEARCH_STATUS`, état de la recherche, textes) : l'app calcule l'état, le composant l'affiche.
+- `src/hooks/` — `use-listbox-navigation.ts` : flèches, Entrée et Échap d'une liste d'options, le comportement qui va avec les parties de `combobox.tsx` ; `use-entry-mode.ts` : le passage d'un mode de saisie à l'autre (recherche ou saisie manuelle) autour de `remote-search-field.tsx`. Import : `@etape/ui/hooks/<nom>`.
 - `components.json` — configuration shadcn.
 
 ## Conventions

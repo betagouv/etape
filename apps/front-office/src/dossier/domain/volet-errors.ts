@@ -7,12 +7,15 @@ export interface VoletError {
   message: string;
 }
 
-/** Les erreurs du résumé, dans l'ordre de la page : zod place celles de `superRefine` après celles des champs. */
+/**
+ * Les erreurs du résumé, sur les champs contrôlés et dans l'ordre de la page : zod place celles
+ * de `superRefine` après celles des champs.
+ */
 export function listVoletErrors(
-  requiredFields: readonly string[],
+  validatedFields: readonly string[],
   errors: FieldErrors,
 ): VoletError[] {
-  return requiredFields
+  return validatedFields
     .filter((name) => errors[name] !== undefined)
     .map((fieldId) => ({ fieldId, message: errors[fieldId]?.message ?? "" }));
 }

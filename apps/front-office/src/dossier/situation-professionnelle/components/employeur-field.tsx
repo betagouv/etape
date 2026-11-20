@@ -1,16 +1,17 @@
-import { useState } from "react";
 import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 
-import { useEmployeurSearch } from "../hooks/use-employeur-search";
+import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
+import { useEntryMode } from "@etape/ui/hooks/use-entry-mode";
+
+import { EMPLOYEUR_SEARCH, useEmployeurSearch } from "../hooks/use-employeur-search";
 import {
   EMPLOYEUR_ENTRY_MODE,
   EMPLOYEUR_FIELDS,
-  type EmployeurEntryMode,
   type SituationProfessionnelleFormData,
 } from "../schema";
 import { EmployeurCard } from "./employeur-card";
 import { EmployeurManualFields } from "./employeur-manual-fields";
-import { EmployeurSearch } from "./employeur-search";
+import { EmployeurOption } from "./employeur-option";
 
 /** Ce que reçoit `EmployeurField` : le formulaire du volet. */
 export interface EmployeurFieldProps {
@@ -22,19 +23,14 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
   const { control, setValue, clearErrors } = form;
   const mode = useWatch({ control, name: "employeurEntryMode" });
   const employeur = useWatch({ control, name: "employeur" });
-  // Champ, carte et saisie manuelle se remplacent : sans cela, le focus tomberait sur la page.
-  const [isFocusRequested, setFocusRequested] = useState(false);
-
-  function switchMode(nextMode: EmployeurEntryMode): void {
-    // Quitter un mode efface les erreurs de ses champs.
-    clearErrors([...EMPLOYEUR_FIELDS[mode]]);
-    setValue("employeurEntryMode", nextMode);
-    setFocusRequested(true);
-  }
+  const { isFocusRequested, requestFocus, switchMode } = useEntryMode(mode, EMPLOYEUR_FIELDS, {
+    clearErrors,
+    setMode: (nextMode) => setValue("employeurEntryMode", nextMode),
+  });
 
   const search = useEmployeurSearch((etablissement) => {
     setValue("employeur", etablissement, { shouldValidate: true });
-    setFocusRequested(true);
+    requestFocus();
   });
 
   if (mode === EMPLOYEUR_ENTRY_MODE.MANUAL) {
@@ -58,7 +54,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
         isFocusRequested={isFocusRequested}
         onChange={() => {
           setValue("employeur", null);
-          setFocusRequested(true);
+          requestFocus();
         }}
       />
     );
@@ -69,13 +65,17 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
       name="employeur"
       control={control}
       render={({ field, fieldState }) => (
-        <EmployeurSearch
+        <RemoteSearchField
           search={search}
-          fieldRef={field.ref}
-          onBlur={field.onBlur}
-          error={fieldState.error}
-          isFocusRequested={isFocusRequested}
+          definition={EMPLOYEUR_SEARCH}
+          control={{
+            fieldRef: field.ref,
+            onBlur: field.onBlur,
+            error: fieldState.error,
+            isFocusRequested,
+          }}
           onManualEntry={() => switchMode(EMPLOYEUR_ENTRY_MODE.MANUAL)}
+          renderOption={(etablissement) => <EmployeurOption etablissement={etablissement} />}
         />
       )}
     />

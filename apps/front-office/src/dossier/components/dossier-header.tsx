@@ -57,9 +57,9 @@ export function DossierHeader({
         <img
           src={illustrationUrl}
           alt=""
-          width={246}
-          height={204}
-          className="absolute top-10.5 right-58 hidden xl:block"
+          width={277}
+          height={156}
+          className="absolute top-13 right-56.5 hidden xl:block"
         />
         <div className="flex flex-col items-start gap-2">
           <Button asChild variant="link">

@@ -1,5 +1,6 @@
-import { Fragment } from "react";
-import { ETABLISSEMENT_SEARCH_MAX_LENGTH } from "@etape/api-contract";
+"use client";
+
+import * as React from "react";
 import {
   CircleXIcon,
   FilePenLineIcon,
@@ -16,8 +17,6 @@ import {
   ComboboxGroup,
   ComboboxList,
   ComboboxOption,
-  ComboboxOptionDetail,
-  ComboboxOptionTitle,
 } from "@etape/ui/components/combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@etape/ui/components/field";
 import {
@@ -28,51 +27,64 @@ import {
 } from "@etape/ui/components/input-group";
 import { Separator } from "@etape/ui/components/separator";
 import { StatusRegion } from "@etape/ui/components/status-region";
-
-import { NO_RESULT_TITLE, SEARCH_ERROR_TITLE, SEARCH_STATUS } from "../domain/employeur-search";
-import { formatSiret } from "../domain/format-siret";
 import {
-  EMPLOYEUR_FIELD_ID,
-  employeurOptionId,
-  type UseEmployeurSearchResult,
-} from "../hooks/use-employeur-search";
-import { SITUATION_PROFESSIONNELLE_FIELD_LABEL } from "../schema";
+  SEARCH_STATUS,
+  type RemoteSearchFieldDefinition,
+  type RemoteSearchState,
+} from "@etape/ui/lib/remote-search";
 
-const DESCRIPTION_ID = `${EMPLOYEUR_FIELD_ID}-description`;
-const ERROR_ID = `${EMPLOYEUR_FIELD_ID}-error`;
-const LIST_ID = `${EMPLOYEUR_FIELD_ID}-list`;
-
-/** Ce que reçoit `EmployeurSearch` : la recherche, le lien au formulaire et le passage à la saisie manuelle. */
-export interface EmployeurSearchProps {
-  search: UseEmployeurSearchResult;
+/** Le lien du champ au formulaire. */
+interface RemoteSearchFieldControl {
   fieldRef: React.Ref<HTMLInputElement>;
   onBlur: () => void;
   error?: { message?: string };
-  /** Vrai après « Changer l'entreprise » ou un retour de la saisie manuelle : le focus revient au champ. */
+  /** Vrai quand le champ vient de remplacer le choix affiché ou la saisie manuelle : il prend le focus. */
   isFocusRequested: boolean;
-  onManualEntry: () => void;
 }
 
-/** Le champ de recherche de l'employeur dans Sirene, sa liste de résultats et ses alertes. */
-export function EmployeurSearch({
+/** Ce que reçoit `RemoteSearchField` : la recherche, ce qui la distingue, le lien au formulaire et le passage à la saisie manuelle. */
+interface RemoteSearchFieldProps<TItem> {
+  search: RemoteSearchState<TItem>;
+  definition: RemoteSearchFieldDefinition<TItem>;
+  control: RemoteSearchFieldControl;
+  onManualEntry: () => void;
+  /** Le contenu d'une ligne de résultat : un `ComboboxOptionTitle`, puis ses `ComboboxOptionDetail`. */
+  renderOption: (item: TItem) => React.ReactNode;
+  /** Mise en page seulement : largeur, marge. */
+  className?: string;
+}
+
+/**
+ * Champ obligatoire de recherche auprès d'une API, au fil de la saisie : sa liste de résultats,
+ * l'alerte « aucun résultat » et l'alerte de panne, qui mènent toutes deux à une saisie manuelle.
+ * Vue pure : l'état vient de `search`, que l'app calcule (requête, clavier, annonce).
+ */
+function RemoteSearchField<TItem>({
   search,
-  fieldRef,
-  onBlur,
-  error,
-  isFocusRequested,
+  definition,
+  control,
   onManualEntry,
-}: EmployeurSearchProps) {
+  renderOption,
+  className,
+}: RemoteSearchFieldProps<TItem>) {
+  const { id, label, maxLength, optionId, texts } = definition;
+  const { fieldRef, onBlur, error, isFocusRequested } = control;
+  const descriptionId = `${id}-description`;
+  const errorId = `${id}-error`;
+  const listId = `${id}-list`;
   const isInvalid = error !== undefined;
   const isRetrying = search.status === SEARCH_STATUS.RETRYING;
   const manualEntryButton = (
     <Button type="button" variant="outline" size="sm" onClick={onManualEntry}>
       <FilePenLineIcon aria-hidden="true" />
-      Saisir mon employeur moi-même
+      {texts.manualEntryLabel}
     </Button>
   );
 
   return (
     <Field
+      data-slot="remote-search-field"
+      className={className}
       data-invalid={isInvalid}
       // On ne quitte le champ qu'en sortant de tout le groupe : la liste reste ouverte pour son bouton,
       // et « Relancer la recherche » ne déclenche pas la validation.
@@ -82,8 +94,8 @@ export function EmployeurSearch({
         onBlur();
       }}
     >
-      <FieldLabel htmlFor={EMPLOYEUR_FIELD_ID} required>
-        {SITUATION_PROFESSIONNELLE_FIELD_LABEL.employeur}
+      <FieldLabel htmlFor={id} required>
+        {label}
       </FieldLabel>
       <div className="relative">
         <InputGroup>
@@ -91,17 +103,17 @@ export function EmployeurSearch({
             <SearchIcon aria-hidden="true" />
           </InputGroupAddon>
           <InputGroupInput
-            id={EMPLOYEUR_FIELD_ID}
+            id={id}
             ref={fieldRef}
             role="combobox"
             aria-autocomplete="list"
-            aria-expanded={search.isPopupOpen && search.etablissements.length > 0}
-            aria-controls={LIST_ID}
-            aria-activedescendant={search.active ? employeurOptionId(search.active) : undefined}
+            aria-expanded={search.isPopupOpen && search.items.length > 0}
+            aria-controls={listId}
+            aria-activedescendant={search.active ? optionId(search.active) : undefined}
             aria-invalid={isInvalid || undefined}
-            aria-describedby={isInvalid ? ERROR_ID : DESCRIPTION_ID}
+            aria-describedby={isInvalid ? errorId : descriptionId}
             autoComplete="off"
-            maxLength={ETABLISSEMENT_SEARCH_MAX_LENGTH}
+            maxLength={maxLength}
             autoFocus={isFocusRequested}
             value={search.searchText}
             {...search.inputHandlers}
@@ -114,7 +126,7 @@ export function EmployeurSearch({
                 onClick={() => {
                   search.clear();
                   // Le bouton disparaît avec le texte : sans cela, le focus tomberait sur la page.
-                  document.getElementById(EMPLOYEUR_FIELD_ID)?.focus();
+                  document.getElementById(id)?.focus();
                 }}
               >
                 <CircleXIcon aria-hidden="true" />
@@ -127,48 +139,32 @@ export function EmployeurSearch({
           {search.status === SEARCH_STATUS.NO_RESULT && (
             <Alert variant="warning">
               <TriangleAlertIcon aria-hidden="true" />
-              <AlertTitle>{NO_RESULT_TITLE}</AlertTitle>
-              <AlertDescription>
-                Vérifiez l’orthographe, ajoutez la ville, ou saisissez le numéro SIRET indiqué sur
-                votre bulletin de salaire.
-              </AlertDescription>
+              <AlertTitle>{texts.noResultTitle}</AlertTitle>
+              <AlertDescription>{texts.noResultDescription}</AlertDescription>
               <AlertActions>{manualEntryButton}</AlertActions>
             </Alert>
           )}
           <ComboboxList
-            id={LIST_ID}
-            aria-label="Établissements"
-            hidden={search.etablissements.length === 0}
+            id={listId}
+            aria-label={texts.listLabel}
+            hidden={search.items.length === 0}
             // Garde le focus dans le champ : un clic sur une option ne doit pas fermer la liste avant d'être pris en compte.
             onMouseDown={(event) => event.preventDefault()}
           >
             <ComboboxGroup label={search.resultLabel}>
-              {search.etablissements.map((etablissement) => (
-                <Fragment key={etablissement.siret}>
+              {search.items.map((item) => (
+                <React.Fragment key={optionId(item)}>
                   <li role="presentation">
                     <Separator />
                   </li>
                   <ComboboxOption
-                    id={employeurOptionId(etablissement)}
-                    active={etablissement === search.active}
-                    onClick={() => search.select(etablissement)}
+                    id={optionId(item)}
+                    active={item === search.active}
+                    onClick={() => search.select(item)}
                   >
-                    <span className="flex flex-col gap-1 py-1">
-                      <ComboboxOptionTitle>{etablissement.denomination}</ComboboxOptionTitle>
-                      {etablissement.enseigne && (
-                        <ComboboxOptionDetail label="Enseigne">
-                          {etablissement.enseigne}
-                        </ComboboxOptionDetail>
-                      )}
-                      <ComboboxOptionDetail label="Adresse">
-                        {etablissement.adresse}
-                      </ComboboxOptionDetail>
-                      <ComboboxOptionDetail label="SIRET">
-                        {formatSiret(etablissement.siret)}
-                      </ComboboxOptionDetail>
-                    </span>
+                    <span className="flex flex-col gap-1 py-1">{renderOption(item)}</span>
                   </ComboboxOption>
-                </Fragment>
+                </React.Fragment>
               ))}
             </ComboboxGroup>
           </ComboboxList>
@@ -177,20 +173,15 @@ export function EmployeurSearch({
       </div>
       {/* Comme dans le kit et `FormField` : l'erreur remplace la description. */}
       {isInvalid ? (
-        <FieldError id={ERROR_ID} errors={[error]} />
+        <FieldError id={errorId} errors={[error]} />
       ) : (
-        <FieldDescription id={DESCRIPTION_ID}>
-          Saisissez le numéro SIRET indiqué sur votre bulletin de salaire, ou le nom de l’entreprise
-          suivi de la ville.
-        </FieldDescription>
+        <FieldDescription id={descriptionId}>{texts.description}</FieldDescription>
       )}
-      {(search.status === SEARCH_STATUS.ERROR || search.status === SEARCH_STATUS.RETRYING) && (
+      {(search.status === SEARCH_STATUS.ERROR || isRetrying) && (
         <Alert variant="warning">
           <TriangleAlertIcon aria-hidden="true" />
-          <AlertTitle>{SEARCH_ERROR_TITLE}</AlertTitle>
-          <AlertDescription>
-            Vous pouvez saisir vous-même les informations de votre employeur.
-          </AlertDescription>
+          <AlertTitle>{texts.errorTitle}</AlertTitle>
+          <AlertDescription>{texts.errorDescription}</AlertDescription>
           <AlertActions>
             {manualEntryButton}
             <Button
@@ -212,3 +203,6 @@ export function EmployeurSearch({
     </Field>
   );
 }
+
+export { RemoteSearchField };
+export type { RemoteSearchFieldControl, RemoteSearchFieldProps };

@@ -5,7 +5,8 @@ import { Button } from "@etape/ui/components/button";
 import { FormField } from "@etape/ui/components/form-field";
 import { Input } from "@etape/ui/components/input";
 
-import { formatSiret } from "../domain/format-siret";
+import { formatInputValue } from "@/lib/format-input";
+import { formatSiret, isSiretDigit } from "../domain/format-siret";
 import {
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   type SituationProfessionnelleFormData,
@@ -51,7 +52,9 @@ export function EmployeurManualFields({
               {...field}
               {...attributes}
               inputMode="numeric"
-              onChange={(e) => field.onChange(formatSiret(e.target.value))}
+              onChange={(e) =>
+                field.onChange(formatInputValue(e, field.value, formatSiret, isSiretDigit))
+              }
             />
           )}
         />
@@ -74,7 +77,14 @@ export function EmployeurManualFields({
         render={({ field, attributes }) => <Input {...field} {...attributes} />}
       />
 
-      <Button type="button" variant="link" size="lg" className="self-start" onClick={onSearch}>
+      <Button
+        type="button"
+        variant="link"
+        size="lg"
+        multiline
+        className="self-start"
+        onClick={onSearch}
+      >
         <SearchIcon aria-hidden="true" />
         Rechercher dans l’annuaire des entreprises
       </Button>

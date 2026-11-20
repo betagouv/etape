@@ -2,13 +2,11 @@ import { NotFoundScreen } from "@etape/session";
 import { useNavigate, useParams } from "@tanstack/react-router";
 
 import { VOLET_PATH, VOLET_ROUTE_ID } from "@/navigation/paths";
-import { VOLET_ID } from "../domain/volet-id";
 import { findVoletPosition } from "../domain/volets";
 import { VOLETS_DOSSIER } from "../domain/volets-dossier";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useVoletHeadingFocus } from "../hooks/use-volet-heading-focus";
-import { InformationsForm } from "../informations/informations-form";
-import { SituationProfessionnelleForm } from "../situation-professionnelle/situation-professionnelle-form";
+import { VOLET_FORMS } from "../volet-forms";
 import { FormLayout } from "./form-layout";
 import { VoletNotice } from "./volet-notice";
 
@@ -22,9 +20,7 @@ export function VoletScreen() {
 
   if (!position) return <NotFoundScreen />;
 
-  const isInformations = voletId === VOLET_ID.INFORMATIONS;
-  const isSituationProfessionnelle = voletId === VOLET_ID.SITUATION_PROFESSIONNELLE;
-  const hasForm = isInformations || isSituationProfessionnelle;
+  const VoletForm = VOLET_FORMS[voletId];
 
   function goToNextVolet(): void {
     if (position?.next) {
@@ -42,17 +38,12 @@ export function VoletScreen() {
       voletProgress={voletProgress}
       position={position}
       headingRef={headingRef}
-      formId={hasForm ? voletId : undefined}
+      formId={VoletForm ? voletId : undefined}
     >
-      {isInformations ? (
-        <InformationsForm
-          formId={VOLET_ID.INFORMATIONS}
+      {VoletForm ? (
+        <VoletForm
+          formId={voletId}
           notice={position.current.notice}
-          onSubmitValid={goToNextVolet}
-        />
-      ) : isSituationProfessionnelle ? (
-        <SituationProfessionnelleForm
-          formId={VOLET_ID.SITUATION_PROFESSIONNELLE}
           onSubmitValid={goToNextVolet}
         />
       ) : (
