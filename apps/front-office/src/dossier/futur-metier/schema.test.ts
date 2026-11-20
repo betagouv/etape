@@ -22,6 +22,7 @@ const EMPTY_FORM = {
   apportDemarche: "",
   piecesJustificatives: [],
   hasCurrentDemarche: true,
+  currentDemarcheId: null,
   demarches: [],
 };
 

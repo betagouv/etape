@@ -7,14 +7,19 @@ import {
   findDemarcheFields,
   findDemarcheIntitule,
   formatAnnulationAnnouncement,
+  formatAnnulationModificationAnnouncement,
   formatDemarcheAnnouncement,
   formatDemarcheLabel,
+  formatModificationAnnouncement,
+  formatModifierLabel,
   isDemarcheFilled,
   MESSAGE_NOMBRE_MAX_DEMARCHES,
   NOMBRE_MAX_DEMARCHES,
+  replaceDemarche,
   TYPE_DEMARCHE,
   TYPE_DEMARCHE_LABEL,
   type CurrentDemarche,
+  type Demarche,
 } from "./demarche";
 
 /** Une saisie complète pour un type de la liste. */
@@ -135,5 +140,36 @@ describe("formatDemarcheAnnouncement", () => {
 describe("formatAnnulationAnnouncement", () => {
   it("annonce la saisie abandonnée par le rang qu'aurait eu la démarche", () => {
     expect(formatAnnulationAnnouncement(1)).toBe("Saisie de la démarche 2 annulée.");
+  });
+});
+
+describe("replaceDemarche", () => {
+  const salon: Demarche = {
+    id: "a",
+    typeDemarche: TYPE_DEMARCHE.SALON,
+    precisionTypeDemarche: "",
+    apportDemarche: "J’ai rencontré trois artisans.",
+    piecesJustificatives: [],
+  };
+  const immersion: Demarche = { ...salon, id: "b", typeDemarche: TYPE_DEMARCHE.IMMERSION };
+
+  it("remplace la démarche de même `id`, à sa place", () => {
+    const modifiee = { ...salon, apportDemarche: "J’en ai rencontré cinq." };
+
+    expect(replaceDemarche([salon, immersion], modifiee)).toEqual([modifiee, immersion]);
+  });
+
+  it("ne touche à rien quand aucune démarche ne porte cet `id`", () => {
+    expect(replaceDemarche([salon], immersion)).toEqual([salon]);
+  });
+});
+
+describe("modification d'une démarche", () => {
+  it("nomme le bouton et annonce la modification par le rang de la démarche", () => {
+    expect(formatModifierLabel(0)).toBe("Modifier la démarche 1");
+    expect(formatModificationAnnouncement(0)).toBe("Démarche 1 modifiée.");
+    expect(formatAnnulationModificationAnnouncement(2)).toBe(
+      "Modification de la démarche 3 annulée.",
+    );
   });
 });

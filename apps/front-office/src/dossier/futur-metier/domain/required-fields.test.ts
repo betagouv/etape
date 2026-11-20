@@ -19,6 +19,7 @@ const values: FuturMetierFormData = {
   apportDemarche: "",
   piecesJustificatives: [],
   hasCurrentDemarche: true,
+  currentDemarcheId: null,
   demarches: [],
 };
 

@@ -45,6 +45,7 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
       apportDemarche: "",
       piecesJustificatives: [],
       hasCurrentDemarche: true,
+      currentDemarcheId: null,
       demarches: [],
     },
   });

@@ -130,3 +130,27 @@ export function formatDemarcheAnnouncement(index: number): string {
 export function formatAnnulationAnnouncement(index: number): string {
   return `Saisie de la démarche ${index + 1} annulée.`;
 }
+
+/** Sous le titre d'une démarche validée, quand on veut la modifier alors qu'une autre saisie est ouverte. */
+export const MESSAGE_SAISIE_EN_COURS =
+  "Validez ou annulez la démarche en cours avant de modifier celle-ci.";
+
+/** Le nom accessible du bouton « Modifier » d'une démarche validée : « Modifier la démarche 1 ». */
+export function formatModifierLabel(index: number): string {
+  return `Modifier la démarche ${index + 1}`;
+}
+
+/** La liste où la démarche modifiée a pris la place de celle qui porte son `id`. */
+export function replaceDemarche(demarches: readonly Demarche[], demarche: Demarche): Demarche[] {
+  return demarches.map((current) => (current.id === demarche.id ? demarche : current));
+}
+
+/** Pour la région `role="status"` : « Démarche 1 modifiée. » */
+export function formatModificationAnnouncement(index: number): string {
+  return `${formatDemarcheLabel(index)} modifiée.`;
+}
+
+/** Pour la région `role="status"` : « Modification de la démarche 1 annulée. » */
+export function formatAnnulationModificationAnnouncement(index: number): string {
+  return `Modification de la démarche ${index + 1} annulée.`;
+}

@@ -83,6 +83,8 @@ const baseFuturMetierSchema = z.object({
   piecesJustificatives: z.array(pieceJustificativeSchema),
   // Vrai tant que la carte de saisie est ouverte : elle se referme sur chaque démarche validée.
   hasCurrentDemarche: z.boolean(),
+  // La démarche validée que la saisie modifie ; `null` pour une nouvelle démarche.
+  currentDemarcheId: z.string().nullable(),
   // Les démarches validées, contrôlées à leur validation (`createDemarche`).
   demarches: z.array(
     z.object({
@@ -148,7 +150,10 @@ export type FuturMetierFieldName = keyof FuturMetierFormData;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
 export const FUTUR_METIER_FIELD_LABEL: Record<
-  Exclude<FuturMetierFieldName, "metierViseEntryMode" | "hasCurrentDemarche" | "demarches">,
+  Exclude<
+    FuturMetierFieldName,
+    "metierViseEntryMode" | "hasCurrentDemarche" | "currentDemarcheId" | "demarches"
+  >,
   string
 > = {
   metierVise: "Quel métier visez-vous ?",
