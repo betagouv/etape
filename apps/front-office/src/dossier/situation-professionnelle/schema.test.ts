@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ENTRY_MODE } from "../domain/entry-mode";
 import { OUI_NON } from "../domain/oui-non";
-import { EMPLOYEUR_ENTRY_MODE, situationProfessionnelleSchema } from "./schema";
+import { situationProfessionnelleSchema } from "./schema";
 
 function findDateDemissionMessages(data: Record<string, unknown>): string[] {
   const issues = situationProfessionnelleSchema.safeParse(data).error?.issues ?? [];
@@ -9,7 +10,7 @@ function findDateDemissionMessages(data: Record<string, unknown>): string[] {
 }
 
 const EMPTY_FORM = {
-  employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
+  employeurEntryMode: ENTRY_MODE.SEARCH,
   employeur: null,
   denomination: "",
   siret: "",

@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { ENTRY_MODE } from "../domain/entry-mode";
 import { OUI_NON } from "../domain/oui-non";
 import { TYPE_DEMARCHE } from "./domain/demarche";
-import { FUTUR_METIER_TEXT_MAX_LENGTH, futurMetierSchema, METIER_VISE_ENTRY_MODE } from "./schema";
+import { FUTUR_METIER_TEXT_MAX_LENGTH, futurMetierSchema } from "./schema";
 
 function findMessages(data: Record<string, unknown>, field: string): string[] {
   const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
@@ -10,7 +11,7 @@ function findMessages(data: Record<string, unknown>, field: string): string[] {
 }
 
 const EMPTY_FORM = {
-  metierViseEntryMode: METIER_VISE_ENTRY_MODE.SEARCH,
+  metierViseEntryMode: ENTRY_MODE.SEARCH,
   metierVise: null,
   intituleMetierVise: "",
   codeRome: "",
@@ -37,7 +38,7 @@ const SEARCH_FORM = {
 
 const MANUAL_FORM = {
   ...SEARCH_FORM,
-  metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+  metierViseEntryMode: ENTRY_MODE.MANUAL,
   intituleMetierVise: "Boulanger",
 };
 

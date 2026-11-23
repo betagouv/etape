@@ -1,15 +1,15 @@
+import type { EntryMode } from "../../domain/entry-mode";
 import { OUI_NON, type OuiNon } from "../../domain/oui-non";
 import {
   EMPLOYEUR_FIELDS,
   SITUATION_PROFESSIONNELLE_SECTION,
-  type EmployeurEntryMode,
   type SituationProfessionnelleFieldName,
   type SituationProfessionnelleSection,
 } from "../schema";
 
 /** La date n'est exigée qu'après un « oui » (maquette 10). */
 export function findSectionFields(
-  mode: EmployeurEntryMode,
+  mode: EntryMode,
   demission: OuiNon | undefined,
 ): Record<SituationProfessionnelleSection, readonly SituationProfessionnelleFieldName[]> {
   return {

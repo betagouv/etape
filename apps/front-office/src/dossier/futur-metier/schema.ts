@@ -1,20 +1,11 @@
 import { AppellationRomeSchema } from "@etape/api-contract";
 import { z } from "zod";
 
+import { ENTRY_MODE, type EntryMode } from "../domain/entry-mode";
 import { OUI_NON } from "../domain/oui-non";
 import { requireFilled } from "../domain/require-filled";
 import { findDemarcheFields, TYPE_DEMARCHE } from "./domain/demarche";
 import { formatCodeRome } from "./domain/format-code-rome";
-
-/** Le métier visé se choisit dans le référentiel ROME, ou se saisit à la main quand la recherche échoue. */
-export const METIER_VISE_ENTRY_MODE = {
-  SEARCH: "search",
-  MANUAL: "manual",
-} as const;
-
-/** Un mode de saisie, parmi ceux de `METIER_VISE_ENTRY_MODE`. */
-export type MetierViseEntryMode =
-  (typeof METIER_VISE_ENTRY_MODE)[keyof typeof METIER_VISE_ENTRY_MODE];
 
 const CODE_ROME_PATTERN = /^[A-Z]\d{4}$/;
 
@@ -35,12 +26,9 @@ const REQUIRED_MESSAGES = {
 type RequiredFieldName = keyof typeof REQUIRED_MESSAGES;
 
 /** Les champs exigés par chaque mode : le code ROME de la saisie manuelle est facultatif (maquette 07). */
-export const REQUIRED_METIER_VISE_FIELDS: Record<
-  MetierViseEntryMode,
-  readonly RequiredFieldName[]
-> = {
-  [METIER_VISE_ENTRY_MODE.SEARCH]: ["metierVise"],
-  [METIER_VISE_ENTRY_MODE.MANUAL]: ["intituleMetierVise"],
+export const REQUIRED_METIER_VISE_FIELDS: Record<EntryMode, readonly RequiredFieldName[]> = {
+  [ENTRY_MODE.SEARCH]: ["metierVise"],
+  [ENTRY_MODE.MANUAL]: ["intituleMetierVise"],
 };
 
 const pieceJustificativeSchema = z.object({
@@ -50,7 +38,7 @@ const pieceJustificativeSchema = z.object({
 });
 
 const baseFuturMetierSchema = z.object({
-  metierViseEntryMode: z.enum(METIER_VISE_ENTRY_MODE),
+  metierViseEntryMode: z.enum(ENTRY_MODE),
   metierVise: AppellationRomeSchema.nullable(),
   intituleMetierVise: z.string().trim(),
   // Le champ n'est mis en forme qu'à sa sortie : un envoi par Entrée arrive avec la saisie brute.
@@ -128,7 +116,7 @@ export const futurMetierSchema = baseFuturMetierSchema.superRefine(
       REQUIRED_METIER_VISE_FIELDS[data.metierViseEntryMode],
       REQUIRED_MESSAGES,
     );
-    if (data.metierViseEntryMode === METIER_VISE_ENTRY_MODE.SEARCH) return;
+    if (data.metierViseEntryMode === ENTRY_MODE.SEARCH) return;
 
     // Facultatif : contrôlé seulement s'il est rempli.
     if (data.codeRome !== "" && !CODE_ROME_PATTERN.test(data.codeRome)) {
@@ -151,6 +139,18 @@ export type FuturMetierFormData = z.infer<typeof futurMetierSchema>;
 
 /** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
 export type FuturMetierFieldName = keyof FuturMetierFormData;
+
+/** Les noms des champs du volet, pour `setValue`, `useWatch` et les `name` des champs. */
+export const FUTUR_METIER_FIELD = {
+  METIER_VISE_ENTRY_MODE: "metierViseEntryMode",
+  METIER_VISE: "metierVise",
+  INTITULE_METIER_VISE: "intituleMetierVise",
+  CODE_ROME: "codeRome",
+  SPECIALISATION: "specialisation",
+  QUOTIDIEN_METIER: "quotidienMetier",
+  CONDITIONS_EMPLOI: "conditionsEmploi",
+  DEBOUCHES: "debouches",
+} as const satisfies Record<string, FuturMetierFieldName>;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
 export const FUTUR_METIER_FIELD_LABEL: Record<
@@ -183,7 +183,7 @@ export const FUTUR_METIER_SECTION = {
 export type FuturMetierSection = (typeof FUTUR_METIER_SECTION)[keyof typeof FUTUR_METIER_SECTION];
 
 /** Les champs de chaque mode de saisie du métier visé. */
-export const METIER_VISE_FIELDS: Record<MetierViseEntryMode, readonly FuturMetierFieldName[]> = {
-  [METIER_VISE_ENTRY_MODE.SEARCH]: ["metierVise"],
-  [METIER_VISE_ENTRY_MODE.MANUAL]: ["intituleMetierVise", "codeRome"],
+export const METIER_VISE_FIELDS: Record<EntryMode, readonly FuturMetierFieldName[]> = {
+  [ENTRY_MODE.SEARCH]: ["metierVise"],
+  [ENTRY_MODE.MANUAL]: ["intituleMetierVise", "codeRome"],
 };

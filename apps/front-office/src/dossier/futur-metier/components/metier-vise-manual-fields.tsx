@@ -6,7 +6,7 @@ import { FormField } from "@etape/ui/components/form-field";
 import { Input } from "@etape/ui/components/input";
 
 import { formatCodeRome } from "../domain/format-code-rome";
-import { FUTUR_METIER_FIELD_LABEL, type FuturMetierFormData } from "../schema";
+import { FUTUR_METIER_FIELD, FUTUR_METIER_FIELD_LABEL, type FuturMetierFormData } from "../schema";
 
 /** Ce que reçoit `MetierViseManualFields` : le contrôle du formulaire et le retour à la recherche. */
 export interface MetierViseManualFieldsProps {
@@ -26,7 +26,7 @@ export function MetierViseManualFields({
     <div className="flex flex-col gap-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <FormField
-          name="intituleMetierVise"
+          name={FUTUR_METIER_FIELD.INTITULE_METIER_VISE}
           control={control}
           label={FUTUR_METIER_FIELD_LABEL.intituleMetierVise}
           required
@@ -36,7 +36,7 @@ export function MetierViseManualFields({
         />
 
         <FormField
-          name="codeRome"
+          name={FUTUR_METIER_FIELD.CODE_ROME}
           control={control}
           label={FUTUR_METIER_FIELD_LABEL.codeRome}
           render={({ field, attributes }) => (

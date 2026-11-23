@@ -4,9 +4,10 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import { OUI_NON } from "../../domain/oui-non";
 import { TYPE_DEMARCHE } from "../domain/demarche";
-import { FUTUR_METIER_SECTION, METIER_VISE_ENTRY_MODE, type FuturMetierFormData } from "../schema";
+import { FUTUR_METIER_SECTION, type FuturMetierFormData } from "../schema";
 import { useFuturMetierForm, type UseFuturMetierFormResult } from "./use-futur-metier-form";
 
 afterEach(cleanup);
@@ -171,7 +172,7 @@ describe("useFuturMetierForm", () => {
 
     setValues(result.current.form, {
       ...FILLED_TEXTS,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
     });
     expect(result.current.progress.remainingFieldCount).toBe(1);
 
@@ -227,7 +228,7 @@ describe("useFuturMetierForm", () => {
     const result = renderForm();
     setValues(result.current.form, {
       ...FILLED_TEXTS,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
     });
 
     await fillAndLeave(result.current.form.register("intituleMetierVise"), " ");
@@ -242,7 +243,7 @@ describe("useFuturMetierForm", () => {
     const result = renderForm();
     setValues(result.current.form, {
       ...FILLED_TEXTS,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
     });
 
     await fillAndLeave(result.current.form.register("intituleMetierVise"), "Pâtissier");
@@ -255,7 +256,7 @@ describe("useFuturMetierForm", () => {
     const result = renderForm();
     setValues(result.current.form, {
       ...FILLED_TEXTS,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
       codeRome: "M18",
     });
@@ -283,7 +284,7 @@ describe("useFuturMetierForm", () => {
     const result = renderForm();
     setValues(result.current.form, {
       ...FILLED_TEXTS,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       codeRome: "M18",
     });
 
@@ -300,7 +301,7 @@ describe("useFuturMetierForm", () => {
     const result = renderForm();
     setValues(result.current.form, {
       ...FILLED_TEXTS,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
     });
 
@@ -316,13 +317,13 @@ describe("useFuturMetierForm", () => {
     const result = renderForm();
     setValues(result.current.form, {
       ...FILLED_TEXTS,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
       codeRome: "M18",
     });
     await submit(result.current.form);
 
-    setValues(result.current.form, { metierViseEntryMode: METIER_VISE_ENTRY_MODE.SEARCH });
+    setValues(result.current.form, { metierViseEntryMode: ENTRY_MODE.SEARCH });
 
     expect(result.current.progress.errorCount).toBe(0);
     expect(result.current.voletErrors).toEqual([]);

@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import { OUI_NON } from "../../domain/oui-non";
 import { TYPE_DEMARCHE } from "./demarche";
-import { FUTUR_METIER_SECTION, METIER_VISE_ENTRY_MODE, type FuturMetierFormData } from "../schema";
+import { FUTUR_METIER_SECTION, type FuturMetierFormData } from "../schema";
 import { findRequiredFields } from "./required-fields";
 
 const values: FuturMetierFormData = {
-  metierViseEntryMode: METIER_VISE_ENTRY_MODE.SEARCH,
+  metierViseEntryMode: ENTRY_MODE.SEARCH,
   metierVise: null,
   intituleMetierVise: "",
   codeRome: "",
@@ -97,7 +98,7 @@ describe("findRequiredFields", () => {
   it("exige l'intitulé saisi à la main, pas le code ROME", () => {
     const required = findRequiredFields({
       ...values,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Boulanger",
       codeRome: "D1102",
     });
@@ -108,7 +109,7 @@ describe("findRequiredFields", () => {
   it("contrôle le code ROME en saisie manuelle, entre l'intitulé et les zones de texte comme sur la page", () => {
     const required = findRequiredFields({
       ...values,
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
     });
     expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
       "intituleMetierVise",

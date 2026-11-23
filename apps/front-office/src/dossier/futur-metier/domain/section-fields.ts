@@ -1,3 +1,4 @@
+import type { EntryMode } from "../../domain/entry-mode";
 import { OUI_NON, type OuiNon } from "../../domain/oui-non";
 import {
   FUTUR_METIER_SECTION,
@@ -5,7 +6,6 @@ import {
   REQUIRED_METIER_VISE_FIELDS,
   type FuturMetierFieldName,
   type FuturMetierSection,
-  type MetierViseEntryMode,
 } from "../schema";
 import { findDemarcheFields, type TypeDemarche } from "./demarche";
 
@@ -19,7 +19,7 @@ const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
 
 /** Ce qui décide des champs de la section : le mode de saisie du métier, et où en sont les démarches. */
 export interface SectionFieldsAnswers {
-  metierViseEntryMode: MetierViseEntryMode;
+  metierViseEntryMode: EntryMode;
   /** Absente tant que la question n'a pas de réponse. */
   demarcheDecouverte?: OuiNon;
   typeDemarche?: TypeDemarche;

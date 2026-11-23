@@ -8,6 +8,7 @@ import { Input } from "@etape/ui/components/input";
 import { formatInputValue } from "@/lib/format-input";
 import { formatSiret, isSiretDigit } from "../domain/format-siret";
 import {
+  SITUATION_PROFESSIONNELLE_FIELD,
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   type SituationProfessionnelleFormData,
 } from "../schema";
@@ -30,7 +31,7 @@ export function EmployeurManualFields({
   return (
     <div className="flex flex-col gap-5">
       <FormField
-        name="denomination"
+        name={SITUATION_PROFESSIONNELLE_FIELD.DENOMINATION}
         control={control}
         label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.denomination}
         required
@@ -42,7 +43,7 @@ export function EmployeurManualFields({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <FormField
-          name="siret"
+          name={SITUATION_PROFESSIONNELLE_FIELD.SIRET}
           control={control}
           label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.siret}
           required
@@ -60,7 +61,7 @@ export function EmployeurManualFields({
         />
 
         <Controller
-          name="secteurActivite"
+          name={SITUATION_PROFESSIONNELLE_FIELD.SECTEUR_ACTIVITE}
           control={control}
           render={({ field, fieldState }) => (
             <SecteurActiviteField field={field} error={fieldState.error} />
@@ -69,7 +70,7 @@ export function EmployeurManualFields({
       </div>
 
       <FormField
-        name="adresse"
+        name={SITUATION_PROFESSIONNELLE_FIELD.ADRESSE}
         control={control}
         label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.adresse}
         required
