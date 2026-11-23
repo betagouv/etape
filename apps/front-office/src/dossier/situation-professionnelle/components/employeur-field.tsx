@@ -1,9 +1,6 @@
-import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
+import { useWatch, type UseFormReturn } from "react-hook-form";
 
-import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
-
-import { ENTRY_MODE } from "../../domain/entry-mode";
-import { useRemoteSearchEntry } from "../../hooks/use-remote-search-entry";
+import { RemoteSearchEntryField } from "../../components/remote-search-entry-field";
 import { EMPLOYEUR_SEARCH } from "../employeur-search-definition";
 import {
   EMPLOYEUR_FIELDS,
@@ -24,56 +21,30 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
   const { control, setValue, clearErrors } = form;
   const mode = useWatch({ control, name: SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE });
   const employeur = useWatch({ control, name: SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR });
-  const { search, isFocusRequested, openManualEntry, openSearch, clearItem } = useRemoteSearchEntry(
-    EMPLOYEUR_SEARCH,
-    mode,
-    EMPLOYEUR_FIELDS,
-    {
-      clearErrors,
-      setMode: (nextMode) =>
-        setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE, nextMode),
-      setItem: (etablissement, options) =>
-        setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR, etablissement, options),
-    },
-  );
-
-  if (mode === ENTRY_MODE.MANUAL) {
-    return (
-      <EmployeurManualFields
-        control={control}
-        isFocusRequested={isFocusRequested}
-        onSearch={openSearch}
-      />
-    );
-  }
-
-  if (employeur) {
-    return (
-      <EmployeurCard
-        etablissement={employeur}
-        isFocusRequested={isFocusRequested}
-        onChange={clearItem}
-      />
-    );
-  }
 
   return (
-    <Controller
-      name={SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR}
+    <RemoteSearchEntryField
       control={control}
-      render={({ field, fieldState }) => (
-        <RemoteSearchField
-          search={search}
-          definition={EMPLOYEUR_SEARCH}
-          control={{
-            fieldRef: field.ref,
-            onBlur: field.onBlur,
-            error: fieldState.error,
-            isFocusRequested,
-          }}
-          onManualEntry={openManualEntry}
-          renderOption={(etablissement) => <EmployeurOption etablissement={etablissement} />}
-        />
+      name={SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR}
+      search={{
+        definition: EMPLOYEUR_SEARCH,
+        renderOption: (etablissement) => <EmployeurOption etablissement={etablissement} />,
+      }}
+      entry={{
+        mode,
+        item: employeur,
+        fields: EMPLOYEUR_FIELDS,
+        clearErrors,
+        setMode: (nextMode) =>
+          setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE, nextMode),
+        setItem: (etablissement, options) =>
+          setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR, etablissement, options),
+      }}
+      renderCard={(etablissement, cardControl) => (
+        <EmployeurCard etablissement={etablissement} {...cardControl} />
+      )}
+      renderManualFields={(manualFieldsControl) => (
+        <EmployeurManualFields control={control} {...manualFieldsControl} />
       )}
     />
   );

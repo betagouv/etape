@@ -4,12 +4,12 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { useForm, useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
 import { KEY } from "@etape/ui/lib/keys";
 
 import { ENTRY_MODE, type EntryMode } from "../domain/entry-mode";
-import type { RemoteSearchDefinition, RemoteSearchResults } from "./use-remote-search";
-import { useRemoteSearchEntry, type RemoteSearchItemOptions } from "./use-remote-search-entry";
+import type { RemoteSearchDefinition, RemoteSearchResults } from "../hooks/use-remote-search";
+import type { RemoteSearchItemOptions } from "../hooks/use-remote-search-entry";
+import { RemoteSearchEntryField } from "./remote-search-entry-field";
 
 interface Metier {
   code: string;
@@ -45,6 +45,9 @@ const NO_METIER: RemoteSearchResults<Metier> = { items: [], totalCount: 0 };
 
 const NO_RESULT_TITLE = "Aucun métier ne correspond";
 const MANUAL_ENTRY_LABEL = "Saisir le métier moi-même";
+const CHANGE_LABEL = "Changer de métier";
+const SEARCH_LABEL = "Rechercher le métier";
+const INTITULE_LABEL = "Nom du métier";
 
 /** Largement passé le délai de frappe, quelle que soit sa valeur. */
 const AFTER_SEARCH_DELAY_MS = 1000;
@@ -81,7 +84,7 @@ interface HarnessProps {
   initialMetier: Metier | null;
 }
 
-/** Le hook derrière un vrai formulaire, et les trois contenus qui se remplacent comme à l'écran. */
+/** Le champ dans un vrai formulaire ; la carte et la saisie manuelle prennent le focus comme à l'écran. */
 function Harness({ definition, onSetItem, initialMetier }: HarnessProps) {
   const { control, setValue, setError, clearErrors, formState } = useForm<FormData>({
     defaultValues: {
@@ -93,25 +96,10 @@ function Harness({ definition, onSetItem, initialMetier }: HarnessProps) {
   });
   const mode = useWatch({ control, name: FIELD.ENTRY_MODE });
   const metier = useWatch({ control, name: FIELD.METIER });
-  const { search, isFocusRequested, openManualEntry, openSearch, clearItem } = useRemoteSearchEntry(
-    definition,
-    mode,
-    FIELDS,
-    {
-      clearErrors,
-      setMode: (nextMode) => setValue(FIELD.ENTRY_MODE, nextMode),
-      setItem: (item, options) => {
-        onSetItem(item, options);
-        setValue(FIELD.METIER, item, options);
-      },
-    },
-  );
 
   return (
     <>
       <p data-testid="mode">{mode}</p>
-      <p data-testid="metier">{metier?.libelle}</p>
-      <p data-testid="focus">{String(isFocusRequested)}</p>
       <p data-testid="errors">
         {ERROR_NAMES.filter((name) => formState.errors[name] !== undefined).join(",")}
       </p>
@@ -122,30 +110,43 @@ function Harness({ definition, onSetItem, initialMetier }: HarnessProps) {
         Mettre en erreur
       </button>
 
-      {mode === ENTRY_MODE.MANUAL && (
-        <button type="button" onClick={openSearch}>
-          Rechercher
-        </button>
-      )}
-      {mode === ENTRY_MODE.SEARCH && metier && (
-        <button type="button" onClick={clearItem}>
-          Changer
-        </button>
-      )}
-      {mode === ENTRY_MODE.SEARCH && !metier && (
-        <RemoteSearchField
-          search={search}
-          definition={definition}
-          control={{ fieldRef: () => undefined, onBlur: () => undefined, isFocusRequested }}
-          onManualEntry={openManualEntry}
-          renderOption={({ libelle }) => libelle}
-        />
-      )}
+      <RemoteSearchEntryField
+        control={control}
+        name={FIELD.METIER}
+        search={{ definition, renderOption: ({ libelle }) => libelle }}
+        entry={{
+          mode,
+          item: metier,
+          fields: FIELDS,
+          clearErrors,
+          setMode: (nextMode) => setValue(FIELD.ENTRY_MODE, nextMode),
+          setItem: (item, options) => {
+            onSetItem(item, options);
+            setValue(FIELD.METIER, item, options);
+          },
+        }}
+        renderCard={({ libelle }, { isFocusRequested, onChange }) => (
+          <>
+            <p data-testid="card">{libelle}</p>
+            <button type="button" autoFocus={isFocusRequested} onClick={onChange}>
+              {CHANGE_LABEL}
+            </button>
+          </>
+        )}
+        renderManualFields={({ isFocusRequested, onSearch }) => (
+          <>
+            <input aria-label={INTITULE_LABEL} autoFocus={isFocusRequested} />
+            <button type="button" onClick={onSearch}>
+              {SEARCH_LABEL}
+            </button>
+          </>
+        )}
+      />
     </>
   );
 }
 
-function renderEntry(
+function renderField(
   results: RemoteSearchResults<Metier>,
   onSetItem: SetItem = vi.fn(),
   initialMetier: Metier | null = null,
@@ -165,8 +166,12 @@ function text(testId: string): string | null {
   return screen.getByTestId(testId).textContent;
 }
 
+function getButton(name: string): HTMLElement {
+  return screen.getByRole("button", { name });
+}
+
 function click(name: string): void {
-  fireEvent.click(screen.getByRole("button", { name }));
+  fireEvent.click(getButton(name));
 }
 
 function getInput(): HTMLInputElement {
@@ -210,48 +215,54 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("useRemoteSearchEntry", () => {
-  it("ne demande pas le focus au premier affichage", () => {
-    renderEntry(ONE_METIER);
+describe("RemoteSearchEntryField", () => {
+  it("affiche la recherche sans lui donner le focus au premier affichage", () => {
+    renderField(ONE_METIER);
 
     expect(text("mode")).toBe(ENTRY_MODE.SEARCH);
-    expect(text("focus")).toBe("false");
+    expect(document.activeElement).not.toBe(getInput());
   });
 
-  it("écrit le résultat choisi en le contrôlant, et demande le focus", async () => {
+  it("affiche la carte d'un métier déjà choisi, sans lui donner le focus", () => {
+    renderField(ONE_METIER, vi.fn(), BOULANGER);
+
+    expect(text("card")).toBe(BOULANGER.libelle);
+    expect(document.activeElement).not.toBe(getButton(CHANGE_LABEL));
+  });
+
+  it("écrit le résultat choisi en le contrôlant, et donne le focus à la carte", async () => {
     const onSetItem = vi.fn<SetItem>();
-    renderEntry(ONE_METIER, onSetItem);
+    renderField(ONE_METIER, onSetItem);
 
     await selectFirstResult();
 
     expect(onSetItem).toHaveBeenCalledExactlyOnceWith(BOULANGER, { shouldValidate: true });
-    expect(text("metier")).toBe(BOULANGER.libelle);
-    expect(text("focus")).toBe("true");
+    expect(text("card")).toBe(BOULANGER.libelle);
+    expect(document.activeElement).toBe(getButton(CHANGE_LABEL));
   });
 
-  it("efface un choix déjà présent sans le contrôler, et demande le focus", () => {
+  it("efface un choix déjà présent sans le contrôler, et donne le focus à la recherche", () => {
     const onSetItem = vi.fn<SetItem>();
-    renderEntry(ONE_METIER, onSetItem, BOULANGER);
-    expect(text("focus")).toBe("false");
+    renderField(ONE_METIER, onSetItem, BOULANGER);
 
-    click("Changer");
+    click(CHANGE_LABEL);
 
     expect(onSetItem).toHaveBeenCalledExactlyOnceWith(null, { shouldValidate: false });
-    expect(text("metier")).toBe("");
-    expect(text("focus")).toBe("true");
+    expect(screen.queryByTestId("card")).toBeNull();
+    expect(document.activeElement).toBe(getInput());
   });
 
   it("rend le champ de recherche vide après un choix puis son effacement", async () => {
-    renderEntry(ONE_METIER);
+    renderField(ONE_METIER);
     await selectFirstResult();
 
-    click("Changer");
+    click(CHANGE_LABEL);
 
     expect(getInput().value).toBe("");
   });
 
   it("passe en saisie manuelle en effaçant les erreurs de la recherche, pas les autres", async () => {
-    renderEntry(NO_METIER);
+    renderField(NO_METIER);
     await searchWithoutResult();
     click("Mettre en erreur");
 
@@ -259,20 +270,21 @@ describe("useRemoteSearchEntry", () => {
 
     expect(text("mode")).toBe(ENTRY_MODE.MANUAL);
     expect(text("errors")).toBe("intitule,specialisation");
-    expect(text("focus")).toBe("true");
+    expect(document.activeElement).toBe(screen.getByRole("textbox", { name: INTITULE_LABEL }));
   });
 
   it("revient à une recherche vide, sans l'alerte de l'ancienne", async () => {
-    renderEntry(NO_METIER);
+    renderField(NO_METIER);
     await searchWithoutResult();
     expect(getAnnouncement()).toBe(NO_RESULT_TITLE);
     click(MANUAL_ENTRY_LABEL);
     click("Mettre en erreur");
 
-    click("Rechercher");
+    click(SEARCH_LABEL);
 
     expect(text("mode")).toBe(ENTRY_MODE.SEARCH);
     expect(getInput().value).toBe("");
+    expect(document.activeElement).toBe(getInput());
     expect(screen.queryByRole("button", { name: MANUAL_ENTRY_LABEL })).toBeNull();
     expect(getAnnouncement()).toBe("");
     expect(text("errors")).toBe("metier,specialisation");
