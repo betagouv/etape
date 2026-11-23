@@ -1,16 +1,21 @@
+import { useWatch } from "react-hook-form";
+
 import { FormField } from "@etape/ui/components/form-field";
+import { FormRadioGroup } from "@etape/ui/components/form-radio-group";
 import {
   FormSection,
   FormSectionHeader,
   FormSectionTitle,
 } from "@etape/ui/components/form-section";
 import { Input } from "@etape/ui/components/input";
+import { Separator } from "@etape/ui/components/separator";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
 import { CharacterCountField } from "../components/character-count-field";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
+import { OUI_NON, OUI_NON_LABEL } from "../domain/oui-non";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
@@ -30,11 +35,12 @@ export interface FuturMetierFormProps {
   onSubmitValid: (data: FuturMetierFormData) => void;
 }
 
-/** Le volet « Mon futur métier » : le métier visé, puis ce que le bénéficiaire en sait. */
+/** Le volet « Mon futur métier » : le métier visé, ce que le bénéficiaire en sait, puis ses perspectives d'emploi. */
 export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFormProps) {
   const { form, sections, voletErrors, errorAnnouncement } = useDossierVolets().futurMetier;
   const { submitCount } = form.formState;
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
+  const contactEmployeurs = useWatch({ control: form.control, name: "contactEmployeurs" });
 
   return (
     <>
@@ -92,6 +98,53 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
           />
 
           <Demarches form={form} />
+        </FormSection>
+
+        <Separator />
+
+        <FormSection>
+          <FormSectionHeader>
+            <FormSectionTitle>Vos perspectives d’emploi</FormSectionTitle>
+            <SectionCounter progress={sections[FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI]} />
+          </FormSectionHeader>
+
+          <FormField
+            name="zoneRechercheEmploi"
+            control={form.control}
+            label={FUTUR_METIER_FIELD_LABEL.zoneRechercheEmploi}
+            required
+            description="Ville, département ou région. Par exemple : Bordeaux et ses environs"
+            render={({ field, attributes }) => <Input {...field} {...attributes} />}
+          />
+
+          <FormRadioGroup
+            name="demenagement"
+            control={form.control}
+            label={FUTUR_METIER_FIELD_LABEL.demenagement}
+            options={OUI_NON_LABEL}
+          />
+
+          <FormRadioGroup
+            name="contactEmployeurs"
+            control={form.control}
+            label={FUTUR_METIER_FIELD_LABEL.contactEmployeurs}
+            options={OUI_NON_LABEL}
+            // Après « non », les entreprises ne sont plus demandées : leur erreur ne doit pas rester au résumé.
+            onValueChange={(value) => {
+              if (value === OUI_NON.NON) form.clearErrors("entreprisesContactees");
+            }}
+          />
+
+          {contactEmployeurs === OUI_NON.OUI && (
+            <CharacterCountField
+              name="entreprisesContactees"
+              control={form.control}
+              label={FUTUR_METIER_FIELD_LABEL.entreprisesContactees}
+              required
+              description="Les éventuels contacts déjà pris avec des employeurs potentiels, les éventuelles intentions d’embauche"
+              maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
+            />
+          )}
         </FormSection>
       </form>
     </>
