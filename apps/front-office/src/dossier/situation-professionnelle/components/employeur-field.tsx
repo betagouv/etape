@@ -1,10 +1,10 @@
 import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 
 import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
-import { useEntryMode } from "@etape/ui/hooks/use-entry-mode";
 
 import { ENTRY_MODE } from "../../domain/entry-mode";
-import { EMPLOYEUR_SEARCH, useEmployeurSearch } from "../hooks/use-employeur-search";
+import { useRemoteSearchEntry } from "../../hooks/use-remote-search-entry";
+import { EMPLOYEUR_SEARCH } from "../employeur-search-definition";
 import {
   EMPLOYEUR_FIELDS,
   SITUATION_PROFESSIONNELLE_FIELD,
@@ -24,26 +24,25 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
   const { control, setValue, clearErrors } = form;
   const mode = useWatch({ control, name: SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE });
   const employeur = useWatch({ control, name: SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR });
-  const { isFocusRequested, requestFocus, switchMode } = useEntryMode(mode, EMPLOYEUR_FIELDS, {
-    clearErrors,
-    setMode: (nextMode) => setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE, nextMode),
-  });
-
-  const search = useEmployeurSearch((etablissement) => {
-    setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR, etablissement, { shouldValidate: true });
-    requestFocus();
-  });
+  const { search, isFocusRequested, openManualEntry, openSearch, clearItem } = useRemoteSearchEntry(
+    EMPLOYEUR_SEARCH,
+    mode,
+    EMPLOYEUR_FIELDS,
+    {
+      clearErrors,
+      setMode: (nextMode) =>
+        setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE, nextMode),
+      setItem: (etablissement, options) =>
+        setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR, etablissement, options),
+    },
+  );
 
   if (mode === ENTRY_MODE.MANUAL) {
     return (
       <EmployeurManualFields
         control={control}
         isFocusRequested={isFocusRequested}
-        onSearch={() => {
-          // On repart d'une recherche vide : l'ancienne rouvrirait son alerte « aucun résultat ».
-          search.clear();
-          switchMode(ENTRY_MODE.SEARCH);
-        }}
+        onSearch={openSearch}
       />
     );
   }
@@ -53,10 +52,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
       <EmployeurCard
         etablissement={employeur}
         isFocusRequested={isFocusRequested}
-        onChange={() => {
-          setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR, null);
-          requestFocus();
-        }}
+        onChange={clearItem}
       />
     );
   }
@@ -75,7 +71,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
             error: fieldState.error,
             isFocusRequested,
           }}
-          onManualEntry={() => switchMode(ENTRY_MODE.MANUAL)}
+          onManualEntry={openManualEntry}
           renderOption={(etablissement) => <EmployeurOption etablissement={etablissement} />}
         />
       )}

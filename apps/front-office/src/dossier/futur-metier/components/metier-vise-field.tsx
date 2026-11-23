@@ -1,10 +1,10 @@
 import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 
 import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
-import { useEntryMode } from "@etape/ui/hooks/use-entry-mode";
 
 import { ENTRY_MODE } from "../../domain/entry-mode";
-import { METIER_VISE_SEARCH, useMetierViseSearch } from "../hooks/use-metier-vise-search";
+import { useRemoteSearchEntry } from "../../hooks/use-remote-search-entry";
+import { METIER_VISE_SEARCH } from "../metier-vise-search-definition";
 import { FUTUR_METIER_FIELD, METIER_VISE_FIELDS, type FuturMetierFormData } from "../schema";
 import { MetierViseCard } from "./metier-vise-card";
 import { MetierViseManualFields } from "./metier-vise-manual-fields";
@@ -20,26 +20,24 @@ export function MetierViseField({ form }: MetierViseFieldProps) {
   const { control, setValue, clearErrors } = form;
   const mode = useWatch({ control, name: FUTUR_METIER_FIELD.METIER_VISE_ENTRY_MODE });
   const metierVise = useWatch({ control, name: FUTUR_METIER_FIELD.METIER_VISE });
-  const { isFocusRequested, requestFocus, switchMode } = useEntryMode(mode, METIER_VISE_FIELDS, {
-    clearErrors,
-    setMode: (nextMode) => setValue(FUTUR_METIER_FIELD.METIER_VISE_ENTRY_MODE, nextMode),
-  });
-
-  const search = useMetierViseSearch((appellationRome) => {
-    setValue(FUTUR_METIER_FIELD.METIER_VISE, appellationRome, { shouldValidate: true });
-    requestFocus();
-  });
+  const { search, isFocusRequested, openManualEntry, openSearch, clearItem } = useRemoteSearchEntry(
+    METIER_VISE_SEARCH,
+    mode,
+    METIER_VISE_FIELDS,
+    {
+      clearErrors,
+      setMode: (nextMode) => setValue(FUTUR_METIER_FIELD.METIER_VISE_ENTRY_MODE, nextMode),
+      setItem: (appellationRome, options) =>
+        setValue(FUTUR_METIER_FIELD.METIER_VISE, appellationRome, options),
+    },
+  );
 
   if (mode === ENTRY_MODE.MANUAL) {
     return (
       <MetierViseManualFields
         control={control}
         isFocusRequested={isFocusRequested}
-        onSearch={() => {
-          // On repart d'une recherche vide : l'ancienne rouvrirait son alerte « aucun résultat ».
-          search.clear();
-          switchMode(ENTRY_MODE.SEARCH);
-        }}
+        onSearch={openSearch}
       />
     );
   }
@@ -49,10 +47,7 @@ export function MetierViseField({ form }: MetierViseFieldProps) {
       <MetierViseCard
         appellationRome={metierVise}
         isFocusRequested={isFocusRequested}
-        onChange={() => {
-          setValue(FUTUR_METIER_FIELD.METIER_VISE, null);
-          requestFocus();
-        }}
+        onChange={clearItem}
       />
     );
   }
@@ -71,7 +66,7 @@ export function MetierViseField({ form }: MetierViseFieldProps) {
             error: fieldState.error,
             isFocusRequested,
           }}
-          onManualEntry={() => switchMode(ENTRY_MODE.MANUAL)}
+          onManualEntry={openManualEntry}
           renderOption={(appellationRome) => <MetierViseOption appellationRome={appellationRome} />}
         />
       )}
