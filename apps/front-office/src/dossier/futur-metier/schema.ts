@@ -44,6 +44,9 @@ export const REQUIRED_METIER_VISE_FIELDS: Record<
   [METIER_VISE_ENTRY_MODE.MANUAL]: ["intituleMetierVise"],
 };
 
+/** Exigé après un « oui » à la question sur les contacts avec des employeurs. */
+const REQUIRED_CONTACT_EMPLOYEURS_FIELDS: readonly RequiredFieldName[] = ["entreprisesContactees"];
+
 const pieceJustificativeSchema = z.object({
   id: z.string(),
   fichier: z.instanceof(File),
@@ -140,7 +143,7 @@ export const futurMetierSchema = baseFuturMetierSchema.superRefine(
       requireFilled(ctx, data, findDemarcheFields(data.typeDemarche), REQUIRED_MESSAGES);
 
     if (data.contactEmployeurs === OUI_NON.OUI)
-      requireFilled(ctx, data, ["entreprisesContactees"], REQUIRED_MESSAGES);
+      requireFilled(ctx, data, REQUIRED_CONTACT_EMPLOYEURS_FIELDS, REQUIRED_MESSAGES);
 
     requireFilled(
       ctx,
