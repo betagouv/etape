@@ -1,12 +1,10 @@
-import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
+import { useWatch, type UseFormReturn } from "react-hook-form";
 
-import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
-import { useEntryMode } from "@etape/ui/hooks/use-entry-mode";
-
-import { EMPLOYEUR_SEARCH, useEmployeurSearch } from "../hooks/use-employeur-search";
+import { RemoteSearchEntryField } from "../../components/remote-search-entry-field";
+import { EMPLOYEUR_SEARCH } from "../employeur-search-definition";
 import {
-  EMPLOYEUR_ENTRY_MODE,
   EMPLOYEUR_FIELDS,
+  SITUATION_PROFESSIONNELLE_FIELD,
   type SituationProfessionnelleFormData,
 } from "../schema";
 import { EmployeurCard } from "./employeur-card";
@@ -21,62 +19,32 @@ export interface EmployeurFieldProps {
 /** La recherche Sirene, la carte de l'établissement choisi, ou la saisie manuelle. */
 export function EmployeurField({ form }: EmployeurFieldProps) {
   const { control, setValue, clearErrors } = form;
-  const mode = useWatch({ control, name: "employeurEntryMode" });
-  const employeur = useWatch({ control, name: "employeur" });
-  const { isFocusRequested, requestFocus, switchMode } = useEntryMode(mode, EMPLOYEUR_FIELDS, {
-    clearErrors,
-    setMode: (nextMode) => setValue("employeurEntryMode", nextMode),
-  });
-
-  const search = useEmployeurSearch((etablissement) => {
-    setValue("employeur", etablissement, { shouldValidate: true });
-    requestFocus();
-  });
-
-  if (mode === EMPLOYEUR_ENTRY_MODE.MANUAL) {
-    return (
-      <EmployeurManualFields
-        control={control}
-        isFocusRequested={isFocusRequested}
-        onSearch={() => {
-          // On repart d'une recherche vide : l'ancienne rouvrirait son alerte « aucun résultat ».
-          search.clear();
-          switchMode(EMPLOYEUR_ENTRY_MODE.SEARCH);
-        }}
-      />
-    );
-  }
-
-  if (employeur) {
-    return (
-      <EmployeurCard
-        etablissement={employeur}
-        isFocusRequested={isFocusRequested}
-        onChange={() => {
-          setValue("employeur", null);
-          requestFocus();
-        }}
-      />
-    );
-  }
+  const mode = useWatch({ control, name: SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE });
+  const employeur = useWatch({ control, name: SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR });
 
   return (
-    <Controller
-      name="employeur"
+    <RemoteSearchEntryField
       control={control}
-      render={({ field, fieldState }) => (
-        <RemoteSearchField
-          search={search}
-          definition={EMPLOYEUR_SEARCH}
-          control={{
-            fieldRef: field.ref,
-            onBlur: field.onBlur,
-            error: fieldState.error,
-            isFocusRequested,
-          }}
-          onManualEntry={() => switchMode(EMPLOYEUR_ENTRY_MODE.MANUAL)}
-          renderOption={(etablissement) => <EmployeurOption etablissement={etablissement} />}
-        />
+      name={SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR}
+      search={{
+        definition: EMPLOYEUR_SEARCH,
+        renderOption: (etablissement) => <EmployeurOption etablissement={etablissement} />,
+      }}
+      entry={{
+        mode,
+        item: employeur,
+        fields: EMPLOYEUR_FIELDS,
+        clearErrors,
+        setMode: (nextMode) =>
+          setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE, nextMode),
+        setItem: (etablissement, options) =>
+          setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR, etablissement, options),
+      }}
+      renderCard={(etablissement, cardControl) => (
+        <EmployeurCard etablissement={etablissement} {...cardControl} />
+      )}
+      renderManualFields={(manualFieldsControl) => (
+        <EmployeurManualFields control={control} {...manualFieldsControl} />
       )}
     />
   );
