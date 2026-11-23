@@ -4,7 +4,7 @@ import { useWatch, type UseFormReturn } from "react-hook-form";
 import { useAnnouncement } from "@etape/ui/hooks/use-announcement";
 import { formatOptionId } from "@etape/ui/lib/option-id";
 
-import { OUI_NON, type OuiNon } from "../../domain/oui-non";
+import { isOui, OUI_NON, type OuiNon } from "../../domain/oui-non";
 import {
   canAddDemarche,
   canCancelDemarche,
@@ -227,7 +227,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   };
 
   const changeAnswer = (answer: OuiNon): void => {
-    if (answer === OUI_NON.OUI) return;
+    if (isOui(answer)) return;
     if (demarches.length === 0) {
       // La saisie en cours n'est plus demandée : ses erreurs ne restent pas au résumé.
       form.clearErrors([...DEMARCHE_FIELDS]);

@@ -15,7 +15,7 @@ import { CharacterCountField } from "../components/character-count-field";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
-import { OUI_NON, OUI_NON_LABEL } from "../domain/oui-non";
+import { isOui, OUI_NON_LABEL } from "../domain/oui-non";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
@@ -131,11 +131,11 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             options={OUI_NON_LABEL}
             // Après « non », les entreprises ne sont plus demandées : leur erreur ne doit pas rester au résumé.
             onValueChange={(value) => {
-              if (value === OUI_NON.NON) form.clearErrors("entreprisesContactees");
+              if (!isOui(value)) form.clearErrors("entreprisesContactees");
             }}
           />
 
-          {contactEmployeurs === OUI_NON.OUI && (
+          {isOui(contactEmployeurs) && (
             <CharacterCountField
               name="entreprisesContactees"
               control={form.control}

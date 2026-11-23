@@ -1,9 +1,9 @@
 import { AppellationRomeSchema } from "@etape/api-contract";
 import { z } from "zod";
 
-import { OUI_NON } from "../domain/oui-non";
+import { findFieldsAfterOui, OUI_NON } from "../domain/oui-non";
 import { requireFilled } from "../domain/require-filled";
-import { findDemarcheFields, TYPE_DEMARCHE } from "./domain/demarche";
+import { findOpenDemarcheFields, TYPE_DEMARCHE } from "./domain/demarche";
 import { formatCodeRome } from "./domain/format-code-rome";
 
 /** Le métier visé se choisit dans le référentiel ROME, ou se saisit à la main quand la recherche échoue. */
@@ -44,8 +44,10 @@ export const REQUIRED_METIER_VISE_FIELDS: Record<
   [METIER_VISE_ENTRY_MODE.MANUAL]: ["intituleMetierVise"],
 };
 
-/** Exigé après un « oui » à la question sur les contacts avec des employeurs. */
-const REQUIRED_CONTACT_EMPLOYEURS_FIELDS: readonly RequiredFieldName[] = ["entreprisesContactees"];
+/** Exigé après un « oui » à la question sur les contacts avec des employeurs (maquette 16). */
+export const REQUIRED_CONTACT_EMPLOYEURS_FIELDS: readonly RequiredFieldName[] = [
+  "entreprisesContactees",
+];
 
 const pieceJustificativeSchema = z.object({
   id: z.string(),
@@ -139,11 +141,14 @@ const refinedFieldsSchema = baseFuturMetierSchema
  */
 export const futurMetierSchema = baseFuturMetierSchema.superRefine(
   (data, ctx) => {
-    if (data.demarcheDecouverte === OUI_NON.OUI && data.hasCurrentDemarche)
-      requireFilled(ctx, data, findDemarcheFields(data.typeDemarche), REQUIRED_MESSAGES);
+    requireFilled(ctx, data, findOpenDemarcheFields(data), REQUIRED_MESSAGES);
 
-    if (data.contactEmployeurs === OUI_NON.OUI)
-      requireFilled(ctx, data, REQUIRED_CONTACT_EMPLOYEURS_FIELDS, REQUIRED_MESSAGES);
+    requireFilled(
+      ctx,
+      data,
+      findFieldsAfterOui(data.contactEmployeurs, REQUIRED_CONTACT_EMPLOYEURS_FIELDS),
+      REQUIRED_MESSAGES,
+    );
 
     requireFilled(
       ctx,
