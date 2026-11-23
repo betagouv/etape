@@ -117,6 +117,19 @@ export type SituationProfessionnelleFormData = z.infer<typeof situationProfessio
 /** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
 export type SituationProfessionnelleFieldName = keyof SituationProfessionnelleFormData;
 
+/** Les noms des champs du volet, pour `setValue`, `useWatch` et les `name` des champs. */
+export const SITUATION_PROFESSIONNELLE_FIELD = {
+  EMPLOYEUR_ENTRY_MODE: "employeurEntryMode",
+  EMPLOYEUR: "employeur",
+  DENOMINATION: "denomination",
+  SIRET: "siret",
+  SECTEUR_ACTIVITE: "secteurActivite",
+  ADRESSE: "adresse",
+  INTITULE_POSTE: "intitulePoste",
+  DEMISSION: "demission",
+  DATE_DEMISSION: "dateDemission",
+} as const satisfies Record<string, SituationProfessionnelleFieldName>;
+
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
 export const SITUATION_PROFESSIONNELLE_FIELD_LABEL: Record<
   Exclude<SituationProfessionnelleFieldName, "employeurEntryMode">,

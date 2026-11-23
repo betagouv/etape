@@ -13,10 +13,10 @@ import {
   type UseRemoteSearchResult,
 } from "../../hooks/use-remote-search";
 import { EMPLOYEUR_SEARCH_TEXTS } from "../domain/employeur-search";
-import { SITUATION_PROFESSIONNELLE_FIELD_LABEL } from "../schema";
+import { SITUATION_PROFESSIONNELLE_FIELD, SITUATION_PROFESSIONNELLE_FIELD_LABEL } from "../schema";
 
 /** Le résumé d'erreurs mène à `#employeur`. */
-const EMPLOYEUR_FIELD_ID = "employeur";
+const EMPLOYEUR_FIELD_ID = SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR;
 
 async function fetchEtablissements(search: string): Promise<RemoteSearchResults<Etablissement>> {
   const response = await httpClient.get<unknown>(searchEtablissements.path, {

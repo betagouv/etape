@@ -7,6 +7,7 @@ import { EMPLOYEUR_SEARCH, useEmployeurSearch } from "../hooks/use-employeur-sea
 import {
   EMPLOYEUR_ENTRY_MODE,
   EMPLOYEUR_FIELDS,
+  SITUATION_PROFESSIONNELLE_FIELD,
   type SituationProfessionnelleFormData,
 } from "../schema";
 import { EmployeurCard } from "./employeur-card";
@@ -21,15 +22,15 @@ export interface EmployeurFieldProps {
 /** La recherche Sirene, la carte de l'établissement choisi, ou la saisie manuelle. */
 export function EmployeurField({ form }: EmployeurFieldProps) {
   const { control, setValue, clearErrors } = form;
-  const mode = useWatch({ control, name: "employeurEntryMode" });
-  const employeur = useWatch({ control, name: "employeur" });
+  const mode = useWatch({ control, name: SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE });
+  const employeur = useWatch({ control, name: SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR });
   const { isFocusRequested, requestFocus, switchMode } = useEntryMode(mode, EMPLOYEUR_FIELDS, {
     clearErrors,
-    setMode: (nextMode) => setValue("employeurEntryMode", nextMode),
+    setMode: (nextMode) => setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR_ENTRY_MODE, nextMode),
   });
 
   const search = useEmployeurSearch((etablissement) => {
-    setValue("employeur", etablissement, { shouldValidate: true });
+    setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR, etablissement, { shouldValidate: true });
     requestFocus();
   });
 
@@ -53,7 +54,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
         etablissement={employeur}
         isFocusRequested={isFocusRequested}
         onChange={() => {
-          setValue("employeur", null);
+          setValue(SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR, null);
           requestFocus();
         }}
       />
@@ -62,7 +63,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
 
   return (
     <Controller
-      name="employeur"
+      name={SITUATION_PROFESSIONNELLE_FIELD.EMPLOYEUR}
       control={control}
       render={({ field, fieldState }) => (
         <RemoteSearchField
