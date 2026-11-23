@@ -17,7 +17,17 @@ const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
   "demarcheDecouverte",
 ];
 
-/** Ce qui décide des champs de la section : le mode de saisie du métier, et où en sont les démarches. */
+/** Exigés dans « Vos perspectives d'emploi », dans l'ordre de la page (maquette 16). */
+const PERSPECTIVES_EMPLOI_FIELDS: readonly FuturMetierFieldName[] = [
+  "zoneRechercheEmploi",
+  "demenagement",
+  "contactEmployeurs",
+];
+
+/**
+ * Ce qui décide des champs des sections : le mode de saisie du métier, où en sont les démarches,
+ * et la réponse sur les contacts avec des employeurs.
+ */
 export interface SectionFieldsAnswers {
   metierViseEntryMode: MetierViseEntryMode;
   /** Absente tant que la question n'a pas de réponse. */
@@ -25,6 +35,8 @@ export interface SectionFieldsAnswers {
   typeDemarche?: TypeDemarche;
   /** Vrai tant que la carte de saisie d'une démarche est ouverte. */
   hasCurrentDemarche: boolean;
+  /** Absente tant que la question n'a pas de réponse. */
+  contactEmployeurs?: OuiNon;
 }
 
 /**
@@ -41,10 +53,19 @@ function findOpenDemarcheFields({
     : [];
 }
 
+/** Les entreprises contactées ne sont demandées qu'après un « oui » aux contacts (maquette 16). */
+function findPerspectivesEmploiFields({
+  contactEmployeurs,
+}: SectionFieldsAnswers): readonly FuturMetierFieldName[] {
+  return contactEmployeurs === OUI_NON.OUI
+    ? [...PERSPECTIVES_EMPLOI_FIELDS, "entreprisesContactees"]
+    : PERSPECTIVES_EMPLOI_FIELDS;
+}
+
 /**
  * Un champ pour le métier visé, en recherche comme en saisie manuelle, puis les trois zones de
  * texte, la question sur les démarches et, après un « oui », la démarche en cours de saisie
- * (maquettes 01, 07, 09 et 10).
+ * (maquettes 01, 07, 09 et 10) ; enfin, les perspectives d'emploi (maquette 16).
  */
 export function findSectionFields(
   answers: SectionFieldsAnswers,
@@ -55,6 +76,7 @@ export function findSectionFields(
       ...ALWAYS_REQUIRED_FIELDS,
       ...findOpenDemarcheFields(answers),
     ],
+    [FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI]: findPerspectivesEmploiFields(answers),
   };
 }
 
@@ -68,5 +90,6 @@ export function findSectionValidatedFields(
       ...ALWAYS_REQUIRED_FIELDS,
       ...findOpenDemarcheFields(answers),
     ],
+    [FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI]: findPerspectivesEmploiFields(answers),
   };
 }

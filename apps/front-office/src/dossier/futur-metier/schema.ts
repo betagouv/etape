@@ -202,6 +202,7 @@ export const FUTUR_METIER_FIELD_LABEL: Record<
 /** Les sections du volet qui portent un compteur. */
 export const FUTUR_METIER_SECTION = {
   METIER_VISE: "metier-vise",
+  PERSPECTIVES_EMPLOI: "perspectives-emploi",
 } as const;
 
 /** Une section du volet, parmi celles de `FUTUR_METIER_SECTION`. */

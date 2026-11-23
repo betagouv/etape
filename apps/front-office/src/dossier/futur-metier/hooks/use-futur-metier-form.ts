@@ -70,6 +70,11 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
       FUTUR_METIER_SECTION.METIER_VISE,
       errors,
     ),
+    [FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI]: computeSectionProgress(
+      requiredFields,
+      FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI,
+      errors,
+    ),
   };
 
   return {
