@@ -3,13 +3,9 @@ import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
 import { useEntryMode } from "@etape/ui/hooks/use-entry-mode";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import { METIER_VISE_SEARCH, useMetierViseSearch } from "../hooks/use-metier-vise-search";
-import {
-  FUTUR_METIER_FIELD,
-  METIER_VISE_ENTRY_MODE,
-  METIER_VISE_FIELDS,
-  type FuturMetierFormData,
-} from "../schema";
+import { FUTUR_METIER_FIELD, METIER_VISE_FIELDS, type FuturMetierFormData } from "../schema";
 import { MetierViseCard } from "./metier-vise-card";
 import { MetierViseManualFields } from "./metier-vise-manual-fields";
 import { MetierViseOption } from "./metier-vise-option";
@@ -34,7 +30,7 @@ export function MetierViseField({ form }: MetierViseFieldProps) {
     requestFocus();
   });
 
-  if (mode === METIER_VISE_ENTRY_MODE.MANUAL) {
+  if (mode === ENTRY_MODE.MANUAL) {
     return (
       <MetierViseManualFields
         control={control}
@@ -42,7 +38,7 @@ export function MetierViseField({ form }: MetierViseFieldProps) {
         onSearch={() => {
           // On repart d'une recherche vide : l'ancienne rouvrirait son alerte « aucun résultat ».
           search.clear();
-          switchMode(METIER_VISE_ENTRY_MODE.SEARCH);
+          switchMode(ENTRY_MODE.SEARCH);
         }}
       />
     );
@@ -75,7 +71,7 @@ export function MetierViseField({ form }: MetierViseFieldProps) {
             error: fieldState.error,
             isFocusRequested,
           }}
-          onManualEntry={() => switchMode(METIER_VISE_ENTRY_MODE.MANUAL)}
+          onManualEntry={() => switchMode(ENTRY_MODE.MANUAL)}
           renderOption={(appellationRome) => <MetierViseOption appellationRome={appellationRome} />}
         />
       )}

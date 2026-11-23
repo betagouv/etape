@@ -4,7 +4,8 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { FUTUR_METIER_SECTION, METIER_VISE_ENTRY_MODE, type FuturMetierFormData } from "../schema";
+import { ENTRY_MODE } from "../../domain/entry-mode";
+import { FUTUR_METIER_SECTION, type FuturMetierFormData } from "../schema";
 import { useFuturMetierForm, type UseFuturMetierFormResult } from "./use-futur-metier-form";
 
 afterEach(cleanup);
@@ -74,7 +75,7 @@ describe("useFuturMetierForm", () => {
   it("en saisie manuelle, demande l'intitulé et pas le code ROME", () => {
     const result = renderForm();
 
-    setValues(result.current.form, { metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL });
+    setValues(result.current.form, { metierViseEntryMode: ENTRY_MODE.MANUAL });
     expect(result.current.progress.remainingFieldCount).toBe(1);
 
     setValues(result.current.form, { intituleMetierVise: "Pâtissier" });
@@ -102,7 +103,7 @@ describe("useFuturMetierForm", () => {
 
   it("annonce l'erreur du champ quitté, suivie du statut du volet", async () => {
     const result = renderForm();
-    setValues(result.current.form, { metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL });
+    setValues(result.current.form, { metierViseEntryMode: ENTRY_MODE.MANUAL });
 
     await fillAndLeave(result.current.form.register("intituleMetierVise"), " ");
 
@@ -114,7 +115,7 @@ describe("useFuturMetierForm", () => {
 
   it("annonce le volet complet quand l'intitulé quitté est rempli", async () => {
     const result = renderForm();
-    setValues(result.current.form, { metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL });
+    setValues(result.current.form, { metierViseEntryMode: ENTRY_MODE.MANUAL });
 
     await fillAndLeave(result.current.form.register("intituleMetierVise"), "Pâtissier");
 
@@ -125,7 +126,7 @@ describe("useFuturMetierForm", () => {
   it("compte l'erreur d'un champ facultatif : un code ROME faux n'est pas un volet complet", async () => {
     const result = renderForm();
     setValues(result.current.form, {
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
       codeRome: "M18",
     });
@@ -152,7 +153,7 @@ describe("useFuturMetierForm", () => {
   it("liste au résumé l'intitulé manquant avant le code ROME faux, dans l'ordre de la page", async () => {
     const result = renderForm();
     setValues(result.current.form, {
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       codeRome: "M18",
     });
 
@@ -168,7 +169,7 @@ describe("useFuturMetierForm", () => {
   it("annonce le code ROME faux qu'on vient de quitter, et le volet à corriger", async () => {
     const result = renderForm();
     setValues(result.current.form, {
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
     });
 
@@ -183,13 +184,13 @@ describe("useFuturMetierForm", () => {
   it("ne compte plus l'erreur du code ROME une fois revenu à la recherche", async () => {
     const result = renderForm();
     setValues(result.current.form, {
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
       codeRome: "M18",
     });
     await submit(result.current.form);
 
-    setValues(result.current.form, { metierViseEntryMode: METIER_VISE_ENTRY_MODE.SEARCH });
+    setValues(result.current.form, { metierViseEntryMode: ENTRY_MODE.SEARCH });
 
     expect(result.current.progress.errorCount).toBe(0);
     expect(result.current.voletErrors).toEqual([]);

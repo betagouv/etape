@@ -3,9 +3,9 @@ import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
 import { useEntryMode } from "@etape/ui/hooks/use-entry-mode";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import { EMPLOYEUR_SEARCH, useEmployeurSearch } from "../hooks/use-employeur-search";
 import {
-  EMPLOYEUR_ENTRY_MODE,
   EMPLOYEUR_FIELDS,
   SITUATION_PROFESSIONNELLE_FIELD,
   type SituationProfessionnelleFormData,
@@ -34,7 +34,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
     requestFocus();
   });
 
-  if (mode === EMPLOYEUR_ENTRY_MODE.MANUAL) {
+  if (mode === ENTRY_MODE.MANUAL) {
     return (
       <EmployeurManualFields
         control={control}
@@ -42,7 +42,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
         onSearch={() => {
           // On repart d'une recherche vide : l'ancienne rouvrirait son alerte « aucun résultat ».
           search.clear();
-          switchMode(EMPLOYEUR_ENTRY_MODE.SEARCH);
+          switchMode(ENTRY_MODE.SEARCH);
         }}
       />
     );
@@ -75,7 +75,7 @@ export function EmployeurField({ form }: EmployeurFieldProps) {
             error: fieldState.error,
             isFocusRequested,
           }}
-          onManualEntry={() => switchMode(EMPLOYEUR_ENTRY_MODE.MANUAL)}
+          onManualEntry={() => switchMode(ENTRY_MODE.MANUAL)}
           renderOption={(etablissement) => <EmployeurOption etablissement={etablissement} />}
         />
       )}

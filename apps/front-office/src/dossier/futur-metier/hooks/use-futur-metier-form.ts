@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn } from "react-hook-form";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import type { SectionProgress } from "../../domain/statut-volet";
 import { VOLET_ID } from "../../domain/volet-id";
 import { computeSectionProgress } from "../../domain/volet-progress";
@@ -11,7 +12,6 @@ import {
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_SECTION,
   futurMetierSchema,
-  METIER_VISE_ENTRY_MODE,
   type FuturMetierFormData,
   type FuturMetierSection,
 } from "../schema";
@@ -31,7 +31,7 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
     ...VOLET_FORM_OPTIONS,
     resolver: zodResolver(futurMetierSchema),
     defaultValues: {
-      metierViseEntryMode: METIER_VISE_ENTRY_MODE.SEARCH,
+      metierViseEntryMode: ENTRY_MODE.SEARCH,
       metierVise: null,
       intituleMetierVise: "",
       codeRome: "",

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { findSectionFields, futurMetierSchema, METIER_VISE_ENTRY_MODE } from "./schema";
+import { ENTRY_MODE } from "../domain/entry-mode";
+import { findSectionFields, futurMetierSchema } from "./schema";
 
 function findMessages(data: Record<string, unknown>, field: string): string[] {
   const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
@@ -8,7 +9,7 @@ function findMessages(data: Record<string, unknown>, field: string): string[] {
 }
 
 const EMPTY_FORM = {
-  metierViseEntryMode: METIER_VISE_ENTRY_MODE.SEARCH,
+  metierViseEntryMode: ENTRY_MODE.SEARCH,
   metierVise: null,
   intituleMetierVise: "",
   codeRome: "",
@@ -16,7 +17,7 @@ const EMPTY_FORM = {
 
 const MANUAL_FORM = {
   ...EMPTY_FORM,
-  metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+  metierViseEntryMode: ENTRY_MODE.MANUAL,
   intituleMetierVise: "Boulanger",
 };
 
@@ -82,13 +83,13 @@ describe("futurMetierSchema, code ROME", () => {
 
 describe("findSectionFields", () => {
   it("exige le métier choisi en recherche", () => {
-    expect(findSectionFields(METIER_VISE_ENTRY_MODE.SEARCH)).toEqual({
+    expect(findSectionFields(ENTRY_MODE.SEARCH)).toEqual({
       "metier-vise": ["metierVise"],
     });
   });
 
   it("exige l'intitulé en saisie manuelle, pas le code ROME", () => {
-    expect(findSectionFields(METIER_VISE_ENTRY_MODE.MANUAL)).toEqual({
+    expect(findSectionFields(ENTRY_MODE.MANUAL)).toEqual({
       "metier-vise": ["intituleMetierVise"],
     });
   });
