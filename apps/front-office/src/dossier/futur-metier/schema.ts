@@ -77,6 +77,14 @@ export type FuturMetierFormData = z.infer<typeof futurMetierSchema>;
 /** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
 export type FuturMetierFieldName = keyof FuturMetierFormData;
 
+/** Les noms des champs du volet, pour `setValue`, `useWatch` et les `name` des champs. */
+export const FUTUR_METIER_FIELD = {
+  METIER_VISE_ENTRY_MODE: "metierViseEntryMode",
+  METIER_VISE: "metierVise",
+  INTITULE_METIER_VISE: "intituleMetierVise",
+  CODE_ROME: "codeRome",
+} as const satisfies Record<string, FuturMetierFieldName>;
+
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
 export const FUTUR_METIER_FIELD_LABEL: Record<
   Exclude<FuturMetierFieldName, "metierViseEntryMode">,

@@ -13,10 +13,10 @@ import {
   type UseRemoteSearchResult,
 } from "../../hooks/use-remote-search";
 import { METIER_VISE_SEARCH_TEXTS } from "../domain/metier-vise-search";
-import { FUTUR_METIER_FIELD_LABEL } from "../schema";
+import { FUTUR_METIER_FIELD, FUTUR_METIER_FIELD_LABEL } from "../schema";
 
 /** Le résumé d'erreurs mène à `#metierVise`. */
-const METIER_VISE_FIELD_ID = "metierVise";
+const METIER_VISE_FIELD_ID = FUTUR_METIER_FIELD.METIER_VISE;
 
 async function fetchAppellationsRome(
   search: string,

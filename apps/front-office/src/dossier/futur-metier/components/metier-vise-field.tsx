@@ -4,7 +4,12 @@ import { RemoteSearchField } from "@etape/ui/components/remote-search-field";
 import { useEntryMode } from "@etape/ui/hooks/use-entry-mode";
 
 import { METIER_VISE_SEARCH, useMetierViseSearch } from "../hooks/use-metier-vise-search";
-import { METIER_VISE_ENTRY_MODE, METIER_VISE_FIELDS, type FuturMetierFormData } from "../schema";
+import {
+  FUTUR_METIER_FIELD,
+  METIER_VISE_ENTRY_MODE,
+  METIER_VISE_FIELDS,
+  type FuturMetierFormData,
+} from "../schema";
 import { MetierViseCard } from "./metier-vise-card";
 import { MetierViseManualFields } from "./metier-vise-manual-fields";
 import { MetierViseOption } from "./metier-vise-option";
@@ -17,15 +22,15 @@ export interface MetierViseFieldProps {
 /** La recherche dans le ROME, la carte du métier choisi, ou la saisie manuelle. */
 export function MetierViseField({ form }: MetierViseFieldProps) {
   const { control, setValue, clearErrors } = form;
-  const mode = useWatch({ control, name: "metierViseEntryMode" });
-  const metierVise = useWatch({ control, name: "metierVise" });
+  const mode = useWatch({ control, name: FUTUR_METIER_FIELD.METIER_VISE_ENTRY_MODE });
+  const metierVise = useWatch({ control, name: FUTUR_METIER_FIELD.METIER_VISE });
   const { isFocusRequested, requestFocus, switchMode } = useEntryMode(mode, METIER_VISE_FIELDS, {
     clearErrors,
-    setMode: (nextMode) => setValue("metierViseEntryMode", nextMode),
+    setMode: (nextMode) => setValue(FUTUR_METIER_FIELD.METIER_VISE_ENTRY_MODE, nextMode),
   });
 
   const search = useMetierViseSearch((appellationRome) => {
-    setValue("metierVise", appellationRome, { shouldValidate: true });
+    setValue(FUTUR_METIER_FIELD.METIER_VISE, appellationRome, { shouldValidate: true });
     requestFocus();
   });
 
@@ -49,7 +54,7 @@ export function MetierViseField({ form }: MetierViseFieldProps) {
         appellationRome={metierVise}
         isFocusRequested={isFocusRequested}
         onChange={() => {
-          setValue("metierVise", null);
+          setValue(FUTUR_METIER_FIELD.METIER_VISE, null);
           requestFocus();
         }}
       />
@@ -58,7 +63,7 @@ export function MetierViseField({ form }: MetierViseFieldProps) {
 
   return (
     <Controller
-      name="metierVise"
+      name={FUTUR_METIER_FIELD.METIER_VISE}
       control={control}
       render={({ field, fieldState }) => (
         <RemoteSearchField
