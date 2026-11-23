@@ -25,7 +25,7 @@ import {
   type Demarche,
   type DemarcheFieldName,
 } from "../domain/demarche";
-import type { FuturMetierFormData } from "../schema";
+import { FUTUR_METIER_FIELD, type FuturMetierFormData } from "../schema";
 import {
   useDemarcheRemoval,
   type DemarcheRemovalItem,
@@ -78,9 +78,9 @@ export interface UseDemarchesResult extends Omit<UseDemarcheRemovalResult, "requ
  */
 export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemarchesResult {
   const { control } = form;
-  const demarches = useWatch({ control, name: "demarches" });
-  const hasCurrentDemarche = useWatch({ control, name: "hasCurrentDemarche" });
-  const currentDemarcheId = useWatch({ control, name: "currentDemarcheId" });
+  const demarches = useWatch({ control, name: FUTUR_METIER_FIELD.DEMARCHES });
+  const hasCurrentDemarche = useWatch({ control, name: FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE });
+  const currentDemarcheId = useWatch({ control, name: FUTUR_METIER_FIELD.CURRENT_DEMARCHE_ID });
   // Calculé dans l'abonnement : la carte n'est pas re-rendue à chaque frappe.
   const isCurrentDemarcheFilled = useWatch({ control, compute: isDemarcheFilled });
   const { message: announcement, announce } = useAnnouncement();
@@ -109,13 +109,18 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
 
   /** La saisie repart de champs vides, sans erreur, et ne modifie plus aucune démarche. */
   const resetCurrentDemarche = (): void => {
-    form.setValue("currentDemarcheId", null);
+    form.setValue(FUTUR_METIER_FIELD.CURRENT_DEMARCHE_ID, null);
     // Pas de `resetField` : il rendrait les valeurs de départ du formulaire, qui seront un jour
     // celles du dossier enregistré.
     form.setValue(TYPE_FIELD, EMPTY_CURRENT_DEMARCHE.typeDemarche);
-    form.setValue("precisionTypeDemarche", EMPTY_CURRENT_DEMARCHE.precisionTypeDemarche);
-    form.setValue("apportDemarche", EMPTY_CURRENT_DEMARCHE.apportDemarche);
-    form.setValue("piecesJustificatives", [...EMPTY_CURRENT_DEMARCHE.piecesJustificatives]);
+    form.setValue(
+      FUTUR_METIER_FIELD.PRECISION_TYPE_DEMARCHE,
+      EMPTY_CURRENT_DEMARCHE.precisionTypeDemarche,
+    );
+    form.setValue(FUTUR_METIER_FIELD.APPORT_DEMARCHE, EMPTY_CURRENT_DEMARCHE.apportDemarche);
+    form.setValue(FUTUR_METIER_FIELD.PIECES_JUSTIFICATIVES, [
+      ...EMPTY_CURRENT_DEMARCHE.piecesJustificatives,
+    ]);
     form.clearErrors([...DEMARCHE_FIELDS]);
     setHighlighted(false);
     setBlockedDemarcheId(null);
@@ -124,16 +129,17 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   /** Referme la carte de saisie sur des champs vides, puis place le focus. */
   const closeCurrentDemarche = (focus: () => void): void => {
     pendingFocus.current = focus;
-    form.setValue("hasCurrentDemarche", false);
+    form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, false);
     resetCurrentDemarche();
   };
 
   /** Une démarche, par sa corbeille : les suivantes remontent d'un rang. */
   const removeOneDemarche = ({ demarche, index }: DemarcheRemovalItem): (() => void) => {
     const remaining = removeDemarche(demarches, demarche.id);
-    form.setValue("demarches", remaining);
+    form.setValue(FUTUR_METIER_FIELD.DEMARCHES, remaining);
     // Sans démarche ni saisie ouverte, le « oui » n'aurait plus rien à montrer : la saisie se rouvre.
-    if (remaining.length === 0 && !hasCurrentDemarche) form.setValue("hasCurrentDemarche", true);
+    if (remaining.length === 0 && !hasCurrentDemarche)
+      form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, true);
     setBlockedDemarcheId(null);
     announce(formatRemovalAnnouncement(index));
 
@@ -148,10 +154,10 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
 
   /** Un « non » confirmé : tout ce qui touche aux démarches repart de zéro. */
   const removeAllDemarches = (demarcheCount: number): (() => void) => {
-    form.setValue("demarches", []);
+    form.setValue(FUTUR_METIER_FIELD.DEMARCHES, []);
     resetCurrentDemarche();
     // Un « oui » à venir rouvrira la saisie de la première démarche.
-    form.setValue("hasCurrentDemarche", true);
+    form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, true);
     form.setValue(ANSWER_FIELD, OUI_NON.NON, { shouldValidate: true });
     announce(formatAllRemovedAnnouncement(demarcheCount));
     return () => document.getElementById(formatOptionId(ANSWER_FIELD, OUI_NON.NON))?.focus();
@@ -181,11 +187,11 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     if (values.currentDemarcheId === null) {
       // Le bouton d'ajout s'arrête au maximum ; une saisie restée ouverte au-delà ne s'ajoute pas non plus.
       if (!canAddDemarche(values.demarches.length)) return;
-      form.setValue("demarches", [...values.demarches, demarche]);
+      form.setValue(FUTUR_METIER_FIELD.DEMARCHES, [...values.demarches, demarche]);
       closeCurrentDemarche(focusAddButton);
       announce(formatDemarcheAnnouncement(currentDemarcheIndex));
     } else {
-      form.setValue("demarches", replaceDemarche(values.demarches, demarche));
+      form.setValue(FUTUR_METIER_FIELD.DEMARCHES, replaceDemarche(values.demarches, demarche));
       closeCurrentDemarche(focusEditButton(demarche.id));
       announce(formatEditAnnouncement(currentDemarcheIndex));
     }
@@ -194,7 +200,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   const addDemarche = (): void => {
     if (!canAddDemarche(demarches.length)) return;
     pendingFocus.current = focusTypeField;
-    form.setValue("hasCurrentDemarche", true);
+    form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, true);
     setHighlighted(true);
     announce("");
   };
@@ -208,11 +214,11 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     }
     pendingFocus.current = focusTypeField;
     form.setValue(TYPE_FIELD, demarche.typeDemarche);
-    form.setValue("precisionTypeDemarche", demarche.precisionTypeDemarche);
-    form.setValue("apportDemarche", demarche.apportDemarche);
-    form.setValue("piecesJustificatives", demarche.piecesJustificatives);
-    form.setValue("currentDemarcheId", demarche.id);
-    form.setValue("hasCurrentDemarche", true);
+    form.setValue(FUTUR_METIER_FIELD.PRECISION_TYPE_DEMARCHE, demarche.precisionTypeDemarche);
+    form.setValue(FUTUR_METIER_FIELD.APPORT_DEMARCHE, demarche.apportDemarche);
+    form.setValue(FUTUR_METIER_FIELD.PIECES_JUSTIFICATIVES, demarche.piecesJustificatives);
+    form.setValue(FUTUR_METIER_FIELD.CURRENT_DEMARCHE_ID, demarche.id);
+    form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, true);
     announce("");
   };
 

@@ -15,7 +15,7 @@ import {
   EDIT_BLOCKED_MESSAGE,
 } from "../domain/demarche";
 import { useDemarches } from "../hooks/use-demarches";
-import { FUTUR_METIER_FIELD_LABEL, type FuturMetierFormData } from "../schema";
+import { FUTUR_METIER_FIELD, FUTUR_METIER_FIELD_LABEL, type FuturMetierFormData } from "../schema";
 import { DemarcheCard } from "./demarche-card";
 import { DemarcheFields } from "./demarche-fields";
 import { DemarcheRemovalDialog } from "./demarche-removal-dialog";
@@ -34,7 +34,10 @@ export interface DemarchesProps {
  */
 export function Demarches({ form }: DemarchesProps) {
   const limitId = useId();
-  const demarcheDecouverte = useWatch({ control: form.control, name: "demarcheDecouverte" });
+  const demarcheDecouverte = useWatch({
+    control: form.control,
+    name: FUTUR_METIER_FIELD.DEMARCHE_DECOUVERTE,
+  });
   const {
     demarches,
     hasCurrentDemarche,
@@ -84,7 +87,7 @@ export function Demarches({ form }: DemarchesProps) {
   return (
     <>
       <FormRadioGroup
-        name="demarcheDecouverte"
+        name={FUTUR_METIER_FIELD.DEMARCHE_DECOUVERTE}
         control={form.control}
         label={FUTUR_METIER_FIELD_LABEL.demarcheDecouverte}
         description="Exemples : Immersion en entreprise, rencontres avec des professionnels, salons, recherches…"

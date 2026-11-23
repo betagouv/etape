@@ -150,6 +150,14 @@ export const FUTUR_METIER_FIELD = {
   QUOTIDIEN_METIER: "quotidienMetier",
   CONDITIONS_EMPLOI: "conditionsEmploi",
   DEBOUCHES: "debouches",
+  DEMARCHE_DECOUVERTE: "demarcheDecouverte",
+  TYPE_DEMARCHE: "typeDemarche",
+  PRECISION_TYPE_DEMARCHE: "precisionTypeDemarche",
+  APPORT_DEMARCHE: "apportDemarche",
+  PIECES_JUSTIFICATIVES: "piecesJustificatives",
+  HAS_CURRENT_DEMARCHE: "hasCurrentDemarche",
+  CURRENT_DEMARCHE_ID: "currentDemarcheId",
+  DEMARCHES: "demarches",
 } as const satisfies Record<string, FuturMetierFieldName>;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
