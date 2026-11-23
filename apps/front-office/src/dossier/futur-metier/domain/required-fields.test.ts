@@ -21,6 +21,10 @@ const values: FuturMetierFormData = {
   hasCurrentDemarche: true,
   currentDemarcheId: null,
   demarches: [],
+  zoneRechercheEmploi: "",
+  demenagement: OUI_NON.NON,
+  contactEmployeurs: OUI_NON.NON,
+  entreprisesContactees: "",
 };
 
 /** Exigés quel que soit le mode de saisie : les trois zones de texte, puis la question sur les démarches. */

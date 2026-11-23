@@ -47,6 +47,10 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
       hasCurrentDemarche: true,
       currentDemarcheId: null,
       demarches: [],
+      zoneRechercheEmploi: "",
+      demenagement: undefined,
+      contactEmployeurs: undefined,
+      entreprisesContactees: "",
     },
   });
 

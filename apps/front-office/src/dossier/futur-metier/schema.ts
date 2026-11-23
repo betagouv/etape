@@ -30,6 +30,7 @@ const REQUIRED_MESSAGES = {
   typeDemarche: "Veuillez choisir le type de démarche.",
   precisionTypeDemarche: "Veuillez préciser le type de démarche.",
   apportDemarche: "Veuillez indiquer ce que la démarche vous a apporté.",
+  entreprisesContactees: "Veuillez indiquer les entreprises contactées ou rencontrées.",
 } as const;
 
 type RequiredFieldName = keyof typeof REQUIRED_MESSAGES;
@@ -95,11 +96,26 @@ const baseFuturMetierSchema = z.object({
       piecesJustificatives: z.array(pieceJustificativeSchema),
     }),
   ),
+  zoneRechercheEmploi: z
+    .string()
+    .trim()
+    .min(1, "Veuillez indiquer la zone où vous chercherez un emploi."),
+  demenagement: z.enum(OUI_NON, "Veuillez indiquer si vous envisagez de déménager."),
+  contactEmployeurs: z.enum(
+    OUI_NON,
+    "Veuillez indiquer si vous avez déjà des contacts avec des employeurs.",
+  ),
+  // Exigées seulement après un « oui » aux contacts avec des employeurs.
+  entreprisesContactees: z
+    .string()
+    .trim()
+    .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
 });
 
 /**
  * Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type.
- * L'apport n'y garde que son type : trop long, il couperait sinon le contrôle des autres champs.
+ * L'apport et les entreprises contactées n'y gardent que leur type : trop longs, ils couperaient
+ * sinon le contrôle des autres champs.
  */
 const refinedFieldsSchema = baseFuturMetierSchema
   .pick({
@@ -111,16 +127,20 @@ const refinedFieldsSchema = baseFuturMetierSchema
     precisionTypeDemarche: true,
     hasCurrentDemarche: true,
   })
-  .extend({ apportDemarche: z.string() });
+  .extend({ apportDemarche: z.string(), entreprisesContactees: z.string() });
 
 /**
- * Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours, et ceux de
- * la démarche en cours de saisie après un « oui », sont exigés.
+ * Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours, ceux de
+ * la démarche en cours de saisie après un « oui », et les entreprises contactées après un « oui »
+ * aux contacts avec des employeurs, sont exigés.
  */
 export const futurMetierSchema = baseFuturMetierSchema.superRefine(
   (data, ctx) => {
     if (data.demarcheDecouverte === OUI_NON.OUI && data.hasCurrentDemarche)
       requireFilled(ctx, data, findDemarcheFields(data.typeDemarche), REQUIRED_MESSAGES);
+
+    if (data.contactEmployeurs === OUI_NON.OUI)
+      requireFilled(ctx, data, ["entreprisesContactees"], REQUIRED_MESSAGES);
 
     requireFilled(
       ctx,
@@ -172,6 +192,11 @@ export const FUTUR_METIER_FIELD_LABEL: Record<
   precisionTypeDemarche: "Précisez le type de démarche",
   apportDemarche: "Ce que la démarche vous a apporté",
   piecesJustificatives: "Justificatifs",
+  zoneRechercheEmploi: "Dans quelle zone géographique chercherez-vous un emploi ?",
+  demenagement: "Envisagez-vous de déménager pour trouver un emploi ?",
+  contactEmployeurs: "Avez-vous déjà des contacts avec des employeurs ?",
+  entreprisesContactees:
+    "Veuillez indiquer ci-dessous les entreprises contactées ou rencontrées au cours de vos recherches",
 };
 
 /** Les sections du volet qui portent un compteur. */
