@@ -186,6 +186,10 @@ export const FUTUR_METIER_FIELD = {
   HAS_CURRENT_DEMARCHE: "hasCurrentDemarche",
   CURRENT_DEMARCHE_ID: "currentDemarcheId",
   DEMARCHES: "demarches",
+  ZONE_RECHERCHE_EMPLOI: "zoneRechercheEmploi",
+  DEMENAGEMENT: "demenagement",
+  CONTACT_EMPLOYEURS: "contactEmployeurs",
+  ENTREPRISES_CONTACTEES: "entreprisesContactees",
 } as const satisfies Record<string, FuturMetierFieldName>;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */

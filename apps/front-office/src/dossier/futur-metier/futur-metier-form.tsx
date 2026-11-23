@@ -41,7 +41,10 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
   const { form, sections, voletErrors, errorAnnouncement } = useDossierVolets().futurMetier;
   const { submitCount } = form.formState;
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
-  const contactEmployeurs = useWatch({ control: form.control, name: "contactEmployeurs" });
+  const contactEmployeurs = useWatch({
+    control: form.control,
+    name: FUTUR_METIER_FIELD.CONTACT_EMPLOYEURS,
+  });
 
   return (
     <>
@@ -110,7 +113,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
           </FormSectionHeader>
 
           <FormField
-            name="zoneRechercheEmploi"
+            name={FUTUR_METIER_FIELD.ZONE_RECHERCHE_EMPLOI}
             control={form.control}
             label={FUTUR_METIER_FIELD_LABEL.zoneRechercheEmploi}
             required
@@ -119,26 +122,26 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
           />
 
           <FormRadioGroup
-            name="demenagement"
+            name={FUTUR_METIER_FIELD.DEMENAGEMENT}
             control={form.control}
             label={FUTUR_METIER_FIELD_LABEL.demenagement}
             options={OUI_NON_LABEL}
           />
 
           <FormRadioGroup
-            name="contactEmployeurs"
+            name={FUTUR_METIER_FIELD.CONTACT_EMPLOYEURS}
             control={form.control}
             label={FUTUR_METIER_FIELD_LABEL.contactEmployeurs}
             options={OUI_NON_LABEL}
             // Après « non », les entreprises ne sont plus demandées : leur erreur ne doit pas rester au résumé.
             onValueChange={(value) => {
-              if (!isOui(value)) form.clearErrors("entreprisesContactees");
+              if (!isOui(value)) form.clearErrors(FUTUR_METIER_FIELD.ENTREPRISES_CONTACTEES);
             }}
           />
 
           {isOui(contactEmployeurs) && (
             <CharacterCountField
-              name="entreprisesContactees"
+              name={FUTUR_METIER_FIELD.ENTREPRISES_CONTACTEES}
               control={form.control}
               label={FUTUR_METIER_FIELD_LABEL.entreprisesContactees}
               required
