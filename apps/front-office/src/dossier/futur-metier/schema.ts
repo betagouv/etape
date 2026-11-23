@@ -96,6 +96,10 @@ export const FUTUR_METIER_FIELD = {
   METIER_VISE: "metierVise",
   INTITULE_METIER_VISE: "intituleMetierVise",
   CODE_ROME: "codeRome",
+  SPECIALISATION: "specialisation",
+  QUOTIDIEN_METIER: "quotidienMetier",
+  CONDITIONS_EMPLOI: "conditionsEmploi",
+  DEBOUCHES: "debouches",
 } as const satisfies Record<string, FuturMetierFieldName>;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
