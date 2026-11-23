@@ -15,6 +15,7 @@ import {
   TYPE_DEMARCHE_LABEL,
 } from "../domain/demarche";
 import {
+  FUTUR_METIER_FIELD,
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_TEXT_MAX_LENGTH,
   type FuturMetierFormData,
@@ -41,7 +42,7 @@ export function DemarcheFields({
 }: DemarcheFieldsProps) {
   const focusLeave = useFocusLeave(onFocusLeave);
   const titleId = useId();
-  const typeDemarche = useWatch({ control, name: "typeDemarche" });
+  const typeDemarche = useWatch({ control, name: FUTUR_METIER_FIELD.TYPE_DEMARCHE });
 
   return (
     <Card
@@ -62,7 +63,7 @@ export function DemarcheFields({
 
       <div className="flex flex-col gap-5">
         <FormSelect
-          name="typeDemarche"
+          name={FUTUR_METIER_FIELD.TYPE_DEMARCHE}
           control={control}
           label={FUTUR_METIER_FIELD_LABEL.typeDemarche}
           required
@@ -71,7 +72,7 @@ export function DemarcheFields({
 
         {typeDemarche === TYPE_DEMARCHE.AUTRE && (
           <FormField
-            name="precisionTypeDemarche"
+            name={FUTUR_METIER_FIELD.PRECISION_TYPE_DEMARCHE}
             control={control}
             label={FUTUR_METIER_FIELD_LABEL.precisionTypeDemarche}
             required
@@ -80,7 +81,7 @@ export function DemarcheFields({
         )}
 
         <CharacterCountField
-          name="apportDemarche"
+          name={FUTUR_METIER_FIELD.APPORT_DEMARCHE}
           control={control}
           label={FUTUR_METIER_FIELD_LABEL.apportDemarche}
           required
@@ -89,7 +90,7 @@ export function DemarcheFields({
         />
 
         <Controller
-          name="piecesJustificatives"
+          name={FUTUR_METIER_FIELD.PIECES_JUSTIFICATIVES}
           control={control}
           render={({ field }) => (
             <PiecesJustificativesField

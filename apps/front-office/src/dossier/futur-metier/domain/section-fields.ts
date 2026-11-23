@@ -1,3 +1,4 @@
+import type { EntryMode } from "../../domain/entry-mode";
 import { findFieldsAfterOui, type OuiNon } from "../../domain/oui-non";
 import {
   FUTUR_METIER_SECTION,
@@ -6,7 +7,6 @@ import {
   REQUIRED_METIER_VISE_FIELDS,
   type FuturMetierFieldName,
   type FuturMetierSection,
-  type MetierViseEntryMode,
 } from "../schema";
 import { findOpenDemarcheFields, type TypeDemarche } from "./demarche";
 
@@ -30,7 +30,7 @@ const PERSPECTIVES_EMPLOI_FIELDS: readonly FuturMetierFieldName[] = [
  * et la réponse sur les contacts avec des employeurs.
  */
 export interface SectionFieldsAnswers {
-  metierViseEntryMode: MetierViseEntryMode;
+  metierViseEntryMode: EntryMode;
   /** Absente tant que la question n'a pas de réponse. */
   demarcheDecouverte?: OuiNon;
   typeDemarche?: TypeDemarche;

@@ -6,17 +6,12 @@ import {
 } from "@etape/api-contract";
 
 import { httpClient } from "@/lib/clients";
-import {
-  useRemoteSearch,
-  type RemoteSearchDefinition,
-  type RemoteSearchResults,
-  type UseRemoteSearchResult,
-} from "../../hooks/use-remote-search";
-import { METIER_VISE_SEARCH_TEXTS } from "../domain/metier-vise-search";
-import { FUTUR_METIER_FIELD_LABEL } from "../schema";
+import type { RemoteSearchDefinition, RemoteSearchResults } from "../hooks/use-remote-search";
+import { METIER_VISE_SEARCH_TEXTS } from "./domain/metier-vise-search";
+import { FUTUR_METIER_FIELD, FUTUR_METIER_FIELD_LABEL } from "./schema";
 
 /** Le résumé d'erreurs mène à `#metierVise`. */
-const METIER_VISE_FIELD_ID = "metierVise";
+const METIER_VISE_FIELD_ID = FUTUR_METIER_FIELD.METIER_VISE;
 
 async function fetchAppellationsRome(
   search: string,
@@ -41,10 +36,3 @@ export const METIER_VISE_SEARCH: RemoteSearchDefinition<AppellationRome> = {
   minLength: APPELLATION_ROME_SEARCH_MIN_LENGTH,
   fetchResults: fetchAppellationsRome,
 };
-
-/** Recherche du métier visé parmi les appellations du ROME, au fil de la saisie. */
-export function useMetierViseSearch(
-  onSelect: (appellationRome: AppellationRome) => void,
-): UseRemoteSearchResult<AppellationRome> {
-  return useRemoteSearch(METIER_VISE_SEARCH, onSelect);
-}

@@ -20,6 +20,7 @@ import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { EmployeurField } from "./components/employeur-field";
 import { computeDateDemissionCalendar } from "./domain/date-demission";
 import {
+  SITUATION_PROFESSIONNELLE_FIELD,
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   SITUATION_PROFESSIONNELLE_SECTION,
   type SituationProfessionnelleFormData,
@@ -39,7 +40,10 @@ export function SituationProfessionnelleForm({
   const { form, sections, voletErrors, errorAnnouncement } =
     useDossierVolets().situationProfessionnelle;
   const { submitCount } = form.formState;
-  const demission = useWatch({ control: form.control, name: "demission" });
+  const demission = useWatch({
+    control: form.control,
+    name: SITUATION_PROFESSIONNELLE_FIELD.DEMISSION,
+  });
   const { ref: errorsAlertRef, errors: submittedErrors } = useErrorsAlert(submitCount, voletErrors);
 
   return (
@@ -62,7 +66,7 @@ export function SituationProfessionnelleForm({
           <EmployeurField form={form} />
 
           <FormField
-            name="intitulePoste"
+            name={SITUATION_PROFESSIONNELLE_FIELD.INTITULE_POSTE}
             control={form.control}
             label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.intitulePoste}
             required
@@ -80,24 +84,24 @@ export function SituationProfessionnelleForm({
           </FormSectionHeader>
 
           <FormRadioGroup
-            name="demission"
+            name={SITUATION_PROFESSIONNELLE_FIELD.DEMISSION}
             control={form.control}
             label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.demission}
             options={OUI_NON_LABEL}
             // Après « non », la date n'est plus demandée : son erreur ne doit pas rester au résumé.
             onValueChange={(value) => {
-              if (!isOui(value)) form.clearErrors("dateDemission");
+              if (!isOui(value)) form.clearErrors(SITUATION_PROFESSIONNELLE_FIELD.DATE_DEMISSION);
             }}
           />
 
           {isOui(demission) && (
             <div className="grid gap-5 sm:grid-cols-2">
               <Controller
-                name="dateDemission"
+                name={SITUATION_PROFESSIONNELLE_FIELD.DATE_DEMISSION}
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <DateField
-                    id="dateDemission"
+                    id={SITUATION_PROFESSIONNELLE_FIELD.DATE_DEMISSION}
                     label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.dateDemission}
                     description="Date de l’accusé de réception ou de la remise en main propre contre décharge. Format : JJ/MM/AAAA"
                     getCalendar={computeDateDemissionCalendar}

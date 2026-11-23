@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import { OUI_NON } from "../../domain/oui-non";
-import { METIER_VISE_ENTRY_MODE } from "../schema";
 import { TYPE_DEMARCHE } from "./demarche";
 import {
   findSectionFields,
@@ -11,13 +11,13 @@ import {
 
 /** En recherche, sans réponse sur les démarches, carte de saisie ouverte : l'état de départ du volet. */
 const ANSWERS: SectionFieldsAnswers = {
-  metierViseEntryMode: METIER_VISE_ENTRY_MODE.SEARCH,
+  metierViseEntryMode: ENTRY_MODE.SEARCH,
   hasCurrentDemarche: true,
 };
 
 const MANUAL_ANSWERS: SectionFieldsAnswers = {
   ...ANSWERS,
-  metierViseEntryMode: METIER_VISE_ENTRY_MODE.MANUAL,
+  metierViseEntryMode: ENTRY_MODE.MANUAL,
 };
 
 /** Les perspectives d'emploi, sans réponse sur les contacts avec des employeurs. */

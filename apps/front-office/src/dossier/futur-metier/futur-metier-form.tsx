@@ -22,6 +22,7 @@ import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { Demarches } from "./components/demarches";
 import { MetierViseField } from "./components/metier-vise-field";
 import {
+  FUTUR_METIER_FIELD,
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_SECTION,
   FUTUR_METIER_TEXT_MAX_LENGTH,
@@ -63,7 +64,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
           <MetierViseField form={form} />
 
           <FormField
-            name="specialisation"
+            name={FUTUR_METIER_FIELD.SPECIALISATION}
             control={form.control}
             label={FUTUR_METIER_FIELD_LABEL.specialisation}
             description="Par exemple : pâtisserie, gériatrie"
@@ -71,7 +72,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
           />
 
           <CharacterCountField
-            name="quotidienMetier"
+            name={FUTUR_METIER_FIELD.QUOTIDIEN_METIER}
             control={form.control}
             label={FUTUR_METIER_FIELD_LABEL.quotidienMetier}
             required
@@ -80,7 +81,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
           />
 
           <CharacterCountField
-            name="conditionsEmploi"
+            name={FUTUR_METIER_FIELD.CONDITIONS_EMPLOI}
             control={form.control}
             label={FUTUR_METIER_FIELD_LABEL.conditionsEmploi}
             required
@@ -89,7 +90,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
           />
 
           <CharacterCountField
-            name="debouches"
+            name={FUTUR_METIER_FIELD.DEBOUCHES}
             control={form.control}
             label={FUTUR_METIER_FIELD_LABEL.debouches}
             required

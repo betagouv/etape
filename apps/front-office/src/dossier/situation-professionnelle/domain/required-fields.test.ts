@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import {
-  EMPLOYEUR_ENTRY_MODE,
   SITUATION_PROFESSIONNELLE_SECTION,
   type SituationProfessionnelleFormData,
 } from "../schema";
@@ -9,7 +9,7 @@ import { OUI_NON } from "../../domain/oui-non";
 import { findRequiredFields } from "./required-fields";
 
 const values: SituationProfessionnelleFormData = {
-  employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
+  employeurEntryMode: ENTRY_MODE.SEARCH,
   employeur: null,
   denomination: "",
   siret: "",
@@ -34,7 +34,7 @@ describe("findRequiredFields", () => {
   it("exige les quatre champs saisis à la main et la date après « oui »", () => {
     const required = findRequiredFields({
       ...values,
-      employeurEntryMode: EMPLOYEUR_ENTRY_MODE.MANUAL,
+      employeurEntryMode: ENTRY_MODE.MANUAL,
       denomination: "ACME",
       demission: OUI_NON.OUI,
     });
