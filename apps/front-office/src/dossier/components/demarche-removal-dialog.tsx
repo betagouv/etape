@@ -5,15 +5,16 @@ import { ConfirmationDialog } from "@etape/ui/components/confirmation-dialog";
 import { FileUploadLine, FileUploadList } from "@etape/ui/components/file-upload";
 import { Separator } from "@etape/ui/components/separator";
 
-import { formatRemovalMessage, formatRemovalTitle } from "../domain/demarche";
+import { findDemarcheIntitule, formatRemovalMessage, formatRemovalTitle } from "../domain/demarche";
 import type { DemarcheRemoval } from "../hooks/use-demarche-removal";
 import { DemarcheTitle } from "./demarche-title";
 
-/** Ce que reçoit `DemarcheRemovalDialog` : la suppression à confirmer et ses trois issues. */
-export interface DemarcheRemovalDialogProps {
+/** Ce que reçoit `DemarcheRemovalDialog` : la suppression à confirmer, les libellés des types du volet et ses trois issues. */
+export interface DemarcheRemovalDialogProps<TType extends string> {
   isOpen: boolean;
   /** Gardée après la fermeture, le temps que la fenêtre disparaisse. */
-  removal: DemarcheRemoval | null;
+  removal: DemarcheRemoval<TType> | null;
+  typeLabels: Record<TType, string>;
   onCancel: () => void;
   onConfirm: () => void;
   /** Le focus retenu par la fenêtre se place à sa fermeture. */
@@ -24,13 +25,14 @@ export interface DemarcheRemovalDialogProps {
  * La fenêtre qui confirme une suppression : elle montre chaque démarche concernée, avec ses
  * fichiers — une seule par la corbeille, toutes après un « non » (maquettes 15 et 14).
  */
-export function DemarcheRemovalDialog({
+export function DemarcheRemovalDialog<TType extends string>({
   isOpen,
   removal,
+  typeLabels,
   onCancel,
   onConfirm,
   onCloseFocus,
-}: DemarcheRemovalDialogProps) {
+}: DemarcheRemovalDialogProps<TType>) {
   const items = removal?.items ?? [];
 
   return (
@@ -55,7 +57,10 @@ export function DemarcheRemovalDialog({
             <li>
               <CardTitle variant="label" asChild>
                 <p>
-                  <DemarcheTitle index={index} demarche={demarche} />
+                  <DemarcheTitle
+                    index={index}
+                    intitule={findDemarcheIntitule(demarche, typeLabels)}
+                  />
                 </p>
               </CardTitle>
               {demarche.piecesJustificatives.length > 0 && (

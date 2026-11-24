@@ -14,9 +14,9 @@ import { FieldDescription } from "@etape/ui/components/field";
 import { FileUploadList } from "@etape/ui/components/file-upload";
 import { Separator } from "@etape/ui/components/separator";
 
-import { PieceJustificativeItem } from "../../components/piece-justificative-item";
 import { formatEditLabel, formatRemoveLabel, type Demarche } from "../domain/demarche";
 import { DemarcheTitle } from "./demarche-title";
+import { PieceJustificativeItem } from "./piece-justificative-item";
 
 /** La modification de la démarche : son action, et ce qui la fait attendre. */
 export interface DemarcheCardEdit {
@@ -25,19 +25,26 @@ export interface DemarcheCardEdit {
   isDisabled: boolean;
   /** Ce qu'il faut faire d'abord, affiché quand on a cliqué « Modifier » grisé. */
   notice?: string;
+  /** « Modifier » reprend le focus quand la modification se referme. */
+  buttonRef: Ref<HTMLButtonElement>;
 }
 
-/** Ce que reçoit `DemarcheCard` : la démarche validée, son rang et de quoi la modifier ou la supprimer. */
+/** La suppression de la démarche, par sa corbeille. */
+export interface DemarcheCardRemove {
+  onClick: () => void;
+  /** La corbeille reprend le focus quand la suppression est abandonnée. */
+  buttonRef: Ref<HTMLButtonElement>;
+}
+
+/** Ce que reçoit `DemarcheCard` : la démarche validée, son rang, ce qui la nomme et de quoi la modifier ou la supprimer. */
 export interface DemarcheCardProps {
   /** Le rang de la démarche dans la liste, à partir de 0. */
   index: number;
   demarche: Demarche;
+  /** Le libellé de son type, ou sa précision pour « Autre » (`findDemarcheIntitule`). */
+  intitule: string;
   edit: DemarcheCardEdit;
-  onRemove: () => void;
-  /** « Modifier » reprend le focus quand la modification se referme. */
-  editButtonRef: Ref<HTMLButtonElement>;
-  /** La corbeille reprend le focus quand la suppression est abandonnée. */
-  removeButtonRef: Ref<HTMLButtonElement>;
+  remove: DemarcheCardRemove;
 }
 
 /**
@@ -45,14 +52,7 @@ export interface DemarcheCardProps {
  * maquette FRONT-OFFICE (frame 12). Sans justificatif, la carte n'en affiche pas la rubrique.
  * « Modifier » la rouvre en saisie ; la corbeille demande confirmation avant de la supprimer.
  */
-export function DemarcheCard({
-  index,
-  demarche,
-  edit,
-  onRemove,
-  editButtonRef,
-  removeButtonRef,
-}: DemarcheCardProps) {
+export function DemarcheCard({ index, demarche, intitule, edit, remove }: DemarcheCardProps) {
   const titleId = useId();
   const noticeId = useId();
   const { apportDemarche, piecesJustificatives } = demarche;
@@ -63,7 +63,7 @@ export function DemarcheCard({
         <div className="flex items-center justify-between gap-4">
           <CardTitle variant="label" asChild>
             <h4 id={titleId} className="min-w-0">
-              <DemarcheTitle index={index} demarche={demarche} />
+              <DemarcheTitle index={index} intitule={intitule} />
             </h4>
           </CardTitle>
           {/* Grisé pendant une autre saisie, « Modifier » reste cliquable : un clic dit quoi faire d'abord. */}
@@ -75,9 +75,9 @@ export function DemarcheCard({
               isDisabled: edit.isDisabled,
               describedBy: edit.notice ? noticeId : undefined,
             }}
-            remove={{ accessibleLabel: formatRemoveLabel(index), onClick: onRemove }}
-            editRef={editButtonRef}
-            removeRef={removeButtonRef}
+            remove={{ accessibleLabel: formatRemoveLabel(index), onClick: remove.onClick }}
+            editRef={edit.buttonRef}
+            removeRef={remove.buttonRef}
           />
         </div>
         {edit.notice && <FieldDescription id={noticeId}>{edit.notice}</FieldDescription>}

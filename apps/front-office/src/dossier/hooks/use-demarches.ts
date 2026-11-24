@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState, type RefCallback, type RefObject } from "react";
-import { useWatch, type UseFormReturn } from "react-hook-form";
+import {
+  useWatch,
+  type FieldPathByValue,
+  type FieldValues,
+  type UseFormReturn,
+} from "react-hook-form";
 
 import { useAnnouncement } from "@etape/ui/hooks/use-announcement";
 import { formatOptionId } from "@etape/ui/lib/option-id";
 
-import { isOui, OUI_NON, type OuiNon } from "../../domain/oui-non";
 import {
   canAddDemarche,
   canCancelDemarche,
@@ -22,22 +26,56 @@ import {
   isDemarcheFilled,
   removeDemarche,
   replaceDemarche,
+  type CurrentDemarche,
   type Demarche,
-  type DemarcheFieldName,
+  type DemarchesValues,
 } from "../domain/demarche";
-import { FUTUR_METIER_FIELD, type FuturMetierFormData } from "../schema";
+import { isOui, OUI_NON, type OuiNon } from "../domain/oui-non";
+import type { PieceJustificative } from "../domain/piece-justificative";
 import {
   useDemarcheRemoval,
   type DemarcheRemovalItem,
   type UseDemarcheRemovalResult,
 } from "./use-demarche-removal";
 
-const TYPE_FIELD = "typeDemarche" satisfies DemarcheFieldName;
-const ANSWER_FIELD = "demarcheDecouverte";
+/** Les champs du volet que le bloc des démarches affiche, contrôle et où il place le focus. */
+export interface DemarchesFieldNames<TFieldValues extends FieldValues, TType extends string> {
+  /** La question du volet : « oui » ouvre les démarches. */
+  answer: FieldPathByValue<TFieldValues, OuiNon | undefined>;
+  typeDemarche: FieldPathByValue<TFieldValues, TType | undefined>;
+  precisionTypeDemarche: FieldPathByValue<TFieldValues, string>;
+  apportDemarche: FieldPathByValue<TFieldValues, string>;
+  piecesJustificatives: FieldPathByValue<TFieldValues, PieceJustificative[]>;
+}
+
+/** Comment écrire la réponse dans le formulaire. */
+export interface DemarchesAnswerOptions {
+  shouldValidate: boolean;
+}
+
+/**
+ * Ce qui relie les démarches au formulaire d'un volet. Le volet écrit lui-même ses champs :
+ * react-hook-form ne type pas `setValue` sur un formulaire générique.
+ */
+export interface DemarchesBinding<TFieldValues extends FieldValues, TType extends string> {
+  fields: DemarchesFieldNames<TFieldValues, TType>;
+  /** La réponse à la question du volet ; absente tant qu'elle n'a pas été donnée. */
+  readAnswer: (values: TFieldValues) => OuiNon | undefined;
+  setAnswer: (answer: OuiNon, options?: DemarchesAnswerOptions) => void;
+  setDemarches: (demarches: Demarche<TType>[]) => void;
+  /** La saisie en cours et la démarche validée qu'elle modifie ; `null` pour une nouvelle démarche. */
+  setCurrentDemarche: (current: CurrentDemarche<TType>, demarcheId: string | null) => void;
+  setHasCurrentDemarche: (hasCurrentDemarche: boolean) => void;
+}
 
 /** Ce que renvoie `useDemarches` : les démarches validées, l'état de la saisie, la fenêtre de suppression et les actions de l'écran. */
-export interface UseDemarchesResult extends Omit<UseDemarcheRemovalResult, "requestAllRemoval"> {
-  demarches: readonly Demarche[];
+export interface UseDemarchesResult<TType extends string = string> extends Omit<
+  UseDemarcheRemovalResult<TType>,
+  "requestAllRemoval"
+> {
+  /** Vrai après un « oui » à la question du volet : les démarches s'affichent. */
+  isAnswerOui: boolean;
+  demarches: readonly Demarche<TType>[];
   /** Vrai tant que la carte de saisie est ouverte. */
   hasCurrentDemarche: boolean;
   /** La démarche validée que la saisie modifie ; `null` pour une nouvelle démarche. */
@@ -64,23 +102,35 @@ export interface UseDemarchesResult extends Omit<UseDemarcheRemovalResult, "requ
   changeAnswer: (answer: OuiNon) => void;
   validateDemarche: () => Promise<void>;
   addDemarche: () => void;
-  editDemarche: (demarche: Demarche) => void;
+  editDemarche: (demarche: Demarche<TType>) => void;
   cancelDemarche: () => void;
   removeHighlight: () => void;
 }
 
 /**
- * Les démarches de découverte du volet : valider la saisie en cours l'ajoute à la liste, ou
- * met à jour la démarche qu'elle modifie, et referme sa carte ; en ajouter ou en modifier une
- * la rouvre, et l'annuler la referme. Une démarche validée se supprime par sa corbeille, et
- * toutes par un « non », chaque fois après confirmation (`useDemarcheRemoval`). Une seule
- * saisie à la fois ; tout vit dans le formulaire du volet, que ses compteurs lisent.
+ * Les démarches d'un volet : valider la saisie en cours l'ajoute à la liste, ou met à jour la
+ * démarche qu'elle modifie, et referme sa carte ; en ajouter ou en modifier une la rouvre, et
+ * l'annuler la referme. Une démarche validée se supprime par sa corbeille, et toutes par un
+ * « non », chaque fois après confirmation (`useDemarcheRemoval`). Une seule saisie à la fois ;
+ * tout vit dans le formulaire du volet, que ses compteurs lisent.
  */
-export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemarchesResult {
+export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType extends string>(
+  form: UseFormReturn<TFieldValues>,
+  binding: DemarchesBinding<TFieldValues, TType>,
+): UseDemarchesResult<TType> {
   const { control } = form;
-  const demarches = useWatch({ control, name: FUTUR_METIER_FIELD.DEMARCHES });
-  const hasCurrentDemarche = useWatch({ control, name: FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE });
-  const currentDemarcheId = useWatch({ control, name: FUTUR_METIER_FIELD.CURRENT_DEMARCHE_ID });
+  const { fields } = binding;
+  // Lues dans le formulaire entier : par leur nom, leur type ne se réduit pas sur un formulaire générique.
+  const answer = useWatch({ control, compute: binding.readAnswer });
+  const demarches = useWatch({ control, compute: (values: TFieldValues) => values.demarches });
+  const hasCurrentDemarche = useWatch({
+    control,
+    compute: (values: TFieldValues) => values.hasCurrentDemarche,
+  });
+  const currentDemarcheId = useWatch({
+    control,
+    compute: (values: TFieldValues) => values.currentDemarcheId,
+  });
   // Calculé dans l'abonnement : la carte n'est pas re-rendue à chaque frappe.
   const isCurrentDemarcheFilled = useWatch({ control, compute: isDemarcheFilled });
   const { message: announcement, announce } = useAnnouncement();
@@ -101,27 +151,28 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   });
 
   const focusAddButton = (): void => addButtonRef.current?.focus();
-  const focusTypeField = (): void => form.setFocus(TYPE_FIELD);
+  const focusTypeField = (): void => form.setFocus(fields.typeDemarche);
 
   /** Le focus revient au bouton « Modifier » de la démarche dont la modification se referme. */
   const focusEditButton = (demarcheId: string) => (): void =>
     editButtons.current.get(demarcheId)?.focus();
 
+  /** Les erreurs de la saisie en cours, tous champs confondus. */
+  const clearCurrentDemarcheErrors = (): void =>
+    form.clearErrors(DEMARCHE_FIELDS.map((name) => fields[name]));
+
   /** La saisie repart de champs vides, sans erreur, et ne modifie plus aucune démarche. */
   const resetCurrentDemarche = (): void => {
-    form.setValue(FUTUR_METIER_FIELD.CURRENT_DEMARCHE_ID, null);
     // Pas de `resetField` : il rendrait les valeurs de départ du formulaire, qui seront un jour
     // celles du dossier enregistré.
-    form.setValue(TYPE_FIELD, EMPTY_CURRENT_DEMARCHE.typeDemarche);
-    form.setValue(
-      FUTUR_METIER_FIELD.PRECISION_TYPE_DEMARCHE,
-      EMPTY_CURRENT_DEMARCHE.precisionTypeDemarche,
+    binding.setCurrentDemarche(
+      {
+        ...EMPTY_CURRENT_DEMARCHE,
+        piecesJustificatives: [...EMPTY_CURRENT_DEMARCHE.piecesJustificatives],
+      },
+      null,
     );
-    form.setValue(FUTUR_METIER_FIELD.APPORT_DEMARCHE, EMPTY_CURRENT_DEMARCHE.apportDemarche);
-    form.setValue(FUTUR_METIER_FIELD.PIECES_JUSTIFICATIVES, [
-      ...EMPTY_CURRENT_DEMARCHE.piecesJustificatives,
-    ]);
-    form.clearErrors([...DEMARCHE_FIELDS]);
+    clearCurrentDemarcheErrors();
     setHighlighted(false);
     setBlockedDemarcheId(null);
   };
@@ -129,17 +180,16 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   /** Referme la carte de saisie sur des champs vides, puis place le focus. */
   const closeCurrentDemarche = (focus: () => void): void => {
     pendingFocus.current = focus;
-    form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, false);
+    binding.setHasCurrentDemarche(false);
     resetCurrentDemarche();
   };
 
   /** Une démarche, par sa corbeille : les suivantes remontent d'un rang. */
-  const removeOneDemarche = ({ demarche, index }: DemarcheRemovalItem): (() => void) => {
+  const removeOneDemarche = ({ demarche, index }: DemarcheRemovalItem<TType>): (() => void) => {
     const remaining = removeDemarche(demarches, demarche.id);
-    form.setValue(FUTUR_METIER_FIELD.DEMARCHES, remaining);
+    binding.setDemarches(remaining);
     // Sans démarche ni saisie ouverte, le « oui » n'aurait plus rien à montrer : la saisie se rouvre.
-    if (remaining.length === 0 && !hasCurrentDemarche)
-      form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, true);
+    if (remaining.length === 0 && !hasCurrentDemarche) binding.setHasCurrentDemarche(true);
     setBlockedDemarcheId(null);
     announce(formatRemovalAnnouncement(index));
 
@@ -154,29 +204,29 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
 
   /** Un « non » confirmé : tout ce qui touche aux démarches repart de zéro. */
   const removeAllDemarches = (demarcheCount: number): (() => void) => {
-    form.setValue(FUTUR_METIER_FIELD.DEMARCHES, []);
+    binding.setDemarches([]);
     resetCurrentDemarche();
     // Un « oui » à venir rouvrira la saisie de la première démarche.
-    form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, true);
-    form.setValue(ANSWER_FIELD, OUI_NON.NON, { shouldValidate: true });
+    binding.setHasCurrentDemarche(true);
+    binding.setAnswer(OUI_NON.NON, { shouldValidate: true });
     announce(formatAllRemovedAnnouncement(demarcheCount));
-    return () => document.getElementById(formatOptionId(ANSWER_FIELD, OUI_NON.NON))?.focus();
+    return () => document.getElementById(formatOptionId(fields.answer, OUI_NON.NON))?.focus();
   };
 
   const { requestAllRemoval, ...removal } = useDemarcheRemoval(demarches, {
     removeDemarche: removeOneDemarche,
     removeAllDemarches,
-    focusAnswer: () => form.setFocus(ANSWER_FIELD),
+    focusAnswer: () => form.setFocus(fields.answer),
   });
 
   const validateDemarche = async (): Promise<void> => {
-    const isValid = await form.trigger([...DEMARCHE_FIELDS]);
+    const isValid = await form.trigger(DEMARCHE_FIELDS.map((name) => fields[name]));
     if (!isValid) {
       // Le bouton grisé reste cliquable : il mène au premier champ à remplir, erreur affichée.
-      const invalidField = findDemarcheFields(form.getValues(TYPE_FIELD)).find(
-        (name) => form.getFieldState(name).invalid,
+      const invalidField = findDemarcheFields(form.getValues().typeDemarche).find(
+        (name) => form.getFieldState(fields[name]).invalid,
       );
-      if (invalidField) form.setFocus(invalidField);
+      if (invalidField) form.setFocus(fields[invalidField]);
       return;
     }
 
@@ -187,11 +237,11 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     if (values.currentDemarcheId === null) {
       // Le bouton d'ajout s'arrête au maximum ; une saisie restée ouverte au-delà ne s'ajoute pas non plus.
       if (!canAddDemarche(values.demarches.length)) return;
-      form.setValue(FUTUR_METIER_FIELD.DEMARCHES, [...values.demarches, demarche]);
+      binding.setDemarches([...values.demarches, demarche]);
       closeCurrentDemarche(focusAddButton);
       announce(formatDemarcheAnnouncement(currentDemarcheIndex));
     } else {
-      form.setValue(FUTUR_METIER_FIELD.DEMARCHES, replaceDemarche(values.demarches, demarche));
+      binding.setDemarches(replaceDemarche(values.demarches, demarche));
       closeCurrentDemarche(focusEditButton(demarche.id));
       announce(formatEditAnnouncement(currentDemarcheIndex));
     }
@@ -200,12 +250,12 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
   const addDemarche = (): void => {
     if (!canAddDemarche(demarches.length)) return;
     pendingFocus.current = focusTypeField;
-    form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, true);
+    binding.setHasCurrentDemarche(true);
     setHighlighted(true);
     announce("");
   };
 
-  const editDemarche = (demarche: Demarche): void => {
+  const editDemarche = (demarche: Demarche<TType>): void => {
     if (hasCurrentDemarche) {
       // Une seule saisie à la fois : la carte de la démarche dit quoi faire d'abord.
       setBlockedDemarcheId(demarche.id);
@@ -213,12 +263,8 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
       return;
     }
     pendingFocus.current = focusTypeField;
-    form.setValue(TYPE_FIELD, demarche.typeDemarche);
-    form.setValue(FUTUR_METIER_FIELD.PRECISION_TYPE_DEMARCHE, demarche.precisionTypeDemarche);
-    form.setValue(FUTUR_METIER_FIELD.APPORT_DEMARCHE, demarche.apportDemarche);
-    form.setValue(FUTUR_METIER_FIELD.PIECES_JUSTIFICATIVES, demarche.piecesJustificatives);
-    form.setValue(FUTUR_METIER_FIELD.CURRENT_DEMARCHE_ID, demarche.id);
-    form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, true);
+    binding.setCurrentDemarche(demarche, demarche.id);
+    binding.setHasCurrentDemarche(true);
     announce("");
   };
 
@@ -232,15 +278,15 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     }
   };
 
-  const changeAnswer = (answer: OuiNon): void => {
-    if (isOui(answer)) return;
+  const changeAnswer = (nextAnswer: OuiNon): void => {
+    if (isOui(nextAnswer)) return;
     if (demarches.length === 0) {
       // La saisie en cours n'est plus demandée : ses erreurs ne restent pas au résumé.
-      form.clearErrors([...DEMARCHE_FIELDS]);
+      clearCurrentDemarcheErrors();
       return;
     }
     // Le « non » emporterait les démarches validées : la réponse reste « oui » jusqu'à la confirmation.
-    form.setValue(ANSWER_FIELD, OUI_NON.OUI);
+    binding.setAnswer(OUI_NON.OUI);
     requestAllRemoval();
   };
 
@@ -253,6 +299,7 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
 
   return {
     ...removal,
+    isAnswerOui: isOui(answer),
     demarches,
     hasCurrentDemarche,
     currentDemarcheId,

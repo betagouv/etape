@@ -16,16 +16,16 @@ import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
 import { isOui, OUI_NON_LABEL } from "../domain/oui-non";
+import { VOLET_TEXT_MAX_LENGTH } from "../domain/text-max-length";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
-import { Demarches } from "./components/demarches";
+import { DemarchesDecouverte } from "./components/demarches-decouverte";
 import { MetierViseField } from "./components/metier-vise-field";
 import {
   FUTUR_METIER_FIELD,
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_SECTION,
-  FUTUR_METIER_TEXT_MAX_LENGTH,
   type FuturMetierFormData,
 } from "./schema";
 
@@ -80,7 +80,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             label={FUTUR_METIER_FIELD_LABEL.quotidienMetier}
             required
             description="Principales activités, environnement et conditions de travail."
-            maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
+            maxLength={VOLET_TEXT_MAX_LENGTH}
           />
 
           <CharacterCountField
@@ -89,7 +89,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             label={FUTUR_METIER_FIELD_LABEL.conditionsEmploi}
             required
             description="Modes de recrutement, types de contrats proposés (CDI, CDD, temps partiel…)."
-            maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
+            maxLength={VOLET_TEXT_MAX_LENGTH}
           />
 
           <CharacterCountField
@@ -98,10 +98,10 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             label={FUTUR_METIER_FIELD_LABEL.debouches}
             required
             description="Nombre d’offres d’emploi, offres non pourvues, candidats par offre…"
-            maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
+            maxLength={VOLET_TEXT_MAX_LENGTH}
           />
 
-          <Demarches form={form} />
+          <DemarchesDecouverte form={form} />
         </FormSection>
 
         <Separator />
@@ -146,7 +146,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
               label={FUTUR_METIER_FIELD_LABEL.entreprisesContactees}
               required
               description="Les éventuels contacts déjà pris avec des employeurs potentiels, les éventuelles intentions d’embauche"
-              maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
+              maxLength={VOLET_TEXT_MAX_LENGTH}
             />
           )}
         </FormSection>

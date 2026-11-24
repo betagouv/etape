@@ -1,3 +1,4 @@
+import { findOpenDemarcheFields } from "../../domain/demarche";
 import type { EntryMode } from "../../domain/entry-mode";
 import { findFieldsAfterOui, type OuiNon } from "../../domain/oui-non";
 import {
@@ -8,7 +9,7 @@ import {
   type FuturMetierFieldName,
   type FuturMetierSection,
 } from "../schema";
-import { findOpenDemarcheFields, type TypeDemarche } from "./demarche";
+import type { TypeDemarche } from "./type-demarche";
 
 /** Exigés quel que soit le mode de saisie du métier visé, dans l'ordre de la page ; la spécialisation est facultative. */
 const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
@@ -62,7 +63,7 @@ export function findSectionFields(
     [FUTUR_METIER_SECTION.METIER_VISE]: [
       ...REQUIRED_METIER_VISE_FIELDS[answers.metierViseEntryMode],
       ...ALWAYS_REQUIRED_FIELDS,
-      ...findOpenDemarcheFields(answers),
+      ...findOpenDemarcheFields(answers.demarcheDecouverte, answers),
     ],
     [FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI]: findPerspectivesEmploiFields(answers),
   };
@@ -76,7 +77,7 @@ export function findSectionValidatedFields(
     [FUTUR_METIER_SECTION.METIER_VISE]: [
       ...METIER_VISE_FIELDS[answers.metierViseEntryMode],
       ...ALWAYS_REQUIRED_FIELDS,
-      ...findOpenDemarcheFields(answers),
+      ...findOpenDemarcheFields(answers.demarcheDecouverte, answers),
     ],
     [FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI]: findPerspectivesEmploiFields(answers),
   };

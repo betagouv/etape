@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ENTRY_MODE } from "../../domain/entry-mode";
 import { OUI_NON } from "../../domain/oui-non";
-import { TYPE_DEMARCHE } from "./demarche";
+import { TYPE_DEMARCHE } from "./type-demarche";
 import { FUTUR_METIER_SECTION, type FuturMetierFormData } from "../schema";
 import { findRequiredFields } from "./required-fields";
 

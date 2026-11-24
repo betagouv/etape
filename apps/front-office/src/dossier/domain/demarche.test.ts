@@ -24,29 +24,33 @@ import {
   NOMBRE_MAX_DEMARCHES,
   removeDemarche,
   replaceDemarche,
-  TYPE_DEMARCHE,
-  TYPE_DEMARCHE_LABEL,
+  TYPE_DEMARCHE_AUTRE,
   type CurrentDemarche,
   type Demarche,
 } from "./demarche";
 
+/** La liste des types d'un volet, réduite à ce que les règles distinguent. */
+const TYPE_DEMARCHE = {
+  IMMERSION: "immersion",
+  SALON: "salon",
+  AUTRE: TYPE_DEMARCHE_AUTRE,
+} as const;
+
+type TypeDemarche = (typeof TYPE_DEMARCHE)[keyof typeof TYPE_DEMARCHE];
+
+const TYPE_DEMARCHE_LABEL: Record<TypeDemarche, string> = {
+  [TYPE_DEMARCHE.IMMERSION]: "Immersion en entreprise",
+  [TYPE_DEMARCHE.SALON]: "Salon, forum ou job dating",
+  [TYPE_DEMARCHE.AUTRE]: "Autre",
+};
+
 /** Une saisie complète pour un type de la liste. */
-const IMMERSION: CurrentDemarche = {
+const IMMERSION: CurrentDemarche<TypeDemarche> = {
   typeDemarche: TYPE_DEMARCHE.IMMERSION,
   precisionTypeDemarche: "",
   apportDemarche: "J’ai vérifié que je tenais ce rythme.",
   piecesJustificatives: [],
 };
-
-describe("TYPE_DEMARCHE_LABEL", () => {
-  it("propose neuf types, « Autre » en dernier", () => {
-    const labels = Object.values(TYPE_DEMARCHE_LABEL);
-
-    expect(labels).toHaveLength(9);
-    expect(labels[0]).toBe("Immersion en entreprise (stage d’observation, PMSMP)");
-    expect(labels.at(-1)).toBe("Autre");
-  });
-});
 
 describe("findDemarcheFields", () => {
   it("exige le type et l'apport tant qu'aucun type n'est choisi", () => {
@@ -73,16 +77,19 @@ describe("formatDemarcheLabel", () => {
 describe("findDemarcheIntitule", () => {
   it("nomme la démarche par le libellé de son type", () => {
     expect(
-      findDemarcheIntitule({ typeDemarche: TYPE_DEMARCHE.SALON, precisionTypeDemarche: "" }),
+      findDemarcheIntitule(
+        { typeDemarche: TYPE_DEMARCHE.SALON, precisionTypeDemarche: "" },
+        TYPE_DEMARCHE_LABEL,
+      ),
     ).toBe("Salon, forum ou job dating");
   });
 
   it("nomme une démarche « Autre » par sa précision (maquette 12)", () => {
     expect(
-      findDemarcheIntitule({
-        typeDemarche: TYPE_DEMARCHE.AUTRE,
-        precisionTypeDemarche: "Stage chez un artisan",
-      }),
+      findDemarcheIntitule(
+        { typeDemarche: TYPE_DEMARCHE.AUTRE, precisionTypeDemarche: "Stage chez un artisan" },
+        TYPE_DEMARCHE_LABEL,
+      ),
     ).toBe("Stage chez un artisan");
   });
 });
@@ -166,14 +173,18 @@ describe("formatCancelAnnouncement", () => {
 });
 
 describe("replaceDemarche", () => {
-  const salon: Demarche = {
+  const salon: Demarche<TypeDemarche> = {
     id: "a",
     typeDemarche: TYPE_DEMARCHE.SALON,
     precisionTypeDemarche: "",
     apportDemarche: "J’ai rencontré trois artisans.",
     piecesJustificatives: [],
   };
-  const immersion: Demarche = { ...salon, id: "b", typeDemarche: TYPE_DEMARCHE.IMMERSION };
+  const immersion: Demarche<TypeDemarche> = {
+    ...salon,
+    id: "b",
+    typeDemarche: TYPE_DEMARCHE.IMMERSION,
+  };
 
   it("remplace la démarche de même `id`, à sa place", () => {
     const modifiee = { ...salon, apportDemarche: "J’en ai rencontré cinq." };
@@ -195,14 +206,18 @@ describe("modification d'une démarche", () => {
 });
 
 describe("suppression d'une démarche", () => {
-  const salon: Demarche = {
+  const salon: Demarche<TypeDemarche> = {
     id: "a",
     typeDemarche: TYPE_DEMARCHE.SALON,
     precisionTypeDemarche: "",
     apportDemarche: "J’ai rencontré trois artisans.",
     piecesJustificatives: [],
   };
-  const immersion: Demarche = { ...salon, id: "b", typeDemarche: TYPE_DEMARCHE.IMMERSION };
+  const immersion: Demarche<TypeDemarche> = {
+    ...salon,
+    id: "b",
+    typeDemarche: TYPE_DEMARCHE.IMMERSION,
+  };
 
   it("retire la démarche de cet `id` et garde les autres dans l'ordre", () => {
     expect(removeDemarche([salon, immersion], "a")).toEqual([immersion]);
