@@ -39,7 +39,7 @@ export function FormLayout({
     <Container size="app" className="relative -mt-22 pb-8">
       <Card variant="panel" className="grid lg:grid-cols-[auto_auto_minmax(0,1fr)]">
         <FormSidebar volets={volets} voletProgress={voletProgress} />
-        <Separator orientation="vertical" className="hidden lg:block" />
+        <Separator orientation="vertical" className="hidden lg:-mr-px lg:block" />
         <div className="flex min-w-0 flex-col gap-6">
           <SectionHeader
             variant="compact"
