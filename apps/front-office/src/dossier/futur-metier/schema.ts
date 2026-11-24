@@ -6,6 +6,12 @@ import { formatCodeRome } from "./domain/format-code-rome";
 
 const CODE_ROME_PATTERN = /^[A-Z]\d{4}$/;
 
+/** La limite des trois zones de texte de la section « Le métier » (maquette 01 : « 0/1000 caractères »). */
+export const FUTUR_METIER_TEXT_MAX_LENGTH = 1000;
+
+// Le navigateur bloque la saisie à la limite ; le schéma la contrôle pour un texte venu d'ailleurs.
+const TEXT_MAX_LENGTH_MESSAGE = `Votre texte ne doit pas dépasser ${FUTUR_METIER_TEXT_MAX_LENGTH} caractères.`;
+
 const REQUIRED_MESSAGES = {
   metierVise: "Veuillez choisir le métier que vous visez.",
   intituleMetierVise: "Veuillez saisir le nom du métier que vous visez.",
@@ -25,6 +31,22 @@ const baseFuturMetierSchema = z.object({
   intituleMetierVise: z.string().trim(),
   // Le champ n'est mis en forme qu'à sa sortie : un envoi par Entrée arrive avec la saisie brute.
   codeRome: z.string().transform(formatCodeRome),
+  specialisation: z.string().trim(),
+  quotidienMetier: z
+    .string()
+    .trim()
+    .min(1, "Veuillez décrire le quotidien de ce métier.")
+    .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
+  conditionsEmploi: z
+    .string()
+    .trim()
+    .min(1, "Veuillez indiquer les conditions habituelles d’emploi dans le métier visé.")
+    .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
+  debouches: z
+    .string()
+    .trim()
+    .min(1, "Veuillez indiquer ce que vous savez des débouchés dans ce métier.")
+    .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
 });
 
 /** Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type. */
@@ -74,6 +96,10 @@ export const FUTUR_METIER_FIELD = {
   METIER_VISE: "metierVise",
   INTITULE_METIER_VISE: "intituleMetierVise",
   CODE_ROME: "codeRome",
+  SPECIALISATION: "specialisation",
+  QUOTIDIEN_METIER: "quotidienMetier",
+  CONDITIONS_EMPLOI: "conditionsEmploi",
+  DEBOUCHES: "debouches",
 } as const satisfies Record<string, FuturMetierFieldName>;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
@@ -84,6 +110,10 @@ export const FUTUR_METIER_FIELD_LABEL: Record<
   metierVise: "Quel métier visez-vous ?",
   intituleMetierVise: "Nom du métier que vous visez",
   codeRome: "Code ROME",
+  specialisation: "Spécialisation",
+  quotidienMetier: "À quoi ressemble le quotidien de ce métier ?",
+  conditionsEmploi: "Quelles sont les conditions habituelles d’emploi dans le métier visé ?",
+  debouches: "Que savez-vous des débouchés dans ce métier ?",
 };
 
 /** Les sections du volet qui portent un compteur. */
@@ -100,12 +130,22 @@ export const METIER_VISE_FIELDS: Record<EntryMode, readonly FuturMetierFieldName
   [ENTRY_MODE.MANUAL]: ["intituleMetierVise", "codeRome"],
 };
 
-/** Un seul champ exigé, en recherche comme en saisie manuelle (maquettes 01 et 07). */
+/** Exigés quel que soit le mode de saisie du métier visé, dans l'ordre de la page ; la spécialisation est facultative. */
+const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
+  "quotidienMetier",
+  "conditionsEmploi",
+  "debouches",
+];
+
+/** Un champ pour le métier visé, en recherche comme en saisie manuelle, puis les trois zones de texte (maquettes 01 et 07). */
 export function findSectionFields(
   mode: EntryMode,
 ): Record<FuturMetierSection, readonly FuturMetierFieldName[]> {
   return {
-    [FUTUR_METIER_SECTION.METIER_VISE]: REQUIRED_METIER_VISE_FIELDS[mode],
+    [FUTUR_METIER_SECTION.METIER_VISE]: [
+      ...REQUIRED_METIER_VISE_FIELDS[mode],
+      ...ALWAYS_REQUIRED_FIELDS,
+    ],
   };
 }
 
@@ -114,6 +154,6 @@ export function findSectionValidatedFields(
   mode: EntryMode,
 ): Record<FuturMetierSection, readonly FuturMetierFieldName[]> {
   return {
-    [FUTUR_METIER_SECTION.METIER_VISE]: METIER_VISE_FIELDS[mode],
+    [FUTUR_METIER_SECTION.METIER_VISE]: [...METIER_VISE_FIELDS[mode], ...ALWAYS_REQUIRED_FIELDS],
   };
 }

@@ -16,6 +16,13 @@ const BOULANGER: AppellationRome = {
   metierRome: { code: "D1102", libelle: "Boulangerie - viennoiserie" },
 };
 
+/** Les trois zones de texte remplies : il ne reste que le métier visé à saisir. */
+const FILLED_TEXTS: Partial<FuturMetierFormData> = {
+  quotidienMetier: "Pétrir, façonner et cuire le pain, tôt le matin.",
+  conditionsEmploi: "Surtout des CDI, en boulangerie artisanale.",
+  debouches: "De nombreuses offres non pourvues dans ma région.",
+};
+
 type Form = UseFuturMetierFormResult["form"];
 
 function renderForm(): { current: UseFuturMetierFormResult } {
@@ -47,26 +54,44 @@ function setValues(form: Form, values: Partial<FuturMetierFormData>): void {
 }
 
 describe("useFuturMetierForm", () => {
-  it("demande un champ, celui du métier, quand rien n'est saisi", () => {
+  it("demande quatre champs, le métier et les trois zones de texte, quand rien n'est saisi", () => {
     const result = renderForm();
 
     expect(result.current.progress).toEqual({
-      requiredFieldCount: 1,
+      requiredFieldCount: 4,
       filledFieldCount: 0,
-      remainingFieldCount: 1,
+      remainingFieldCount: 4,
       errorCount: 0,
     });
     expect(result.current.sections).toEqual({
-      [FUTUR_METIER_SECTION.METIER_VISE]: { remainingFieldCount: 1, errorCount: 0 },
+      [FUTUR_METIER_SECTION.METIER_VISE]: { remainingFieldCount: 4, errorCount: 0 },
     });
     expect(result.current.voletErrors).toEqual([]);
     expect(result.current.errorAnnouncement).toBe("");
   });
 
+  it("ne compte pas la spécialisation, facultative, parmi les champs à remplir", () => {
+    const result = renderForm();
+
+    setValues(result.current.form, { specialisation: "pâtisserie" });
+
+    expect(result.current.progress.requiredFieldCount).toBe(4);
+    expect(result.current.progress.remainingFieldCount).toBe(4);
+  });
+
+  it("ne laisse que le métier à saisir une fois les trois zones de texte remplies", () => {
+    const result = renderForm();
+
+    setValues(result.current.form, FILLED_TEXTS);
+
+    expect(result.current.progress.remainingFieldCount).toBe(1);
+    expect(result.current.sections[FUTUR_METIER_SECTION.METIER_VISE].remainingFieldCount).toBe(1);
+  });
+
   it("ne laisse aucun champ restant une fois le métier choisi", () => {
     const result = renderForm();
 
-    setValues(result.current.form, { metierVise: BOULANGER });
+    setValues(result.current.form, { ...FILLED_TEXTS, metierVise: BOULANGER });
 
     expect(result.current.progress.remainingFieldCount).toBe(0);
     expect(result.current.sections[FUTUR_METIER_SECTION.METIER_VISE].remainingFieldCount).toBe(0);
@@ -75,20 +100,44 @@ describe("useFuturMetierForm", () => {
   it("en saisie manuelle, demande l'intitulé et pas le code ROME", () => {
     const result = renderForm();
 
-    setValues(result.current.form, { metierViseEntryMode: ENTRY_MODE.MANUAL });
+    setValues(result.current.form, {
+      ...FILLED_TEXTS,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
+    });
     expect(result.current.progress.remainingFieldCount).toBe(1);
 
     setValues(result.current.form, { intituleMetierVise: "Pâtissier" });
     expect(result.current.progress).toEqual({
-      requiredFieldCount: 1,
-      filledFieldCount: 1,
+      requiredFieldCount: 4,
+      filledFieldCount: 4,
       remainingFieldCount: 0,
       errorCount: 0,
     });
   });
 
+  it("à l'envoi d'un volet vide, liste les quatre champs manquants dans l'ordre de la page", async () => {
+    const result = renderForm();
+
+    await submit(result.current.form);
+
+    expect(result.current.progress.errorCount).toBe(4);
+    expect(result.current.voletErrors).toEqual([
+      { fieldId: "metierVise", message: "Veuillez choisir le métier que vous visez." },
+      { fieldId: "quotidienMetier", message: "Veuillez décrire le quotidien de ce métier." },
+      {
+        fieldId: "conditionsEmploi",
+        message: "Veuillez indiquer les conditions habituelles d’emploi dans le métier visé.",
+      },
+      {
+        fieldId: "debouches",
+        message: "Veuillez indiquer ce que vous savez des débouchés dans ce métier.",
+      },
+    ]);
+  });
+
   it("à l'envoi sans métier, compte l'erreur et la porte au résumé", async () => {
     const result = renderForm();
+    setValues(result.current.form, FILLED_TEXTS);
 
     await submit(result.current.form);
 
@@ -103,7 +152,10 @@ describe("useFuturMetierForm", () => {
 
   it("annonce l'erreur du champ quitté, suivie du statut du volet", async () => {
     const result = renderForm();
-    setValues(result.current.form, { metierViseEntryMode: ENTRY_MODE.MANUAL });
+    setValues(result.current.form, {
+      ...FILLED_TEXTS,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
+    });
 
     await fillAndLeave(result.current.form.register("intituleMetierVise"), " ");
 
@@ -115,7 +167,10 @@ describe("useFuturMetierForm", () => {
 
   it("annonce le volet complet quand l'intitulé quitté est rempli", async () => {
     const result = renderForm();
-    setValues(result.current.form, { metierViseEntryMode: ENTRY_MODE.MANUAL });
+    setValues(result.current.form, {
+      ...FILLED_TEXTS,
+      metierViseEntryMode: ENTRY_MODE.MANUAL,
+    });
 
     await fillAndLeave(result.current.form.register("intituleMetierVise"), "Pâtissier");
 
@@ -126,6 +181,7 @@ describe("useFuturMetierForm", () => {
   it("compte l'erreur d'un champ facultatif : un code ROME faux n'est pas un volet complet", async () => {
     const result = renderForm();
     setValues(result.current.form, {
+      ...FILLED_TEXTS,
       metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
       codeRome: "M18",
@@ -134,8 +190,8 @@ describe("useFuturMetierForm", () => {
     await submit(result.current.form);
 
     expect(result.current.progress).toEqual({
-      requiredFieldCount: 1,
-      filledFieldCount: 1,
+      requiredFieldCount: 4,
+      filledFieldCount: 4,
       remainingFieldCount: 0,
       errorCount: 1,
     });
@@ -153,6 +209,7 @@ describe("useFuturMetierForm", () => {
   it("liste au résumé l'intitulé manquant avant le code ROME faux, dans l'ordre de la page", async () => {
     const result = renderForm();
     setValues(result.current.form, {
+      ...FILLED_TEXTS,
       metierViseEntryMode: ENTRY_MODE.MANUAL,
       codeRome: "M18",
     });
@@ -169,6 +226,7 @@ describe("useFuturMetierForm", () => {
   it("annonce le code ROME faux qu'on vient de quitter, et le volet à corriger", async () => {
     const result = renderForm();
     setValues(result.current.form, {
+      ...FILLED_TEXTS,
       metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
     });
@@ -184,6 +242,7 @@ describe("useFuturMetierForm", () => {
   it("ne compte plus l'erreur du code ROME une fois revenu à la recherche", async () => {
     const result = renderForm();
     setValues(result.current.form, {
+      ...FILLED_TEXTS,
       metierViseEntryMode: ENTRY_MODE.MANUAL,
       intituleMetierVise: "Pâtissier",
       codeRome: "M18",

@@ -70,7 +70,8 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 
 // Pas de `data-[invalid=true]:text-destructive` de la source shadcn : dans le kit, un
 // champ invalide garde son libellé noir ; seule la bordure du contrôle passe en rouge.
-const fieldVariants = cva("group/field flex w-full gap-3", {
+// 8 px entre le libellé, le contrôle et l'aide, comme le `Field` du kit (12 px dans la source shadcn).
+const fieldVariants = cva("group/field flex w-full gap-2", {
   variants: {
     orientation: {
       vertical: ["flex-col [&>*]:w-full [&>.sr-only]:w-auto"],
@@ -148,7 +149,7 @@ function FieldLabel({
       data-required={required || undefined}
       // Sans la carte de choix de la source shadcn : c'est le rôle de `ChoiceCard`.
       className={cn(
-        "group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",
+        "group/field-label peer/field-label flex w-fit gap-2 leading-5 group-data-[disabled=true]/field:opacity-50",
         className,
       )}
       {...props}
@@ -176,8 +177,9 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="field-description"
       className={cn(
-        "text-muted-foreground text-sm leading-normal font-normal group-has-[[data-orientation=horizontal]]/field:text-balance",
-        "last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5",
+        "text-muted-foreground text-sm leading-5 font-normal group-has-[[data-orientation=horizontal]]/field:text-balance",
+        // Sans le `nth-last-2:-mt-1` de la source shadcn : dans le kit, l'aide reste à 8 px, où qu'elle soit placée.
+        "last:mt-0 [[data-variant=legend]+&]:-mt-1.5",
         "[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
         className,
       )}
