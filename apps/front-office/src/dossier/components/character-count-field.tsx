@@ -3,7 +3,10 @@ import type { Control, FieldPathByValue, FieldValues } from "react-hook-form";
 import { CharacterCountTextarea } from "@etape/ui/components/character-count-textarea";
 import { FormField } from "@etape/ui/components/form-field";
 
-import { formatCharacterCount } from "../domain/format-character-count";
+import {
+  formatCharacterCount,
+  formatCharacterCountAnnouncement,
+} from "../domain/format-character-count";
 
 /** Ce que reçoit `CharacterCountField` : un champ texte du formulaire, son libellé, son aide et sa limite. */
 export interface CharacterCountFieldProps<
@@ -43,6 +46,7 @@ export function CharacterCountField<
           {...attributes}
           maxLength={maxLength}
           countLabel={formatCharacterCount(field.value.length, maxLength)}
+          countAnnouncement={formatCharacterCountAnnouncement(field.value.length, maxLength)}
         />
       )}
     />
