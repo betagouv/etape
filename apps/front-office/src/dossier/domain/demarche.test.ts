@@ -8,6 +8,7 @@ import {
   EMPTY_CURRENT_DEMARCHE,
   findDemarcheFields,
   findDemarcheIntitule,
+  findOpenDemarcheFields,
   formatCancelAnnouncement,
   formatEditCancelAnnouncement,
   formatDemarcheAnnouncement,
@@ -28,6 +29,7 @@ import {
   type CurrentDemarche,
   type Demarche,
 } from "./demarche";
+import { OUI_NON } from "./oui-non";
 
 /** La liste des types d'un volet, réduite à ce que les règles distinguent. */
 const TYPE_DEMARCHE = {
@@ -64,6 +66,35 @@ describe("findDemarcheFields", () => {
   it("exige la précision pour « Autre », entre le type et l'apport comme sur la page", () => {
     expect(findDemarcheFields(TYPE_DEMARCHE.AUTRE)).toEqual(DEMARCHE_FIELDS);
     expect(DEMARCHE_FIELDS).toEqual(["typeDemarche", "precisionTypeDemarche", "apportDemarche"]);
+  });
+});
+
+describe("findOpenDemarcheFields", () => {
+  /** La carte de saisie est ouverte, aucun type n'est choisi. */
+  const OPEN = { hasCurrentDemarche: true };
+
+  it("n'exige rien tant que la question n'a pas de réponse", () => {
+    expect(findOpenDemarcheFields(undefined, OPEN)).toEqual([]);
+  });
+
+  it("n'exige rien après un « non », même si un type reste saisi", () => {
+    expect(
+      findOpenDemarcheFields(OUI_NON.NON, { ...OPEN, typeDemarche: TYPE_DEMARCHE.AUTRE }),
+    ).toEqual([]);
+  });
+
+  it("exige le type et l'apport après un « oui », carte de saisie ouverte", () => {
+    expect(findOpenDemarcheFields(OUI_NON.OUI, OPEN)).toEqual(["typeDemarche", "apportDemarche"]);
+  });
+
+  it("exige aussi la précision pour « Autre »", () => {
+    expect(
+      findOpenDemarcheFields(OUI_NON.OUI, { ...OPEN, typeDemarche: TYPE_DEMARCHE.AUTRE }),
+    ).toEqual(DEMARCHE_FIELDS);
+  });
+
+  it("n'exige plus rien une fois la carte de saisie fermée", () => {
+    expect(findOpenDemarcheFields(OUI_NON.OUI, { hasCurrentDemarche: false })).toEqual([]);
   });
 });
 
