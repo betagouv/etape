@@ -4,6 +4,7 @@ import type { VoletProgress } from "./domain/statut-volet";
 import type { VoletId } from "./domain/volet-id";
 import type { UseFuturMetierFormResult } from "./futur-metier/hooks/use-futur-metier-form";
 import type { UseInformationsFormResult } from "./informations/hooks/use-informations-form";
+import type { UseProjetFormResult } from "./projet/hooks/use-projet-form";
 import type { UseSituationProfessionnelleFormResult } from "./situation-professionnelle/hooks/use-situation-professionnelle-form";
 
 /** Les formulaires des volets et l'avancement de chacun, tels que `DossierScreen` les met en contexte. */
@@ -11,6 +12,7 @@ export interface DossierVolets {
   informations: UseInformationsFormResult;
   situationProfessionnelle: UseSituationProfessionnelleFormResult;
   futurMetier: UseFuturMetierFormResult;
+  projet: UseProjetFormResult;
   voletProgress: Partial<Record<VoletId, VoletProgress>>;
 }
 
