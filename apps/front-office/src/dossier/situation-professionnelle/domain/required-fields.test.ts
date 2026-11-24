@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import {
   DEMISSION,
-  EMPLOYEUR_ENTRY_MODE,
   SITUATION_PROFESSIONNELLE_SECTION,
   type SituationProfessionnelleFormData,
 } from "../schema";
 import { findRequiredFields } from "./required-fields";
 
 const values: SituationProfessionnelleFormData = {
-  employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
+  employeurEntryMode: ENTRY_MODE.SEARCH,
   employeur: null,
   denomination: "",
   siret: "",
@@ -34,7 +34,7 @@ describe("findRequiredFields", () => {
   it("exige les quatre champs saisis à la main et la date après « oui »", () => {
     const required = findRequiredFields({
       ...values,
-      employeurEntryMode: EMPLOYEUR_ENTRY_MODE.MANUAL,
+      employeurEntryMode: ENTRY_MODE.MANUAL,
       denomination: "ACME",
       demission: DEMISSION.OUI,
     });
@@ -48,5 +48,11 @@ describe("findRequiredFields", () => {
       "dateDemission",
     ]);
     expect(required.filledFields).toEqual(["denomination", "intitulePoste", "demission"]);
+  });
+
+  it("ne contrôle que les champs exigés", () => {
+    const required = findRequiredFields(values);
+
+    expect(required.sectionValidatedFields).toEqual(required.sectionFields);
   });
 });

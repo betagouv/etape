@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn } from "react-hook-form";
 
+import { ENTRY_MODE } from "../../domain/entry-mode";
 import type { SectionProgress } from "../../domain/statut-volet";
 import { VOLET_ID } from "../../domain/volet-id";
 import { computeSectionProgress } from "../../domain/volet-progress";
@@ -8,7 +9,6 @@ import { useVoletProgress, type UseVoletProgressResult } from "../../hooks/use-v
 import { VOLET_FORM_OPTIONS } from "../../volet-form-options";
 import { findRequiredFields } from "../domain/required-fields";
 import {
-  EMPLOYEUR_ENTRY_MODE,
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   SITUATION_PROFESSIONNELLE_SECTION,
   situationProfessionnelleSchema,
@@ -31,7 +31,7 @@ export function useSituationProfessionnelleForm(): UseSituationProfessionnelleFo
     ...VOLET_FORM_OPTIONS,
     resolver: zodResolver(situationProfessionnelleSchema),
     defaultValues: {
-      employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
+      employeurEntryMode: ENTRY_MODE.SEARCH,
       employeur: null,
       denomination: "",
       siret: "",

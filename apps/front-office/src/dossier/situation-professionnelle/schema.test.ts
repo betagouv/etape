@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  DEMISSION,
-  EMPLOYEUR_ENTRY_MODE,
-  findSectionFields,
-  situationProfessionnelleSchema,
-} from "./schema";
+import { ENTRY_MODE } from "../domain/entry-mode";
+import { DEMISSION, findSectionFields, situationProfessionnelleSchema } from "./schema";
 
 function findDateDemissionMessages(data: Record<string, unknown>): string[] {
   const issues = situationProfessionnelleSchema.safeParse(data).error?.issues ?? [];
@@ -13,7 +9,7 @@ function findDateDemissionMessages(data: Record<string, unknown>): string[] {
 }
 
 const EMPTY_FORM = {
-  employeurEntryMode: EMPLOYEUR_ENTRY_MODE.SEARCH,
+  employeurEntryMode: ENTRY_MODE.SEARCH,
   employeur: null,
   denomination: "",
   siret: "",
@@ -85,14 +81,14 @@ describe("situationProfessionnelleSchema, date de démission", () => {
 
 describe("findSectionFields", () => {
   it("exige l'employeur choisi et le poste en recherche", () => {
-    expect(findSectionFields(EMPLOYEUR_ENTRY_MODE.SEARCH, undefined)).toEqual({
+    expect(findSectionFields(ENTRY_MODE.SEARCH, undefined)).toEqual({
       emploi: ["employeur", "intitulePoste"],
       demission: ["demission"],
     });
   });
 
   it("exige les quatre champs de l'employeur, le poste et la date après un « oui »", () => {
-    expect(findSectionFields(EMPLOYEUR_ENTRY_MODE.MANUAL, DEMISSION.OUI)).toEqual({
+    expect(findSectionFields(ENTRY_MODE.MANUAL, DEMISSION.OUI)).toEqual({
       emploi: ["denomination", "siret", "secteurActivite", "adresse", "intitulePoste"],
       demission: ["demission", "dateDemission"],
     });

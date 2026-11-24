@@ -34,6 +34,12 @@ describe("findRequiredFields", () => {
     ]);
   });
 
+  it("ne contrôle que les champs demandés", () => {
+    const required = findRequiredFields(values);
+
+    expect(required.sectionValidatedFields).toEqual(required.sectionFields);
+  });
+
   it("ne retient comme remplis que les champs qui ont une valeur", () => {
     expect(findRequiredFields(values).filledFields).toEqual([
       "civilite",

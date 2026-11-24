@@ -16,5 +16,7 @@ export function findRequiredFields(
     sectionFields: INFORMATIONS_SECTION_FIELDS,
     allFields: ALL_REQUIRED_FIELDS,
     filledFields: listFilledFields(values, ALL_REQUIRED_FIELDS),
+    // Aucun champ facultatif n'est contrôlé dans ce volet.
+    sectionValidatedFields: INFORMATIONS_SECTION_FIELDS,
   };
 }

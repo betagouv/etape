@@ -5,8 +5,10 @@ import { Button } from "@etape/ui/components/button";
 import { FormField } from "@etape/ui/components/form-field";
 import { Input } from "@etape/ui/components/input";
 
-import { formatSiret } from "../domain/format-siret";
+import { formatInputValue } from "@/lib/format-input";
+import { formatSiret, isSiretDigit } from "../domain/format-siret";
 import {
+  SITUATION_PROFESSIONNELLE_FIELD,
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   type SituationProfessionnelleFormData,
 } from "../schema";
@@ -29,7 +31,7 @@ export function EmployeurManualFields({
   return (
     <div className="flex flex-col gap-5">
       <FormField
-        name="denomination"
+        name={SITUATION_PROFESSIONNELLE_FIELD.DENOMINATION}
         control={control}
         label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.denomination}
         required
@@ -41,7 +43,7 @@ export function EmployeurManualFields({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <FormField
-          name="siret"
+          name={SITUATION_PROFESSIONNELLE_FIELD.SIRET}
           control={control}
           label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.siret}
           required
@@ -51,13 +53,15 @@ export function EmployeurManualFields({
               {...field}
               {...attributes}
               inputMode="numeric"
-              onChange={(e) => field.onChange(formatSiret(e.target.value))}
+              onChange={(e) =>
+                field.onChange(formatInputValue(e, field.value, formatSiret, isSiretDigit))
+              }
             />
           )}
         />
 
         <Controller
-          name="secteurActivite"
+          name={SITUATION_PROFESSIONNELLE_FIELD.SECTEUR_ACTIVITE}
           control={control}
           render={({ field, fieldState }) => (
             <SecteurActiviteField field={field} error={fieldState.error} />
@@ -66,7 +70,7 @@ export function EmployeurManualFields({
       </div>
 
       <FormField
-        name="adresse"
+        name={SITUATION_PROFESSIONNELLE_FIELD.ADRESSE}
         control={control}
         label={SITUATION_PROFESSIONNELLE_FIELD_LABEL.adresse}
         required
@@ -74,7 +78,14 @@ export function EmployeurManualFields({
         render={({ field, attributes }) => <Input {...field} {...attributes} />}
       />
 
-      <Button type="button" variant="link" size="lg" className="self-start" onClick={onSearch}>
+      <Button
+        type="button"
+        variant="link"
+        size="lg"
+        multiline
+        className="self-start"
+        onClick={onSearch}
+      >
         <SearchIcon aria-hidden="true" />
         Rechercher dans l’annuaire des entreprises
       </Button>

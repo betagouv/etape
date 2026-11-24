@@ -12,5 +12,11 @@ export function findRequiredFields(
 ): RequiredFields<SituationProfessionnelleSection, SituationProfessionnelleFieldName> {
   const sectionFields = findSectionFields(values.employeurEntryMode, values.demission);
   const allFields = Object.values(sectionFields).flat();
-  return { sectionFields, allFields, filledFields: listFilledFields(values, allFields) };
+  return {
+    sectionFields,
+    allFields,
+    filledFields: listFilledFields(values, allFields),
+    // Aucun champ facultatif n'est contrôlé dans ce volet.
+    sectionValidatedFields: sectionFields,
+  };
 }

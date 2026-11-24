@@ -5,6 +5,7 @@ import { STATUT_DOSSIER } from "../domain/statut-dossier";
 import { VOLET_ID } from "../domain/volet-id";
 import { VOLETS_DOSSIER } from "../domain/volets-dossier";
 import { DossierVoletsContext } from "../dossier-volets-context";
+import { useFuturMetierForm } from "../futur-metier/hooks/use-futur-metier-form";
 import { useInformationsForm } from "../informations/hooks/use-informations-form";
 import { useSituationProfessionnelleForm } from "../situation-professionnelle/hooks/use-situation-professionnelle-form";
 import { DossierHeader } from "./dossier-header";
@@ -13,14 +14,18 @@ import { DossierHeader } from "./dossier-header";
 export function DossierScreen() {
   const informations = useInformationsForm();
   const situationProfessionnelle = useSituationProfessionnelleForm();
+  const futurMetier = useFuturMetierForm();
   const voletProgress = {
     [VOLET_ID.INFORMATIONS]: informations.progress,
     [VOLET_ID.SITUATION_PROFESSIONNELLE]: situationProfessionnelle.progress,
+    [VOLET_ID.FUTUR_METIER]: futurMetier.progress,
   };
   const { completed } = computeDossierProgress(Object.values(voletProgress));
 
   return (
-    <DossierVoletsContext value={{ informations, situationProfessionnelle, voletProgress }}>
+    <DossierVoletsContext
+      value={{ informations, situationProfessionnelle, futurMetier, voletProgress }}
+    >
       {/* Numéro, horodatage : en attendant l'API. */}
       <DossierHeader
         title="Démission-reconversion"
