@@ -22,7 +22,11 @@ function FormSectionHeader({ className, ...props }: React.ComponentProps<"div">)
     <div
       data-slot="form-section-header"
       // 24 px même sans compteur (maquette), pour que le formulaire ne saute pas quand il disparaît.
-      className={cn("flex min-h-6 items-center justify-between gap-2", className)}
+      // Faute de place, le compteur passe sous le titre plutôt que de le couper, et reste à droite.
+      className={cn(
+        "flex min-h-6 flex-wrap items-center justify-between gap-2 [&>:not(:first-child)]:ml-auto",
+        className,
+      )}
       {...props}
     />
   );
@@ -31,8 +35,9 @@ function FormSectionHeader({ className, ...props }: React.ComponentProps<"div">)
 const formSectionTitleVariants = cva("font-semibold", {
   variants: {
     size: {
-      // La hauteur de ligne suit la taille : `tailwind-merge` l'efface sinon.
-      default: "text-lg leading-none",
+      // La hauteur de ligne suit la taille : `tailwind-merge` l'efface sinon. 24 px, la hauteur
+      // de l'en-tête : un titre trop long pour une ligne garde des lignes lisibles.
+      default: "text-lg leading-6",
       // Sections de l'inscription (Figma FRONT-OFFICE, « 01. SIGN-UP ») : titre de 16 px.
       sm: "text-base leading-none",
     },
