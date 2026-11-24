@@ -7,7 +7,7 @@ import { VOLET_ID } from "../../domain/volet-id";
 import { computeSectionProgress } from "../../domain/volet-progress";
 import { useVoletProgress, type UseVoletProgressResult } from "../../hooks/use-volet-progress";
 import { VOLET_FORM_OPTIONS } from "../../volet-form-options";
-import { findRequiredFields } from "../domain/required-fields";
+import { findSectionFields, findSectionValidatedFields } from "../domain/section-fields";
 import {
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_SECTION,
@@ -60,7 +60,8 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
     errors,
     VOLET_ID.FUTUR_METIER,
     FUTUR_METIER_FIELD_LABEL,
-    findRequiredFields,
+    findSectionFields,
+    findSectionValidatedFields,
   );
 
   // Un littéral plutôt qu'un `Object.fromEntries` casté : une section ajoutée sans compteur ne compile pas.

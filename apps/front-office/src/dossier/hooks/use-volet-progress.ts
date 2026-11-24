@@ -1,9 +1,11 @@
+import { useCallback } from "react";
 import { useWatch, type FieldPath, type FieldValues, type UseFormReturn } from "react-hook-form";
 
 import type { FieldErrors } from "../domain/field-error-announcement";
 import type { VoletProgress } from "../domain/statut-volet";
 import type { VoletId } from "../domain/volet-id";
 import {
+  buildRequiredFields,
   computeVoletProgress,
   listValidatedFields,
   type RequiredFields,
@@ -30,16 +32,30 @@ export interface UseVoletProgressResult<TSection extends string> {
  * `errors` est `form.formState.errors`, passé à part : lu ici, son type générique ne se réduit
  * pas au type du domaine sans cast, alors que celui de chaque volet s'y conforme.
  *
- * `labels` et `findRequiredFields` sont définis hors du rendu : sans quoi l'abonnement de
- * l'annonce est refait à chaque rendu.
+ * `findSectionFields` rend les champs exigés de chaque section au vu des réponses en cours ;
+ * `findSectionValidatedFields`, ses champs contrôlés quand un champ facultatif l'est aussi.
+ * Avec `labels`, elles sont définies hors du rendu : sans quoi l'abonnement de l'annonce est
+ * refait à chaque rendu.
  */
-export function useVoletProgress<TFieldValues extends FieldValues, TSection extends string>(
+export function useVoletProgress<
+  TFieldValues extends FieldValues,
+  TSection extends string,
+  TName extends string,
+>(
   form: UseFormReturn<TFieldValues>,
   errors: FieldErrors,
   voletId: VoletId,
   labels: Partial<Record<FieldPath<TFieldValues>, string>>,
-  findRequiredFields: (values: TFieldValues) => RequiredFields<TSection>,
+  findSectionFields: (values: TFieldValues) => Record<TSection, readonly TName[]>,
+  findSectionValidatedFields: (
+    values: TFieldValues,
+  ) => Record<TSection, readonly TName[]> = findSectionFields,
 ): UseVoletProgressResult<TSection> {
+  const findRequiredFields = useCallback(
+    (values: TFieldValues): RequiredFields<TSection, TName> =>
+      buildRequiredFields(values, findSectionFields(values), findSectionValidatedFields(values)),
+    [findSectionFields, findSectionValidatedFields],
+  );
   const errorAnnouncement = useFieldErrorAnnouncement(
     form,
     labels,
