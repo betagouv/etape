@@ -12,7 +12,7 @@ import {
   PIECES_DEMARCHE_DESCRIPTION,
   TYPE_DEMARCHE_AUTRE,
 } from "../domain/demarche";
-import { VOLET_TEXT_MAX_LENGTH } from "../domain/text-max-length";
+import { LONGUEUR_MAX_TEXTE } from "../domain/longueur-max-texte";
 import type { DemarchesFieldNames } from "../hooks/use-demarches";
 import { CharacterCountField } from "./character-count-field";
 import { PiecesJustificativesField } from "./pieces-justificatives-field";
@@ -90,7 +90,7 @@ export function DemarcheFields<TFieldValues extends FieldValues, TType extends s
           label={DEMARCHE_FIELD_LABEL.apportDemarche}
           required
           description="Ce que vous avez appris sur vous ou sur votre projet."
-          maxLength={VOLET_TEXT_MAX_LENGTH}
+          maxLength={LONGUEUR_MAX_TEXTE}
         />
 
         <Controller

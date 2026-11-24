@@ -16,7 +16,7 @@ import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
 import { isOui, OUI_NON_LABEL } from "../domain/oui-non";
-import { VOLET_TEXT_MAX_LENGTH } from "../domain/text-max-length";
+import { LONGUEUR_MAX_TEXTE } from "../domain/longueur-max-texte";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
@@ -80,7 +80,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             label={FUTUR_METIER_FIELD_LABEL.quotidienMetier}
             required
             description="Principales activités, environnement et conditions de travail."
-            maxLength={VOLET_TEXT_MAX_LENGTH}
+            maxLength={LONGUEUR_MAX_TEXTE}
           />
 
           <CharacterCountField
@@ -89,7 +89,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             label={FUTUR_METIER_FIELD_LABEL.conditionsEmploi}
             required
             description="Modes de recrutement, types de contrats proposés (CDI, CDD, temps partiel…)."
-            maxLength={VOLET_TEXT_MAX_LENGTH}
+            maxLength={LONGUEUR_MAX_TEXTE}
           />
 
           <CharacterCountField
@@ -98,7 +98,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             label={FUTUR_METIER_FIELD_LABEL.debouches}
             required
             description="Nombre d’offres d’emploi, offres non pourvues, candidats par offre…"
-            maxLength={VOLET_TEXT_MAX_LENGTH}
+            maxLength={LONGUEUR_MAX_TEXTE}
           />
 
           <DemarchesDecouverte form={form} />
@@ -146,7 +146,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
               label={FUTUR_METIER_FIELD_LABEL.entreprisesContactees}
               required
               description="Les éventuels contacts déjà pris avec des employeurs potentiels, les éventuelles intentions d’embauche"
-              maxLength={VOLET_TEXT_MAX_LENGTH}
+              maxLength={LONGUEUR_MAX_TEXTE}
             />
           )}
         </FormSection>

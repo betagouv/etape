@@ -10,7 +10,7 @@ import { DEMARCHE_FIELD_LABEL, findOpenDemarcheFields } from "../domain/demarche
 import { ENTRY_MODE, type EntryMode } from "../domain/entry-mode";
 import { findFieldsAfterOui, OUI_NON } from "../domain/oui-non";
 import { requireFilled } from "../domain/require-filled";
-import { VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE } from "../domain/text-max-length";
+import { LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE } from "../domain/longueur-max-texte";
 import { formatCodeRome } from "./domain/format-code-rome";
 import { TYPE_DEMARCHE } from "./domain/type-demarche";
 
@@ -47,17 +47,17 @@ const baseFuturMetierSchema = z.object({
     .string()
     .trim()
     .min(1, "Veuillez décrire le quotidien de ce métier.")
-    .max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+    .max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
   conditionsEmploi: z
     .string()
     .trim()
     .min(1, "Veuillez indiquer les conditions habituelles d’emploi dans le métier visé.")
-    .max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+    .max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
   debouches: z
     .string()
     .trim()
     .min(1, "Veuillez indiquer ce que vous savez des débouchés dans ce métier.")
-    .max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+    .max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
   demarcheDecouverte: z.enum(
     OUI_NON,
     "Veuillez indiquer si vous avez entrepris des démarches pour découvrir ce métier.",
@@ -77,10 +77,7 @@ const baseFuturMetierSchema = z.object({
     "Veuillez indiquer si vous avez déjà des contacts avec des employeurs.",
   ),
   // Exigées seulement après un « oui » aux contacts avec des employeurs.
-  entreprisesContactees: z
-    .string()
-    .trim()
-    .max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+  entreprisesContactees: z.string().trim().max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
 });
 
 /**

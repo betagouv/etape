@@ -10,7 +10,7 @@ import { CharacterCountField } from "../components/character-count-field";
 import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { VoletNotice } from "../components/volet-notice";
-import { VOLET_TEXT_MAX_LENGTH } from "../domain/text-max-length";
+import { LONGUEUR_MAX_TEXTE } from "../domain/longueur-max-texte";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
@@ -54,7 +54,7 @@ export function ProjetForm({ formId, notice, onSubmitValid }: ProjetFormProps) {
             label={PROJET_FIELD_LABEL.motivationChangement}
             required
             description="Ce qui vous a conduit à ce choix, ce qui vous attire dans ce métier."
-            maxLength={VOLET_TEXT_MAX_LENGTH}
+            maxLength={LONGUEUR_MAX_TEXTE}
           />
 
           <CharacterCountField
@@ -63,7 +63,7 @@ export function ProjetForm({ formId, notice, onSubmitValid }: ProjetFormProps) {
             label={PROJET_FIELD_LABEL.effetsChangement}
             required
             description="Revenus, horaires, conditions de travail, organisation personnelle…"
-            maxLength={VOLET_TEXT_MAX_LENGTH}
+            maxLength={LONGUEUR_MAX_TEXTE}
           />
         </FormSection>
 
@@ -81,7 +81,7 @@ export function ProjetForm({ formId, notice, onSubmitValid }: ProjetFormProps) {
             label={PROJET_FIELD_LABEL.competencesAcquises}
             required
             description="Connaissances, savoir-faire et qualités acquis au cours de votre carrière."
-            maxLength={VOLET_TEXT_MAX_LENGTH}
+            maxLength={LONGUEUR_MAX_TEXTE}
           />
 
           <CharacterCountField
@@ -90,7 +90,7 @@ export function ProjetForm({ formId, notice, onSubmitValid }: ProjetFormProps) {
             label={PROJET_FIELD_LABEL.competencesAAcquerir}
             required
             description="Ce que vous devez apprendre, développer ou faire reconnaître."
-            maxLength={VOLET_TEXT_MAX_LENGTH}
+            maxLength={LONGUEUR_MAX_TEXTE}
           />
         </FormSection>
 

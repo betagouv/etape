@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { DemarcheFieldName } from "./domain/demarche";
-import { VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE } from "./domain/text-max-length";
+import { LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE } from "./domain/longueur-max-texte";
 
 const pieceJustificativeSchema = z.object({
   id: z.string(),
@@ -23,7 +23,7 @@ export const DEMARCHE_REQUIRED_MESSAGES: Record<DemarcheFieldName, string> = {
  */
 export const currentDemarcheSchema = z.object({
   precisionTypeDemarche: z.string().trim(),
-  apportDemarche: z.string().trim().max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+  apportDemarche: z.string().trim().max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
   // Facultatives ; format et taille sont contrôlés à l'ajout (`checkFichiers`).
   piecesJustificatives: z.array(pieceJustificativeSchema),
   // Vrai tant que la carte de saisie est ouverte : elle se referme sur chaque démarche validée.

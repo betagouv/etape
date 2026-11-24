@@ -8,7 +8,7 @@ import {
 import { DEMARCHE_FIELD_LABEL, findOpenDemarcheFields } from "../domain/demarche";
 import { OUI_NON } from "../domain/oui-non";
 import { requireFilled } from "../domain/require-filled";
-import { VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE } from "../domain/text-max-length";
+import { LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE } from "../domain/longueur-max-texte";
 import { TYPE_DEMARCHE } from "./domain/type-demarche";
 
 const baseProjetSchema = z.object({
@@ -16,12 +16,12 @@ const baseProjetSchema = z.object({
     .string()
     .trim()
     .min(1, "Veuillez indiquer pourquoi vous souhaitez changer de métier.")
-    .max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+    .max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
   effetsChangement: z
     .string()
     .trim()
     .min(1, "Veuillez indiquer ce que ce changement va modifier dans votre situation.")
-    .max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+    .max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
   competencesAcquises: z
     .string()
     .trim()
@@ -29,12 +29,12 @@ const baseProjetSchema = z.object({
       1,
       "Veuillez indiquer les compétences de votre parcours qui vous serviront dans votre futur métier.",
     )
-    .max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+    .max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
   competencesAAcquerir: z
     .string()
     .trim()
     .min(1, "Veuillez indiquer les compétences qu’il vous reste à acquérir.")
-    .max(VOLET_TEXT_MAX_LENGTH, VOLET_TEXT_MAX_LENGTH_MESSAGE),
+    .max(LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE),
   demarcheConstruction: z.enum(
     OUI_NON,
     "Veuillez indiquer si vous avez réalisé une démarche pour construire votre projet.",

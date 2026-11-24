@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { OUI_NON } from "../domain/oui-non";
-import { VOLET_TEXT_MAX_LENGTH } from "../domain/text-max-length";
+import { LONGUEUR_MAX_TEXTE } from "../domain/longueur-max-texte";
 import { TYPE_DEMARCHE } from "./domain/type-demarche";
 import { projetSchema } from "./schema";
 
@@ -81,7 +81,7 @@ describe("projetSchema", () => {
   });
 
   it("accepte une zone de texte à la limite, espaces autour compris", () => {
-    const atLimit = "x".repeat(VOLET_TEXT_MAX_LENGTH);
+    const atLimit = "x".repeat(LONGUEUR_MAX_TEXTE);
     for (const field of TEXT_FIELDS) {
       expect(findMessages({ ...FILLED_FORM, [field]: atLimit }, field)).toEqual([]);
       expect(findMessages({ ...FILLED_FORM, [field]: ` ${atLimit}\n` }, field)).toEqual([]);
@@ -89,7 +89,7 @@ describe("projetSchema", () => {
   });
 
   it("refuse une zone de texte qui dépasse la limite, même venue d'ailleurs que la saisie", () => {
-    const overLimit = "x".repeat(VOLET_TEXT_MAX_LENGTH + 1);
+    const overLimit = "x".repeat(LONGUEUR_MAX_TEXTE + 1);
     for (const field of TEXT_FIELDS) {
       expect(findMessages({ ...FILLED_FORM, [field]: overLimit }, field)).toEqual([
         "Votre texte ne doit pas dépasser 1000 caractères.",
@@ -179,7 +179,7 @@ describe("projetSchema, démarche en cours de saisie", () => {
   it("signale le type manquant au même envoi qu'un apport trop long", () => {
     const data = {
       ...OPEN_DEMARCHE_FORM,
-      apportDemarche: "x".repeat(VOLET_TEXT_MAX_LENGTH + 1),
+      apportDemarche: "x".repeat(LONGUEUR_MAX_TEXTE + 1),
     };
     expect(findPaths(data).sort()).toEqual(["apportDemarche", "typeDemarche"]);
   });
