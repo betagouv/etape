@@ -1,20 +1,16 @@
-import type { UseFormReturn } from "react-hook-form";
-
 import { Demarches } from "../../components/demarches";
+import { useDossierVolets } from "../../hooks/use-dossier-volets";
 import { TYPE_DEMARCHE_LABEL } from "../domain/type-demarche";
 import {
   DEMARCHES_DECOUVERTE_FIELDS,
   useDemarchesDecouverte,
 } from "../hooks/use-demarches-decouverte";
-import { FUTUR_METIER_FIELD_LABEL, type FuturMetierFormData } from "../schema";
-
-/** Ce que reçoit `DemarchesDecouverte` : le formulaire du volet. */
-export interface DemarchesDecouverteProps {
-  form: UseFormReturn<FuturMetierFormData>;
-}
+import { FUTUR_METIER_FIELD_LABEL } from "../schema";
 
 /** La question sur les démarches de découverte du métier, et ces démarches (maquettes 09 à 15). */
-export function DemarchesDecouverte({ form }: DemarchesDecouverteProps) {
+export function DemarchesDecouverte() {
+  // Lu ici plutôt que reçu : en prop, le formulaire traverserait trois composants avant ses champs.
+  const { form } = useDossierVolets().futurMetier;
   const demarches = useDemarchesDecouverte(form);
 
   return (

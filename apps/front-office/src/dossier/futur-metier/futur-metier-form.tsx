@@ -101,7 +101,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             maxLength={LONGUEUR_MAX_TEXTE}
           />
 
-          <DemarchesDecouverte form={form} />
+          <DemarchesDecouverte />
         </FormSection>
 
         <Separator />

@@ -102,7 +102,7 @@ export function ProjetForm({ formId, notice, onSubmitValid }: ProjetFormProps) {
             <SectionCounter progress={sections[PROJET_SECTION.DEMARCHES]} />
           </FormSectionHeader>
 
-          <DemarchesConstruction form={form} />
+          <DemarchesConstruction />
         </FormSection>
       </form>
     </>
