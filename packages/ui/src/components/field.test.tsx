@@ -6,6 +6,9 @@ import { Input } from "@etape/ui/components/input";
 
 afterEach(cleanup);
 
+/** L'étoile, précédée du gluon qui l'attache au dernier mot. */
+const STAR = "⁠*";
+
 describe("FieldLabel required", () => {
   it("masque l'étoile et annonce « obligatoire » dans le nom du champ", () => {
     render(
@@ -19,7 +22,20 @@ describe("FieldLabel required", () => {
 
     // jsdom ne restitue pas l'espace entre deux enfants en ligne ; les navigateurs si.
     expect(screen.getByRole("textbox", { name: /^Téléphone ?\(obligatoire\)$/ })).toBeDefined();
-    expect(screen.getByText("*").getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByText(STAR).getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("garde l'étoile dans le flux du texte, juste après le libellé", () => {
+    render(
+      <FieldLabel htmlFor="motivation" required>
+        Pourquoi souhaitez-vous changer de métier ?
+      </FieldLabel>,
+    );
+
+    const star = screen.getByText(STAR);
+    expect(star.previousSibling?.textContent).toBe("Pourquoi souhaitez-vous changer de métier ?");
+    // jsdom ne calcule pas la mise en page : on vérifie que rien ne remet le libellé en flex.
+    expect(star.parentElement?.className ?? "").not.toMatch(/flex/);
   });
 
   it("nomme aussi un groupe par sa légende", () => {

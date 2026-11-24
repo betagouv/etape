@@ -123,15 +123,17 @@ function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
 /**
  * Marque « obligatoire » du kit (`Field`, propriété `Required`) : étoile `destructive` à
  * 2 px du libellé. Elle est visuelle seulement, les lecteurs d'écran entendent la mention
- * en clair (RGAA 11.10).
+ * en clair (RGAA 11.10). Elle reste dans le flux du texte : en flex, un libellé sur deux
+ * lignes prend toute la largeur et rejette l'étoile au bord droit.
  */
 function FieldRequiredContent({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <span className="inline-flex gap-0.5">
+      <span>
         {children}
-        <span aria-hidden="true" className="text-destructive">
-          *
+        {/* Le gluon U+2060 empêche l'étoile de passer seule à la ligne. */}
+        <span aria-hidden="true" className="text-destructive ml-0.5">
+          {"⁠*"}
         </span>
       </span>
       <span className="sr-only"> (obligatoire)</span>
