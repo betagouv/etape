@@ -21,7 +21,8 @@ function FormSectionHeader({ className, ...props }: React.ComponentProps<"div">)
   return (
     <div
       data-slot="form-section-header"
-      className={cn("flex items-center justify-between gap-2", className)}
+      // 24 px même sans compteur (maquette), pour que le formulaire ne saute pas quand il disparaît.
+      className={cn("flex min-h-6 items-center justify-between gap-2", className)}
       {...props}
     />
   );
