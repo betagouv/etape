@@ -83,7 +83,14 @@ function FormCheckboxGroup<
             <div
               id={name}
               data-slot="checkbox-group"
-              className="flex flex-wrap gap-x-5 gap-y-2"
+              className="flex flex-wrap gap-x-5 gap-y-2 outline-none"
+              // Cible du lien du résumé d'erreurs : le focus qu'il y pose passe à la première case,
+              // comme Radix le fait pour un groupe radio.
+              tabIndex={-1}
+              onFocus={(event) => {
+                if (event.target !== event.currentTarget) return;
+                event.currentTarget.querySelector<HTMLElement>("[data-slot=checkbox]")?.focus();
+              }}
               // Le focus passe d'une case à l'autre : on ne quitte le champ qu'en quittant le groupe.
               onBlur={(event) => {
                 if (!event.currentTarget.contains(event.relatedTarget)) field.onBlur();

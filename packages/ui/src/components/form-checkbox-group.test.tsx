@@ -163,6 +163,16 @@ describe("FormCheckboxGroup", () => {
     expect(screen.getByText(ERROR)).toBeDefined();
   });
 
+  it("passe à la première case le focus posé sur le groupe par le lien du résumé d'erreurs", () => {
+    render(<ModalitesTestForm />);
+
+    act(() => {
+      document.getElementById("modalites")?.focus();
+    });
+
+    expect(document.activeElement).toBe(getCheckbox("En présentiel"));
+  });
+
   it("porte le ref du champ sur la première case", async () => {
     render(<ModalitesTestForm />);
 
