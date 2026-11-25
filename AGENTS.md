@@ -62,4 +62,4 @@ Les quatre documents de conventions (`stack-front.md`, `architecture-api.md`, `r
 
 ## Revue de code
 
-Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage, d'accessibilité et d'architecture, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation. Il s'appuie sur le sous-agent `revue-front` pour un diff front, et sur `revue-api` pour un diff de `apps/api`.
+Toute review de code ou de PR passe par le skill `review-pr` : conventions de nommage, de typage, d'accessibilité et d'architecture, suivi des constats des revues précédentes, suggestions GitHub vérifiées, rien de posté sans validation. Il s'appuie sur le sous-agent `revue-front` pour un diff front, sur `revue-api` pour un diff de `apps/api`, et sur `revue-doublons` pour tout diff qui ajoute du code : il cherche dans `apps/` et `packages/` ce que la PR recopie de l'existant.

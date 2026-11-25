@@ -21,17 +21,17 @@ Les conventions du projet sont écrites dans `docs/conventions/`. Ce document di
 
 ## Où vit chaque convention
 
-| Convention       | Document              | Niveau 1 — bloquant                                                                                                  | Niveau 2 — règle                        | Niveau 3 — procédure       |
-| ---------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------------------- |
-| Nommage FR/EN    | `nommage.md`          | —                                                                                                                    | —                                       | Skill `convention-nommage` |
-| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax`, `etape/no-hardcoded-literal`         | `.claude/rules/typescript.md`           | —                          |
-| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**                                               | `.claude/rules/accessibilite.md`        | —                          |
-| Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`                                         | `.claude/rules/react.md`                | Sous-agent `revue-front`   |
-| Design system    | `react.md` §4         | —                                                                                                                    | `.claude/rules/design-system.md`        | Skill `composant-ui`       |
-| Stack front      | `stack-front.md`      | —                                                                                                                    | `.claude/rules/react.md` (renvoi)       | —                          |
-| Architecture API | `architecture-api.md` | `no-restricted-imports` (Prisma hors repository), `no-restricted-syntax` (nom et fichier du repository) — `apps/api` | `.claude/rules/api.md`                  | Sous-agent `revue-api`     |
-| Méthode de revue | —                     | —                                                                                                                    | —                                       | Skill `review-pr`          |
-| Cartographie     | `../cartographie.md`  | `pnpm run check:workspace-map` (CI)                                                                                  | `AGENTS.md` / `CLAUDE.md` par workspace | —                          |
+| Convention       | Document              | Niveau 1 — bloquant                                                                                                  | Niveau 2 — règle                        | Niveau 3 — procédure                           |
+| ---------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------- |
+| Nommage FR/EN    | `nommage.md`          | —                                                                                                                    | —                                       | Skill `convention-nommage`                     |
+| Typage           | `typescript.md`       | `erasableSyntaxOnly`, `explicit-module-boundary-types`, `no-restricted-syntax`, `etape/no-hardcoded-literal`         | `.claude/rules/typescript.md`           | —                                              |
+| Accessibilité    | `accessibilite.md`    | `jsx-a11y`, 21 règles — **`apps/site` et `apps/simulateur` seulement**                                               | `.claude/rules/accessibilite.md`        | —                                              |
+| Pratiques React  | `react.md`            | Règles React Compiler de `react-hooks` (toutes en erreur), `exhaustive-deps`                                         | `.claude/rules/react.md`                | Sous-agent `revue-front`                       |
+| Design system    | `react.md` §4         | —                                                                                                                    | `.claude/rules/design-system.md`        | Skill `composant-ui`                           |
+| Stack front      | `stack-front.md`      | —                                                                                                                    | `.claude/rules/react.md` (renvoi)       | —                                              |
+| Architecture API | `architecture-api.md` | `no-restricted-imports` (Prisma hors repository), `no-restricted-syntax` (nom et fichier du repository) — `apps/api` | `.claude/rules/api.md`                  | Sous-agent `revue-api`                         |
+| Méthode de revue | —                     | —                                                                                                                    | —                                       | Skill `review-pr`, sous-agent `revue-doublons` |
+| Cartographie     | `../cartographie.md`  | `pnpm run check:workspace-map` (CI)                                                                                  | `AGENTS.md` / `CLAUDE.md` par workspace | —                                              |
 
 ## Ce que le lint impose déjà, et qu'on n'avait pas mesuré
 
@@ -101,6 +101,7 @@ Les `AGENTS.md` par workspace suivent la même logique, à l'échelle d'un dossi
 - **`composant-ui`** — procédure d'ajout ou d'extension d'un composant : chercher l'existant, récupérer la source officielle par le MCP `shadcn`, étendre par variante, brancher les tokens, vérifier le focus. Nouveau.
 - **`revue-front`** (sous-agent, lecture seule) — audite un diff contre `react.md` : logique dans les composants, props, `className` d'apparence, primitives réécrites ; puis contre le skill `vercel-react-best-practices` : rendus inutiles, poids ajouté au bundle (mesuré par un build comparé à `main`). Appelé par `review-pr`. Nouveau.
 - **`revue-api`** (sous-agent, lecture seule) — audite un diff de `apps/api` contre `architecture-api.md` : couches, repository (nom, fichiers, aucune règle métier), frontière HTTP, journaux. Relit en entier chaque fichier touché, pas seulement les lignes modifiées. Appelé par `review-pr`, sur le modèle de `revue-front` (issue #82).
+- **`revue-doublons`** (sous-agent, lecture seule) — cherche dans `apps/` et `packages/` ce que le diff recopie de l'existant : fonction, hook, type, constante, schéma, libellé ou motif de code, dans `packages/ui` comme dans les features voisines des autres équipes, et dans le diff lui-même. Il cherche le motif, pas seulement le nom. Il reçoit le diff sans les constats du reviewer et rend les doublons confirmés, puis les ressemblances écartées avec leur raison. Appelé par `review-pr` en parallèle des deux autres. Nouveau : sur la PR #144, les six retours de revue humaine étaient des doublons, et deux passages de `review-pr`, qui ne cherchait l'existant que dans `packages/ui`, n'en avaient vu aucun.
 
 ### Automatisations
 
@@ -167,16 +168,17 @@ Il lance ESLint depuis la racine du workspace et non depuis le dossier du fichie
 
 ## Ce qui n'est pas outillé, et pourquoi
 
-| Pratique                                     | Pourquoi aucun outil                                                                                            |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Logique d'écran dans un hook                 | Aucun lint ne sait juger qu'un composant fait trop de choses                                                    |
-| `className` d'apparence contre variante      | Un `grep` donnerait trop de faux positifs : `w-full sm:w-auto` est légitime, `min-h-11 rounded-lg` ne l'est pas |
-| Valeurs Tailwind arbitraires                 | Même raison : `style={{ width: '42%' }}` d'une barre de progression est légitime, `max-w-[1184px]` ne l'est pas |
-| Primitive réécrite au lieu d'être réutilisée | Demande de savoir ce qui existe dans `packages/ui`                                                              |
-| Nommage métier                               | Demande le glossaire et un jugement                                                                             |
-| Règle métier dans un repository              | Aucun lint ne distingue une condition métier d'un filtre de requête                                             |
+| Pratique                                         | Pourquoi aucun outil                                                                                                                                                                                     |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Logique d'écran dans un hook                     | Aucun lint ne sait juger qu'un composant fait trop de choses                                                                                                                                             |
+| `className` d'apparence contre variante          | Un `grep` donnerait trop de faux positifs : `w-full sm:w-auto` est légitime, `min-h-11 rounded-lg` ne l'est pas                                                                                          |
+| Valeurs Tailwind arbitraires                     | Même raison : `style={{ width: '42%' }}` d'une barre de progression est légitime, `max-w-[1184px]` ne l'est pas                                                                                          |
+| Primitive réécrite au lieu d'être réutilisée     | Demande de savoir ce qui existe dans `packages/ui`                                                                                                                                                       |
+| Nommage métier                                   | Demande le glossaire et un jugement                                                                                                                                                                      |
+| Règle métier dans un repository                  | Aucun lint ne distingue une condition métier d'un filtre de requête                                                                                                                                      |
+| Code qui refait l'existant hors du design system | Il faut savoir ce qui existe dans tout le dépôt, et juger que deux codes font la même chose : un détecteur de copier-coller ne repère que les copies littérales, pas un motif réécrit sous d'autres noms |
 
-Ces six-là sont vérifiées **en revue**, par le skill `review-pr` et les sous-agents `revue-front` et `revue-api`. Le document le dit pour que personne ne croie la CI exhaustive.
+Ces sept-là sont vérifiées **en revue**, par le skill `review-pr` et les sous-agents `revue-front`, `revue-api` et `revue-doublons`. Seuls les doublons couverts par une règle écrite sont bloquants : une primitive réécrite (`react.md` §4.4), un composant partagé hors de `packages/ui` (`stack-front.md`, décision 6), une règle métier réécrite hors de `domain/` (`react.md` §1.1). Pour un hook, un type, une constante ou un libellé répétés dans une même app, aucune règle n'existe encore. Le document le dit pour que personne ne croie la CI exhaustive.
 
 ## Pour les développeurs qui n'utilisent pas Claude Code
 

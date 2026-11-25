@@ -1,6 +1,6 @@
 ---
 name: review-pr
-description: Revue d'une PR ou d'un diff ETAPE selon les conventions du projet (nommage, typage, accessibilité), avec suivi des constats des revues précédentes et suggestions GitHub prêtes à valider. À utiliser pour toute review de code ou de PR, toute re-revue après correctifs, et pour rédiger ou poster des commentaires de revue sur GitHub.
+description: Revue d'une PR ou d'un diff ETAPE selon les conventions du projet (nommage, typage, accessibilité) et à la recherche du code qui recopie l'existant, avec suivi des constats des revues précédentes et suggestions GitHub prêtes à valider. À utiliser pour toute review de code ou de PR, toute re-revue après correctifs, et pour rédiger ou poster des commentaires de revue sur GitHub.
 ---
 
 # Revue de PR — ETAPE
@@ -58,7 +58,14 @@ S'il y en a, la synthèse **commence par un tableau de suivi** : chaque constat 
   - **Accessibilité** : `disabled` sur une action asynchrone, annonces d'état (région toujours montée, sans doublon), nom accessible, erreur reliée au champ par `aria-describedby`, icônes décoratives.
   - **Design system** (`.claude/rules/design-system.md`) : `className` d'apparence au lieu d'une variante `cva`, primitive de `packages/ui` réécrite à la main.
   - **Architecture API** : couches, repository (nom, fichiers, aucune règle métier), Prisma et types générés confinés au repository, frontière HTTP.
-- S'appuyer sur les sous-agents, lancés en parallèle de la section 4 selon ce que touche le diff : **`revue-front`** sur un diff qui touche des `.tsx` (pratiques React, design system, poids du bundle mesuré), **`revue-api`** pour `apps/api`. Chacun de leurs constats est vérifié dans le code avant d'être repris, avec les mêmes exigences : règle citée retrouvée dans le document, scénario exécuté.
+  - **Doublons** : chaque fonction, hook, type, constante, schéma, libellé ou motif de code ajouté par le diff se cherche par `git grep` dans `apps/` et `packages/`, dans l'arbre du dernier commit de la PR. On cherche **le motif, pas seulement le nom** : un doublon porte rarement le nom de l'original. La recherche couvre les features voisines écrites par les autres équipes, pas seulement `packages/ui`, ainsi que les répétitions internes au diff. Motifs déjà rencontrés :
+    - `.filter(Boolean).join(" ")`, réécrit pour joindre des annonces ou des classes ;
+    - une `Map` de références et sa fonction d'enregistrement (`register…Button(id)`), recopiées d'un hook à l'autre ;
+    - `NonNullable<ComponentProps<typeof X>["prop"]>` redéclaré dans une app, alors que `packages/ui` doit l'exporter, comme il le fait pour `ContainerSize` ;
+    - un calcul d'avancement ou une comparaison de statut avant/après refaits à côté de `domain/volet-progress.ts` et `domain/statut-volet.ts` ;
+    - un schéma zod qui sert à plusieurs features, mais resté dans le fichier de l'une d'elles ;
+    - un même libellé écrit à plusieurs endroits.
+- S'appuyer sur les sous-agents, lancés en parallèle de la section 4 selon ce que touche le diff : **`revue-front`** sur un diff qui touche des `.tsx` (pratiques React, design system, poids du bundle mesuré), **`revue-api`** pour `apps/api`, **`revue-doublons`** sur tout diff qui ajoute du code dans `apps/` ou `packages/`. Ce dernier reçoit le diff et le commit de tête, **sans les constats du reviewer**, pour que sa recherche ne se limite pas à confirmer ce qu'on a déjà vu. Chacun de leurs constats est vérifié dans le code avant d'être repris, avec les mêmes exigences : règle citée retrouvée dans le document, scénario exécuté. Pour un doublon, on relit l'original et on vérifie qu'il remplace le nouveau code sans changer le comportement, ou au prix d'un seul paramètre.
 
 ### 4. Valider la logique
 
@@ -90,6 +97,14 @@ Pour chaque constat : `fichier:ligne`, problème, scénario ou raison, correctio
 - **Tests** : logique nouvelle (domaine, hooks, parseurs, scripts) livrée sans test dans un workspace qui déclare Vitest. Dans un workspace sans Vitest, le signaler en [SUGGESTION].
 
 **[SUGGESTION]** : ce qui n'est pas une règle écrite — lisibilité, commentaire, découpage, préférence de design, performance non mesurée, piste d'amélioration sans défaut constaté.
+
+**Doublons** : un doublon est [BLOCKING] quand une règle écrite le couvre. À ce jour :
+
+- une primitive de `packages/ui` réécrite (`react.md` §4.4, `.claude/rules/design-system.md` point 4) ;
+- un composant utilisé par plus d'une app et resté hors de `packages/ui` (`stack-front.md`, décision 6) ;
+- une règle métier de `domain/` réécrite au lieu d'être appelée (`react.md` §1.1).
+
+Les autres doublons ne sont couverts par aucune règle écrite : hook, type, constante ou libellé répétés dans une même app. Ils sont donc [SUGGESTION], même répétés trois fois. Le constat donne `fichier:ligne` du nouveau code et de l'existant, et dit ce qu'il faut mettre en commun. Le message général propose d'écrire la règle manquante dans `react.md` ou `typescript.md`, sans en inventer une dans la revue.
 
 En cas de doute sur la portée d'une règle (document qui exclut un workspace, règle `.claude/rules/` qui l'inclut), classer selon la règle la plus stricte et signaler la contradiction dans le message général, pour qu'elle soit tranchée dans les documents.
 
