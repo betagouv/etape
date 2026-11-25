@@ -1,29 +1,32 @@
 import { Injectable } from "@nestjs/common";
+import { z } from "zod";
 
 import { escapeLikePattern } from "../common/like-pattern.js";
 import { PrismaService } from "../database/prisma.service.js";
 import type { Prisma } from "../generated/prisma/client.ts";
 import { CertificationRepository } from "./certification.repository.js";
-import type {
-  Certificateur,
-  CertificationSearchResult,
-  ImportedCertification,
-  RepertoireCertification,
-  StatutCertification,
+import {
+  REPERTOIRE_CERTIFICATION,
+  type CertificationSearchResult,
+  type ImportedCertification,
+  type StatutCertification,
 } from "./certification.types.js";
 
 // Un import écrit 30 000 fiches et 43 000 certificateurs : les 5 s par défaut de Prisma sont pensées pour une requête d'écran.
 const TRANSACTION_TIMEOUT_MS = 120_000;
 
-interface CertificationRow {
-  numeroFiche: string;
-  repertoire: RepertoireCertification;
-  intitule: string;
-  abrege: string | null;
-  niveau: number | null;
-  certificateurs: Certificateur[];
-  certificationCount: number;
-}
+// `$queryRaw` ne type pas ce qu'il rend : chaque ligne est vérifiée avant d'entrer dans le module.
+const certificationRowsSchema = z.array(
+  z.object({
+    numeroFiche: z.string(),
+    repertoire: z.enum(REPERTOIRE_CERTIFICATION),
+    intitule: z.string(),
+    abrege: z.string().nullable(),
+    niveau: z.int().nullable(),
+    certificateurs: z.array(z.object({ siret: z.string(), nom: z.string() })),
+    certificationCount: z.int(),
+  }),
+);
 
 @Injectable()
 export class PrismaCertificationRepository extends CertificationRepository {
@@ -57,7 +60,7 @@ export class PrismaCertificationRepository extends CertificationRepository {
     // SQL brut : Prisma ne sait pas appeler `unaccent`. Les noms des certificateurs entrent dans le
     // texte cherché : 908 fiches actives partagent leur intitulé, seul l'organisme les distingue.
     // L'abrégé précède l'intitulé, comme à l'écran (« BP Boulanger »), pour le tri.
-    const rows = await this.client.$queryRaw<CertificationRow[]>`
+    const result = await this.client.$queryRaw`
       select certification.numero_fiche as "numeroFiche",
              certification.repertoire::text as repertoire,
              certification.intitule, certification.abrege,
@@ -84,6 +87,7 @@ export class PrismaCertificationRepository extends CertificationRepository {
                certification.numero_fiche
       limit ${limit}
     `;
+    const rows = certificationRowsSchema.parse(result);
 
     return {
       certificationCount: rows[0]?.certificationCount ?? 0,
