@@ -1,4 +1,4 @@
-import { useId, type ComponentProps } from "react";
+import { useId } from "react";
 import { CircleAlertIcon, CircleCheckIcon, type LucideIcon } from "lucide-react";
 
 import { Alert, AlertActions, AlertTitle } from "@etape/ui/components/alert";
@@ -12,9 +12,10 @@ import {
   FileUploadList,
   FileUploadTitle,
   FileUploadTrigger,
+  type FileUploadVariant,
 } from "@etape/ui/components/file-upload";
 import { StatusRegion } from "@etape/ui/components/status-region";
-import { Tag } from "@etape/ui/components/tag";
+import { Tag, type TagStatus } from "@etape/ui/components/tag";
 
 import {
   ACCEPT_PIECE_JUSTIFICATIVE,
@@ -22,12 +23,9 @@ import {
   type PieceJustificative,
 } from "../domain/piece-justificative";
 import { getStatutDocument, STATUT_DOCUMENT, type StatutDocument } from "../domain/statut-document";
+import { FACULTATIF_LABEL } from "../domain/statut-volet";
 import { usePiecesJustificatives } from "../hooks/use-pieces-justificatives";
 import { PieceJustificativeItem } from "./piece-justificative-item";
-
-type FileUploadVariant = NonNullable<ComponentProps<typeof FileUpload>["variant"]>;
-
-type TagStatus = NonNullable<ComponentProps<typeof Tag>["status"]>;
 
 interface StatutDocumentUi {
   label: string;
@@ -38,7 +36,7 @@ interface StatutDocumentUi {
 const STATUT_DOCUMENT_UI: Record<StatutDocument, StatutDocumentUi> = {
   [STATUT_DOCUMENT.A_DEPOSER]: { label: "À déposer", status: "warning" },
   [STATUT_DOCUMENT.DEPOSE]: { label: "Déposé", status: "success", Icon: CircleCheckIcon },
-  [STATUT_DOCUMENT.FACULTATIF]: { label: "Facultatif", status: "neutral" },
+  [STATUT_DOCUMENT.FACULTATIF]: { label: FACULTATIF_LABEL, status: "neutral" },
 };
 
 const HAS_STATUT: Record<FileUploadVariant, boolean> = {

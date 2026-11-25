@@ -32,6 +32,7 @@ import {
 } from "../domain/demarche";
 import { isOui, OUI_NON, type OuiNon } from "../domain/oui-non";
 import type { PieceJustificative } from "../domain/piece-justificative";
+import { useButtonRegistry } from "./use-button-registry";
 import {
   useDemarcheRemoval,
   type DemarcheRemovalItem,
@@ -137,7 +138,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
   const [isHighlighted, setHighlighted] = useState(false);
   const [blockedDemarcheId, setBlockedDemarcheId] = useState<string | null>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
-  const editButtons = useRef(new Map<string, HTMLButtonElement>());
+  const editButtons = useButtonRegistry();
   const pendingFocus = useRef<(() => void) | null>(null);
 
   const editedIndex = demarches.findIndex(({ id }) => id === currentDemarcheId);
@@ -154,8 +155,9 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
   const focusTypeField = (): void => form.setFocus(fields.typeDemarche);
 
   /** Le focus revient au bouton « Modifier » de la démarche dont la modification se referme. */
-  const focusEditButton = (demarcheId: string) => (): void =>
-    editButtons.current.get(demarcheId)?.focus();
+  const focusEditButton = (demarcheId: string) => (): void => {
+    editButtons.focus(demarcheId);
+  };
 
   /** Les erreurs de la saisie en cours, tous champs confondus. */
   const clearCurrentDemarcheErrors = (): void =>
@@ -196,8 +198,8 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     // La démarche qui prend la place, sinon le bouton d'ajout, sinon la saisie ouverte.
     const nextId = remaining[index]?.id;
     return () => {
-      const target = (nextId && editButtons.current.get(nextId)) || addButtonRef.current;
-      if (target) target.focus();
+      if (nextId !== undefined && editButtons.focus(nextId)) return;
+      if (addButtonRef.current) addButtonRef.current.focus();
       else focusTypeField();
     };
   };
@@ -290,13 +292,6 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     requestAllRemoval();
   };
 
-  const registerEditButton =
-    (demarcheId: string): RefCallback<HTMLButtonElement> =>
-    (button) => {
-      if (button) editButtons.current.set(demarcheId, button);
-      else editButtons.current.delete(demarcheId);
-    };
-
   return {
     ...removal,
     isAnswerOui: isOui(answer),
@@ -311,7 +306,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     blockedDemarcheId,
     announcement,
     addButtonRef,
-    registerEditButton,
+    registerEditButton: editButtons.register,
     changeAnswer,
     validateDemarche,
     addDemarche,

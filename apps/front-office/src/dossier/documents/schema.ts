@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { pieceJustificativeSchema } from "../demarche-schema";
+import { pieceJustificativeSchema } from "../piece-justificative-schema";
 
 /** Le schéma du formulaire « Mes documents » : les pièces de chaque document obligatoire, contrôlées à l'ajout (`checkFichiers`). */
 export const documentsSchema = z.object({
@@ -21,3 +21,11 @@ export const DOCUMENTS_FIELD = {
   CALENDRIER_FORMATION: "calendrierFormation",
   DEVIS_FORMATION: "devisFormation",
 } as const satisfies Record<string, DocumentsFieldName>;
+
+/** Les sections du volet qui portent un compteur. */
+export const DOCUMENTS_SECTION = {
+  OBLIGATOIRES: "obligatoires",
+} as const;
+
+/** Une section du volet, parmi celles de `DOCUMENTS_SECTION`. */
+export type DocumentsSection = (typeof DOCUMENTS_SECTION)[keyof typeof DOCUMENTS_SECTION];

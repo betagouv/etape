@@ -1,16 +1,18 @@
-import { useRef, useState, type RefObject } from "react";
+import { useRef, useState, type RefCallback, type RefObject } from "react";
 import { flushSync } from "react-dom";
 
 import { useAnnouncement } from "@etape/ui/hooks/use-announcement";
+
+import { joinAnnouncements } from "@/lib/join-announcements";
 
 import {
   checkFichiers,
   formatAddAnnouncement,
   formatRemoveAnnouncement,
-  joinAnnouncements,
   type PieceJustificative,
   type RejectedFichier,
 } from "../domain/piece-justificative";
+import { useButtonRegistry } from "./use-button-registry";
 
 /** Un refus affiché : son `id` sert à le retrouver quand on ferme son message. */
 export interface DisplayedRejection extends RejectedFichier {
@@ -30,7 +32,7 @@ export interface UsePiecesJustificativesResult {
   /** « Annuler » de la confirmation : il prend le focus à son ouverture. */
   cancelRemovalRef: RefObject<HTMLButtonElement | null>;
   /** La référence de la corbeille d'une pièce : elle reprend le focus quand on annule. */
-  registerRemoveButton: (id: string) => (button: HTMLButtonElement | null) => void;
+  registerRemoveButton: (id: string) => RefCallback<HTMLButtonElement>;
   addFichiers: (fichiers: File[]) => void;
   askRemoval: (piece: PieceJustificative) => void;
   cancelRemoval: () => void;
@@ -50,17 +52,10 @@ export function usePiecesJustificatives(
 ): UsePiecesJustificativesResult {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const cancelRemovalRef = useRef<HTMLButtonElement>(null);
-  const removeButtons = useRef(new Map<string, HTMLButtonElement>());
+  const removeButtons = useButtonRegistry();
   const [rejections, setRejections] = useState<readonly DisplayedRejection[]>([]);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const { message: announcement, announce } = useAnnouncement();
-
-  const registerRemoveButton =
-    (id: string) =>
-    (button: HTMLButtonElement | null): void => {
-      if (button) removeButtons.current.set(id, button);
-      else removeButtons.current.delete(id);
-    };
 
   const addFichiers = (fichiers: File[]): void => {
     // Un dépôt sans fichier ne dit rien : les refus affichés restent.
@@ -89,7 +84,7 @@ export function usePiecesJustificatives(
   const cancelRemoval = (): void => {
     const id = pendingRemovalId;
     flushSync(() => setPendingRemovalId(null));
-    if (id !== null) removeButtons.current.get(id)?.focus();
+    if (id !== null) removeButtons.focus(id);
   };
 
   const confirmRemoval = (): void => {
@@ -115,7 +110,7 @@ export function usePiecesJustificatives(
     triggerRef,
     pendingRemovalId,
     cancelRemovalRef,
-    registerRemoveButton,
+    registerRemoveButton: removeButtons.register,
     addFichiers,
     askRemoval,
     cancelRemoval,

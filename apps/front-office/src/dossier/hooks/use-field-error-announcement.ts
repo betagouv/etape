@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 
+import { joinAnnouncements } from "@/lib/join-announcements";
 import { formatFieldErrorAnnouncement, type FieldErrors } from "../domain/field-error-announcement";
-import { describeVoletStatut, type RequiredFields } from "../domain/volet-progress";
+import { formatStatutVoletChange, type VoletProgress } from "../domain/statut-volet";
+import { computeVoletProgress, type RequiredFields } from "../domain/volet-progress";
 
 /**
  * Texte de la région `role="status"` du formulaire : l'erreur du champ qu'on vient de quitter,
@@ -20,7 +22,7 @@ export function useFieldErrorAnnouncement<TFieldValues extends FieldValues>(
 ): string {
   const [announcement, setAnnouncement] = useState("");
   // Lu à la sortie du champ, pas pendant la frappe : le statut change à chaque caractère.
-  const lastStatut = useRef("");
+  const lastProgress = useRef<VoletProgress | undefined>(undefined);
 
   useEffect(
     () =>
@@ -33,20 +35,14 @@ export function useFieldErrorAnnouncement<TFieldValues extends FieldValues>(
         callback: ({ name, errors }) => {
           if (!name) return;
           const fieldErrors = (errors ?? {}) as FieldErrors;
-          const statut = describeVoletStatut(
-            voletLabel,
-            findRequiredFields(form.getValues()),
-            fieldErrors,
-          );
-          const hasStatutChanged = statut !== lastStatut.current;
-          lastStatut.current = statut;
+          const progress = computeVoletProgress(findRequiredFields(form.getValues()), fieldErrors);
+          const statutChange = formatStatutVoletChange(voletLabel, lastProgress.current, progress);
+          lastProgress.current = progress;
           setAnnouncement(
-            [
+            joinAnnouncements(
               formatFieldErrorAnnouncement(name, fieldErrors, labels),
-              hasStatutChanged ? statut : "",
-            ]
-              .filter(Boolean)
-              .join(" "),
+              statutChange,
+            ),
           );
         },
       }),

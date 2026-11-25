@@ -4,6 +4,7 @@ import {
   type SearchStatus,
 } from "@etape/ui/lib/remote-search";
 
+import { joinAnnouncements } from "@/lib/join-announcements";
 import type { PluralForms } from "@/lib/plural";
 
 /** Annoncé pendant la relance de la recherche. */
@@ -42,7 +43,7 @@ export function findSearchAnnouncement(
 ): string {
   const announcements: Record<SearchStatus, string> = {
     [SEARCH_STATUS.IDLE]: "",
-    [SEARCH_STATUS.RESULTS]: [resultLabel, moreMessage].filter(Boolean).join(" "),
+    [SEARCH_STATUS.RESULTS]: joinAnnouncements(resultLabel, moreMessage),
     [SEARCH_STATUS.NO_RESULT]: titles.noResultTitle,
     [SEARCH_STATUS.ERROR]: titles.errorTitle,
     [SEARCH_STATUS.RETRYING]: RETRYING_ANNOUNCEMENT,

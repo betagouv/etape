@@ -1,3 +1,4 @@
+import { joinAnnouncements } from "@/lib/join-announcements";
 import { selectPlural, type PluralForms } from "@/lib/plural";
 import { formatFieldDate } from "./field-date";
 
@@ -145,8 +146,6 @@ const ADDED_FICHIER_LABELS: PluralForms<string> = {
   other: "fichiers ajoutés",
 };
 
-const ANNOUNCEMENT_SEPARATOR = " ";
-
 /**
  * Ce qui s'annonce après un ajout : le fichier gardé, ou leur nombre, puis chaque fichier refusé
  * avec sa raison. Vide si l'ajout ne contenait aucun fichier.
@@ -158,12 +157,7 @@ export function formatAddAnnouncement({ accepted, rejected }: CheckedFichiers): 
   if (accepted.length > 1)
     parts.push(`${accepted.length} ${selectPlural(accepted.length, ADDED_FICHIER_LABELS)}.`);
   for (const { name, message } of rejected) parts.push(`${name} refusé : ${message}`);
-  return parts.join(ANNOUNCEMENT_SEPARATOR);
-}
-
-/** Les annonces d'un même changement, en une phrase après l'autre ; les vides sont omises. */
-export function joinAnnouncements(...parts: readonly string[]): string {
-  return parts.filter(Boolean).join(ANNOUNCEMENT_SEPARATOR);
+  return joinAnnouncements(...parts);
 }
 
 /** Ce qui s'annonce quand une pièce est retirée. */

@@ -13,16 +13,16 @@ import { Tag } from "@etape/ui/components/tag";
 import { PiecesJustificativesField } from "../components/pieces-justificatives-field";
 import { SectionCounter } from "../components/section-counter";
 import { VoletNotice } from "../components/volet-notice";
-import { PROGRESS_UNIT } from "../domain/statut-volet";
+import { FACULTATIF_LABEL, PROGRESS_UNIT } from "../domain/statut-volet";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { DOCUMENTS_OBLIGATOIRES } from "./domain/document-obligatoire";
-import type { DocumentsFormData } from "./schema";
+import { DOCUMENTS_SECTION, type DocumentsFormData } from "./schema";
 
 const FACULTATIF_TAG = (
   <Tag importance="subdued" size="sm">
     <InfoIcon aria-hidden="true" />
-    Facultatif
+    {FACULTATIF_LABEL}
   </Tag>
 );
 
@@ -35,7 +35,7 @@ export interface DocumentsFormProps {
 
 /** Le volet « Mes documents » : les documents obligatoires, puis les justificatifs des démarches et les documents complémentaires. */
 export function DocumentsForm({ formId, notice, onSubmitValid }: DocumentsFormProps) {
-  const { form, obligatoires, describeStatutChange } = useDossierVolets().documents;
+  const { form, sections, describeStatutChange } = useDossierVolets().documents;
 
   return (
     <>
@@ -50,7 +50,10 @@ export function DocumentsForm({ formId, notice, onSubmitValid }: DocumentsFormPr
         <FormSection>
           <FormSectionHeader>
             <FormSectionTitle>Documents obligatoires</FormSectionTitle>
-            <SectionCounter progress={obligatoires} unit={PROGRESS_UNIT.DOCUMENT} />
+            <SectionCounter
+              progress={sections[DOCUMENTS_SECTION.OBLIGATOIRES]}
+              unit={PROGRESS_UNIT.DOCUMENT}
+            />
           </FormSectionHeader>
 
           {DOCUMENTS_OBLIGATOIRES.map(({ field: name, title, description, dropLabel }) => (

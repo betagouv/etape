@@ -75,4 +75,7 @@ function Tag({
   );
 }
 
+/** Les statuts d'une étiquette, pour les tables qui associent un état à son apparence. */
+export type TagStatus = NonNullable<VariantProps<typeof tagVariants>["status"]>;
+
 export { Tag, tagVariants };

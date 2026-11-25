@@ -1,7 +1,6 @@
-import type { ComponentProps } from "react";
 import { CircleAlertIcon, InfoIcon, type LucideIcon } from "lucide-react";
 
-import { Tag } from "@etape/ui/components/tag";
+import { Tag, type TagStatus } from "@etape/ui/components/tag";
 
 import { selectPlural, type PluralForms } from "@/lib/plural";
 import {
@@ -12,8 +11,6 @@ import {
   type ProgressUnit,
   type SectionProgress,
 } from "../domain/statut-volet";
-
-type TagStatus = NonNullable<ComponentProps<typeof Tag>["status"]>;
 
 /** Les deux statuts du volet qu'une section reprend ; complète, elle n'affiche rien. */
 type CounterStatut = typeof STATUT_VOLET.A_CORRIGER | typeof STATUT_VOLET.EN_COURS;

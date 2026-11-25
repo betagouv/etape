@@ -2,13 +2,7 @@ import { z } from "zod";
 
 import type { DemarcheFieldName } from "./domain/demarche";
 import { LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE } from "./domain/longueur-max-texte";
-
-/** Une pièce justificative déposée, telle que le formulaire la porte. */
-export const pieceJustificativeSchema = z.object({
-  id: z.string(),
-  fichier: z.instanceof(File),
-  dateDepot: z.date(),
-});
+import { pieceJustificativeSchema } from "./piece-justificative-schema";
 
 /** Les messages des champs exigés de la démarche en cours de saisie, repris par ceux de chaque volet. */
 export const DEMARCHE_REQUIRED_MESSAGES: Record<DemarcheFieldName, string> = {

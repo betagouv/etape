@@ -3,7 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { PieceJustificative } from "../../domain/piece-justificative";
-import { DOCUMENTS_FIELD } from "../schema";
+import { DOCUMENTS_FIELD, DOCUMENTS_SECTION } from "../schema";
 import { useDocumentsForm } from "./use-documents-form";
 
 afterEach(cleanup);
@@ -24,7 +24,10 @@ describe("useDocumentsForm", () => {
       remainingFieldCount: 3,
       errorCount: 0,
     });
-    expect(result.current.obligatoires).toEqual({ remainingFieldCount: 3, errorCount: 0 });
+    expect(result.current.sections[DOCUMENTS_SECTION.OBLIGATOIRES]).toEqual({
+      remainingFieldCount: 3,
+      errorCount: 0,
+    });
   });
 
   it("suit le dépôt d'une pièce dans l'avancement et le compteur", () => {
@@ -33,7 +36,7 @@ describe("useDocumentsForm", () => {
     act(() => result.current.form.setValue(DOCUMENTS_FIELD.PROGRAMME_FORMATION, [PROGRAMME]));
 
     expect(result.current.progress.remainingFieldCount).toBe(2);
-    expect(result.current.obligatoires.remainingFieldCount).toBe(2);
+    expect(result.current.sections[DOCUMENTS_SECTION.OBLIGATOIRES].remainingFieldCount).toBe(2);
   });
 
   it("décrit le statut du volet après un dépôt, d'après les valeurs en cours", () => {

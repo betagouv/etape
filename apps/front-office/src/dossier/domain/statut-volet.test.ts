@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatStatutVoletAnnouncement,
+  formatStatutVoletChange,
   getStatutVolet,
   isVoletCompleted,
   listStatutVoletLines,
@@ -210,5 +211,39 @@ describe("formatStatutVoletAnnouncement", () => {
         errorCount: 3,
       }),
     ).toBe("Mes informations : 3 erreurs à corriger.");
+  });
+});
+
+describe("formatStatutVoletChange", () => {
+  const EN_COURS: VoletProgress = { ...A_REMPLIR, filledFieldCount: 1, remainingFieldCount: 4 };
+
+  it("annonce le statut quand rien n'a encore été annoncé", () => {
+    expect(formatStatutVoletChange("Mes informations", undefined, A_REMPLIR)).toBe(
+      "Mes informations : à remplir.",
+    );
+  });
+
+  it("annonce le nouveau statut quand il change", () => {
+    expect(formatStatutVoletChange("Mes informations", A_REMPLIR, EN_COURS)).toBe(
+      "Mes informations : 4 champs restants.",
+    );
+  });
+
+  it("ne dit rien quand le statut annoncé reste le même", () => {
+    expect(
+      formatStatutVoletChange("Mes informations", EN_COURS, { ...EN_COURS, filledFieldCount: 2 }),
+    ).toBe("");
+  });
+
+  it("compte en documents pour « Mes documents »", () => {
+    const AUCUN: VoletProgress = { ...A_REMPLIR, requiredFieldCount: 3, remainingFieldCount: 3 };
+    expect(
+      formatStatutVoletChange(
+        "Mes documents",
+        AUCUN,
+        { ...AUCUN, filledFieldCount: 1, remainingFieldCount: 2 },
+        PROGRESS_UNIT.DOCUMENT,
+      ),
+    ).toBe("Mes documents : 2 documents restants à déposer.");
   });
 });

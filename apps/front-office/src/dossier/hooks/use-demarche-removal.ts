@@ -1,6 +1,7 @@
 import { useRef, useState, type RefCallback } from "react";
 
 import type { Demarche } from "../domain/demarche";
+import { useButtonRegistry } from "./use-button-registry";
 
 /** Une démarche que la fenêtre de confirmation montre, et son rang. */
 export interface DemarcheRemovalItem<TType extends string = string> {
@@ -52,7 +53,7 @@ export function useDemarcheRemoval<TType extends string>(
 ): UseDemarcheRemovalResult<TType> {
   const [removal, setRemoval] = useState<DemarcheRemoval<TType> | null>(null);
   const [isRemovalOpen, setRemovalOpen] = useState(false);
-  const removeButtons = useRef(new Map<string, HTMLButtonElement>());
+  const removeButtons = useButtonRegistry();
   const focusOnClose = useRef<(() => void) | null>(null);
 
   const requestRemoval = (demarche: Demarche<TType>): void => {
@@ -78,7 +79,7 @@ export function useDemarcheRemoval<TType extends string>(
     focusOnClose.current =
       removal.isAnswerNon || first === undefined
         ? focusAnswer
-        : () => removeButtons.current.get(first.demarche.id)?.focus();
+        : () => removeButtons.focus(first.demarche.id);
     setRemovalOpen(false);
   };
 
@@ -95,17 +96,10 @@ export function useDemarcheRemoval<TType extends string>(
     focusOnClose.current = null;
   };
 
-  const registerRemoveButton =
-    (demarcheId: string): RefCallback<HTMLButtonElement> =>
-    (button) => {
-      if (button) removeButtons.current.set(demarcheId, button);
-      else removeButtons.current.delete(demarcheId);
-    };
-
   return {
     removal,
     isRemovalOpen,
-    registerRemoveButton,
+    registerRemoveButton: removeButtons.register,
     requestRemoval,
     requestAllRemoval,
     cancelRemoval,

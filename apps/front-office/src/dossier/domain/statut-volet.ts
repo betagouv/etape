@@ -32,6 +32,9 @@ export interface StatutVoletLine {
   label: string;
 }
 
+/** Ce qui n'est pas exigé : un volet, un document ou une section de « Mes documents ». */
+export const FACULTATIF_LABEL = "Facultatif";
+
 /** Libellé des champs restants, au singulier et au pluriel. */
 export const REMAINING_FIELD_LABELS: PluralForms<string> = {
   one: "champ restant",
@@ -95,7 +98,7 @@ const STATUT_LABELS: Record<StatutVolet, StatutText> = {
     formatCount(remainingFieldCount, REMAINING_STATUT_LABELS[unit]),
   [STATUT_VOLET.A_CORRIGER]: ({ errorCount }) => formatCount(errorCount, ERROR_LABELS),
   [STATUT_VOLET.COMPLET]: () => "Complet",
-  [STATUT_VOLET.FACULTATIF]: () => "Facultatif",
+  [STATUT_VOLET.FACULTATIF]: () => FACULTATIF_LABEL,
 };
 
 // Distinctes des libellés (`accessibilite.md`, § 3) : une phrase reprend les deux lignes du statut.
@@ -164,4 +167,19 @@ export function formatStatutVoletAnnouncement(
   unit: ProgressUnit = PROGRESS_UNIT.FIELD,
 ): string {
   return `${voletLabel} : ${STATUT_ANNOUNCEMENTS[getStatutVolet(progress)](progress, unit)}.`;
+}
+
+/**
+ * Le statut annoncé après un changement : vide s'il est le même qu'avant. Sans `before`, rien
+ * n'a encore été annoncé, et il l'est.
+ */
+export function formatStatutVoletChange(
+  voletLabel: string,
+  before: VoletProgress | undefined,
+  after: VoletProgress,
+  unit: ProgressUnit = PROGRESS_UNIT.FIELD,
+): string {
+  const next = formatStatutVoletAnnouncement(voletLabel, after, unit);
+  if (before === undefined) return next;
+  return formatStatutVoletAnnouncement(voletLabel, before, unit) === next ? "" : next;
 }

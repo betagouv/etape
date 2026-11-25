@@ -1,12 +1,18 @@
-import {
-  formatStatutVoletAnnouncement,
-  PROGRESS_UNIT,
-  type SectionProgress,
-  type VoletProgress,
-} from "../../domain/statut-volet";
+import type { FieldErrors } from "../../domain/field-error-announcement";
+import { formatStatutVoletChange, PROGRESS_UNIT } from "../../domain/statut-volet";
 import { VOLET_ID } from "../../domain/volet-id";
+import {
+  buildRequiredFields,
+  computeVoletProgress,
+  type RequiredFields,
+} from "../../domain/volet-progress";
 import { findVoletLabel } from "../../domain/volets-dossier";
-import { DOCUMENTS_FIELD, type DocumentsFieldName } from "../schema";
+import {
+  DOCUMENTS_FIELD,
+  DOCUMENTS_SECTION,
+  type DocumentsFieldName,
+  type DocumentsSection,
+} from "../schema";
 
 /** Un document obligatoire de « Mes documents » : son champ et ses textes. */
 export interface DocumentObligatoire {
@@ -42,42 +48,27 @@ export const DOCUMENTS_OBLIGATOIRES: readonly DocumentObligatoire[] = [
 /** Les pièces de chaque document, telles que le formulaire les porte. */
 export type DocumentsPieces = Partial<Record<DocumentsFieldName, readonly unknown[]>>;
 
-/** Avancement du volet en documents : un document obligatoire est rempli dès sa première pièce. */
-export function computeDocumentsProgress(pieces: DocumentsPieces): VoletProgress {
-  const filledCount = DOCUMENTS_OBLIGATOIRES.filter(
-    ({ field }) => (pieces[field]?.length ?? 0) > 0,
-  ).length;
-  return {
-    requiredFieldCount: DOCUMENTS_OBLIGATOIRES.length,
-    filledFieldCount: filledCount,
-    remainingFieldCount: DOCUMENTS_OBLIGATOIRES.length - filledCount,
-    errorCount: 0,
-  };
+const SECTION_FIELDS: Record<DocumentsSection, readonly DocumentsFieldName[]> = {
+  [DOCUMENTS_SECTION.OBLIGATOIRES]: DOCUMENTS_OBLIGATOIRES.map(({ field }) => field),
+};
+
+/** Les documents demandés, et ceux qui ont au moins une pièce : un document compte dès sa première pièce. */
+export function findDocumentsRequiredFields(
+  pieces: DocumentsPieces,
+): RequiredFields<DocumentsSection, DocumentsFieldName> {
+  return buildRequiredFields(pieces, SECTION_FIELDS);
 }
 
 /** Le statut du volet tel qu'il s'annonce après un dépôt ou un retrait ; vide s'il n'a pas changé. */
 export function formatDocumentsStatutChange(
   before: DocumentsPieces,
   after: DocumentsPieces,
+  errors: FieldErrors,
 ): string {
-  const voletLabel = findVoletLabel(VOLET_ID.DOCUMENTS);
-  const previous = formatStatutVoletAnnouncement(
-    voletLabel,
-    computeDocumentsProgress(before),
+  return formatStatutVoletChange(
+    findVoletLabel(VOLET_ID.DOCUMENTS),
+    computeVoletProgress(findDocumentsRequiredFields(before), errors),
+    computeVoletProgress(findDocumentsRequiredFields(after), errors),
     PROGRESS_UNIT.DOCUMENT,
   );
-  const next = formatStatutVoletAnnouncement(
-    voletLabel,
-    computeDocumentsProgress(after),
-    PROGRESS_UNIT.DOCUMENT,
-  );
-  return next === previous ? "" : next;
-}
-
-/** Le compteur de « Documents obligatoires » : les documents sans pièce. */
-export function computeDocumentsObligatoiresProgress({
-  remainingFieldCount,
-  errorCount,
-}: VoletProgress): SectionProgress {
-  return { remainingFieldCount, errorCount };
 }

@@ -38,6 +38,9 @@ const fileUploadVariants = cva("group/file-upload flex flex-col gap-3 rounded-xl
   },
 });
 
+/** Les apparences du dépôt de fichiers, pour un champ qui la reçoit en prop. */
+type FileUploadVariant = NonNullable<VariantProps<typeof fileUploadVariants>["variant"]>;
+
 /** Ce que reçoit `FileUpload` : son apparence, les formats proposés au choix et la suite d'un ajout. */
 interface FileUploadProps
   extends Omit<React.ComponentProps<"div">, "onDrop">, VariantProps<typeof fileUploadVariants> {
@@ -328,4 +331,5 @@ export type {
   FileUploadLineProps,
   FileUploadProps,
   FileUploadTriggerProps,
+  FileUploadVariant,
 };
