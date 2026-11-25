@@ -1,11 +1,11 @@
 import { normalizeForSearch } from "@etape/utils/text";
 
 import type { CertificationRepository } from "./certification.repository.js";
-import {
-  STATUT_CERTIFICATION,
-  type Certificateur,
-  type CertificationSearchResult,
-  type ImportedCertification,
+import type {
+  Certificateur,
+  CertificationSearchResult,
+  ImportedCertification,
+  StatutCertification,
 } from "./certification.types.js";
 
 type StoredCertification = Omit<ImportedCertification, "numeroFiche" | "certificateurs">;
@@ -19,12 +19,16 @@ export class FakeCertificationRepository implements CertificationRepository {
   /** Par numéro de fiche, puis par SIRET. */
   readonly certificateurs = new Map<string, Map<string, string>>();
 
-  async searchCertifications(words: string[], limit: number): Promise<CertificationSearchResult> {
+  async searchCertifications(
+    words: string[],
+    statut: StatutCertification,
+    limit: number,
+  ): Promise<CertificationSearchResult> {
     const searchedWords = words.map(normalizeForSearch);
     const [firstWord = ""] = searchedWords;
 
     const found = [...this.certifications]
-      .filter(([, { statut }]) => statut === STATUT_CERTIFICATION.ACTIVE)
+      .filter(([, stored]) => stored.statut === statut)
       .map(([numeroFiche, { repertoire, intitule, abrege, niveau }]) => {
         const certificateurs = this.listCertificateurs(numeroFiche);
         const displayed = [abrege, intitule].filter(Boolean).join(" ");

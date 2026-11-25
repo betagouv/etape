@@ -21,12 +21,19 @@ export class CertificationService {
     private readonly certificationRepository: CertificationRepository,
   ) {}
 
-  /** Chaque mot de la saisie doit figurer dans la fiche, dans n'importe quel ordre. */
+  /**
+   * Chaque mot de la saisie doit figurer dans la fiche, dans n'importe quel ordre. Seule une fiche
+   * active se délivre encore : les inactives ne sont pas proposées.
+   */
   async searchCertifications(search: string): Promise<CertificationSearchResult> {
     const words = search.split(/\s+/).filter(Boolean);
     if (words.length === 0) return NO_CERTIFICATION;
 
-    return this.certificationRepository.searchCertifications(words, SEARCH_RESULT_LIMIT);
+    return this.certificationRepository.searchCertifications(
+      words,
+      STATUT_CERTIFICATION.ACTIVE,
+      SEARCH_RESULT_LIMIT,
+    );
   }
 
   /** Premier remplissage : ne télécharge rien dès qu'une fiche est en base. */

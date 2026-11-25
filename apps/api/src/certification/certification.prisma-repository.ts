@@ -4,12 +4,12 @@ import { escapeLikePattern } from "../common/like-pattern.js";
 import { PrismaService } from "../database/prisma.service.js";
 import type { Prisma } from "../generated/prisma/client.ts";
 import { CertificationRepository } from "./certification.repository.js";
-import {
-  STATUT_CERTIFICATION,
-  type Certificateur,
-  type CertificationSearchResult,
-  type ImportedCertification,
-  type RepertoireCertification,
+import type {
+  Certificateur,
+  CertificationSearchResult,
+  ImportedCertification,
+  RepertoireCertification,
+  StatutCertification,
 } from "./certification.types.js";
 
 // Un import écrit 30 000 fiches et 43 000 certificateurs : les 5 s par défaut de Prisma sont pensées pour une requête d'écran.
@@ -46,7 +46,11 @@ export class PrismaCertificationRepository extends CertificationRepository {
     );
   }
 
-  async searchCertifications(words: string[], limit: number): Promise<CertificationSearchResult> {
+  async searchCertifications(
+    words: string[],
+    statut: StatutCertification,
+    limit: number,
+  ): Promise<CertificationSearchResult> {
     const patterns = words.map(escapeLikePattern);
     const [firstPattern = ""] = patterns;
 
@@ -67,7 +71,7 @@ export class PrismaCertificationRepository extends CertificationRepository {
         from certificateur
         where certificateur.certification_id = certification.id
       ) as certificateurs on true
-      where certification.statut = ${STATUT_CERTIFICATION.ACTIVE}::"StatutCertification"
+      where certification.statut = ${statut}::"StatutCertification"
         and lower(unaccent(concat_ws(' ', certification.numero_fiche, certification.abrege,
                                      certification.intitule, certificateurs.noms)))
             like all (

@@ -1,14 +1,22 @@
-import type { CertificationSearchResult, ImportedCertification } from "./certification.types.js";
+import type {
+  CertificationSearchResult,
+  ImportedCertification,
+  StatutCertification,
+} from "./certification.types.js";
 
 /** Copie locale des répertoires RNCP et RS : France compétences fait foi, la base recopie. */
 export abstract class CertificationRepository {
   /**
-   * Les fiches actives dont le numéro, l'abrégé, l'intitulé ou un certificateur contient chaque
-   * mot, sans tenir compte des accents ni de la casse : celles dont l'abrégé suivi de l'intitulé
-   * commence par le premier mot d'abord, puis par ordre alphabétique. `limit` borne les fiches
-   * rendues, pas leur décompte.
+   * Les fiches de statut `statut` dont le numéro, l'abrégé, l'intitulé ou un certificateur contient
+   * chaque mot, sans tenir compte des accents ni de la casse : celles dont l'abrégé suivi de
+   * l'intitulé commence par le premier mot d'abord, puis par ordre alphabétique. `limit` borne les
+   * fiches rendues, pas leur décompte.
    */
-  abstract searchCertifications(words: string[], limit: number): Promise<CertificationSearchResult>;
+  abstract searchCertifications(
+    words: string[],
+    statut: StatutCertification,
+    limit: number,
+  ): Promise<CertificationSearchResult>;
   /** Au moins une fiche en base. */
   abstract hasCertification(): Promise<boolean>;
   /** Crée ou met à jour chaque fiche par son numéro, sans toucher à ses certificateurs. */
