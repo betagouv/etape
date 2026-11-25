@@ -173,7 +173,7 @@ export function FormationForm({ formId, notice, onSubmitValid }: FormationFormPr
             control={form.control}
             label={FORMATION_FIELD_LABEL.contenuFormation}
             required
-            description="Les grandes parties du programme. Le programme détaillé, le calendrier et le devis seront à déposer dans « Mes documents »."
+            description="Indiquez dans les grandes lignes le contenu du programme."
             maxLength={LONGUEUR_MAX_TEXTE}
           />
 
