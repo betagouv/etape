@@ -5,6 +5,7 @@ import {
   getStatutVolet,
   isVoletCompleted,
   listStatutVoletLines,
+  PROGRESS_UNIT,
   STATUT_VOLET,
   type VoletProgress,
 } from "./statut-volet";
@@ -123,6 +124,51 @@ describe("listStatutVoletLines", () => {
         errorCount: 3,
       }),
     ).toEqual([{ statut: STATUT_VOLET.A_CORRIGER, label: "3 erreurs à corriger" }]);
+  });
+});
+
+describe("listStatutVoletLines en documents", () => {
+  const DOCUMENTS = {
+    requiredFieldCount: 3,
+    filledFieldCount: 0,
+    remainingFieldCount: 3,
+    errorCount: 0,
+  };
+
+  it("compte les documents à déposer tant qu'aucun n'est déposé", () => {
+    expect(listStatutVoletLines(DOCUMENTS, PROGRESS_UNIT.DOCUMENT)).toEqual([
+      { statut: STATUT_VOLET.A_REMPLIR, label: "3 documents à déposer" },
+    ]);
+  });
+
+  it("compte les documents restants à déposer, accordés", () => {
+    expect(
+      listStatutVoletLines(
+        { ...DOCUMENTS, filledFieldCount: 1, remainingFieldCount: 2 },
+        PROGRESS_UNIT.DOCUMENT,
+      ),
+    ).toEqual([{ statut: STATUT_VOLET.EN_COURS, label: "2 documents restants à déposer" }]);
+    expect(
+      listStatutVoletLines(
+        { ...DOCUMENTS, filledFieldCount: 2, remainingFieldCount: 1 },
+        PROGRESS_UNIT.DOCUMENT,
+      ),
+    ).toEqual([{ statut: STATUT_VOLET.EN_COURS, label: "1 document restant à déposer" }]);
+  });
+
+  it("dit « Complet » quand les documents obligatoires ont tous une pièce", () => {
+    expect(
+      listStatutVoletLines(
+        { ...DOCUMENTS, filledFieldCount: 3, remainingFieldCount: 0 },
+        PROGRESS_UNIT.DOCUMENT,
+      ),
+    ).toEqual([{ statut: STATUT_VOLET.COMPLET, label: "Complet" }]);
+  });
+
+  it("annonce les documents à déposer", () => {
+    expect(formatStatutVoletAnnouncement("Mes documents", DOCUMENTS, PROGRESS_UNIT.DOCUMENT)).toBe(
+      "Mes documents : 3 documents à déposer.",
+    );
   });
 });
 
