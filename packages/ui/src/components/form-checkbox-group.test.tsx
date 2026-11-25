@@ -42,11 +42,10 @@ const DESCRIPTION = "Plusieurs réponses possibles.";
 
 interface ModalitesFormProps {
   description?: string;
-  onValueChange?: (values: Modalite[]) => void;
   onSubmit?: (data: ModalitesForm) => void;
 }
 
-function ModalitesTestForm({ description, onValueChange, onSubmit }: ModalitesFormProps = {}) {
+function ModalitesTestForm({ description, onSubmit }: ModalitesFormProps = {}) {
   const form = useForm<ModalitesForm>({
     resolver: zodResolver(schema),
     defaultValues: { modalites: [] },
@@ -62,7 +61,7 @@ function ModalitesTestForm({ description, onValueChange, onSubmit }: ModalitesFo
         label="Comment se déroule la formation ?"
         description={description}
         options={MODALITE_LABEL}
-        onValueChange={onValueChange}
+        className="mt-4"
       />
       <button type="submit">Valider</button>
       <button type="button" onClick={() => form.setFocus("modalites")}>
@@ -94,15 +93,26 @@ describe("FormCheckboxGroup", () => {
     ]);
   });
 
-  it("range les valeurs cochées dans l'ordre des options et prévient onValueChange", () => {
-    const onValueChange = vi.fn();
-    render(<ModalitesTestForm onValueChange={onValueChange} />);
+  it("porte son data-slot et la mise en page reçue", () => {
+    render(<ModalitesTestForm />);
+
+    const group = screen.getByRole("group", { name: /^Comment se déroule la formation \?/ });
+    expect(group.dataset.slot).toBe("form-checkbox-group");
+    expect(group.classList.contains("mt-4")).toBe(true);
+  });
+
+  it("range les valeurs cochées dans l'ordre des options", async () => {
+    const onSubmit = vi.fn();
+    render(<ModalitesTestForm onSubmit={onSubmit} />);
 
     fireEvent.click(getCheckbox("À distance"));
     fireEvent.click(getCheckbox("En présentiel"));
+    await submit();
 
     expect(getCheckbox("En présentiel").getAttribute("aria-checked")).toBe("true");
-    expect(onValueChange).toHaveBeenLastCalledWith([MODALITE.PRESENTIEL, MODALITE.DISTANCE]);
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith({
+      modalites: [MODALITE.PRESENTIEL, MODALITE.DISTANCE],
+    });
   });
 
   it("retire une valeur décochée", async () => {

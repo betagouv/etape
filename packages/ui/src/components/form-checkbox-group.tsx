@@ -35,8 +35,8 @@ interface FormCheckboxGroupProps<
   description?: React.ReactNode;
   /** Le libellé de chaque valeur du champ, dans l'ordre d'affichage. */
   options: Record<OptionValue<TFieldValues, TName>, string>;
-  /** Appelé après chaque clic, avec les valeurs cochées, pour ce qui en dépend ailleurs. */
-  onValueChange?: (values: OptionValue<TFieldValues, TName>[]) => void;
+  /** Mise en page seulement ; fusionné par `cn()` dans `FieldSet`. */
+  className?: string;
 }
 
 /**
@@ -54,7 +54,7 @@ function FormCheckboxGroup<
   label,
   description,
   options,
-  onValueChange,
+  className,
 }: FormCheckboxGroupProps<TFieldValues, TName>) {
   const descriptionId = `${name}-description`;
   const errorId = `${name}-error`;
@@ -76,7 +76,7 @@ function FormCheckboxGroup<
         ]);
 
         return (
-          <FieldSet>
+          <FieldSet data-slot="form-checkbox-group" className={className}>
             <FieldLegend variant="label" required>
               {label}
             </FieldLegend>
@@ -106,7 +106,6 @@ function FormCheckboxGroup<
                       if (!isOptionValue(options, value)) return;
                       const next = toggleOptionValue(options, values, value, state === true);
                       field.onChange(next);
-                      onValueChange?.(next);
                     }}
                     aria-invalid={fieldState.invalid}
                     aria-describedby={describedBy}
