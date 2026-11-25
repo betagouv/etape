@@ -134,7 +134,16 @@ export function FormationForm({ formId, notice, onSubmitValid }: FormationFormPr
                   label={FORMATION_FIELD_LABEL.dateDebutFormation}
                   description={DATE_DESCRIPTION}
                   getCalendar={computeDateDebutFormationCalendar}
-                  field={field}
+                  field={{
+                    ...field,
+                    // La fin se contrôle contre le début : en mode `onBlur`, quitter le début ne
+                    // revaliderait que lui, et l'erreur de fin resterait périmée.
+                    onBlur: () => {
+                      field.onBlur();
+                      if (form.getValues(FORMATION_FIELD.DATE_FIN_FORMATION))
+                        void form.trigger(FORMATION_FIELD.DATE_FIN_FORMATION);
+                    },
+                  }}
                   error={fieldState.error}
                 />
               )}
