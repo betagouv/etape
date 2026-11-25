@@ -155,6 +155,28 @@ describe("parseCertifications", () => {
     expect(certifications.map(({ certificateurs }) => certificateurs)).toEqual([[]]);
   });
 
+  it("garde une seule fois une fiche ou un certificateur en double, dans sa dernière version", () => {
+    const certifications = parseCertifications(
+      csv(
+        STANDARD_HEADER,
+        '"1";"RNCP41937";"Boulanger";"BP";"";"NIV4";"ACTIVE"',
+        '"2";"RNCP41937";"Boulanger pâtissier";"BP";"";"NIV4";"ACTIVE"',
+      ),
+      csv(
+        CERTIFICATEURS_HEADER,
+        '"RNCP41937";"11000007200014";"MINISTERE"',
+        '"RNCP41937";"11000007200014";"MINISTERE DE L\'EDUCATION NATIONALE"',
+      ),
+    );
+
+    expect(certifications).toMatchObject([
+      {
+        intitule: "Boulanger pâtissier",
+        certificateurs: [{ siret: "11000007200014", nom: "MINISTERE DE L'EDUCATION NATIONALE" }],
+      },
+    ]);
+  });
+
   it("refuse un numéro de fiche hors RNCP et RS", () => {
     expect(() =>
       parseCertifications(

@@ -91,33 +91,39 @@ export function extractExportCsv(zip: Uint8Array): { standard: string; certifica
   return { standard: read(STANDARD_ENTRY), certificateurs: read(CERTIFICATEURS_ENTRY) };
 }
 
-/** Rattache à chaque fiche ses certificateurs ; ceux d'une fiche absente sont ignorés. */
+/**
+ * Rattache à chaque fiche ses certificateurs ; ceux d'une fiche absente sont ignorés. Une fiche,
+ * ou un certificateur d'une même fiche, présent deux fois ne compte qu'une fois, dans sa dernière
+ * version : un doublon ferait échouer l'écriture en masse.
+ */
 export function parseCertifications(
   standardCsv: string,
   certificateursCsv: string,
 ): ImportedCertification[] {
-  const certificateursByFiche = new Map<string, Certificateur[]>();
+  const certificateursByFiche = new Map<string, Map<string, Certificateur>>();
   for (const row of z.array(certificateurRowSchema).parse(parseCsv(certificateursCsv))) {
-    const certificateurs = certificateursByFiche.get(row.Numero_Fiche) ?? [];
-    certificateurs.push({
+    const certificateurs = certificateursByFiche.get(row.Numero_Fiche) ?? new Map();
+    certificateurs.set(row.Siret_Certificateur, {
       siret: row.Siret_Certificateur,
       nom: collapseWhitespace(row.Nom_Certificateur),
     });
     certificateursByFiche.set(row.Numero_Fiche, certificateurs);
   }
 
-  return z
-    .array(standardRowSchema)
-    .parse(parseCsv(standardCsv))
-    .map((row) => ({
+  const certifications = new Map<string, ImportedCertification>();
+  for (const row of z.array(standardRowSchema).parse(parseCsv(standardCsv))) {
+    certifications.set(row.Numero_Fiche, {
       numeroFiche: row.Numero_Fiche,
       repertoire: toRepertoire(row.Numero_Fiche),
       intitule: collapseWhitespace(row.Intitule),
       abrege: toAbrege(row.Abrege_Libelle),
       niveau: toNiveau(row.Nomenclature_Europe_Niveau),
       statut: row.Actif,
-      certificateurs: certificateursByFiche.get(row.Numero_Fiche) ?? [],
-    }));
+      certificateurs: [...(certificateursByFiche.get(row.Numero_Fiche)?.values() ?? [])],
+    });
+  }
+
+  return [...certifications.values()];
 }
 
 function parseCsv(csv: string): unknown[] {
