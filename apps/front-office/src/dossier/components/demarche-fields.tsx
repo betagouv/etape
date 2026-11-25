@@ -100,8 +100,10 @@ export function DemarcheFields<TFieldValues extends FieldValues, TType extends s
             <PiecesJustificativesField
               pieces={field.value}
               onChange={field.onChange}
-              title={DEMARCHE_FIELD_LABEL.piecesJustificatives}
-              description={PIECES_DEMARCHE_DESCRIPTION}
+              labels={{
+                title: DEMARCHE_FIELD_LABEL.piecesJustificatives,
+                description: PIECES_DEMARCHE_DESCRIPTION,
+              }}
             />
           )}
         />

@@ -161,7 +161,17 @@ export function formatAddAnnouncement({ accepted, rejected }: CheckedFichiers): 
   return parts.join(ANNOUNCEMENT_SEPARATOR);
 }
 
+/** Les annonces d'un même changement, en une phrase après l'autre ; les vides sont omises. */
+export function joinAnnouncements(...parts: readonly string[]): string {
+  return parts.filter(Boolean).join(ANNOUNCEMENT_SEPARATOR);
+}
+
 /** Ce qui s'annonce quand une pièce est retirée. */
 export function formatRemoveAnnouncement(name: string): string {
   return `${name} retiré.`;
+}
+
+/** La question qui remplace la ligne d'une pièce avant sa suppression : « Supprimer x.pdf ? ». */
+export function formatRemovalQuestion(name: string): string {
+  return `Supprimer ${name}\u00a0?`;
 }

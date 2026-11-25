@@ -88,18 +88,110 @@ describe("usePiecesJustificatives", () => {
     expect(result.current.rejections).toEqual([]);
   });
 
-  it("retire une pièce, l'annonce et rend le focus au bouton d'ajout", () => {
+  it("demande confirmation avant de retirer une pièce, et porte le focus sur « Annuler »", () => {
+    const { result, onChange } = renderField([ATTESTATION]);
+    const cancel = document.createElement("button");
+    document.body.append(cancel);
+    result.current.cancelRemovalRef.current = cancel;
+
+    act(() => result.current.askRemoval(ATTESTATION));
+
+    expect(result.current.pendingRemovalId).toBe(ATTESTATION.id);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(cancel);
+    cancel.remove();
+  });
+
+  it("garde la pièce quand on annule, et rend le focus à sa corbeille", () => {
+    const { result, onChange } = renderField([ATTESTATION]);
+    const corbeille = document.createElement("button");
+    document.body.append(corbeille);
+    act(() => result.current.askRemoval(ATTESTATION));
+    result.current.registerRemoveButton(ATTESTATION.id)(corbeille);
+
+    act(() => result.current.cancelRemoval());
+
+    expect(result.current.pendingRemovalId).toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(corbeille);
+    corbeille.remove();
+  });
+
+  it("retire la pièce confirmée, l'annonce et rend le focus au bouton d'ajout", () => {
     const { result, onChange } = renderField([ATTESTATION]);
     const button = document.createElement("button");
     document.body.append(button);
     result.current.triggerRef.current = button;
+    act(() => result.current.askRemoval(ATTESTATION));
 
-    act(() => result.current.removePiece(ATTESTATION));
+    act(() => result.current.confirmRemoval());
 
     expect(onChange).toHaveBeenCalledExactlyOnceWith([]);
+    expect(result.current.pendingRemovalId).toBeNull();
     expect(result.current.announcement).toBe("attestation.pdf retiré.");
     expect(document.activeElement).toBe(button);
     button.remove();
+  });
+
+  it("remplace la confirmation en attente quand on demande à supprimer une autre pièce", () => {
+    const COMPTE_RENDU: PieceJustificative = { ...ATTESTATION, id: "compte-rendu" };
+    const { result, onChange } = renderField([ATTESTATION, COMPTE_RENDU]);
+    act(() => result.current.askRemoval(ATTESTATION));
+
+    act(() => result.current.askRemoval(COMPTE_RENDU));
+    act(() => result.current.confirmRemoval());
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith([ATTESTATION]);
+  });
+
+  it("ne retire rien quand la pièce à confirmer a déjà disparu", () => {
+    const onChange = vi.fn<(pieces: PieceJustificative[]) => void>();
+    const { result, rerender } = renderHook(
+      ({ pieces }: { pieces: readonly PieceJustificative[] }) =>
+        usePiecesJustificatives(pieces, onChange),
+      { initialProps: { pieces: [ATTESTATION] } },
+    );
+    act(() => result.current.askRemoval(ATTESTATION));
+    rerender({ pieces: [] });
+
+    act(() => result.current.confirmRemoval());
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(result.current.pendingRemovalId).toBeNull();
+    expect(result.current.announcement).toBe("");
+  });
+
+  it("ajoute à l'annonce ce que le changement fait ailleurs, à l'ajout comme au retrait", () => {
+    const onChange = vi.fn<(pieces: PieceJustificative[]) => void>();
+    const describeChange = vi.fn((pieces: readonly PieceJustificative[]) =>
+      pieces.length > 0 ? "Mes documents : complet." : "Mes documents : 1 document à déposer.",
+    );
+    const { result, rerender } = renderHook(
+      ({ pieces }: { pieces: readonly PieceJustificative[] }) =>
+        usePiecesJustificatives(pieces, onChange, describeChange),
+      { initialProps: { pieces: [] as readonly PieceJustificative[] } },
+    );
+
+    act(() => result.current.addFichiers([ATTESTATION.fichier]));
+    expect(result.current.announcement).toBe("attestation.pdf ajouté. Mes documents : complet.");
+
+    rerender({ pieces: [ATTESTATION] });
+    act(() => result.current.askRemoval(ATTESTATION));
+    act(() => result.current.confirmRemoval());
+    expect(result.current.announcement).toBe(
+      "attestation.pdf retiré. Mes documents : 1 document à déposer.",
+    );
+  });
+
+  it("n'ajoute rien à l'annonce d'un ajout entièrement refusé", () => {
+    const onChange = vi.fn<(pieces: PieceJustificative[]) => void>();
+    const describeChange = vi.fn(() => "Mes documents : complet.");
+    const { result } = renderHook(() => usePiecesJustificatives([], onChange, describeChange));
+
+    act(() => result.current.addFichiers([createFichier("photo.heic", MO)]));
+
+    expect(describeChange).not.toHaveBeenCalled();
+    expect(result.current.announcement).not.toContain("Mes documents");
   });
 
   it("ferme le message d'un refus et rend le focus au bouton d'ajout", () => {
