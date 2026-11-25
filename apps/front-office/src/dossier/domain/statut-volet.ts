@@ -36,7 +36,7 @@ export interface StatutVoletLine {
 export const FACULTATIF_LABEL = "Facultatif";
 
 /** Libellé des champs restants, au singulier et au pluriel. */
-export const REMAINING_FIELD_LABELS: PluralForms<string> = {
+const REMAINING_FIELD_LABELS: PluralForms<string> = {
   one: "champ restant",
   other: "champs restants",
 };

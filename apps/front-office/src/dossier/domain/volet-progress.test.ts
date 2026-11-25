@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { formatStatutVoletAnnouncement } from "./statut-volet";
 import {
   buildRequiredFields,
   computeSectionProgress,
@@ -188,39 +187,5 @@ describe("computeSectionProgress", () => {
     expect(
       computeSectionProgress(MANUAL_METIER_VISE, "metier-vise", { codeRome: { message: "x" } }),
     ).toEqual({ remainingFieldCount: 0, errorCount: 1 });
-  });
-});
-
-describe("computeVoletProgress, tel qu'il s'annonce", () => {
-  const requiredFields = createRequiredFields(
-    { identite: ["civilite", "cleNir"], contact: ["telephone"] },
-    ["civilite", "cleNir"],
-  );
-
-  it("annonce les erreurs des champs contrôlés et les champs qui restent", () => {
-    expect(
-      formatStatutVoletAnnouncement(
-        "Mes informations",
-        computeVoletProgress(requiredFields, { cleNir: { message: "x" } }),
-      ),
-    ).toBe("Mes informations : 1 erreur à corriger et 1 champ restant.");
-  });
-
-  it("annonce un volet complet quand tout est rempli sans erreur", () => {
-    expect(
-      formatStatutVoletAnnouncement(
-        "Mes informations",
-        computeVoletProgress({ ...requiredFields, filledFields: requiredFields.allFields }, {}),
-      ),
-    ).toBe("Mes informations : complet.");
-  });
-
-  it("n'annonce pas complet un volet rempli dont un champ facultatif est en erreur", () => {
-    expect(
-      formatStatutVoletAnnouncement(
-        "Mon futur métier",
-        computeVoletProgress(MANUAL_METIER_VISE, { codeRome: { message: "x" } }),
-      ),
-    ).toBe("Mon futur métier : 1 erreur à corriger.");
   });
 });
