@@ -6,6 +6,7 @@ import { minutes, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 
 import { AuthModule } from "./auth/auth.module.js";
 import { CsrfGuard } from "./auth/csrf.guard.js";
+import { CertificationModule } from "./certification/certification.module.js";
 import { FrontGuard } from "./auth/front.guard.js";
 import { validateEnv } from "./config/env.js";
 import { DatabaseModule } from "./database/database.module.js";
@@ -26,6 +27,7 @@ import { SecteurActiviteModule } from "./secteur-activite/secteur-activite.modul
     ScheduleModule.forRoot(),
     DatabaseModule,
     AuthModule,
+    CertificationModule,
     EtablissementModule,
     MetierRomeModule,
     SecteurActiviteModule,

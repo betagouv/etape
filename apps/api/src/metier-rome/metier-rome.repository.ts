@@ -3,12 +3,13 @@ import type { AppellationRomeSearchResult, MetierRome, VersionRome } from "./met
 /** Copie locale du référentiel ROME : France Travail fait foi, la base recopie. */
 export abstract class MetierRomeRepository {
   /**
-   * Les appellations non obsolètes dont le libellé contient chaque mot, sans tenir compte des
-   * accents ni de la casse : celles qui commencent par le premier mot d'abord, puis par ordre
-   * alphabétique. `limit` borne les appellations rendues, pas leur décompte.
+   * Les appellations obsolètes ou non, selon `isObsolete`, dont le libellé contient chaque mot,
+   * sans tenir compte des accents ni de la casse : celles qui commencent par le premier mot
+   * d'abord, puis par ordre alphabétique. `limit` borne les appellations rendues, pas leur décompte.
    */
   abstract searchAppellationsRome(
     words: string[],
+    filter: { isObsolete: boolean },
     limit: number,
   ): Promise<AppellationRomeSearchResult>;
   /** La dernière version importée, `null` tant que rien ne l'a été. */

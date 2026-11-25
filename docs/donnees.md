@@ -269,6 +269,59 @@ import rejoué ne réécrit aucune ligne inchangée, mais les instances
 partageraient le quota de France Travail (en-têtes
 `X-Ratelimit-*-Clientidlimiter`).
 
+## Les certifications RNCP et RS : France compétences fait foi, la base recopie
+
+Le volet « Ma formation » doit retrouver la certification visée, enregistrée au
+RNCP ou au RS. France compétences publie chaque nuit, vers 2 h, un export de ses
+deux répertoires sur
+[data.gouv](https://www.data.gouv.fr/datasets/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique),
+sans clé : un zip CSV de 10 Mo. Son API « Référentiels RNCP/RS » demande une clé
+obtenue par un abonnement validé à la main ; elle a été écartée le 2026-11-25.
+Les données sont publiques : aucune donnée personnelle.
+
+| Table           | Rôle                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------- |
+| `certification` | Une fiche : numéro (`RNCP41937`), répertoire, intitulé, abrégé (`BP`), niveau, statut |
+| `certificateur` | Un organisme qui délivre la fiche, par son SIRET ; 1 à 7 par fiche, 43 117 en tout    |
+
+Le code est dans [`apps/api/src/certification/`](../apps/api/src/certification/).
+
+### L'import
+
+`CertificationSyncTask` lance l'import chaque jour à 4 h (après la publication
+de 2 h et le ROME de 3 h), et au démarrage tant que la table est vide. Le
+`FranceCompetencesClient` liste les ressources du jeu par l'API v2 de data.gouv
+(la v1 renvoie 16 Mo en 30 s), télécharge le dernier zip et n'en lit que deux
+fichiers, `…_Standard_…` et `…_Certificateurs_…`. Il n'y a pas de version à
+comparer : l'export change chaque jour, et l'écriture ne touche que les lignes
+modifiées. Un import complet prend une vingtaine de secondes en local.
+
+Toutes les fiches sont gardées, inactives comprises (30 821, dont 6 595 actives
+le 2026-11-25) : un dossier doit pouvoir afficher celle qu'il cite. L'export
+contient déjà l'historique entier ; une fiche qui en disparaîtrait garde son
+dernier état. Les certificateurs qu'une fiche ne liste plus sont supprimés.
+
+Mêmes garde-fous que pour le ROME : un export vide est refusé, l'import tient
+dans une transaction, un seul import à la fois, et data.gouv injoignable ne fait
+que journaliser l'erreur.
+
+Normalisations à la lecture : espaces et retours à la ligne des intitulés
+réduits (3 045 intitulés en contiennent), tabulation retirée devant le SIRET,
+niveau `NIV4` lu comme `4` (`REPRISE`, l'ancienne nomenclature, et les fiches RS
+n'en ont pas), abrégé de repli « Autre » écarté.
+
+### La recherche d'une certification
+
+`GET /api/certification?search=…` ne rend que les fiches actives. Comme pour le
+ROME, chaque mot doit figurer, sans accents ni casse, mais dans le numéro,
+l'abrégé, l'intitulé ou le nom d'un certificateur : 908 fiches actives
+partagent leur intitulé (19 « Ostéopathe »), seul l'organisme les distingue.
+« cap boulanger », « 41937 » ou « RNCP 41937 » trouvent donc la fiche. Le tri
+lit l'abrégé suivi de l'intitulé, comme l'écran les affiche (« BP Boulanger »).
+
+Aucun index : environ 45 ms par recherche en local, l'agrégation des
+certificateurs comprise.
+
 ## Migrations
 
 Écrites par Prisma, versionnées, relues comme du SQL ordinaire.

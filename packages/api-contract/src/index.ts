@@ -10,6 +10,20 @@ export {
   type SessionResponse,
 } from "./auth/auth.schemas.js";
 export { buildRoutePath } from "./build-route-path.js";
+export { searchCertifications } from "./certification/certification.routes.js";
+export {
+  CERTIFICATION_SEARCH_MAX_LENGTH,
+  CERTIFICATION_SEARCH_MIN_LENGTH,
+  CertificateurSchema,
+  CertificationSchema,
+  REPERTOIRE_CERTIFICATION,
+  SearchCertificationsQuerySchema,
+  SearchCertificationsResponseSchema,
+  type Certificateur,
+  type Certification,
+  type SearchCertificationsQuery,
+  type SearchCertificationsResponse,
+} from "./certification/certification.schemas.js";
 export { searchEtablissements } from "./etablissement/etablissement.routes.js";
 export {
   ETABLISSEMENT_SEARCH_MAX_LENGTH,
