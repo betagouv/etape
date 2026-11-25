@@ -101,7 +101,9 @@ export function FormationForm({ formId, notice, onSubmitValid }: FormationFormPr
               render={({ field, attributes }) => (
                 <InputGroup>
                   <InputGroupInput {...field} {...attributes} inputMode="numeric" />
-                  <InputGroupAddon align="inline-end">heures</InputGroupAddon>
+                  <InputGroupAddon align="inline-end" aria-hidden="true">
+                    heures
+                  </InputGroupAddon>
                 </InputGroup>
               )}
             />
@@ -120,7 +122,9 @@ export function FormationForm({ formId, notice, onSubmitValid }: FormationFormPr
               render={({ field, attributes }) => (
                 <InputGroup>
                   <InputGroupInput {...field} {...attributes} inputMode="numeric" />
-                  <InputGroupAddon align="inline-end">heures</InputGroupAddon>
+                  <InputGroupAddon align="inline-end" aria-hidden="true">
+                    heures
+                  </InputGroupAddon>
                 </InputGroup>
               )}
             />
