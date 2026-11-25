@@ -61,7 +61,7 @@ S'il y en a, la synthèse **commence par un tableau de suivi** : chaque constat 
   - **Doublons** : chaque fonction, hook, type, constante, schéma, libellé ou motif de code ajouté par le diff se cherche par `git grep` dans `apps/` et `packages/`, dans l'arbre du dernier commit de la PR. On cherche **le motif, pas seulement le nom** : un doublon porte rarement le nom de l'original. Chaque maillon d'une chaîne se cherche à part, parce que Prettier coupe les chaînes longues sur plusieurs lignes. La recherche couvre les features voisines écrites par les autres équipes, pas seulement `packages/ui`, ainsi que les répétitions internes au diff. Motifs déjà rencontrés :
     - `.filter(Boolean).join(" ")`, réécrit pour joindre des annonces ou des classes ;
     - une `Map` de références et sa fonction d'enregistrement (`register…Button(id)`), recopiées d'un hook à l'autre ;
-    - `NonNullable<ComponentProps<typeof X>["prop"]>` redéclaré dans une app, alors que `packages/ui` doit l'exporter, comme il le fait pour `ContainerSize` ;
+    - `NonNullable<ComponentProps<typeof X>["prop"]>` redéclaré dans une app, alors que `packages/ui` peut l'exporter une fois, comme il le fait pour `ContainerSize` ;
     - un calcul d'avancement ou une comparaison de statut avant/après refaits à côté de `domain/volet-progress.ts` et `domain/statut-volet.ts` ;
     - un schéma zod qui sert à plusieurs features, mais resté dans le fichier de l'une d'elles ;
     - un même libellé écrit à plusieurs endroits.
@@ -102,9 +102,9 @@ Pour chaque constat : `fichier:ligne`, problème, scénario ou raison, correctio
 
 - une primitive de `packages/ui` réécrite (`react.md` §4.4, `.claude/rules/design-system.md` point 4) ;
 - un composant utilisé par plus d'une app et resté hors de `packages/ui` (`stack-front.md`, décision 6) ;
-- une règle métier de `domain/` réécrite au lieu d'être appelée (`react.md` §1.1).
+- une règle métier réécrite dans un composant ou un hook au lieu d'être appelée depuis `domain/` (`react.md` §1.1 : « Un composant les appelle, ne les réécrit pas »).
 
-Les autres doublons ne sont couverts par aucune règle écrite : hook, type, constante ou libellé répétés dans une même app. Ils sont donc [SUGGESTION], même répétés trois fois. Le constat donne `fichier:ligne` du nouveau code et de l'existant, et dit ce qu'il faut mettre en commun. Le message général propose d'écrire la règle manquante dans `react.md` ou `typescript.md`, sans en inventer une dans la revue.
+Les autres doublons ne sont couverts par aucune règle écrite : hook, type, constante ou libellé répétés dans une même app, ou fonction de `domain/` qui en refait une autre de `domain/`. Ils sont donc [SUGGESTION], même répétés trois fois. Le constat donne `fichier:ligne` du nouveau code et de l'existant, et dit ce qu'il faut mettre en commun. Le message général propose d'écrire la règle manquante dans `react.md` ou `typescript.md`, sans en inventer une dans la revue.
 
 En cas de doute sur la portée d'une règle (document qui exclut un workspace, règle `.claude/rules/` qui l'inclut), classer selon la règle la plus stricte et signaler la contradiction dans le message général, pour qu'elle soit tranchée dans les documents.
 

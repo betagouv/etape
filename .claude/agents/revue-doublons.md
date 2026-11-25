@@ -53,9 +53,9 @@ Celui du skill `review-pr`, section 5 : un doublon est **[BLOCKING]** seulement 
 
 - une primitive de `packages/ui` réécrite : `docs/conventions/react.md` §4.4, `.claude/rules/design-system.md` point 4 ;
 - un composant utilisé par plus d'une app et resté hors de `packages/ui` : `docs/conventions/stack-front.md`, décision 6 ;
-- une règle métier de `domain/` réécrite au lieu d'être appelée : `docs/conventions/react.md` §1.1.
+- une règle métier réécrite dans un composant ou un hook au lieu d'être appelée depuis `domain/` : `docs/conventions/react.md` §1.1.
 
-Tout autre doublon est **[SUGGESTION]**, avec la mention « aucune règle écrite » : c'est au reviewer de proposer la règle, pas à toi de l'inventer.
+Tout autre doublon est **[SUGGESTION]**, avec la mention « aucune règle écrite » : c'est au reviewer de proposer la règle, pas à toi de l'inventer. Une fonction de `domain/` qui en refait une autre de `domain/` en fait partie : §1.1 vise le code React qui réécrit une règle métier.
 
 ## Format de sortie
 
