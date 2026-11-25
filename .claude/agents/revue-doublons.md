@@ -19,23 +19,33 @@ Tu reçois un diff, pas les conclusions de la revue. Ne pars pas de ce qu'un aut
 2. **Inventaire.** Lister ce que le diff ajoute dans `apps/` et `packages/` : chaque fonction, hook, type ou interface, constante, objet `as const` ou `Record`, schéma zod, libellé (texte affiché ou annoncé), et chaque motif de code de plus de deux lignes, même anonyme (une gestion de références, un calcul, une comparaison). Commencer par ce qui est exporté, puis le reste. Ignorer ce qui tient en une expression triviale.
 3. **Recherche.** Pour chaque entrée, chercher dans tout `apps/` et `packages/` :
    - **le nom, puis le motif**. Un doublon porte rarement le nom de l'original : on cherche la structure, les valeurs, la signature (voir la table ci-dessous) ;
-   - **partout** : les features voisines écrites par d'autres équipes autant que `packages/ui` ; `packages/utils` pour une fonction pure, `packages/api-contract` pour un schéma partagé avec l'API, les `domain/` de l'app pour une règle métier ;
+   - **chaque maillon séparément** : `git grep` lit ligne à ligne, et Prettier coupe les chaînes longues. `.filter(Boolean).join(` ne trouve pas un `.filter(Boolean)` suivi d'un `.join(` à la ligne suivante : chercher `filter(Boolean)` seul, puis lire autour ;
+   - **partout** : les features voisines écrites par d'autres équipes autant que `packages/ui` ; `packages/utils` pour une fonction pure, `packages/api-contract` pour un schéma partagé avec l'API ; les `domain/` **et** les `hooks/` de l'app pour une règle métier, car une comparaison ou un calcul vit parfois dans un hook ;
    - **dans le diff lui-même** : la même fonction, le même motif ou le même libellé écrits plusieurs fois par la PR.
-4. **Vérification.** Lire l'existant en entier avant de conclure. Deux codes qui se ressemblent ne font pas un doublon s'ils ne traitent pas les mêmes cas. Le doublon est **confirmé** quand l'existant peut remplacer le nouveau code sans changer le comportement, ou au prix d'un seul paramètre. Sinon, c'est une ressemblance écartée, avec la différence qui l'empêche. Si tu ne peux pas trancher en lisant, écris « à vérifier » et dis quel cas départagerait.
+4. **Vérification.** Lire l'existant en entier avant de conclure. La question n'est pas « l'existant remplace-t-il le nouveau code ? », mais **« une seule version pourrait-elle servir aux deux endroits ? »**. Les trois réponses comptent :
+   - **l'existante** remplace le nouveau code ;
+   - **la nouvelle** remplace l'existant : une fonction générique écrite dans le fichier d'une feature, alors que le même motif est déjà écrit en ligne ailleurs, est un doublon. Elle se déplace dans un module commun et remplace les copies ;
+   - **une troisième**, à extraire des deux.
+
+   **Une partie suffit** : le même libellé dans deux rendus différents, la même mécanique dans deux flux différents, le même type dans deux composants. On met en commun la partie, pas le tout.
+
+   **Une différence ne suffit pas à écarter** quand une généralisation simple la résout : un paramètre, ou un cas limite traité autrement dans l'existant (un tableau vide compté comme vide, par exemple). Le doublon est alors confirmé : décrire la généralisation, et dire ce qu'il faut vérifier sur les autres appelants de l'existant avant de la faire. Une ressemblance ne s'écarte que si les deux codes répondent à des besoins différents (autre donnée, autre déclencheur, autre résultat attendu) ; la raison le dit. Si tu ne peux pas trancher en lisant, écris « à vérifier » et dis quel cas départagerait.
+
 5. **Rendu** : les deux tableaux ci-dessous.
 
 ## Comment chercher l'existant
 
-| Ce que le diff ajoute                          | Ce qu'on cherche                                                                                                                                                                                            |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Fonction utilitaire                            | La chaîne d'appels de son corps (`.filter(Boolean).join(`, `.reduce(`, `.flatMap(`), puis les fonctions de même signature dans `packages/utils` et les `domain/`                                            |
-| Hook                                           | Les mêmes hooks appelés dans le même ordre (`useRef` + `useState` + `useAnnouncement`), les mêmes `ref`, les mêmes noms de retour dans les autres `hooks/`                                                  |
-| Gestion de références ou de focus              | `new Map<string, HTML`, `useRef(new Map`, `register`, `flushSync(`, `.focus(` : la même mécanique existe souvent dans un hook voisin                                                                        |
-| Type dérivé d'un composant                     | `ComponentProps<typeof`, `VariantProps<typeof`, `NonNullable<` ; puis les `export type` du composant d'origine dans `packages/ui` (`ContainerSize` y est exporté de `container.tsx`)                        |
-| Type d'union, objet `as const`, `Record`       | Les valeurs littérales, pas le nom : une des chaînes de l'union ou du `Record`                                                                                                                              |
-| Règle métier (avancement, statut, comparaison) | Les fonctions de `domain/` qui traitent la même notion. Pour le dossier : `domain/volet-progress.ts` pour l'avancement, `domain/statut-volet.ts` pour les statuts                                           |
-| Schéma zod                                     | Les noms de champs avec `z.object(` ; puis qui importe le schéma : un schéma importé par une autre feature n'est plus à sa place dans le fichier d'une seule                                                |
-| Libellé                                        | La chaîne exacte, entre guillemets, dans `apps/`, `packages/` et le diff. Un libellé déjà porté par une constante ou un `Record` se réutilise ; un libellé écrit deux fois par la PR est un doublon interne |
+| Ce que le diff ajoute                    | Ce qu'on cherche                                                                                                                                                                                            |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fonction utilitaire                      | La chaîne d'appels de son corps (`.filter(Boolean).join(`, `.reduce(`, `.flatMap(`), puis les fonctions de même signature dans `packages/utils` et les `domain/`                                            |
+| Hook                                     | Les mêmes hooks appelés dans le même ordre (`useRef` + `useState` + `useAnnouncement`), les mêmes `ref`, les mêmes noms de retour dans les autres `hooks/`                                                  |
+| Gestion de références ou de focus        | `new Map<string, HTML`, `useRef(new Map`, `register`, `flushSync(`, `.focus(` : la même mécanique existe souvent dans un hook voisin                                                                        |
+| Type dérivé d'un composant               | `ComponentProps<typeof`, `VariantProps<typeof`, `NonNullable<` ; puis les `export type` du composant d'origine dans `packages/ui` (`ContainerSize` y est exporté de `container.tsx`)                        |
+| Type d'union, objet `as const`, `Record` | Les valeurs littérales, pas le nom : une des chaînes de l'union ou du `Record`                                                                                                                              |
+| Règle métier (avancement, statut)        | Les fonctions de `domain/` qui traitent la même notion. Pour le dossier : `domain/volet-progress.ts` pour l'avancement, `domain/statut-volet.ts` pour les statuts                                           |
+| Comparaison avant/après                  | La structure, pas le nom : une même valeur calculée deux fois puis comparée (`!==`, `hasChanged`, `previous`, `before`), dans `domain/` et dans les hooks qui annoncent un changement                       |
+| Schéma zod                               | Les noms de champs avec `z.object(` ; puis qui importe le schéma. Un schéma importé par une feature que son fichier ne nomme pas n'est plus à sa place : il va dans un fichier à son propre nom             |
+| Libellé                                  | La chaîne exacte, entre guillemets, dans `apps/`, `packages/` et le diff. Un libellé déjà porté par une constante ou un `Record` se réutilise ; un libellé écrit deux fois par la PR est un doublon interne |
 
 ## Niveau
 
