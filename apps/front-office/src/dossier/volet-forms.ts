@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 
+import { DocumentsForm } from "./documents/documents-form";
 import { VOLET_ID, type VoletId } from "./domain/volet-id";
 import type { VoletNoticeContent } from "./domain/volets";
 import { FuturMetierForm } from "./futur-metier/futur-metier-form";
@@ -20,4 +21,5 @@ export const VOLET_FORMS: Partial<Record<VoletId, ComponentType<VoletFormProps>>
   [VOLET_ID.SITUATION_PROFESSIONNELLE]: SituationProfessionnelleForm,
   [VOLET_ID.FUTUR_METIER]: FuturMetierForm,
   [VOLET_ID.PROJET]: ProjetForm,
+  [VOLET_ID.DOCUMENTS]: DocumentsForm,
 };

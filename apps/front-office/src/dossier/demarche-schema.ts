@@ -3,7 +3,8 @@ import { z } from "zod";
 import type { DemarcheFieldName } from "./domain/demarche";
 import { LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE } from "./domain/longueur-max-texte";
 
-const pieceJustificativeSchema = z.object({
+/** Une pièce justificative déposée, telle que le formulaire la porte. */
+export const pieceJustificativeSchema = z.object({
   id: z.string(),
   fichier: z.instanceof(File),
   dateDepot: z.date(),

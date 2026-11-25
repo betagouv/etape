@@ -33,9 +33,9 @@ describe("findVoletPosition", () => {
   });
 
   it("n'a pas de volet suivant au dernier volet", () => {
-    const position = findVoletPosition(VOLETS_DOSSIER, VOLET_ID.DOCUMENTS);
+    const position = findVoletPosition(VOLETS_DOSSIER, VOLET_ID.CEP);
 
-    expect(position?.previous?.id).toBe(VOLET_ID.CEP);
+    expect(position?.previous?.id).toBe(VOLET_ID.DOCUMENTS);
     expect(position?.next).toBeUndefined();
   });
 
