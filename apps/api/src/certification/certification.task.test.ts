@@ -9,9 +9,12 @@ import { CertificationSyncTask } from "./certification.task.js";
 import {
   REPERTOIRE_CERTIFICATION,
   STATUT_CERTIFICATION,
+  type CertificationExport,
   type ImportedCertification,
 } from "./certification.types.js";
 import { FranceCompetencesClient } from "./france-competences.client.js";
+
+const EXPORT_FILE_NAME = "export-fiches-csv-2026-11-25.zip";
 
 const CERTIFICATIONS: ImportedCertification[] = [
   {
@@ -32,7 +35,9 @@ function setup() {
   return {
     repository,
     task: new CertificationSyncTask(new CertificationService(client, repository)),
-    fetchCertifications: vi.spyOn(client, "fetchCertifications").mockResolvedValue(CERTIFICATIONS),
+    fetchCertifications: vi
+      .spyOn(client, "fetchCertifications")
+      .mockResolvedValue({ fileName: EXPORT_FILE_NAME, certifications: CERTIFICATIONS }),
   };
 }
 
@@ -115,7 +120,7 @@ describe("CertificationSyncTask", () => {
   describe("sans chevauchement", () => {
     it("ignore la tâche du jour pendant l'import du démarrage", async () => {
       const { task, repository, fetchCertifications } = setup();
-      let publishExport: (certifications: ImportedCertification[]) => void = () => undefined;
+      let publishExport: (certificationExport: CertificationExport) => void = () => undefined;
       fetchCertifications.mockReturnValueOnce(
         new Promise((resolve) => {
           publishExport = resolve;
@@ -134,7 +139,7 @@ describe("CertificationSyncTask", () => {
         "Synchronisation des certifications déjà en cours : appel ignoré.",
       );
 
-      publishExport(CERTIFICATIONS);
+      publishExport({ fileName: EXPORT_FILE_NAME, certifications: CERTIFICATIONS });
       await vi.waitFor(() => {
         expect(repository.certifications.size).toBe(1);
       });

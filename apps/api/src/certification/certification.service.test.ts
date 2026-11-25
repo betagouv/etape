@@ -13,6 +13,8 @@ import {
 } from "./certification.types.js";
 import { FranceCompetencesClient } from "./france-competences.client.js";
 
+const EXPORT_FILE_NAME = "export-fiches-csv-2026-11-25.zip";
+
 const EDUCATION_NATIONALE: Certificateur = {
   siret: "11000007200014",
   nom: "Ministère de l'Éducation nationale",
@@ -74,7 +76,7 @@ async function importExport(
   { service, fetchCertifications }: ReturnType<typeof setup>,
   certifications: ImportedCertification[],
 ): Promise<void> {
-  fetchCertifications.mockResolvedValueOnce(certifications);
+  fetchCertifications.mockResolvedValueOnce({ fileName: EXPORT_FILE_NAME, certifications });
   await service.syncCertifications();
 }
 
@@ -100,13 +102,13 @@ describe("CertificationService : import", () => {
     expect(context.repository.listCertificateurs("RNCP41937")).toEqual([EDUCATION_NATIONALE]);
   });
 
-  it("ne journalise que les deux compteurs", async () => {
+  it("ne journalise que le fichier importé et les deux compteurs", async () => {
     const context = setup();
 
     await importExport(context, [BP_BOULANGER, ANCIEN_BOULANGER]);
 
     expect(log).toHaveBeenCalledExactlyOnceWith(
-      "Certifications importées : 2 fiches, dont 1 actives.",
+      "Certifications importées de export-fiches-csv-2026-11-25.zip : 2 fiches, dont 1 actives.",
     );
   });
 
@@ -175,7 +177,10 @@ describe("CertificationService : import", () => {
 
   it("remplit la base vide au démarrage", async () => {
     const context = setup();
-    context.fetchCertifications.mockResolvedValueOnce([BP_BOULANGER]);
+    context.fetchCertifications.mockResolvedValueOnce({
+      fileName: EXPORT_FILE_NAME,
+      certifications: [BP_BOULANGER],
+    });
 
     await context.service.syncCertificationsIfEmpty();
 

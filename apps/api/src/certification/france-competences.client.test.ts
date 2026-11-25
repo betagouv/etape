@@ -54,17 +54,20 @@ describe("FranceCompetencesClient", () => {
       .mockResolvedValueOnce(Response.json(RESOURCES_RESPONSE))
       .mockResolvedValueOnce(new Response(EXPORT_ZIP));
 
-    await expect(createClient().fetchCertifications()).resolves.toEqual([
-      {
-        numeroFiche: "RNCP42950",
-        repertoire: REPERTOIRE_CERTIFICATION.RNCP,
-        intitule: "CQP Boulanger",
-        abrege: null,
-        niveau: 3,
-        statut: STATUT_CERTIFICATION.ACTIVE,
-        certificateurs: [{ siret: "78435466400029", nom: "FEDERATION ENTREPRISES BOULANGERIE" }],
-      },
-    ]);
+    await expect(createClient().fetchCertifications()).resolves.toEqual({
+      fileName: "export-fiches-csv-2026-11-24.zip",
+      certifications: [
+        {
+          numeroFiche: "RNCP42950",
+          repertoire: REPERTOIRE_CERTIFICATION.RNCP,
+          intitule: "CQP Boulanger",
+          abrege: null,
+          niveau: 3,
+          statut: STATUT_CERTIFICATION.ACTIVE,
+          certificateurs: [{ siret: "78435466400029", nom: "FEDERATION ENTREPRISES BOULANGERIE" }],
+        },
+      ],
+    });
 
     const [[resourcesUrl, resourcesInit], [exportUrl]] = fetchMock.mock.calls;
     expect(String(resourcesUrl)).toBe(

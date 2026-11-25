@@ -65,13 +65,16 @@ export function buildExportResourcesUrl(baseUrl: string): URL {
 }
 
 /** Le zip CSV le plus récent ; une erreur si aucun ne figure dans la réponse. */
-export function findLatestExportUrl(response: ExportResourcesResponse): URL {
+export function findLatestExport(response: ExportResourcesResponse): {
+  fileName: string;
+  url: URL;
+} {
   const [latest] = response.data
     .filter(({ title }) => EXPORT_TITLE_PATTERN.test(title))
     .sort((a, b) => Date.parse(b.last_modified) - Date.parse(a.last_modified));
   if (!latest) throw new Error("Aucun export CSV des certifications sur data.gouv");
 
-  return new URL(latest.url);
+  return { fileName: latest.title, url: new URL(latest.url) };
 }
 
 /** Les deux fichiers CSV du zip dont l'import a besoin. */

@@ -2,12 +2,12 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import type { Env } from "../config/env.js";
-import type { ImportedCertification } from "./certification.types.js";
+import type { CertificationExport } from "./certification.types.js";
 import {
   buildExportResourcesUrl,
   exportResourcesResponseSchema,
   extractExportCsv,
-  findLatestExportUrl,
+  findLatestExport,
   parseCertifications,
 } from "./france-competences.js";
 
@@ -19,7 +19,7 @@ const REQUEST_TIMEOUT_MS = 60_000;
 export class FranceCompetencesClient {
   constructor(private readonly config: ConfigService<Env, true>) {}
 
-  async fetchCertifications(): Promise<ImportedCertification[]> {
+  async fetchCertifications(): Promise<CertificationExport> {
     const resourcesUrl = buildExportResourcesUrl(
       this.config.get("FRANCE_COMPETENCES_RESOURCES_URL", { infer: true }),
     );
@@ -27,10 +27,11 @@ export class FranceCompetencesClient {
       await (await this.get(resourcesUrl)).json(),
     );
 
-    const zip = await (await this.get(findLatestExportUrl(resources))).arrayBuffer();
+    const { fileName, url } = findLatestExport(resources);
+    const zip = await (await this.get(url)).arrayBuffer();
     const { standard, certificateurs } = extractExportCsv(new Uint8Array(zip));
 
-    return parseCertifications(standard, certificateurs);
+    return { fileName, certifications: parseCertifications(standard, certificateurs) };
   }
 
   private async get(url: URL): Promise<Response> {

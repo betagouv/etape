@@ -6,7 +6,7 @@ import { REPERTOIRE_CERTIFICATION, STATUT_CERTIFICATION } from "./certification.
 import {
   buildExportResourcesUrl,
   extractExportCsv,
-  findLatestExportUrl,
+  findLatestExport,
   parseCertifications,
   type ExportResourcesResponse,
 } from "./france-competences.js";
@@ -37,9 +37,9 @@ describe("buildExportResourcesUrl", () => {
   });
 });
 
-describe("findLatestExportUrl", () => {
+describe("findLatestExport", () => {
   it("prend le zip CSV le plus récent, quel que soit l'ordre de la réponse", () => {
-    const url = findLatestExportUrl({
+    const { fileName, url } = findLatestExport({
       data: [
         resource("export-fiches-csv-2026-11-23.zip", "2026-11-23T02:00:09.055000+00:00"),
         resource("export-fiches-csv-2026-11-24.zip", "2026-11-24T02:00:09.694000+00:00"),
@@ -47,11 +47,12 @@ describe("findLatestExportUrl", () => {
       ],
     });
 
+    expect(fileName).toBe("export-fiches-csv-2026-11-24.zip");
     expect(String(url)).toBe("https://static.data.test/export-fiches-csv-2026-11-24.zip");
   });
 
   it("refuse une réponse sans export CSV", () => {
-    expect(() => findLatestExportUrl({ data: [] })).toThrow(
+    expect(() => findLatestExport({ data: [] })).toThrow(
       "Aucun export CSV des certifications sur data.gouv",
     );
   });

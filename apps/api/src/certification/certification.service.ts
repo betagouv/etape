@@ -45,7 +45,7 @@ export class CertificationService {
 
   /** Une fiche absente de l'export garde son dernier état : l'export contient déjà les inactives. */
   async syncCertifications(): Promise<void> {
-    const certifications = await this.franceCompetencesClient.fetchCertifications();
+    const { fileName, certifications } = await this.franceCompetencesClient.fetchCertifications();
     if (certifications.length === 0) {
       throw new Error("France compétences a publié un export de certifications vide");
     }
@@ -60,7 +60,8 @@ export class CertificationService {
       ({ statut }) => statut === STATUT_CERTIFICATION.ACTIVE,
     ).length;
     this.logger.log(
-      `Certifications importées : ${certifications.length} fiches, dont ${activeCount} actives.`,
+      // Le nom du fichier date l'export : un export ancien se verrait dans le journal.
+      `Certifications importées de ${fileName} : ${certifications.length} fiches, dont ${activeCount} actives.`,
     );
   }
 }

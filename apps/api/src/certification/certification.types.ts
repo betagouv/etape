@@ -32,6 +32,12 @@ export interface ImportedCertification {
   certificateurs: Certificateur[];
 }
 
+/** Dernier export de France compétences : le nom de son fichier sur data.gouv, et ses fiches. */
+export interface CertificationExport {
+  fileName: string;
+  certifications: ImportedCertification[];
+}
+
 /** Fiche active trouvée par une recherche. */
 export type FoundCertification = Omit<ImportedCertification, "statut">;
 
