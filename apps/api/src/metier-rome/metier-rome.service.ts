@@ -21,12 +21,19 @@ export class MetierRomeService {
     private readonly metierRomeRepository: MetierRomeRepository,
   ) {}
 
-  /** Chaque mot de la saisie doit figurer dans le libellé, dans n'importe quel ordre. */
+  /**
+   * Chaque mot de la saisie doit figurer dans le libellé, dans n'importe quel ordre. Une
+   * appellation retirée du référentiel par France Travail ne se propose plus.
+   */
   async searchAppellationsRome(search: string): Promise<AppellationRomeSearchResult> {
     const words = search.split(/\s+/).filter(Boolean);
     if (words.length === 0) return NO_APPELLATION_ROME;
 
-    return this.metierRomeRepository.searchAppellationsRome(words, SEARCH_RESULT_LIMIT);
+    return this.metierRomeRepository.searchAppellationsRome(
+      words,
+      { isObsolete: false },
+      SEARCH_RESULT_LIMIT,
+    );
   }
 
   /** Premier remplissage : ne contacte pas France Travail dès qu'une version est en base. */

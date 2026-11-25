@@ -40,6 +40,7 @@ export class PrismaMetierRomeRepository extends MetierRomeRepository {
 
   async searchAppellationsRome(
     words: string[],
+    { isObsolete }: { isObsolete: boolean },
     limit: number,
   ): Promise<AppellationRomeSearchResult> {
     const patterns = words.map(escapeLikePattern);
@@ -54,7 +55,7 @@ export class PrismaMetierRomeRepository extends MetierRomeRepository {
              count(*) over ()::int as "appellationRomeCount"
       from appellation_rome
       join metier_rome on metier_rome.id = appellation_rome.metier_rome_id
-      where not appellation_rome.is_obsolete
+      where appellation_rome.is_obsolete = ${isObsolete}
         and lower(unaccent(appellation_rome.libelle)) like all (
           select '%' || lower(unaccent(pattern)) || '%'
           from unnest(${patterns}::text[]) as pattern
