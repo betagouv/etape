@@ -139,6 +139,21 @@ Définitions relevées le 2026-11-13 dans la documentation de l'API « ROME 4.0 
 | Version du ROME                  | `version_rome`     | Numéro de version du référentiel (« 62 ») et date de sa dernière modification, tels que France Travail les publie                                                                                                               | `GET /v1/metiers/version`                                |
 | Obsolète                         | `obsolete`         | Métier ou appellation absent de la dernière version importée : conservé en base et marqué (`is_obsolete`), jamais supprimé. France Travail porte un champ `obsolete` sur la lecture d'un métier, pas dans la liste              | décision du 2026-11-13 ; `GET /v1/metiers/metier/{code}` |
 
+## Répertoires de France compétences (RNCP et RS)
+
+Définitions relevées le 2026-11-25 dans l'export CSV publié par France compétences sur data.gouv et dans la documentation de son API « Référentiels RNCP/RS ».
+
+| Terme métier               | Identifiant     | Définition                                                                                                                              | Source                                           |
+| -------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Certification              | `certification` | Fiche enregistrée par France compétences au RNCP ou au RS, que vise la formation du bénéficiaire                                        | Export CSV, fichier `Standard`                   |
+| Répertoire                 | `repertoire`    | `RNCP`, Répertoire national des certifications professionnelles, ou `RS`, Répertoire spécifique ; lu dans le préfixe du numéro de fiche | Export CSV                                       |
+| Numéro de fiche            | `numero_fiche`  | Identifiant unique de la fiche : préfixe du répertoire suivi de chiffres (« RNCP41937 », « RS5547 »)                                    | Export CSV, colonne `Numero_Fiche`               |
+| Intitulé                   | `intitule`      | Nom de la certification (« Boulanger »)                                                                                                 | Export CSV, colonne `Intitule`                   |
+| Abrégé                     | `abrege`        | Type de diplôme, affiché devant l'intitulé (« BP », « CAP », « BAC PRO ») ; absent pour la plupart des fiches                           | Export CSV, colonne `Abrege_Libelle`             |
+| Niveau                     | `niveau`        | Niveau de qualification du cadre national, de 2 à 8 (« NIV4 ») ; seules les fiches RNCP en ont un                                       | Export CSV, colonne `Nomenclature_Europe_Niveau` |
+| Statut d'une certification | `statut`        | `ACTIVE`, la fiche se délivre encore, ou `INACTIVE` ; valeurs de France compétences                                                     | Export CSV, colonne `Actif`                      |
+| Certificateur              | `certificateur` | Organisme qui délivre la certification, identifié par son SIRET et son nom ; une fiche en a un ou plusieurs                             | Export CSV, fichier `Certificateurs`             |
+
 ## Termes techniques proches du métier
 
 Ces termes ne sont **pas** métier : ils restent en anglais dans les identifiants (décision du 2026-09-15, `nommage.md`, « Cas tranchés »). Ils figurent ici pour qu'on ne les francise pas et qu'on ne les confonde pas avec un rôle métier.
