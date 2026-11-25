@@ -20,6 +20,8 @@ const validEnv = {
   FRANCE_TRAVAIL_TOKEN_URL:
     "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire",
   API_ROME_METIERS_URL: "https://api.francetravail.io/partenaire/rome-metiers/v1",
+  FRANCE_COMPETENCES_RESOURCES_URL:
+    "https://www.data.gouv.fr/api/2/datasets/5eebbc067a14b6fecc9c9976/resources",
 };
 
 describe("validateEnv", () => {

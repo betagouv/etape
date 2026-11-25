@@ -64,6 +64,9 @@ const envSchema = z
     FRANCE_TRAVAIL_TOKEN_URL: z.url(),
     /** Version comprise, sans slash final : `https://api.francetravail.io/partenaire/rome-metiers/v1`. */
     API_ROME_METIERS_URL: z.url(),
+
+    /** Ressources du jeu RNCP/RS de France compétences, API v2 de data.gouv, sans slash final : `https://www.data.gouv.fr/api/2/datasets/5eebbc067a14b6fecc9c9976/resources`. */
+    FRANCE_COMPETENCES_RESOURCES_URL: z.url(),
   })
   // Deux fronts sur le même hôte seraient indiscernables, et une API servie
   // ailleurs que sur l'origine de son front ne recevrait pas ses cookies.
