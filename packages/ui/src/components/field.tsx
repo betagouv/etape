@@ -274,4 +274,5 @@ export {
   FieldSet,
   FieldContent,
   FieldTitle,
+  FieldRequiredContent,
 };
