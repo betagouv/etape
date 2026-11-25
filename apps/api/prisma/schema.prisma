@@ -127,3 +127,49 @@ model VersionRome {
 
   @@map("version_rome")
 }
+
+// Copie des répertoires RNCP et RS de France compétences : toutes les fiches de l'export, inactives comprises.
+model Certification {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  numeroFiche String                  @unique @map("numero_fiche")
+  repertoire  RepertoireCertification
+  intitule    String
+  abrege      String?
+  // Nomenclature européenne, de 2 à 8 ; absent pour une fiche RS.
+  niveau      Int?                    @db.SmallInt
+  statut      StatutCertification
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  certificateurs Certificateur[]
+
+  @@map("certification")
+}
+
+enum RepertoireCertification {
+  RNCP
+  RS
+}
+
+enum StatutCertification {
+  ACTIVE
+  INACTIVE
+}
+
+model Certificateur {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  certificationId String        @map("certification_id") @db.Uuid
+  certification   Certification @relation(fields: [certificationId], references: [id])
+
+  siret String
+  nom   String
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([certificationId, siret])
+  @@map("certificateur")
+}
