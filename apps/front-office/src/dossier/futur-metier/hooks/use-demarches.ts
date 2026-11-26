@@ -23,7 +23,6 @@ import {
   removeDemarche,
   replaceDemarche,
   type Demarche,
-  type DemarcheFieldName,
 } from "../domain/demarche";
 import { FUTUR_METIER_FIELD, type FuturMetierFormData } from "../schema";
 import {
@@ -32,8 +31,8 @@ import {
   type UseDemarcheRemovalResult,
 } from "./use-demarche-removal";
 
-const TYPE_FIELD = "typeDemarche" satisfies DemarcheFieldName;
-const ANSWER_FIELD = "demarcheDecouverte";
+const TYPE_FIELD = FUTUR_METIER_FIELD.TYPE_DEMARCHE;
+const ANSWER_FIELD = FUTUR_METIER_FIELD.DEMARCHE_DECOUVERTE;
 
 /** Ce que renvoie `useDemarches` : les démarches validées, l'état de la saisie, la fenêtre de suppression et les actions de l'écran. */
 export interface UseDemarchesResult extends Omit<UseDemarcheRemovalResult, "requestAllRemoval"> {
