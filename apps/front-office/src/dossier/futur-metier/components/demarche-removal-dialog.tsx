@@ -44,7 +44,7 @@ export function DemarcheRemovalDialog({
       confirm={{
         label: "Supprimer",
         icon: <Trash2Icon aria-hidden="true" className="size-5" />,
-        isDestructive: true,
+        variant: "destructive",
         onClick: onConfirm,
       }}
       onCloseFocus={onCloseFocus}
