@@ -20,6 +20,7 @@ import {
   formatRemovalTitle,
   formatRemoveLabel,
   isDemarcheFilled,
+  isPrecisionRequired,
   MAX_DEMARCHES_MESSAGE,
   NOMBRE_MAX_DEMARCHES,
   removeDemarche,
@@ -45,6 +46,17 @@ describe("TYPE_DEMARCHE_LABEL", () => {
     expect(labels).toHaveLength(9);
     expect(labels[0]).toBe("Immersion en entreprise (stage d’observation, PMSMP)");
     expect(labels.at(-1)).toBe("Autre");
+  });
+});
+
+describe("isPrecisionRequired", () => {
+  it("est vrai pour « Autre »", () => {
+    expect(isPrecisionRequired(TYPE_DEMARCHE.AUTRE)).toBe(true);
+  });
+
+  it("est faux pour un type de la liste, et tant qu'aucun type n'est choisi", () => {
+    expect(isPrecisionRequired(TYPE_DEMARCHE.SALON)).toBe(false);
+    expect(isPrecisionRequired(undefined)).toBe(false);
   });
 });
 

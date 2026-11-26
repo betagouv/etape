@@ -52,11 +52,16 @@ export const DEMARCHE_FIELDS: readonly DemarcheFieldName[] = [
 
 const PRECISION_FIELD: DemarcheFieldName = "precisionTypeDemarche";
 
+/** Vrai pour le type qui se précise en texte libre : « Autre » (maquettes 10 et 11). */
+export function isPrecisionRequired(typeDemarche: TypeDemarche | undefined): boolean {
+  return typeDemarche === TYPE_DEMARCHE.AUTRE;
+}
+
 /** Les champs qu'exige la démarche en cours : la précision n'est demandée que pour « Autre » (maquettes 10 et 11). */
 export function findDemarcheFields(
   typeDemarche: TypeDemarche | undefined,
 ): readonly DemarcheFieldName[] {
-  if (typeDemarche === TYPE_DEMARCHE.AUTRE) return DEMARCHE_FIELDS;
+  if (isPrecisionRequired(typeDemarche)) return DEMARCHE_FIELDS;
   return DEMARCHE_FIELDS.filter((name) => name !== PRECISION_FIELD);
 }
 
@@ -97,7 +102,7 @@ export function findDemarcheIntitule({
   typeDemarche,
   precisionTypeDemarche,
 }: Pick<Demarche, "typeDemarche" | "precisionTypeDemarche">): string {
-  return typeDemarche === TYPE_DEMARCHE.AUTRE
+  return isPrecisionRequired(typeDemarche)
     ? precisionTypeDemarche
     : TYPE_DEMARCHE_LABEL[typeDemarche];
 }
@@ -118,7 +123,7 @@ export function createDemarche(id: string, current: CurrentDemarche): Demarche |
   return {
     id,
     typeDemarche,
-    precisionTypeDemarche: typeDemarche === TYPE_DEMARCHE.AUTRE ? precisionTypeDemarche.trim() : "",
+    precisionTypeDemarche: isPrecisionRequired(typeDemarche) ? precisionTypeDemarche.trim() : "",
     apportDemarche: apportDemarche.trim(),
     piecesJustificatives,
   };

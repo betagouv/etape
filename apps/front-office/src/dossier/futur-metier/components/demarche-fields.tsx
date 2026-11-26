@@ -10,8 +10,8 @@ import { useFocusLeave } from "@etape/ui/hooks/use-focus-leave";
 import { CharacterCountField } from "../../components/character-count-field";
 import { PiecesJustificativesField } from "../../components/pieces-justificatives-field";
 import {
+  isPrecisionRequired,
   PIECES_DEMARCHE_DESCRIPTION,
-  TYPE_DEMARCHE,
   TYPE_DEMARCHE_LABEL,
 } from "../domain/demarche";
 import {
@@ -70,7 +70,7 @@ export function DemarcheFields({
           options={TYPE_DEMARCHE_LABEL}
         />
 
-        {typeDemarche === TYPE_DEMARCHE.AUTRE && (
+        {isPrecisionRequired(typeDemarche) && (
           <FormField
             name={FUTUR_METIER_FIELD.PRECISION_TYPE_DEMARCHE}
             control={control}
