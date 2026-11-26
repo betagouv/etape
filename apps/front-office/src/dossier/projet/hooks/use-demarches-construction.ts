@@ -2,6 +2,7 @@ import type { UseFormReturn } from "react-hook-form";
 
 import {
   useDemarches,
+  type DemarchesBinding,
   type DemarchesFieldNames,
   type UseDemarchesResult,
 } from "../../hooks/use-demarches";
@@ -17,11 +18,11 @@ export const DEMARCHES_CONSTRUCTION_FIELDS: DemarchesFieldNames<ProjetFormData, 
   piecesJustificatives: PROJET_FIELD.PIECES_JUSTIFICATIVES,
 };
 
-/** Les démarches de construction du projet : `useDemarches`, relié au formulaire « Mon projet ». */
-export function useDemarchesConstruction(
+/** Comment les démarches lisent et écrivent le formulaire « Mon projet », pour `useDemarches` et « Mes documents ». */
+export function createDemarchesConstructionBinding(
   form: UseFormReturn<ProjetFormData>,
-): UseDemarchesResult<TypeDemarche> {
-  return useDemarches(form, {
+): DemarchesBinding<ProjetFormData, TypeDemarche> {
+  return {
     fields: DEMARCHES_CONSTRUCTION_FIELDS,
     readAnswer: (values) => values.demarcheConstruction,
     setAnswer: (answer, options) =>
@@ -36,5 +37,12 @@ export function useDemarchesConstruction(
     },
     setHasCurrentDemarche: (hasCurrentDemarche) =>
       form.setValue(PROJET_FIELD.HAS_CURRENT_DEMARCHE, hasCurrentDemarche),
-  });
+  };
+}
+
+/** Les démarches de construction du projet : `useDemarches`, relié au formulaire « Mon projet ». */
+export function useDemarchesConstruction(
+  form: UseFormReturn<ProjetFormData>,
+): UseDemarchesResult<TypeDemarche> {
+  return useDemarches(form, createDemarchesConstructionBinding(form));
 }
