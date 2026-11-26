@@ -7,6 +7,8 @@ import {
   findFormatFichier,
   formatAddAnnouncement,
   formatPieceDetails,
+  formatRemovalNotice,
+  formatRemovalQuestion,
   formatRemoveAnnouncement,
   formatSize,
   FORMATS_PIECE_JUSTIFICATIVE_LABEL,
@@ -155,6 +157,15 @@ describe("annonces", () => {
 
   it("nomme la pièce retirée", () => {
     expect(formatRemoveAnnouncement("a.pdf")).toBe("a.pdf retiré.");
+  });
+});
+
+describe("confirmation de suppression", () => {
+  it("demande s'il faut supprimer le fichier, puis dit quel autre volet le perd aussi", () => {
+    expect(formatRemovalQuestion("a.pdf")).toBe("Supprimer a.pdf\u00a0?");
+    expect(formatRemovalNotice("Mon futur métier")).toBe(
+      "Il sera aussi retiré de «\u00a0Mon futur métier\u00a0».",
+    );
   });
 });
 

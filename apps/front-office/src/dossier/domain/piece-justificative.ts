@@ -169,3 +169,8 @@ export function formatRemoveAnnouncement(name: string): string {
 export function formatRemovalQuestion(name: string): string {
   return `Supprimer ${name}\u00a0?`;
 }
+
+/** Sous la question, quand la pièce vit aussi dans un autre volet : « Il sera aussi retiré de « Mon projet ». » */
+export function formatRemovalNotice(voletLabel: string): string {
+  return `Il sera aussi retiré de «\u00a0${voletLabel}\u00a0».`;
+}

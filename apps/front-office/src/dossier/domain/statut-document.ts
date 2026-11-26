@@ -8,8 +8,8 @@ export const STATUT_DOCUMENT = {
 /** Un statut de document, parmi ceux de `STATUT_DOCUMENT`. */
 export type StatutDocument = (typeof STATUT_DOCUMENT)[keyof typeof STATUT_DOCUMENT];
 
-/** Déposé dès sa première pièce ; sans pièce, à déposer s'il est obligatoire, facultatif sinon. */
+/** Un document facultatif le reste, avec ou sans pièce ; un obligatoire est déposé dès sa première pièce. */
 export function getStatutDocument(isRequired: boolean, pieceCount: number): StatutDocument {
-  if (pieceCount > 0) return STATUT_DOCUMENT.DEPOSE;
-  return isRequired ? STATUT_DOCUMENT.A_DEPOSER : STATUT_DOCUMENT.FACULTATIF;
+  if (!isRequired) return STATUT_DOCUMENT.FACULTATIF;
+  return pieceCount > 0 ? STATUT_DOCUMENT.DEPOSE : STATUT_DOCUMENT.A_DEPOSER;
 }
