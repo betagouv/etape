@@ -57,10 +57,10 @@ export function canPreviewFichier(name: string): boolean {
 }
 
 /** La taille telle qu'elle s'affiche : « 1,2 Mo », ou en Ko en dessous de 1 Mo. */
-export function formatSize(octets: number): string {
-  if (octets >= BYTES_PER_MB) return `${SIZE_FORMAT.format(octets / BYTES_PER_MB)} Mo`;
+export function formatSize(bytes: number): string {
+  if (bytes >= BYTES_PER_MB) return `${SIZE_FORMAT.format(bytes / BYTES_PER_MB)} Mo`;
   // Arrondi au Ko supérieur : un fichier non vide ne s'affiche pas « 0 Ko ».
-  return `${Math.ceil(octets / BYTES_PER_KB)} Ko`;
+  return `${Math.ceil(bytes / BYTES_PER_KB)} Ko`;
 }
 
 /** Sous le nom d'une pièce déposée : « PDF · 1,2 Mo · Déposé le 24/09/2026 ». */
@@ -99,8 +99,8 @@ export interface CheckedFichiers {
  * La taille d'un fichier trop lourd, arrondie au dixième de Mo supérieur : à peine au-dessus
  * du maximum, il s'afficherait sinon « 10 Mo, au-delà de la taille maximale de 10 Mo ».
  */
-function formatOversize(octets: number): string {
-  const tenths = Math.ceil((octets / BYTES_PER_MB) * TENTHS);
+function formatOversize(bytes: number): string {
+  const tenths = Math.ceil((bytes / BYTES_PER_MB) * TENTHS);
   return `${SIZE_FORMAT.format(tenths / TENTHS)} Mo`;
 }
 

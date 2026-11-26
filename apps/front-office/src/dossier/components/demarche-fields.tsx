@@ -9,8 +9,8 @@ import { useFocusLeave } from "@etape/ui/hooks/use-focus-leave";
 
 import {
   DEMARCHE_FIELD_LABEL,
+  isPrecisionRequired,
   PIECES_DEMARCHE_DESCRIPTION,
-  TYPE_DEMARCHE_AUTRE,
 } from "../domain/demarche";
 import { LONGUEUR_MAX_TEXTE } from "../domain/longueur-max-texte";
 import type { DemarchesFieldNames } from "../hooks/use-demarches";
@@ -74,7 +74,7 @@ export function DemarcheFields<TFieldValues extends FieldValues, TType extends s
           options={typeLabels}
         />
 
-        {typeDemarche === TYPE_DEMARCHE_AUTRE && (
+        {isPrecisionRequired(typeDemarche) && (
           <FormField
             name={fields.precisionTypeDemarche}
             control={control}

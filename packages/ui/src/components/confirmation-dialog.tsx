@@ -32,8 +32,8 @@ interface ConfirmationDialogConfirm {
   onClick: () => void;
   /** Devant le libellé : une icône de 20 px, masquée aux lecteurs d'écran. */
   icon?: React.ReactNode;
-  /** Vrai pour une action qui détruit : le bouton passe en rouge clair (`Destructive=Yes` du kit). */
-  isDestructive?: boolean;
+  /** `destructive` pour une action qui détruit : le bouton passe en rouge clair (`Destructive=Yes` du kit). */
+  variant?: React.ComponentProps<typeof AlertDialogAction>["variant"];
 }
 
 /** Ce que reçoit `ConfirmationDialog` : son ouverture, ses textes, ses deux boutons et, en enfants, son contenu. */
@@ -91,7 +91,7 @@ function ConfirmationDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>{cancel.label}</AlertDialogCancel>
           <AlertDialogAction
-            variant={confirm.isDestructive ? "destructive" : "default"}
+            variant={confirm.variant}
             onClick={() => {
               isConfirmed.current = true;
               confirm.onClick();
