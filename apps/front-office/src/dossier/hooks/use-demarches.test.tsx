@@ -289,6 +289,7 @@ describe("useDemarches", () => {
     expect(result.current.removal).toEqual({
       items: [{ demarche: demarches[1], index: 1 }],
       isAnswerNon: false,
+      isCurrentDemarcheRemoved: false,
     });
 
     act(() => result.current.cancelRemoval());
@@ -359,12 +360,41 @@ describe("useDemarches", () => {
         { demarche: demarches[1], index: 1 },
       ],
       isAnswerNon: true,
+      isCurrentDemarcheRemoved: false,
     });
 
     act(() => result.current.cancelRemoval());
     expect(result.current.isRemovalOpen).toBe(false);
     expect(result.current.form.getValues(FIELD.ANSWER)).toBe(OUI_NON.OUI);
     expect(result.current.demarches).toEqual(demarches);
+  });
+
+  it("prévient qu'un « non » emporte aussi une saisie commencée, puis la supprime avec les démarches", () => {
+    const result = renderDemarches({ demarches: createDemarches(1), ...IMMERSION });
+
+    answer(result, OUI_NON.NON);
+    expect(result.current.removal?.isCurrentDemarcheRemoved).toBe(true);
+
+    act(() => result.current.confirmRemoval());
+    expect(result.current.form.getValues()).toMatchObject({
+      demarches: [],
+      typeDemarche: undefined,
+      apportDemarche: "",
+    });
+  });
+
+  it("ne prévient pas pour une carte de saisie ouverte mais vide, ni pour une modification en cours", () => {
+    const [salon] = createDemarches(1);
+    const result = renderDemarches({ demarches: [salon] });
+
+    answer(result, OUI_NON.NON);
+    expect(result.current.removal?.isCurrentDemarcheRemoved).toBe(false);
+
+    act(() => result.current.cancelRemoval());
+    act(() => result.current.cancelDemarche());
+    act(() => result.current.editDemarche(salon));
+    answer(result, OUI_NON.NON);
+    expect(result.current.removal?.isCurrentDemarcheRemoved).toBe(false);
   });
 
   it("supprime toutes les démarches quand le « non » est confirmé, et repart d'une saisie vide", () => {
