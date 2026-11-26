@@ -113,6 +113,13 @@ export function isDemarcheFilled(values: Pick<CurrentDemarche, DemarcheFieldName
   return listFilledFields(values, fields).length === fields.length;
 }
 
+/** Vrai dès que la saisie en cours porte quelque chose à perdre : un champ rempli ou un justificatif. */
+export function isDemarcheStarted(current: CurrentDemarche): boolean {
+  return (
+    listFilledFields(current, DEMARCHE_FIELDS).length > 0 || current.piecesJustificatives.length > 0
+  );
+}
+
 /**
  * La démarche validée à partir de la saisie en cours ; rien tant qu'aucun type n'est choisi.
  * La précision ne se garde que pour « Autre » : celle d'un type quitté ne suit pas.
@@ -194,9 +201,17 @@ export function formatRemovalTitle(demarcheCount: number): string {
   return selectPlural(demarcheCount, REMOVAL_TITLES);
 }
 
-/** Sous ce titre : ce que la suppression emporte. */
-export function formatRemovalMessage(demarcheCount: number): string {
-  return `En cliquant sur «\u00a0Supprimer\u00a0», ${selectPlural(demarcheCount, REMOVAL_SUBJECTS)} seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».`;
+/** À la suite du message, quand un « non » emporte aussi une saisie commencée (absent de la maquette 14, à valider par la PO). */
+const CURRENT_DEMARCHE_REMOVAL_MESSAGE =
+  "La démarche en cours de saisie et ses justificatifs seront aussi supprimés.";
+
+/** Sous ce titre : ce que la suppression emporte, démarches validées puis saisie commencée. */
+export function formatRemovalMessage(
+  demarcheCount: number,
+  isCurrentDemarcheRemoved: boolean,
+): string {
+  const message = `En cliquant sur «\u00a0Supprimer\u00a0», ${selectPlural(demarcheCount, REMOVAL_SUBJECTS)} seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».`;
+  return isCurrentDemarcheRemoved ? `${message} ${CURRENT_DEMARCHE_REMOVAL_MESSAGE}` : message;
 }
 
 /** Le nom accessible de la corbeille d'une démarche validée : « Supprimer la démarche 1 ». */

@@ -38,7 +38,7 @@ export function DemarcheRemovalDialog({
       isOpen={isOpen}
       text={{
         title: formatRemovalTitle(items.length),
-        description: formatRemovalMessage(items.length),
+        description: formatRemovalMessage(items.length, removal?.isCurrentDemarcheRemoved ?? false),
       }}
       cancel={{ label: "Annuler", onClick: onCancel }}
       confirm={{

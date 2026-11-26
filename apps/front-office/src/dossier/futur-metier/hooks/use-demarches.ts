@@ -20,6 +20,7 @@ import {
   formatEditCancelAnnouncement,
   formatRemovalAnnouncement,
   isDemarcheFilled,
+  isDemarcheStarted,
   removeDemarche,
   replaceDemarche,
   type Demarche,
@@ -240,7 +241,8 @@ export function useDemarches(form: UseFormReturn<FuturMetierFormData>): UseDemar
     }
     // Le « non » emporterait les démarches validées : la réponse reste « oui » jusqu'à la confirmation.
     form.setValue(ANSWER_FIELD, OUI_NON.OUI);
-    requestAllRemoval();
+    // Une modification porte sur une démarche que la fenêtre liste déjà : seule une nouvelle saisie s'y ajoute.
+    requestAllRemoval(currentDemarcheId === null && isDemarcheStarted(form.getValues()));
   };
 
   const registerEditButton =
