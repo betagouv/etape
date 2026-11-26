@@ -53,11 +53,16 @@ export const DEMARCHE_FIELDS: readonly DemarcheFieldName[] = [
 
 const PRECISION_FIELD: DemarcheFieldName = "precisionTypeDemarche";
 
+/** Vrai pour le type qui se précise en texte libre : « Autre » (maquettes 10 et 11). */
+export function isPrecisionRequired(typeDemarche: TypeDemarche | undefined): boolean {
+  return typeDemarche === TYPE_DEMARCHE.AUTRE;
+}
+
 /** Les champs qu'exige la démarche en cours : la précision n'est demandée que pour « Autre » (maquettes 10 et 11). */
 export function findDemarcheFields(
   typeDemarche: TypeDemarche | undefined,
 ): readonly DemarcheFieldName[] {
-  if (typeDemarche === TYPE_DEMARCHE.AUTRE) return DEMARCHE_FIELDS;
+  if (isPrecisionRequired(typeDemarche)) return DEMARCHE_FIELDS;
   return DEMARCHE_FIELDS.filter((name) => name !== PRECISION_FIELD);
 }
 
@@ -119,7 +124,7 @@ export function findDemarcheIntitule({
   typeDemarche,
   precisionTypeDemarche,
 }: Pick<Demarche, "typeDemarche" | "precisionTypeDemarche">): string {
-  return typeDemarche === TYPE_DEMARCHE.AUTRE
+  return isPrecisionRequired(typeDemarche)
     ? precisionTypeDemarche
     : TYPE_DEMARCHE_LABEL[typeDemarche];
 }
@@ -128,6 +133,13 @@ export function findDemarcheIntitule({
 export function isDemarcheFilled(values: Pick<CurrentDemarche, DemarcheFieldName>): boolean {
   const fields = findDemarcheFields(values.typeDemarche);
   return listFilledFields(values, fields).length === fields.length;
+}
+
+/** Vrai dès que la saisie en cours porte quelque chose à perdre : un champ rempli ou un justificatif. */
+export function isDemarcheStarted(current: CurrentDemarche): boolean {
+  return (
+    listFilledFields(current, DEMARCHE_FIELDS).length > 0 || current.piecesJustificatives.length > 0
+  );
 }
 
 /**
@@ -140,7 +152,7 @@ export function createDemarche(id: string, current: CurrentDemarche): Demarche |
   return {
     id,
     typeDemarche,
-    precisionTypeDemarche: typeDemarche === TYPE_DEMARCHE.AUTRE ? precisionTypeDemarche.trim() : "",
+    precisionTypeDemarche: isPrecisionRequired(typeDemarche) ? precisionTypeDemarche.trim() : "",
     apportDemarche: apportDemarche.trim(),
     piecesJustificatives,
   };
@@ -211,9 +223,17 @@ export function formatRemovalTitle(demarcheCount: number): string {
   return selectPlural(demarcheCount, REMOVAL_TITLES);
 }
 
-/** Sous ce titre : ce que la suppression emporte. */
-export function formatRemovalMessage(demarcheCount: number): string {
-  return `En cliquant sur «\u00a0Supprimer\u00a0», ${selectPlural(demarcheCount, REMOVAL_SUBJECTS)} seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».`;
+/** À la suite du message, quand un « non » emporte aussi une saisie commencée (absent de la maquette 14, à valider par la PO). */
+const CURRENT_DEMARCHE_REMOVAL_MESSAGE =
+  "La démarche en cours de saisie et ses justificatifs seront aussi supprimés.";
+
+/** Sous ce titre : ce que la suppression emporte, démarches validées puis saisie commencée. */
+export function formatRemovalMessage(
+  demarcheCount: number,
+  isCurrentDemarcheRemoved: boolean,
+): string {
+  const message = `En cliquant sur «\u00a0Supprimer\u00a0», ${selectPlural(demarcheCount, REMOVAL_SUBJECTS)} seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».`;
+  return isCurrentDemarcheRemoved ? `${message} ${CURRENT_DEMARCHE_REMOVAL_MESSAGE}` : message;
 }
 
 /** Le nom accessible de la corbeille d'une démarche validée : « Supprimer la démarche 1 ». */
