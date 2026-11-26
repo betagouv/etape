@@ -30,10 +30,7 @@ export function createDemarchesDecouverteBinding(
     setDemarches: (demarches) => form.setValue(FUTUR_METIER_FIELD.DEMARCHES, demarches),
     setCurrentDemarche: (current, demarcheId) => {
       form.setValue(FUTUR_METIER_FIELD.CURRENT_DEMARCHE_ID, demarcheId);
-      form.setValue(FUTUR_METIER_FIELD.TYPE_DEMARCHE, current.typeDemarche);
-      form.setValue(FUTUR_METIER_FIELD.PRECISION_TYPE_DEMARCHE, current.precisionTypeDemarche);
-      form.setValue(FUTUR_METIER_FIELD.APPORT_DEMARCHE, current.apportDemarche);
-      form.setValue(FUTUR_METIER_FIELD.PIECES_JUSTIFICATIVES, current.piecesJustificatives);
+      form.setValue(FUTUR_METIER_FIELD.CURRENT_DEMARCHE, current);
     },
     setHasCurrentDemarche: (hasCurrentDemarche) =>
       form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, hasCurrentDemarche),

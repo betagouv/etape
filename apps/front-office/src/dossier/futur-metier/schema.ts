@@ -3,10 +3,17 @@ import { z } from "zod";
 
 import {
   currentDemarcheSchema,
+  currentDemarcheStateSchema,
   DEMARCHE_REQUIRED_MESSAGES,
   demarcheSchema,
 } from "../demarche-schema";
-import { DEMARCHE_FIELD_LABEL, findOpenDemarcheFields } from "../domain/demarche";
+import {
+  CURRENT_DEMARCHE_FIELD,
+  CURRENT_DEMARCHE_FIELD_LABEL,
+  CURRENT_DEMARCHE_PATH,
+  findOpenDemarcheFields,
+  type CurrentDemarchePath,
+} from "../domain/demarche";
 import { ENTRY_MODE, type EntryMode } from "../domain/entry-mode";
 import { findFieldsAfterOui, OUI_NON } from "../domain/oui-non";
 import { requireFilled } from "../domain/require-filled";
@@ -63,8 +70,11 @@ const baseFuturMetierSchema = z.object({
     "Veuillez indiquer si vous avez entrepris des démarches pour découvrir ce métier.",
   ),
   // La démarche en cours de saisie : ses champs ne sont exigés qu'après un « oui ».
-  typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
-  ...currentDemarcheSchema.shape,
+  currentDemarche: z.object({
+    typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
+    ...currentDemarcheSchema.shape,
+  }),
+  ...currentDemarcheStateSchema.shape,
   // Les démarches validées, contrôlées à leur validation (`createDemarche`).
   demarches: z.array(demarcheSchema.extend({ typeDemarche: z.enum(TYPE_DEMARCHE) })),
   zoneRechercheEmploi: z
@@ -91,11 +101,14 @@ const refinedFieldsSchema = baseFuturMetierSchema
     metierVise: true,
     intituleMetierVise: true,
     codeRome: true,
-    typeDemarche: true,
-    precisionTypeDemarche: true,
     hasCurrentDemarche: true,
   })
-  .extend({ apportDemarche: z.string(), entreprisesContactees: z.string() });
+  .extend({
+    currentDemarche: baseFuturMetierSchema.shape.currentDemarche
+      .pick({ typeDemarche: true, precisionTypeDemarche: true })
+      .extend({ apportDemarche: z.string() }),
+    entreprisesContactees: z.string(),
+  });
 
 /**
  * Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours, ceux de
@@ -145,8 +158,8 @@ export const futurMetierSchema = baseFuturMetierSchema.superRefine(
 /** Les valeurs du formulaire « Mon futur métier », telles que le schéma les valide. */
 export type FuturMetierFormData = z.infer<typeof futurMetierSchema>;
 
-/** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
-export type FuturMetierFieldName = keyof FuturMetierFormData;
+/** Nom d'un champ du formulaire, tel que react-hook-form le connaît : un champ de la démarche en cours se nomme par son chemin. */
+export type FuturMetierFieldName = keyof FuturMetierFormData | CurrentDemarchePath;
 
 /** Les noms des champs du volet, pour `setValue`, `useWatch` et les `name` des champs. */
 export const FUTUR_METIER_FIELD = {
@@ -159,10 +172,11 @@ export const FUTUR_METIER_FIELD = {
   CONDITIONS_EMPLOI: "conditionsEmploi",
   DEBOUCHES: "debouches",
   DEMARCHE_DECOUVERTE: "demarcheDecouverte",
-  TYPE_DEMARCHE: "typeDemarche",
-  PRECISION_TYPE_DEMARCHE: "precisionTypeDemarche",
-  APPORT_DEMARCHE: "apportDemarche",
-  PIECES_JUSTIFICATIVES: "piecesJustificatives",
+  CURRENT_DEMARCHE: CURRENT_DEMARCHE_FIELD,
+  TYPE_DEMARCHE: CURRENT_DEMARCHE_PATH.typeDemarche,
+  PRECISION_TYPE_DEMARCHE: CURRENT_DEMARCHE_PATH.precisionTypeDemarche,
+  APPORT_DEMARCHE: CURRENT_DEMARCHE_PATH.apportDemarche,
+  PIECES_JUSTIFICATIVES: CURRENT_DEMARCHE_PATH.piecesJustificatives,
   HAS_CURRENT_DEMARCHE: "hasCurrentDemarche",
   CURRENT_DEMARCHE_ID: "currentDemarcheId",
   DEMARCHES: "demarches",
@@ -176,7 +190,11 @@ export const FUTUR_METIER_FIELD = {
 export const FUTUR_METIER_FIELD_LABEL: Record<
   Exclude<
     FuturMetierFieldName,
-    "metierViseEntryMode" | "hasCurrentDemarche" | "currentDemarcheId" | "demarches"
+    | "metierViseEntryMode"
+    | "currentDemarche"
+    | "hasCurrentDemarche"
+    | "currentDemarcheId"
+    | "demarches"
   >,
   string
 > = {
@@ -188,7 +206,7 @@ export const FUTUR_METIER_FIELD_LABEL: Record<
   conditionsEmploi: "Quelles sont les conditions habituelles d’emploi dans le métier visé ?",
   debouches: "Que savez-vous des débouchés dans ce métier ?",
   demarcheDecouverte: "Avez-vous entrepris des démarches pour découvrir ce métier ?",
-  ...DEMARCHE_FIELD_LABEL,
+  ...CURRENT_DEMARCHE_FIELD_LABEL,
   zoneRechercheEmploi: "Dans quelle zone géographique chercherez-vous un emploi ?",
   demenagement: "Envisagez-vous de déménager pour trouver un emploi ?",
   contactEmployeurs: "Avez-vous déjà des contacts avec des employeurs ?",

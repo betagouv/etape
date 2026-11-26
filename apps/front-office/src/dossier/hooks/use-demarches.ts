@@ -12,6 +12,7 @@ import { formatOptionId } from "@etape/ui/lib/option-id";
 import {
   canAddDemarche,
   canCancelDemarche,
+  createCurrentDemarche,
   createDemarche,
   DEMARCHE_FIELDS,
   EDIT_BLOCKED_MESSAGE,
@@ -134,7 +135,10 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     compute: (values: TFieldValues) => values.currentDemarcheId,
   });
   // Calculé dans l'abonnement : la carte n'est pas re-rendue à chaque frappe.
-  const isCurrentDemarcheFilled = useWatch({ control, compute: isDemarcheFilled });
+  const isCurrentDemarcheFilled = useWatch({
+    control,
+    compute: (values: TFieldValues) => isDemarcheFilled(values.currentDemarche),
+  });
   const { message: announcement, announce } = useAnnouncement();
   const [isHighlighted, setHighlighted] = useState(false);
   const [blockedDemarcheId, setBlockedDemarcheId] = useState<string | null>(null);
@@ -226,7 +230,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     const isValid = await form.trigger(DEMARCHE_FIELDS.map((name) => fields[name]));
     if (!isValid) {
       // Le bouton grisé reste cliquable : il mène au premier champ à remplir, erreur affichée.
-      const invalidField = findDemarcheFields(form.getValues().typeDemarche).find(
+      const invalidField = findDemarcheFields(form.getValues().currentDemarche.typeDemarche).find(
         (name) => form.getFieldState(fields[name]).invalid,
       );
       if (invalidField) form.setFocus(fields[invalidField]);
@@ -234,7 +238,10 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     }
 
     const values = form.getValues();
-    const demarche = createDemarche(values.currentDemarcheId ?? crypto.randomUUID(), values);
+    const demarche = createDemarche(
+      values.currentDemarcheId ?? crypto.randomUUID(),
+      values.currentDemarche,
+    );
     if (demarche === undefined) return;
 
     if (values.currentDemarcheId === null) {
@@ -266,7 +273,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
       return;
     }
     pendingFocus.current = focusTypeField;
-    binding.setCurrentDemarche(demarche, demarche.id);
+    binding.setCurrentDemarche(createCurrentDemarche(demarche), demarche.id);
     binding.setHasCurrentDemarche(true);
     announce("");
   };
@@ -291,7 +298,9 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     // Le « non » emporterait les démarches validées : la réponse reste « oui » jusqu'à la confirmation.
     binding.setAnswer(OUI_NON.OUI);
     // Une modification porte sur une démarche que la fenêtre liste déjà : seule une nouvelle saisie s'y ajoute.
-    requestAllRemoval(currentDemarcheId === null && isDemarcheStarted(form.getValues()));
+    requestAllRemoval(
+      currentDemarcheId === null && isDemarcheStarted(form.getValues().currentDemarche),
+    );
   };
 
   return {

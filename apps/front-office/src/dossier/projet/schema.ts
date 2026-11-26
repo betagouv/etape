@@ -2,10 +2,17 @@ import { z } from "zod";
 
 import {
   currentDemarcheSchema,
+  currentDemarcheStateSchema,
   DEMARCHE_REQUIRED_MESSAGES,
   demarcheSchema,
 } from "../demarche-schema";
-import { DEMARCHE_FIELD_LABEL, findOpenDemarcheFields } from "../domain/demarche";
+import {
+  CURRENT_DEMARCHE_FIELD,
+  CURRENT_DEMARCHE_FIELD_LABEL,
+  CURRENT_DEMARCHE_PATH,
+  findOpenDemarcheFields,
+  type CurrentDemarchePath,
+} from "../domain/demarche";
 import { OUI_NON } from "../domain/oui-non";
 import { requireFilled } from "../domain/require-filled";
 import { LONGUEUR_MAX_TEXTE, LONGUEUR_MAX_TEXTE_MESSAGE } from "../domain/longueur-max-texte";
@@ -40,8 +47,11 @@ const baseProjetSchema = z.object({
     "Veuillez indiquer si vous avez réalisé une démarche pour construire votre projet.",
   ),
   // La démarche en cours de saisie : ses champs ne sont exigés qu'après un « oui ».
-  typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
-  ...currentDemarcheSchema.shape,
+  currentDemarche: z.object({
+    typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
+    ...currentDemarcheSchema.shape,
+  }),
+  ...currentDemarcheStateSchema.shape,
   // Les démarches validées, contrôlées à leur validation (`createDemarche`).
   demarches: z.array(demarcheSchema.extend({ typeDemarche: z.enum(TYPE_DEMARCHE) })),
 });
@@ -50,9 +60,11 @@ const baseProjetSchema = z.object({
  * Les champs que lit le contrôle de la démarche en cours : il ne s'exécute que s'ils ont le bon
  * type. L'apport n'y garde que son type : trop long, il couperait sinon le contrôle du type.
  */
-const refinedFieldsSchema = baseProjetSchema
-  .pick({ typeDemarche: true, precisionTypeDemarche: true, hasCurrentDemarche: true })
-  .extend({ apportDemarche: z.string() });
+const refinedFieldsSchema = baseProjetSchema.pick({ hasCurrentDemarche: true }).extend({
+  currentDemarche: baseProjetSchema.shape.currentDemarche
+    .pick({ typeDemarche: true, precisionTypeDemarche: true })
+    .extend({ apportDemarche: z.string() }),
+});
 
 /**
  * Le schéma du formulaire « Mon projet » ; les champs de la démarche en cours de saisie ne sont
@@ -77,8 +89,8 @@ export const projetSchema = baseProjetSchema.superRefine(
 /** Les valeurs du formulaire « Mon projet », telles que le schéma les valide. */
 export type ProjetFormData = z.infer<typeof projetSchema>;
 
-/** Nom d'un champ du formulaire, tel que react-hook-form le connaît. */
-export type ProjetFieldName = keyof ProjetFormData;
+/** Nom d'un champ du formulaire, tel que react-hook-form le connaît : un champ de la démarche en cours se nomme par son chemin. */
+export type ProjetFieldName = keyof ProjetFormData | CurrentDemarchePath;
 
 /** Les noms des champs du volet, pour `setValue`, `useWatch` et les `name` des champs. */
 export const PROJET_FIELD = {
@@ -87,10 +99,11 @@ export const PROJET_FIELD = {
   COMPETENCES_ACQUISES: "competencesAcquises",
   COMPETENCES_A_ACQUERIR: "competencesAAcquerir",
   DEMARCHE_CONSTRUCTION: "demarcheConstruction",
-  TYPE_DEMARCHE: "typeDemarche",
-  PRECISION_TYPE_DEMARCHE: "precisionTypeDemarche",
-  APPORT_DEMARCHE: "apportDemarche",
-  PIECES_JUSTIFICATIVES: "piecesJustificatives",
+  CURRENT_DEMARCHE: CURRENT_DEMARCHE_FIELD,
+  TYPE_DEMARCHE: CURRENT_DEMARCHE_PATH.typeDemarche,
+  PRECISION_TYPE_DEMARCHE: CURRENT_DEMARCHE_PATH.precisionTypeDemarche,
+  APPORT_DEMARCHE: CURRENT_DEMARCHE_PATH.apportDemarche,
+  PIECES_JUSTIFICATIVES: CURRENT_DEMARCHE_PATH.piecesJustificatives,
   HAS_CURRENT_DEMARCHE: "hasCurrentDemarche",
   CURRENT_DEMARCHE_ID: "currentDemarcheId",
   DEMARCHES: "demarches",
@@ -98,7 +111,10 @@ export const PROJET_FIELD = {
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
 export const PROJET_FIELD_LABEL: Record<
-  Exclude<ProjetFieldName, "hasCurrentDemarche" | "currentDemarcheId" | "demarches">,
+  Exclude<
+    ProjetFieldName,
+    "currentDemarche" | "hasCurrentDemarche" | "currentDemarcheId" | "demarches"
+  >,
   string
 > = {
   motivationChangement: "Pourquoi souhaitez-vous changer de métier ?",
@@ -108,7 +124,7 @@ export const PROJET_FIELD_LABEL: Record<
   competencesAAcquerir: "Quelles compétences vous reste-t-il à acquérir ?",
   demarcheConstruction:
     "Avez-vous réalisé un bilan de compétences, un bilan de carrière, une VAE ou une autre prestation pour construire votre projet ?",
-  ...DEMARCHE_FIELD_LABEL,
+  ...CURRENT_DEMARCHE_FIELD_LABEL,
 };
 
 /** Les sections du volet qui portent un compteur. */

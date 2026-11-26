@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   canAddDemarche,
   canCancelDemarche,
+  createCurrentDemarche,
   createDemarche,
   DEMARCHE_FIELDS,
   EMPTY_CURRENT_DEMARCHE,
@@ -84,7 +85,7 @@ describe("findDemarcheFields", () => {
 
 describe("findOpenDemarcheFields", () => {
   /** La carte de saisie est ouverte, aucun type n'est choisi. */
-  const OPEN = { hasCurrentDemarche: true };
+  const OPEN = { currentDemarche: {}, hasCurrentDemarche: true };
 
   it("n'exige rien tant que la question n'a pas de réponse", () => {
     expect(findOpenDemarcheFields(undefined, OPEN)).toEqual([]);
@@ -92,22 +93,35 @@ describe("findOpenDemarcheFields", () => {
 
   it("n'exige rien après un « non », même si un type reste saisi", () => {
     expect(
-      findOpenDemarcheFields(OUI_NON.NON, { ...OPEN, typeDemarche: TYPE_DEMARCHE.AUTRE }),
+      findOpenDemarcheFields(OUI_NON.NON, {
+        ...OPEN,
+        currentDemarche: { typeDemarche: TYPE_DEMARCHE.AUTRE },
+      }),
     ).toEqual([]);
   });
 
-  it("exige le type et l'apport après un « oui », carte de saisie ouverte", () => {
-    expect(findOpenDemarcheFields(OUI_NON.OUI, OPEN)).toEqual(["typeDemarche", "apportDemarche"]);
+  it("exige le type et l'apport après un « oui », carte de saisie ouverte, par leur chemin dans le formulaire", () => {
+    expect(findOpenDemarcheFields(OUI_NON.OUI, OPEN)).toEqual([
+      "currentDemarche.typeDemarche",
+      "currentDemarche.apportDemarche",
+    ]);
   });
 
   it("exige aussi la précision pour « Autre »", () => {
     expect(
-      findOpenDemarcheFields(OUI_NON.OUI, { ...OPEN, typeDemarche: TYPE_DEMARCHE.AUTRE }),
-    ).toEqual(DEMARCHE_FIELDS);
+      findOpenDemarcheFields(OUI_NON.OUI, {
+        ...OPEN,
+        currentDemarche: { typeDemarche: TYPE_DEMARCHE.AUTRE },
+      }),
+    ).toEqual([
+      "currentDemarche.typeDemarche",
+      "currentDemarche.precisionTypeDemarche",
+      "currentDemarche.apportDemarche",
+    ]);
   });
 
   it("n'exige plus rien une fois la carte de saisie fermée", () => {
-    expect(findOpenDemarcheFields(OUI_NON.OUI, { hasCurrentDemarche: false })).toEqual([]);
+    expect(findOpenDemarcheFields(OUI_NON.OUI, { ...OPEN, hasCurrentDemarche: false })).toEqual([]);
   });
 });
 
@@ -171,6 +185,15 @@ describe("isDemarcheStarted", () => {
     expect(isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, piecesJustificatives: [piece] })).toBe(
       true,
     );
+  });
+});
+
+describe("createCurrentDemarche", () => {
+  it("rouvre une démarche validée en saisie, sans son `id`", () => {
+    const demarche = { ...IMMERSION, id: "a", typeDemarche: TYPE_DEMARCHE.IMMERSION };
+
+    expect(createCurrentDemarche(demarche)).toEqual(IMMERSION);
+    expect(createCurrentDemarche(demarche)).not.toHaveProperty("id");
   });
 });
 

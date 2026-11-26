@@ -17,8 +17,28 @@ export const PIECES_AUTRE_DESCRIPTION =
 /** L'aide du dépôt des justificatifs d'une démarche (maquette 10, formats et taille transmis le 2026-11-18). */
 export const PIECES_DEMARCHE_DESCRIPTION = `Attestation, compte-rendu ou tout autre document qui atteste cette démarche. Vous les retrouverez aussi dans «\u00a0Mes documents\u00a0». Formats acceptés : ${FORMATS_PIECE_JUSTIFICATIVE_LABEL}, ${TAILLE_MAX_PIECE_MO} Mo maximum par fichier.`;
 
-/** Nom d'un champ de la démarche en cours de saisie. */
+/** Le champ objet du formulaire d'un volet qui porte la démarche en cours de saisie. */
+export const CURRENT_DEMARCHE_FIELD = "currentDemarche";
+
+/** Le chemin d'un champ de la saisie en cours dans le formulaire du volet. */
+export type CurrentDemarchePath<TName extends keyof CurrentDemarche = keyof CurrentDemarche> =
+  `${typeof CURRENT_DEMARCHE_FIELD}.${TName}`;
+
+/** Le chemin de chaque champ de la saisie en cours : le nom du champ, son `id` et la clé de son libellé. */
+export const CURRENT_DEMARCHE_PATH: {
+  [TName in keyof CurrentDemarche]-?: CurrentDemarchePath<TName>;
+} = {
+  typeDemarche: "currentDemarche.typeDemarche",
+  precisionTypeDemarche: "currentDemarche.precisionTypeDemarche",
+  apportDemarche: "currentDemarche.apportDemarche",
+  piecesJustificatives: "currentDemarche.piecesJustificatives",
+};
+
+/** Nom d'un champ exigé de la démarche en cours de saisie, dans son objet. */
 export type DemarcheFieldName = "typeDemarche" | "precisionTypeDemarche" | "apportDemarche";
+
+/** Le chemin d'un de ces champs dans le formulaire du volet : ce que ses compteurs et son schéma lisent. */
+export type DemarcheFieldPath = CurrentDemarchePath<DemarcheFieldName>;
 
 /** Tous les champs de la démarche en cours de saisie, dans l'ordre de la page. */
 export const DEMARCHE_FIELDS: readonly DemarcheFieldName[] = [
@@ -27,12 +47,20 @@ export const DEMARCHE_FIELDS: readonly DemarcheFieldName[] = [
   "apportDemarche",
 ];
 
-/** Libellés des champs de la démarche en cours de saisie, repris par ceux de chaque volet. */
-export const DEMARCHE_FIELD_LABEL: Record<DemarcheFieldName | "piecesJustificatives", string> = {
+/** Libellés des champs de la démarche en cours de saisie. */
+export const DEMARCHE_FIELD_LABEL: Record<keyof CurrentDemarche, string> = {
   typeDemarche: "Type de démarche",
   precisionTypeDemarche: "Précisez le type de démarche",
   apportDemarche: "Ce que la démarche vous a apporté",
   piecesJustificatives: "Justificatifs",
+};
+
+/** Les mêmes libellés par le chemin du champ, repris par ceux de chaque volet. */
+export const CURRENT_DEMARCHE_FIELD_LABEL: Record<CurrentDemarchePath, string> = {
+  [CURRENT_DEMARCHE_PATH.typeDemarche]: DEMARCHE_FIELD_LABEL.typeDemarche,
+  [CURRENT_DEMARCHE_PATH.precisionTypeDemarche]: DEMARCHE_FIELD_LABEL.precisionTypeDemarche,
+  [CURRENT_DEMARCHE_PATH.apportDemarche]: DEMARCHE_FIELD_LABEL.apportDemarche,
+  [CURRENT_DEMARCHE_PATH.piecesJustificatives]: DEMARCHE_FIELD_LABEL.piecesJustificatives,
 };
 
 const PRECISION_FIELD: DemarcheFieldName = "precisionTypeDemarche";
@@ -50,7 +78,7 @@ export function findDemarcheFields(typeDemarche: string | undefined): readonly D
 
 /** Ce qui, avec la réponse à la question du volet, décide des champs de la démarche en cours de saisie. */
 export interface OpenDemarche {
-  typeDemarche?: string;
+  currentDemarche: Pick<CurrentDemarche, "typeDemarche">;
   /** Vrai tant que la carte de saisie d'une démarche est ouverte. */
   hasCurrentDemarche: boolean;
 }
@@ -58,13 +86,17 @@ export interface OpenDemarche {
 /**
  * Les champs de la démarche en cours de saisie ne sont demandés qu'après un « oui », et tant que
  * sa carte est ouverte : une démarche validée ne compte plus (maquettes 09, 10 et 12). `answer`
- * est absente tant que la question n'a pas de réponse.
+ * est absente tant que la question n'a pas de réponse. Chaque champ est rendu par son chemin
+ * dans le formulaire du volet.
  */
 export function findOpenDemarcheFields(
   answer: OuiNon | undefined,
-  { typeDemarche, hasCurrentDemarche }: OpenDemarche,
-): readonly DemarcheFieldName[] {
-  return isOui(answer) && hasCurrentDemarche ? findDemarcheFields(typeDemarche) : [];
+  { currentDemarche, hasCurrentDemarche }: OpenDemarche,
+): readonly DemarcheFieldPath[] {
+  if (!isOui(answer) || !hasCurrentDemarche) return [];
+  return findDemarcheFields(currentDemarche.typeDemarche).map(
+    (name) => CURRENT_DEMARCHE_PATH[name],
+  );
 }
 
 /** Le nombre de démarches qu'un volet peut porter (décision du 2026-11-20, à revoir). */
@@ -95,7 +127,8 @@ export interface Demarche<TType extends string = string> extends CurrentDemarche
 }
 
 /** Ce que le formulaire d'un volet porte pour ses démarches, en plus de la réponse à sa question. */
-export interface DemarchesValues<TType extends string = string> extends CurrentDemarche<TType> {
+export interface DemarchesValues<TType extends string = string> {
+  currentDemarche: CurrentDemarche<TType>;
   /** Vrai tant que la carte de saisie est ouverte : elle se referme sur chaque démarche validée. */
   hasCurrentDemarche: boolean;
   /** La démarche validée que la saisie modifie ; `null` pour une nouvelle démarche. */
@@ -129,6 +162,16 @@ export function isDemarcheStarted(current: CurrentDemarche): boolean {
   return (
     listFilledFields(current, DEMARCHE_FIELDS).length > 0 || current.piecesJustificatives.length > 0
   );
+}
+
+/** La saisie qui rouvre une démarche validée : ce qu'elle porte, sans son `id`. */
+export function createCurrentDemarche<TType extends string>({
+  typeDemarche,
+  precisionTypeDemarche,
+  apportDemarche,
+  piecesJustificatives,
+}: Demarche<TType>): CurrentDemarche<TType> {
+  return { typeDemarche, precisionTypeDemarche, apportDemarche, piecesJustificatives };
 }
 
 /**

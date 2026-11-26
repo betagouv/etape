@@ -1,19 +1,24 @@
 // @vitest-environment jsdom
 import { zodResolver } from "@hookform/resolvers/zod";
-import { act, cleanup, renderHook } from "@testing-library/react";
-import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
+import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import { Controller, useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import {
   currentDemarcheSchema,
+  currentDemarcheStateSchema,
   DEMARCHE_REQUIRED_MESSAGES,
   demarcheSchema,
 } from "../demarche-schema";
 import {
+  CURRENT_DEMARCHE_FIELD,
+  CURRENT_DEMARCHE_PATH,
+  EMPTY_CURRENT_DEMARCHE,
   findOpenDemarcheFields,
   NOMBRE_MAX_DEMARCHES,
   TYPE_DEMARCHE_AUTRE,
+  type CurrentDemarchePath,
   type Demarche,
 } from "../domain/demarche";
 import { OUI_NON } from "../domain/oui-non";
@@ -49,8 +54,11 @@ const schema = z
   .object({
     answer: z.enum(OUI_NON).optional(),
     autreChamp: z.string(),
-    typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
-    ...currentDemarcheSchema.shape,
+    currentDemarche: z.object({
+      typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
+      ...currentDemarcheSchema.shape,
+    }),
+    ...currentDemarcheStateSchema.shape,
     demarches: z.array(demarcheSchema.extend({ typeDemarche: z.enum(TYPE_DEMARCHE) })),
   })
   .superRefine((data, ctx) => {
@@ -62,14 +70,15 @@ type FormData = z.infer<typeof schema>;
 
 const FIELD = {
   ANSWER: "answer",
-  TYPE_DEMARCHE: "typeDemarche",
-  PRECISION_TYPE_DEMARCHE: "precisionTypeDemarche",
-  APPORT_DEMARCHE: "apportDemarche",
-  PIECES_JUSTIFICATIVES: "piecesJustificatives",
+  CURRENT_DEMARCHE: CURRENT_DEMARCHE_FIELD,
+  TYPE_DEMARCHE: CURRENT_DEMARCHE_PATH.typeDemarche,
+  PRECISION_TYPE_DEMARCHE: CURRENT_DEMARCHE_PATH.precisionTypeDemarche,
+  APPORT_DEMARCHE: CURRENT_DEMARCHE_PATH.apportDemarche,
+  PIECES_JUSTIFICATIVES: CURRENT_DEMARCHE_PATH.piecesJustificatives,
   HAS_CURRENT_DEMARCHE: "hasCurrentDemarche",
   CURRENT_DEMARCHE_ID: "currentDemarcheId",
   DEMARCHES: "demarches",
-} as const satisfies Record<string, keyof FormData>;
+} as const satisfies Record<string, keyof FormData | CurrentDemarchePath>;
 
 const FIELDS: DemarchesFieldNames<FormData, TypeDemarche> = {
   answer: FIELD.ANSWER,
@@ -92,10 +101,12 @@ function useVoletDemarches(): Result {
     defaultValues: {
       answer: undefined,
       autreChamp: "",
-      typeDemarche: undefined,
-      precisionTypeDemarche: "",
-      apportDemarche: "",
-      piecesJustificatives: [],
+      currentDemarche: {
+        typeDemarche: undefined,
+        precisionTypeDemarche: "",
+        apportDemarche: "",
+        piecesJustificatives: [],
+      },
       hasCurrentDemarche: true,
       currentDemarcheId: null,
       demarches: [],
@@ -108,10 +119,7 @@ function useVoletDemarches(): Result {
     setDemarches: (nextDemarches) => form.setValue(FIELD.DEMARCHES, nextDemarches),
     setCurrentDemarche: (current, demarcheId) => {
       form.setValue(FIELD.CURRENT_DEMARCHE_ID, demarcheId);
-      form.setValue(FIELD.TYPE_DEMARCHE, current.typeDemarche);
-      form.setValue(FIELD.PRECISION_TYPE_DEMARCHE, current.precisionTypeDemarche);
-      form.setValue(FIELD.APPORT_DEMARCHE, current.apportDemarche);
-      form.setValue(FIELD.PIECES_JUSTIFICATIVES, current.piecesJustificatives);
+      form.setValue(FIELD.CURRENT_DEMARCHE, current);
     },
     setHasCurrentDemarche: (hasCurrentDemarche) =>
       form.setValue(FIELD.HAS_CURRENT_DEMARCHE, hasCurrentDemarche),
@@ -131,8 +139,11 @@ function renderDemarches(values: Partial<FormData> = {}): { current: Result } {
 }
 
 const IMMERSION: Partial<FormData> = {
-  typeDemarche: TYPE_DEMARCHE.IMMERSION,
-  apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+  currentDemarche: {
+    ...EMPTY_CURRENT_DEMARCHE,
+    typeDemarche: TYPE_DEMARCHE.IMMERSION,
+    apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+  },
 };
 
 function createDemarches(count: number): Demarche<TypeDemarche>[] {
@@ -145,6 +156,51 @@ function createDemarches(count: number): Demarche<TypeDemarche>[] {
   }));
 }
 
+/** Deux champs de la saisie, branchés comme `FormField` : par `Controller`, et deux actions du hook. */
+function CurrentDemarcheFields({ demarche }: { demarche: Demarche<TypeDemarche> }) {
+  const { form, editDemarche, cancelDemarche } = useVoletDemarches();
+  return (
+    <>
+      <Controller
+        control={form.control}
+        name={FIELD.TYPE_DEMARCHE}
+        render={({ field }) => <input aria-label="Type" {...field} value={field.value ?? ""} />}
+      />
+      <Controller
+        control={form.control}
+        name={FIELD.APPORT_DEMARCHE}
+        render={({ field }) => <textarea aria-label="Apport" {...field} />}
+      />
+      <button type="button" onClick={() => editDemarche(demarche)}>
+        Modifier
+      </button>
+      <button type="button" onClick={cancelDemarche}>
+        Annuler
+      </button>
+    </>
+  );
+}
+
+describe("useDemarches, champs affichés", () => {
+  it("remplit les champs d'une démarche rouverte, puis les vide tous quand la saisie se referme, type compris", () => {
+    const [salon] = createDemarches(1);
+    render(<CurrentDemarcheFields demarche={salon} />);
+    const type = screen.getByLabelText<HTMLInputElement>("Type");
+    const apport = screen.getByLabelText<HTMLTextAreaElement>("Apport");
+    // La carte de départ se referme : une démarche ne se rouvre pas pendant une autre saisie.
+    fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Modifier" }));
+    expect(type.value).toBe(TYPE_DEMARCHE.SALON);
+    expect(apport.value).toBe("J’ai rencontré trois artisans.");
+
+    // La saisie vide n'a pas de clé `typeDemarche` : le champ du type se vide quand même.
+    fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+    expect(type.value).toBe("");
+    expect(apport.value).toBe("");
+  });
+});
+
 describe("useDemarches", () => {
   it("part d'une carte de saisie ouverte, bouton de validation grisé", () => {
     const result = renderDemarches();
@@ -155,13 +211,17 @@ describe("useDemarches", () => {
   });
 
   it("montre ce qui manque quand on valide une saisie incomplète, sans rien ajouter", async () => {
-    const result = renderDemarches({ typeDemarche: TYPE_DEMARCHE.AUTRE });
+    const result = renderDemarches({
+      currentDemarche: { ...EMPTY_CURRENT_DEMARCHE, typeDemarche: TYPE_DEMARCHE.AUTRE },
+    });
 
     await act(() => result.current.validateDemarche());
 
     const { errors } = result.current;
-    expect(errors.precisionTypeDemarche?.message).toBe("Veuillez préciser le type de démarche.");
-    expect(errors.apportDemarche?.message).toBe(
+    expect(errors.currentDemarche?.precisionTypeDemarche?.message).toBe(
+      "Veuillez préciser le type de démarche.",
+    );
+    expect(errors.currentDemarche?.apportDemarche?.message).toBe(
       "Veuillez indiquer ce que la démarche vous a apporté.",
     );
     // Les autres champs du volet, vides eux aussi, ne sont pas signalés par ce bouton.
@@ -183,12 +243,7 @@ describe("useDemarches", () => {
     });
     expect(result.current.hasCurrentDemarche).toBe(false);
     expect(result.current.announcement).toBe("Démarche 1 enregistrée.");
-    expect(result.current.form.getValues()).toMatchObject({
-      typeDemarche: undefined,
-      precisionTypeDemarche: "",
-      apportDemarche: "",
-      piecesJustificatives: [],
-    });
+    expect(result.current.form.getValues(FIELD.CURRENT_DEMARCHE)).toEqual(EMPTY_CURRENT_DEMARCHE);
   });
 
   it("fait ressortir la carte d'une démarche de plus, jusqu'à ce que le focus la quitte", async () => {
@@ -211,7 +266,7 @@ describe("useDemarches", () => {
     act(() => result.current.addDemarche());
     act(() => result.current.form.setValue(FIELD.TYPE_DEMARCHE, TYPE_DEMARCHE.AUTRE));
     await act(() => result.current.validateDemarche());
-    expect(result.current.errors.apportDemarche).toBeDefined();
+    expect(result.current.errors.currentDemarche?.apportDemarche).toBeDefined();
 
     act(() => result.current.cancelDemarche());
 
@@ -220,7 +275,7 @@ describe("useDemarches", () => {
     expect(result.current.isHighlighted).toBe(false);
     expect(result.current.announcement).toBe("Saisie de la démarche 2 annulée.");
     expect(result.current.form.getValues(FIELD.TYPE_DEMARCHE)).toBeUndefined();
-    expect(result.current.errors.apportDemarche).toBeUndefined();
+    expect(result.current.errors.currentDemarche?.apportDemarche).toBeUndefined();
   });
 
   it("rouvre une démarche validée en saisie, préremplie, à son rang", () => {
@@ -234,9 +289,12 @@ describe("useDemarches", () => {
     expect(result.current.currentDemarcheIndex).toBe(0);
     expect(result.current.canCancel).toBe(true);
     expect(result.current.isHighlighted).toBe(false);
-    expect(result.current.form.getValues()).toMatchObject({
+    // Tout ce que porte la démarche, sauf son `id`.
+    expect(result.current.form.getValues(FIELD.CURRENT_DEMARCHE)).toEqual({
       typeDemarche: TYPE_DEMARCHE.SALON,
+      precisionTypeDemarche: "",
       apportDemarche: "J’ai rencontré trois artisans.",
+      piecesJustificatives: [],
     });
   });
 
@@ -422,11 +480,8 @@ describe("useDemarches", () => {
     expect(result.current.removal?.isCurrentDemarcheRemoved).toBe(true);
 
     act(() => result.current.confirmRemoval());
-    expect(result.current.form.getValues()).toMatchObject({
-      demarches: [],
-      typeDemarche: undefined,
-      apportDemarche: "",
-    });
+    expect(result.current.form.getValues(FIELD.DEMARCHES)).toEqual([]);
+    expect(result.current.form.getValues(FIELD.CURRENT_DEMARCHE)).toEqual(EMPTY_CURRENT_DEMARCHE);
   });
 
   it("ne prévient pas pour une carte de saisie ouverte mais vide, ni pour une modification en cours", () => {
@@ -456,9 +511,8 @@ describe("useDemarches", () => {
       demarches: [],
       currentDemarcheId: null,
       hasCurrentDemarche: true,
-      typeDemarche: undefined,
-      apportDemarche: "",
     });
+    expect(result.current.form.getValues(FIELD.CURRENT_DEMARCHE)).toEqual(EMPTY_CURRENT_DEMARCHE);
     expect(result.current.isRemovalOpen).toBe(false);
     expect(result.current.announcement).toBe("Vos démarches ont été supprimées.");
   });
@@ -471,7 +525,7 @@ describe("useDemarches", () => {
     expect(result.current.isRemovalOpen).toBe(false);
     expect(result.current.form.getValues()).toMatchObject({
       answer: OUI_NON.NON,
-      typeDemarche: TYPE_DEMARCHE.IMMERSION,
+      currentDemarche: { typeDemarche: TYPE_DEMARCHE.IMMERSION },
     });
   });
 

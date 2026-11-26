@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { Demarche } from "../../domain/demarche";
+import { EMPTY_CURRENT_DEMARCHE, type CurrentDemarche, type Demarche } from "../../domain/demarche";
 import { OUI_NON } from "../../domain/oui-non";
 import type { UseDemarchesResult } from "../../hooks/use-demarches";
 import { TYPE_DEMARCHE, type TypeDemarche } from "../domain/type-demarche";
@@ -27,7 +27,8 @@ function renderDemarches(values: Partial<ProjetFormData> = {}): { current: Resul
   return result;
 }
 
-const BILAN: Partial<ProjetFormData> = {
+const BILAN: CurrentDemarche<TypeDemarche> = {
+  ...EMPTY_CURRENT_DEMARCHE,
   typeDemarche: TYPE_DEMARCHE.BILAN_COMPETENCES,
   apportDemarche: "J’ai identifié ce qui me motive.",
 };
@@ -43,38 +44,36 @@ const VAE: Demarche<TypeDemarche> = {
 // Le comportement des démarches est testé avec `useDemarches` ; ici, ce qui le relie au volet.
 describe("useDemarchesConstruction", () => {
   it("signale les champs de la démarche avec les messages du volet, sans toucher à ses autres champs", async () => {
-    const result = renderDemarches({ typeDemarche: TYPE_DEMARCHE.AUTRE });
+    const result = renderDemarches({
+      currentDemarche: { ...EMPTY_CURRENT_DEMARCHE, typeDemarche: TYPE_DEMARCHE.AUTRE },
+    });
 
     await act(() => result.current.validateDemarche());
 
     const { errors } = result.current.form.formState;
-    expect(errors.precisionTypeDemarche?.message).toBe("Veuillez préciser le type de démarche.");
-    expect(errors.apportDemarche?.message).toBe(
+    expect(errors.currentDemarche?.precisionTypeDemarche?.message).toBe(
+      "Veuillez préciser le type de démarche.",
+    );
+    expect(errors.currentDemarche?.apportDemarche?.message).toBe(
       "Veuillez indiquer ce que la démarche vous a apporté.",
     );
     expect(errors.motivationChangement).toBeUndefined();
   });
 
   it("écrit la démarche validée dans le volet et vide la saisie", async () => {
-    const result = renderDemarches(BILAN);
+    const result = renderDemarches({ currentDemarche: BILAN });
 
     await act(() => result.current.validateDemarche());
 
     const values = result.current.form.getValues();
     expect(values.demarches).toHaveLength(1);
     expect(values.demarches[0]).toMatchObject(BILAN);
-    expect(values).toMatchObject({
-      hasCurrentDemarche: false,
-      currentDemarcheId: null,
-      typeDemarche: undefined,
-      precisionTypeDemarche: "",
-      apportDemarche: "",
-      piecesJustificatives: [],
-    });
+    expect(values).toMatchObject({ hasCurrentDemarche: false, currentDemarcheId: null });
+    expect(values.currentDemarche).toEqual(EMPTY_CURRENT_DEMARCHE);
   });
 
   it("ne compte plus les champs de la démarche une fois validée, et les recompte à la suivante", async () => {
-    const result = renderDemarches(BILAN);
+    const result = renderDemarches({ currentDemarche: BILAN });
     const countFields = (): number => result.current.progress.requiredFieldCount;
     const openCount = countFields();
 
@@ -94,8 +93,10 @@ describe("useDemarchesConstruction", () => {
     expect(result.current.form.getValues()).toMatchObject({
       hasCurrentDemarche: true,
       currentDemarcheId: VAE.id,
-      typeDemarche: TYPE_DEMARCHE.VAE,
-      apportDemarche: VAE.apportDemarche,
+      currentDemarche: {
+        typeDemarche: TYPE_DEMARCHE.VAE,
+        apportDemarche: VAE.apportDemarche,
+      },
     });
   });
 

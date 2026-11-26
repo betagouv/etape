@@ -1,4 +1,4 @@
-import { findOpenDemarcheFields } from "../../domain/demarche";
+import { findOpenDemarcheFields, type OpenDemarche } from "../../domain/demarche";
 import type { EntryMode } from "../../domain/entry-mode";
 import { findFieldsAfterOui, type OuiNon } from "../../domain/oui-non";
 import {
@@ -9,7 +9,6 @@ import {
   type FuturMetierFieldName,
   type FuturMetierSection,
 } from "../schema";
-import type { TypeDemarche } from "./type-demarche";
 
 /** Exigés quel que soit le mode de saisie du métier visé, dans l'ordre de la page ; la spécialisation est facultative. */
 const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
@@ -30,13 +29,10 @@ const PERSPECTIVES_EMPLOI_FIELDS: readonly FuturMetierFieldName[] = [
  * Ce qui décide des champs des sections : le mode de saisie du métier, où en sont les démarches,
  * et la réponse sur les contacts avec des employeurs.
  */
-export interface SectionFieldsAnswers {
+export interface SectionFieldsAnswers extends OpenDemarche {
   metierViseEntryMode: EntryMode;
   /** Absente tant que la question n'a pas de réponse. */
   demarcheDecouverte?: OuiNon;
-  typeDemarche?: TypeDemarche;
-  /** Vrai tant que la carte de saisie d'une démarche est ouverte. */
-  hasCurrentDemarche: boolean;
   /** Absente tant que la question n'a pas de réponse. */
   contactEmployeurs?: OuiNon;
 }

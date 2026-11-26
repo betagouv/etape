@@ -12,6 +12,7 @@ import {
 /** En recherche, sans réponse sur les démarches, carte de saisie ouverte : l'état de départ du volet. */
 const ANSWERS: SectionFieldsAnswers = {
   metierViseEntryMode: ENTRY_MODE.SEARCH,
+  currentDemarche: {},
   hasCurrentDemarche: true,
 };
 
@@ -71,8 +72,8 @@ describe("findSectionFields", () => {
     const fields = findSectionFields({ ...ANSWERS, demarcheDecouverte: OUI_NON.OUI });
     expect(fields["metier-vise"].slice(-3)).toEqual([
       "demarcheDecouverte",
-      "typeDemarche",
-      "apportDemarche",
+      "currentDemarche.typeDemarche",
+      "currentDemarche.apportDemarche",
     ]);
   });
 
@@ -80,12 +81,12 @@ describe("findSectionFields", () => {
     const fields = findSectionFields({
       ...ANSWERS,
       demarcheDecouverte: OUI_NON.OUI,
-      typeDemarche: TYPE_DEMARCHE.AUTRE,
+      currentDemarche: { typeDemarche: TYPE_DEMARCHE.AUTRE },
     });
     expect(fields["metier-vise"].slice(-3)).toEqual([
-      "typeDemarche",
-      "precisionTypeDemarche",
-      "apportDemarche",
+      "currentDemarche.typeDemarche",
+      "currentDemarche.precisionTypeDemarche",
+      "currentDemarche.apportDemarche",
     ]);
   });
 
@@ -93,7 +94,7 @@ describe("findSectionFields", () => {
     const fields = findSectionFields({
       ...ANSWERS,
       demarcheDecouverte: OUI_NON.NON,
-      typeDemarche: TYPE_DEMARCHE.AUTRE,
+      currentDemarche: { typeDemarche: TYPE_DEMARCHE.AUTRE },
     });
     expect(fields["metier-vise"].at(-1)).toBe("demarcheDecouverte");
   });
@@ -121,12 +122,12 @@ describe("findSectionValidatedFields", () => {
     const fields = findSectionValidatedFields({
       ...ANSWERS,
       demarcheDecouverte: OUI_NON.OUI,
-      typeDemarche: TYPE_DEMARCHE.AUTRE,
+      currentDemarche: { typeDemarche: TYPE_DEMARCHE.AUTRE },
     });
     expect(fields["metier-vise"].slice(-3)).toEqual([
-      "typeDemarche",
-      "precisionTypeDemarche",
-      "apportDemarche",
+      "currentDemarche.typeDemarche",
+      "currentDemarche.precisionTypeDemarche",
+      "currentDemarche.apportDemarche",
     ]);
   });
 
@@ -136,7 +137,7 @@ describe("findSectionValidatedFields", () => {
       demarcheDecouverte: OUI_NON.OUI,
       hasCurrentDemarche: false,
     });
-    expect(fields["metier-vise"]).not.toContain("typeDemarche");
+    expect(fields["metier-vise"]).not.toContain("currentDemarche.typeDemarche");
   });
 
   it("contrôle les entreprises contactées après un « oui » aux contacts seulement", () => {

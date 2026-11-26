@@ -3,6 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { EMPTY_CURRENT_DEMARCHE } from "../../domain/demarche";
 import { OUI_NON } from "../../domain/oui-non";
 import { TYPE_DEMARCHE } from "../domain/type-demarche";
 import { PROJET_FIELD, PROJET_SECTION, type ProjetFormData } from "../schema";
@@ -104,13 +105,17 @@ describe("useProjetForm", () => {
 
     setValues(result.current.form, {
       demarcheConstruction: OUI_NON.OUI,
-      typeDemarche: TYPE_DEMARCHE.AUTRE,
+      currentDemarche: { ...EMPTY_CURRENT_DEMARCHE, typeDemarche: TYPE_DEMARCHE.AUTRE },
     });
     expect(result.current.progress.remainingFieldCount).toBe(2);
 
     setValues(result.current.form, {
-      precisionTypeDemarche: "Atelier de mon opérateur CEP",
-      apportDemarche: "J’ai identifié ce qui me motive.",
+      currentDemarche: {
+        ...EMPTY_CURRENT_DEMARCHE,
+        typeDemarche: TYPE_DEMARCHE.AUTRE,
+        precisionTypeDemarche: "Atelier de mon opérateur CEP",
+        apportDemarche: "J’ai identifié ce qui me motive.",
+      },
     });
     expect(result.current.progress.remainingFieldCount).toBe(0);
   });
@@ -159,9 +164,9 @@ describe("useProjetForm", () => {
     await submit(result.current.form);
 
     expect(result.current.voletErrors).toEqual([
-      { fieldId: "typeDemarche", message: "Veuillez choisir le type de démarche." },
+      { fieldId: "currentDemarche.typeDemarche", message: "Veuillez choisir le type de démarche." },
       {
-        fieldId: "apportDemarche",
+        fieldId: "currentDemarche.apportDemarche",
         message: "Veuillez indiquer ce que la démarche vous a apporté.",
       },
     ]);

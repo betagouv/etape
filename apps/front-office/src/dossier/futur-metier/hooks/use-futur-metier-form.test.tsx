@@ -5,6 +5,7 @@ import type { UseFormRegisterReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ENTRY_MODE } from "../../domain/entry-mode";
+import { EMPTY_CURRENT_DEMARCHE } from "../../domain/demarche";
 import { OUI_NON } from "../../domain/oui-non";
 import { TYPE_DEMARCHE } from "../domain/type-demarche";
 import { FUTUR_METIER_SECTION, type FuturMetierFormData } from "../schema";
@@ -131,13 +132,17 @@ describe("useFuturMetierForm", () => {
 
     setValues(result.current.form, {
       demarcheDecouverte: OUI_NON.OUI,
-      typeDemarche: TYPE_DEMARCHE.AUTRE,
+      currentDemarche: { ...EMPTY_CURRENT_DEMARCHE, typeDemarche: TYPE_DEMARCHE.AUTRE },
     });
     expect(result.current.progress.remainingFieldCount).toBe(2);
 
     setValues(result.current.form, {
-      precisionTypeDemarche: "Stage chez un artisan",
-      apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+      currentDemarche: {
+        ...EMPTY_CURRENT_DEMARCHE,
+        typeDemarche: TYPE_DEMARCHE.AUTRE,
+        precisionTypeDemarche: "Stage chez un artisan",
+        apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+      },
     });
     expect(result.current.progress.remainingFieldCount).toBe(0);
   });
@@ -153,9 +158,9 @@ describe("useFuturMetierForm", () => {
     await submit(result.current.form);
 
     expect(result.current.voletErrors).toEqual([
-      { fieldId: "typeDemarche", message: "Veuillez choisir le type de démarche." },
+      { fieldId: "currentDemarche.typeDemarche", message: "Veuillez choisir le type de démarche." },
       {
-        fieldId: "apportDemarche",
+        fieldId: "currentDemarche.apportDemarche",
         message: "Veuillez indiquer ce que la démarche vous a apporté.",
       },
     ]);

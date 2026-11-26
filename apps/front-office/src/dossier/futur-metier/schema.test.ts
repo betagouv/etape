@@ -8,8 +8,12 @@ import { futurMetierSchema } from "./schema";
 
 function findMessages(data: Record<string, unknown>, field: string): string[] {
   const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
-  return issues.filter((issue) => issue.path[0] === field).map((issue) => issue.message);
+  // Par le chemin entier : un champ de la démarche en cours est rangé sous `currentDemarche`.
+  return issues.filter(({ path }) => path.join(".") === field).map((issue) => issue.message);
 }
+
+/** La démarche en cours de saisie, vide et sans type. */
+const EMPTY_DEMARCHE = { precisionTypeDemarche: "", apportDemarche: "", piecesJustificatives: [] };
 
 const EMPTY_FORM = {
   metierViseEntryMode: ENTRY_MODE.SEARCH,
@@ -20,9 +24,7 @@ const EMPTY_FORM = {
   quotidienMetier: "",
   conditionsEmploi: "",
   debouches: "",
-  precisionTypeDemarche: "",
-  apportDemarche: "",
-  piecesJustificatives: [],
+  currentDemarche: EMPTY_DEMARCHE,
   hasCurrentDemarche: true,
   currentDemarcheId: null,
   demarches: [],
@@ -211,11 +213,14 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
   });
 
   it("exige le type et l'apport après un « oui », pas la précision", () => {
-    expect(findPaths(OPEN_DEMARCHE_FORM)).toEqual(["typeDemarche", "apportDemarche"]);
-    expect(findMessages(OPEN_DEMARCHE_FORM, "typeDemarche")).toEqual([
+    expect(findPaths(OPEN_DEMARCHE_FORM)).toEqual([
+      "currentDemarche.typeDemarche",
+      "currentDemarche.apportDemarche",
+    ]);
+    expect(findMessages(OPEN_DEMARCHE_FORM, "currentDemarche.typeDemarche")).toEqual([
       "Veuillez choisir le type de démarche.",
     ]);
-    expect(findMessages(OPEN_DEMARCHE_FORM, "apportDemarche")).toEqual([
+    expect(findMessages(OPEN_DEMARCHE_FORM, "currentDemarche.apportDemarche")).toEqual([
       "Veuillez indiquer ce que la démarche vous a apporté.",
     ]);
   });
@@ -223,13 +228,16 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
   it("exige la précision pour « Autre », espaces seuls refusés", () => {
     const data = {
       ...OPEN_DEMARCHE_FORM,
-      typeDemarche: TYPE_DEMARCHE.AUTRE,
-      precisionTypeDemarche: "  ",
-      apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+      currentDemarche: {
+        ...EMPTY_DEMARCHE,
+        typeDemarche: TYPE_DEMARCHE.AUTRE,
+        precisionTypeDemarche: "  ",
+        apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+      },
     };
 
-    expect(findPaths(data)).toEqual(["precisionTypeDemarche"]);
-    expect(findMessages(data, "precisionTypeDemarche")).toEqual([
+    expect(findPaths(data)).toEqual(["currentDemarche.precisionTypeDemarche"]);
+    expect(findMessages(data, "currentDemarche.precisionTypeDemarche")).toEqual([
       "Veuillez préciser le type de démarche.",
     ]);
   });
@@ -237,31 +245,44 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
   it("accepte une démarche complète, sans précision pour un type de la liste", () => {
     const result = futurMetierSchema.safeParse({
       ...OPEN_DEMARCHE_FORM,
-      typeDemarche: TYPE_DEMARCHE.IMMERSION,
-      apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+      currentDemarche: {
+        ...EMPTY_DEMARCHE,
+        typeDemarche: TYPE_DEMARCHE.IMMERSION,
+        apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+      },
     });
     expect(result.success).toBe(true);
   });
 
   it("refuse un type absent de la liste", () => {
-    expect(findPaths({ ...OPEN_DEMARCHE_FORM, typeDemarche: "stage" })).toContain("typeDemarche");
+    const data = {
+      ...OPEN_DEMARCHE_FORM,
+      currentDemarche: { ...EMPTY_DEMARCHE, typeDemarche: "stage" },
+    };
+    expect(findPaths(data)).toContain("currentDemarche.typeDemarche");
   });
 
   it("signale le type manquant au même envoi qu'un apport trop long", () => {
     const data = {
       ...OPEN_DEMARCHE_FORM,
-      apportDemarche: "x".repeat(LONGUEUR_MAX_TEXTE + 1),
+      currentDemarche: { ...EMPTY_DEMARCHE, apportDemarche: "x".repeat(LONGUEUR_MAX_TEXTE + 1) },
     };
-    expect(findPaths(data).sort()).toEqual(["apportDemarche", "typeDemarche"]);
+    expect(findPaths(data).sort()).toEqual([
+      "currentDemarche.apportDemarche",
+      "currentDemarche.typeDemarche",
+    ]);
   });
 
   it("refuse un apport au-delà de la limite", () => {
     const data = {
       ...OPEN_DEMARCHE_FORM,
-      typeDemarche: TYPE_DEMARCHE.SALON,
-      apportDemarche: "x".repeat(LONGUEUR_MAX_TEXTE + 1),
+      currentDemarche: {
+        ...EMPTY_DEMARCHE,
+        typeDemarche: TYPE_DEMARCHE.SALON,
+        apportDemarche: "x".repeat(LONGUEUR_MAX_TEXTE + 1),
+      },
     };
-    expect(findMessages(data, "apportDemarche")).toEqual([
+    expect(findMessages(data, "currentDemarche.apportDemarche")).toEqual([
       `Votre texte ne doit pas dépasser ${LONGUEUR_MAX_TEXTE} caractères.`,
     ]);
   });
