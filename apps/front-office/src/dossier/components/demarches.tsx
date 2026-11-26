@@ -52,50 +52,31 @@ export function Demarches<TFieldValues extends FieldValues, TType extends string
   state,
 }: DemarchesProps<TFieldValues, TType>) {
   const limitId = useId();
-  const {
-    isAnswerOui,
-    demarches,
-    hasCurrentDemarche,
-    currentDemarcheId,
-    currentDemarcheIndex,
-    isCurrentDemarcheFilled,
-    canAdd,
-    canCancel,
-    isHighlighted,
-    blockedDemarcheId,
-    announcement,
-    addButtonRef,
-    registerEditButton,
-    registerRemoveButton,
-    removal,
-    isRemovalOpen,
-    requestRemoval,
-    changeAnswer,
-    cancelRemoval,
-    confirmRemoval,
-    restoreFocusAfterRemoval,
-    validateDemarche,
-    addDemarche,
-    editDemarche,
-    cancelDemarche,
-    removeHighlight,
-  } = state;
+  const { isAnswerOui, changeAnswer, announcement, currentDemarche, list, removalDialog } = state;
+  const { addButtonRef } = list;
 
   // Une seule saisie à la fois : à la place de la démarche qu'elle modifie, ou après les autres.
-  const currentDemarche = hasCurrentDemarche && (
+  const currentDemarcheCard = currentDemarche.isOpen && (
     <DemarcheFields
       control={control}
       fields={fields}
       typeLabels={typeLabels}
-      title={formatDemarcheLabel(currentDemarcheIndex)}
-      highlight={{ isActive: isHighlighted, onFocusLeave: removeHighlight }}
+      title={formatDemarcheLabel(currentDemarche.index)}
+      highlight={{
+        isActive: currentDemarche.isHighlighted,
+        onFocusLeave: currentDemarche.removeHighlight,
+      }}
     >
       <FormCardActions
         validateLabel="Valider la démarche"
-        isFilled={isCurrentDemarcheFilled}
-        onValidate={validateDemarche}
+        isFilled={currentDemarche.isFilled}
+        onValidate={currentDemarche.validate}
         // La première démarche ne s'annule pas : on répond « non » (maquettes 10 et 13).
-        cancel={canCancel ? { label: "Annuler", onClick: cancelDemarche } : undefined}
+        cancel={
+          currentDemarche.canCancel
+            ? { label: "Annuler", onClick: currentDemarche.cancel }
+            : undefined
+        }
       />
     </DemarcheFields>
   );
@@ -113,9 +94,9 @@ export function Demarches<TFieldValues extends FieldValues, TType extends string
 
       {isAnswerOui && (
         <>
-          {demarches.map((demarche, index) =>
-            demarche.id === currentDemarcheId ? (
-              <Fragment key={demarche.id}>{currentDemarche}</Fragment>
+          {list.demarches.map((demarche, index) =>
+            demarche.id === currentDemarche.demarcheId ? (
+              <Fragment key={demarche.id}>{currentDemarcheCard}</Fragment>
             ) : (
               <DemarcheCard
                 key={demarche.id}
@@ -123,47 +104,49 @@ export function Demarches<TFieldValues extends FieldValues, TType extends string
                 demarche={demarche}
                 intitule={findDemarcheIntitule(demarche, typeLabels)}
                 edit={{
-                  onClick: () => editDemarche(demarche),
-                  isDisabled: hasCurrentDemarche,
-                  notice: demarche.id === blockedDemarcheId ? EDIT_BLOCKED_MESSAGE : undefined,
-                  buttonRef: registerEditButton(demarche.id),
+                  onClick: () => list.edit(demarche),
+                  isDisabled: currentDemarche.isOpen,
+                  notice: demarche.id === list.blockedDemarcheId ? EDIT_BLOCKED_MESSAGE : undefined,
+                  buttonRef: list.registerEditButton(demarche.id),
                 }}
                 remove={{
-                  onClick: () => requestRemoval(demarche),
-                  buttonRef: registerRemoveButton(demarche.id),
+                  onClick: () => removalDialog.requestRemoval(demarche),
+                  buttonRef: removalDialog.registerRemoveButton(demarche.id),
                 }}
               />
             ),
           )}
 
-          {currentDemarcheId === null && currentDemarche}
+          {currentDemarche.demarcheId === null && currentDemarcheCard}
 
-          {!hasCurrentDemarche && (
+          {!currentDemarche.isOpen && (
             <div className="flex flex-col items-start gap-2">
               {/* Au maximum, le bouton reste atteignable et dit pourquoi il n'ajoute plus rien. */}
               <Button
                 ref={addButtonRef}
                 type="button"
                 variant="outline"
-                aria-disabled={!canAdd}
-                aria-describedby={canAdd ? undefined : limitId}
-                onClick={addDemarche}
+                aria-disabled={!list.canAdd}
+                aria-describedby={list.canAdd ? undefined : limitId}
+                onClick={list.add}
               >
                 <PlusIcon aria-hidden="true" className="size-5" />
                 Ajouter une autre démarche
               </Button>
-              {!canAdd && <FieldDescription id={limitId}>{MAX_DEMARCHES_MESSAGE}</FieldDescription>}
+              {!list.canAdd && (
+                <FieldDescription id={limitId}>{MAX_DEMARCHES_MESSAGE}</FieldDescription>
+              )}
             </div>
           )}
         </>
       )}
       <DemarcheRemovalDialog
-        isOpen={isRemovalOpen}
-        removal={removal}
+        isOpen={removalDialog.isRemovalOpen}
+        removal={removalDialog.removal}
         typeLabels={typeLabels}
-        onCancel={cancelRemoval}
-        onConfirm={confirmRemoval}
-        onCloseFocus={restoreFocusAfterRemoval}
+        onCancel={removalDialog.cancelRemoval}
+        onConfirm={removalDialog.confirmRemoval}
+        onCloseFocus={removalDialog.restoreFocusAfterRemoval}
       />
       <StatusRegion message={announcement} />
     </>

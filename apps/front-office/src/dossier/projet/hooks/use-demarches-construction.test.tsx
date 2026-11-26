@@ -48,7 +48,7 @@ describe("useDemarchesConstruction", () => {
       currentDemarche: { ...EMPTY_CURRENT_DEMARCHE, typeDemarche: TYPE_DEMARCHE.AUTRE },
     });
 
-    await act(() => result.current.validateDemarche());
+    await act(() => result.current.currentDemarche.validate());
 
     const { errors } = result.current.form.formState;
     expect(errors.currentDemarche?.precisionTypeDemarche?.message).toBe(
@@ -63,7 +63,7 @@ describe("useDemarchesConstruction", () => {
   it("écrit la démarche validée dans le volet et vide la saisie", async () => {
     const result = renderDemarches({ currentDemarche: BILAN });
 
-    await act(() => result.current.validateDemarche());
+    await act(() => result.current.currentDemarche.validate());
 
     const values = result.current.form.getValues();
     expect(values.demarches).toHaveLength(1);
@@ -77,18 +77,18 @@ describe("useDemarchesConstruction", () => {
     const countFields = (): number => result.current.progress.requiredFieldCount;
     const openCount = countFields();
 
-    await act(() => result.current.validateDemarche());
+    await act(() => result.current.currentDemarche.validate());
     expect(countFields()).toBe(openCount - 2);
 
-    act(() => result.current.addDemarche());
-    expect(result.current.hasCurrentDemarche).toBe(true);
+    act(() => result.current.list.add());
+    expect(result.current.currentDemarche.isOpen).toBe(true);
     expect(countFields()).toBe(openCount);
   });
 
   it("remet une démarche validée dans les champs de saisie du volet", () => {
     const result = renderDemarches({ demarches: [VAE], hasCurrentDemarche: false });
 
-    act(() => result.current.editDemarche(VAE));
+    act(() => result.current.list.edit(VAE));
 
     expect(result.current.form.getValues()).toMatchObject({
       hasCurrentDemarche: true,
@@ -109,7 +109,7 @@ describe("useDemarchesConstruction", () => {
     // La réponse reste « oui » tant que la fenêtre n'est pas confirmée.
     expect(result.current.form.getValues(PROJET_FIELD.DEMARCHE_CONSTRUCTION)).toBe(OUI_NON.OUI);
 
-    act(() => result.current.confirmRemoval());
+    act(() => result.current.removalDialog.confirmRemoval());
 
     expect(result.current.form.getValues()).toMatchObject({
       demarcheConstruction: OUI_NON.NON,
