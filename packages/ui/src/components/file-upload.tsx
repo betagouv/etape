@@ -39,7 +39,9 @@ const fileUploadVariants = cva("group/file-upload flex flex-col gap-3 rounded-xl
 
 /** Ce que reçoit `FileUpload` : son apparence, les formats proposés au choix et la suite d'un ajout. */
 interface FileUploadProps
-  extends Omit<React.ComponentProps<"div">, "onDrop">, VariantProps<typeof fileUploadVariants> {
+  extends
+    Omit<React.ComponentProps<"div">, "onDragEnter" | "onDragLeave" | "onDragOver" | "onDrop">,
+    VariantProps<typeof fileUploadVariants> {
   /** L'attribut `accept` du sélecteur de fichiers : il filtre le choix, pas le glisser-déposer. */
   accept?: string;
   /** Les fichiers choisis ou déposés, tels quels : c'est l'écran qui les contrôle. */
