@@ -1,5 +1,4 @@
 import { Controller } from "react-hook-form";
-import { InfoIcon } from "lucide-react";
 
 import { FieldDescription } from "@etape/ui/components/field";
 import {
@@ -8,23 +7,17 @@ import {
   FormSectionTitle,
 } from "@etape/ui/components/form-section";
 import { Separator } from "@etape/ui/components/separator";
-import { Tag } from "@etape/ui/components/tag";
 
 import { PiecesJustificativesField } from "../components/pieces-justificatives-field";
 import { SectionCounter } from "../components/section-counter";
 import { VoletNotice } from "../components/volet-notice";
-import { FACULTATIF_LABEL, PROGRESS_UNIT } from "../domain/statut-volet";
+import { PROGRESS_UNIT } from "../domain/statut-volet";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
+import { DocumentsDemarches } from "./components/documents-demarches";
+import { FacultatifTag } from "./components/facultatif-tag";
 import { DOCUMENTS_OBLIGATOIRES } from "./domain/document-obligatoire";
 import { DOCUMENTS_SECTION, type DocumentsFormData } from "./schema";
-
-const FACULTATIF_TAG = (
-  <Tag importance="subdued" size="sm">
-    <InfoIcon aria-hidden="true" />
-    {FACULTATIF_LABEL}
-  </Tag>
-);
 
 /** Ce que reçoit `DocumentsForm` : l'`id` du formulaire, l'encart du volet et la suite d'un envoi. */
 export interface DocumentsFormProps {
@@ -77,25 +70,12 @@ export function DocumentsForm({ formId, notice, onSubmitValid }: DocumentsFormPr
 
         <Separator />
 
-        <FormSection>
-          <div className="flex flex-col gap-3">
-            <FormSectionHeader>
-              <FormSectionTitle>Justificatifs de vos démarches</FormSectionTitle>
-              {FACULTATIF_TAG}
-            </FormSectionHeader>
-            <FieldDescription>
-              Attestations, comptes-rendus, synthèses… Les documents qui attestent les démarches
-              déclarées dans votre dossier.
-            </FieldDescription>
-          </div>
-        </FormSection>
-
-        <Separator />
+        <DocumentsDemarches />
 
         <FormSection>
           <FormSectionHeader>
             <FormSectionTitle>Documents complémentaires</FormSectionTitle>
-            {FACULTATIF_TAG}
+            <FacultatifTag />
           </FormSectionHeader>
           <FieldDescription>
             Tout autre document utile à votre dossier, par exemple le bilan de positionnement ou les

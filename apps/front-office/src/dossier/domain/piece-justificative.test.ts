@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ACCEPT_PIECE_JUSTIFICATIVE,
+  applyPiecesChange,
   canPreviewFichier,
   checkFichiers,
   findFormatFichier,
@@ -186,5 +187,23 @@ describe("canPreviewFichier", () => {
       false,
       false,
     ]);
+  });
+});
+
+describe("applyPiecesChange", () => {
+  const a = createPiece("a.pdf", MO);
+  const b = createPiece("b.pdf", MO);
+  const saisie = createPiece("saisie.pdf", MO);
+
+  it("ajoute les pièces gagnées et garde celles qui n'étaient que dans la liste", () => {
+    expect(applyPiecesChange([saisie], [], [a])).toEqual([saisie, a]);
+  });
+
+  it("retire les pièces perdues, sans toucher aux autres", () => {
+    expect(applyPiecesChange([a, saisie, b], [a, b], [b])).toEqual([saisie, b]);
+  });
+
+  it("n'ajoute pas deux fois une pièce que la liste a déjà", () => {
+    expect(applyPiecesChange([a], [], [a])).toEqual([a]);
   });
 });

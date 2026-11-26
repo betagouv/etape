@@ -29,4 +29,18 @@ describe("FormSectionTitle", () => {
     expect(title?.getAttribute("data-slot")).toBe("form-section-title");
     expect(classSet(title)).toEqual(new Set(["font-semibold", "text-base", "leading-none"]));
   });
+
+  it("donne au sous-titre d'un groupe 16 px sur une ligne de 24, dans la couleur principale", () => {
+    const { container } = render(
+      <FormSectionTitle size="subtitle" asChild>
+        <h4>Les démarches en lien avec votre projet</h4>
+      </FormSectionTitle>,
+    );
+
+    const title = container.firstElementChild;
+    expect(title?.tagName).toBe("H4");
+    expect(classSet(title)).toEqual(
+      new Set(["font-semibold", "text-base", "leading-6", "text-primary"]),
+    );
+  });
 });

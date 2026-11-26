@@ -40,6 +40,10 @@ const formSectionTitleVariants = cva("font-semibold", {
       default: "text-lg leading-6",
       // Sections de l'inscription (Figma FRONT-OFFICE, « 01. SIGN-UP ») : titre de 16 px.
       sm: "text-base leading-none",
+      // Sous-titre d'un groupe dans une section (Figma FRONT-OFFICE, « Mes documents », écrans 01
+      // et 16) : 16 px sur une ligne de 24, couleur principale. Le style de `CardTitle` en
+      // `summary`, gardé ici parce que c'est un titre de section, pas celui d'une carte.
+      subtitle: "text-base leading-6 text-primary",
     },
   },
   defaultVariants: {
