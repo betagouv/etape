@@ -17,6 +17,16 @@ describe("formatFieldErrorAnnouncement", () => {
     expect(formatFieldErrorAnnouncement("nir", { nir: {} }, LABELS)).toBe("");
   });
 
+  it("annonce l'erreur d'un champ imbriqué, lue par son chemin", () => {
+    const errors = { currentDemarche: { typeDemarche: { message: "Choisissez un type." } } };
+    const labels = { "currentDemarche.typeDemarche": "Type de démarche" };
+
+    expect(formatFieldErrorAnnouncement("currentDemarche.typeDemarche", errors, labels)).toBe(
+      "Type de démarche : Choisissez un type.",
+    );
+    expect(formatFieldErrorAnnouncement("currentDemarche.apportDemarche", errors, labels)).toBe("");
+  });
+
   it("ignore les erreurs des autres champs", () => {
     const errors = { cleNir: { message: "Saisissez les 2 derniers chiffres." } };
     expect(formatFieldErrorAnnouncement("nir", errors, LABELS)).toBe("");

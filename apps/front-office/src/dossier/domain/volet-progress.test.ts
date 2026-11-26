@@ -34,6 +34,14 @@ describe("listFilledFields", () => {
     ).toEqual(["devisFormation"]);
   });
 
+  it("lit un champ imbriqué par son chemin", () => {
+    const values = { currentDemarche: { typeDemarche: "salon", apportDemarche: " " } };
+
+    expect(
+      listFilledFields(values, ["currentDemarche.typeDemarche", "currentDemarche.apportDemarche"]),
+    ).toEqual(["currentDemarche.typeDemarche"]);
+  });
+
   it("compte l'employeur choisi comme rempli, pas l'absence d'employeur", () => {
     expect(listFilledFields({ employeur: null }, ["employeur"])).toEqual([]);
     expect(listFilledFields({ employeur: { siret: "50393256800010" } }, ["employeur"])).toEqual([
@@ -156,6 +164,26 @@ describe("computeVoletProgress", () => {
       computeVoletProgress(createRequiredFields({ identite: ["cleNir", "civilite"] }, []), errors)
         .errorCount,
     ).toBe(1);
+  });
+
+  it("compte l'erreur d'un champ imbriqué, rangée sous son objet", () => {
+    const fields = ["currentDemarche.typeDemarche", "currentDemarche.apportDemarche"];
+    const requiredFields = buildRequiredFields(
+      { currentDemarche: { typeDemarche: "salon", apportDemarche: "" } },
+      { demarches: fields },
+    );
+    const errors = { currentDemarche: { apportDemarche: { message: "Apport" } } };
+
+    expect(computeVoletProgress(requiredFields, errors)).toEqual({
+      requiredFieldCount: 2,
+      filledFieldCount: 1,
+      remainingFieldCount: 1,
+      errorCount: 1,
+    });
+    expect(computeSectionProgress(requiredFields, "demarches", errors)).toEqual({
+      remainingFieldCount: 1,
+      errorCount: 1,
+    });
   });
 
   it("compte l'erreur d'un champ facultatif, sans le compter parmi les champs demandés", () => {

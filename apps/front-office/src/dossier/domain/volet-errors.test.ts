@@ -18,6 +18,23 @@ describe("listVoletErrors", () => {
     expect(listVoletErrors(["demission"], errors)).toEqual([]);
   });
 
+  it("liste l'erreur d'un champ imbriqué sous son chemin, qui est aussi l'`id` du champ", () => {
+    const errors = {
+      currentDemarche: { apportDemarche: { message: "Apport" } },
+      quotidienMetier: { message: "Quotidien" },
+    };
+    const fields = [
+      "currentDemarche.typeDemarche",
+      "currentDemarche.apportDemarche",
+      "quotidienMetier",
+    ];
+
+    expect(listVoletErrors(fields, errors)).toEqual([
+      { fieldId: "currentDemarche.apportDemarche", message: "Apport" },
+      { fieldId: "quotidienMetier", message: "Quotidien" },
+    ]);
+  });
+
   it("garde une erreur sans message, avec un texte vide", () => {
     expect(listVoletErrors(["civilite"], { civilite: {} })).toEqual([
       { fieldId: "civilite", message: "" },
