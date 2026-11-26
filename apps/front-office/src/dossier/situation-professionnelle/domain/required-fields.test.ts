@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { ENTRY_MODE } from "../../domain/entry-mode";
 import {
-  DEMISSION,
   SITUATION_PROFESSIONNELLE_SECTION,
   type SituationProfessionnelleFormData,
 } from "../schema";
+import { OUI_NON } from "../../domain/oui-non";
 import { findRequiredFields } from "./required-fields";
 
 const values: SituationProfessionnelleFormData = {
@@ -16,7 +16,7 @@ const values: SituationProfessionnelleFormData = {
   secteurActivite: "",
   adresse: "",
   intitulePoste: "Comptable",
-  demission: DEMISSION.NON,
+  demission: OUI_NON.NON,
   dateDemission: "",
 };
 
@@ -36,7 +36,7 @@ describe("findRequiredFields", () => {
       ...values,
       employeurEntryMode: ENTRY_MODE.MANUAL,
       denomination: "ACME",
-      demission: DEMISSION.OUI,
+      demission: OUI_NON.OUI,
     });
     expect(required.allFields).toEqual([
       "denomination",

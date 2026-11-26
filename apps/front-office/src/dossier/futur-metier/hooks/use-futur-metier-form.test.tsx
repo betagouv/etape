@@ -5,6 +5,8 @@ import type { UseFormRegisterReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ENTRY_MODE } from "../../domain/entry-mode";
+import { OUI_NON } from "../../domain/oui-non";
+import { TYPE_DEMARCHE } from "../domain/demarche";
 import { FUTUR_METIER_SECTION, type FuturMetierFormData } from "../schema";
 import { useFuturMetierForm, type UseFuturMetierFormResult } from "./use-futur-metier-form";
 
@@ -16,11 +18,12 @@ const BOULANGER: AppellationRome = {
   metierRome: { code: "D1102", libelle: "Boulangerie - viennoiserie" },
 };
 
-/** Les trois zones de texte remplies : il ne reste que le métier visé à saisir. */
+/** Les trois zones de texte remplies et la question sur les démarches répondue : il ne reste que le métier visé à saisir. */
 const FILLED_TEXTS: Partial<FuturMetierFormData> = {
   quotidienMetier: "Pétrir, façonner et cuire le pain, tôt le matin.",
   conditionsEmploi: "Surtout des CDI, en boulangerie artisanale.",
   debouches: "De nombreuses offres non pourvues dans ma région.",
+  demarcheDecouverte: OUI_NON.NON,
 };
 
 type Form = UseFuturMetierFormResult["form"];
@@ -54,17 +57,17 @@ function setValues(form: Form, values: Partial<FuturMetierFormData>): void {
 }
 
 describe("useFuturMetierForm", () => {
-  it("demande quatre champs, le métier et les trois zones de texte, quand rien n'est saisi", () => {
+  it("demande cinq champs, le métier, les trois zones de texte et la question sur les démarches, quand rien n'est saisi", () => {
     const result = renderForm();
 
     expect(result.current.progress).toEqual({
-      requiredFieldCount: 4,
+      requiredFieldCount: 5,
       filledFieldCount: 0,
-      remainingFieldCount: 4,
+      remainingFieldCount: 5,
       errorCount: 0,
     });
     expect(result.current.sections).toEqual({
-      [FUTUR_METIER_SECTION.METIER_VISE]: { remainingFieldCount: 4, errorCount: 0 },
+      [FUTUR_METIER_SECTION.METIER_VISE]: { remainingFieldCount: 5, errorCount: 0 },
     });
     expect(result.current.voletErrors).toEqual([]);
     expect(result.current.errorAnnouncement).toBe("");
@@ -75,8 +78,8 @@ describe("useFuturMetierForm", () => {
 
     setValues(result.current.form, { specialisation: "pâtisserie" });
 
-    expect(result.current.progress.requiredFieldCount).toBe(4);
-    expect(result.current.progress.remainingFieldCount).toBe(4);
+    expect(result.current.progress.requiredFieldCount).toBe(5);
+    expect(result.current.progress.remainingFieldCount).toBe(5);
   });
 
   it("ne laisse que le métier à saisir une fois les trois zones de texte remplies", () => {
@@ -97,6 +100,73 @@ describe("useFuturMetierForm", () => {
     expect(result.current.sections[FUTUR_METIER_SECTION.METIER_VISE].remainingFieldCount).toBe(0);
   });
 
+  it("ne compte plus la question sur les démarches une fois répondue « non »", () => {
+    const result = renderForm();
+
+    setValues(result.current.form, { demarcheDecouverte: OUI_NON.NON });
+
+    expect(result.current.progress.remainingFieldCount).toBe(4);
+  });
+
+  it("après un « oui », compte le type et l'apport de la démarche : cinq champs restants une fois le métier choisi (maquette 10)", () => {
+    const result = renderForm();
+
+    setValues(result.current.form, { metierVise: BOULANGER, demarcheDecouverte: OUI_NON.OUI });
+
+    expect(result.current.sections[FUTUR_METIER_SECTION.METIER_VISE].remainingFieldCount).toBe(5);
+  });
+
+  it("compte la précision à remplir une fois « Autre » choisi", () => {
+    const result = renderForm();
+    setValues(result.current.form, { ...FILLED_TEXTS, metierVise: BOULANGER });
+
+    setValues(result.current.form, {
+      demarcheDecouverte: OUI_NON.OUI,
+      typeDemarche: TYPE_DEMARCHE.AUTRE,
+    });
+    expect(result.current.progress.remainingFieldCount).toBe(2);
+
+    setValues(result.current.form, {
+      precisionTypeDemarche: "Stage chez un artisan",
+      apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+    });
+    expect(result.current.progress.remainingFieldCount).toBe(0);
+  });
+
+  it("à l'envoi après un « oui », liste les champs de la démarche à la fin du résumé", async () => {
+    const result = renderForm();
+    setValues(result.current.form, {
+      ...FILLED_TEXTS,
+      metierVise: BOULANGER,
+      demarcheDecouverte: OUI_NON.OUI,
+    });
+
+    await submit(result.current.form);
+
+    expect(result.current.voletErrors).toEqual([
+      { fieldId: "typeDemarche", message: "Veuillez choisir le type de démarche." },
+      {
+        fieldId: "apportDemarche",
+        message: "Veuillez indiquer ce que la démarche vous a apporté.",
+      },
+    ]);
+  });
+
+  it("ne compte plus les erreurs de la démarche après un retour à « non »", async () => {
+    const result = renderForm();
+    setValues(result.current.form, {
+      ...FILLED_TEXTS,
+      metierVise: BOULANGER,
+      demarcheDecouverte: OUI_NON.OUI,
+    });
+    await submit(result.current.form);
+
+    setValues(result.current.form, { demarcheDecouverte: OUI_NON.NON });
+
+    expect(result.current.progress.errorCount).toBe(0);
+    expect(result.current.voletErrors).toEqual([]);
+  });
+
   it("en saisie manuelle, demande l'intitulé et pas le code ROME", () => {
     const result = renderForm();
 
@@ -108,19 +178,19 @@ describe("useFuturMetierForm", () => {
 
     setValues(result.current.form, { intituleMetierVise: "Pâtissier" });
     expect(result.current.progress).toEqual({
-      requiredFieldCount: 4,
-      filledFieldCount: 4,
+      requiredFieldCount: 5,
+      filledFieldCount: 5,
       remainingFieldCount: 0,
       errorCount: 0,
     });
   });
 
-  it("à l'envoi d'un volet vide, liste les quatre champs manquants dans l'ordre de la page", async () => {
+  it("à l'envoi d'un volet vide, liste les cinq champs manquants dans l'ordre de la page", async () => {
     const result = renderForm();
 
     await submit(result.current.form);
 
-    expect(result.current.progress.errorCount).toBe(4);
+    expect(result.current.progress.errorCount).toBe(5);
     expect(result.current.voletErrors).toEqual([
       { fieldId: "metierVise", message: "Veuillez choisir le métier que vous visez." },
       { fieldId: "quotidienMetier", message: "Veuillez décrire le quotidien de ce métier." },
@@ -131,6 +201,10 @@ describe("useFuturMetierForm", () => {
       {
         fieldId: "debouches",
         message: "Veuillez indiquer ce que vous savez des débouchés dans ce métier.",
+      },
+      {
+        fieldId: "demarcheDecouverte",
+        message: "Veuillez indiquer si vous avez entrepris des démarches pour découvrir ce métier.",
       },
     ]);
   });
@@ -190,8 +264,8 @@ describe("useFuturMetierForm", () => {
     await submit(result.current.form);
 
     expect(result.current.progress).toEqual({
-      requiredFieldCount: 4,
-      filledFieldCount: 4,
+      requiredFieldCount: 5,
+      filledFieldCount: 5,
       remainingFieldCount: 0,
       errorCount: 1,
     });

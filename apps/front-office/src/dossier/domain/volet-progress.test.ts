@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildRequiredFields,
   computeSectionProgress,
   computeVoletProgress,
   describeVoletStatut,
@@ -53,6 +54,49 @@ const MANUAL_METIER_VISE: RequiredFields = {
   filledFields: ["intituleMetierVise"],
   sectionValidatedFields: { "metier-vise": ["intituleMetierVise", "codeRome"] },
 };
+
+describe("buildRequiredFields", () => {
+  const SECTION_FIELDS = {
+    emploi: ["employeur", "intitulePoste"],
+    demission: ["demission", "dateDemission"],
+  } as const;
+
+  it("réunit les champs des sections, dans l'ordre de la page, et relève ceux qui sont remplis", () => {
+    const required = buildRequiredFields(
+      { employeur: null, intitulePoste: "Comptable", demission: "oui", dateDemission: " " },
+      SECTION_FIELDS,
+    );
+
+    expect(required.sectionFields).toBe(SECTION_FIELDS);
+    expect(required.allFields).toEqual([
+      "employeur",
+      "intitulePoste",
+      "demission",
+      "dateDemission",
+    ]);
+    expect(required.filledFields).toEqual(["intitulePoste", "demission"]);
+  });
+
+  it("contrôle les champs demandés quand aucun champ facultatif n'est contrôlé", () => {
+    expect(buildRequiredFields({}, SECTION_FIELDS).sectionValidatedFields).toBe(SECTION_FIELDS);
+  });
+
+  it("garde à part les champs contrôlés quand un champ facultatif l'est", () => {
+    const sectionFields = { "metier-vise": ["intituleMetierVise"] } as const;
+    const sectionValidatedFields = { "metier-vise": ["intituleMetierVise", "codeRome"] } as const;
+
+    const required = buildRequiredFields(
+      { intituleMetierVise: "Boulanger", codeRome: "D1102" },
+      sectionFields,
+      sectionValidatedFields,
+    );
+
+    // Le code ROME, facultatif, n'est ni demandé ni compté parmi les champs remplis.
+    expect(required.allFields).toEqual(["intituleMetierVise"]);
+    expect(required.filledFields).toEqual(["intituleMetierVise"]);
+    expect(required.sectionValidatedFields).toBe(sectionValidatedFields);
+  });
+});
 
 describe("listValidatedFields", () => {
   it("liste les champs contrôlés de toutes les sections, dans l'ordre de la page", () => {

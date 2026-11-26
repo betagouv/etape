@@ -39,6 +39,14 @@ export function useFuturMetierForm(): UseFuturMetierFormResult {
       quotidienMetier: "",
       conditionsEmploi: "",
       debouches: "",
+      demarcheDecouverte: undefined,
+      typeDemarche: undefined,
+      precisionTypeDemarche: "",
+      apportDemarche: "",
+      piecesJustificatives: [],
+      hasCurrentDemarche: true,
+      currentDemarcheId: null,
+      demarches: [],
     },
   });
 

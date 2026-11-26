@@ -34,7 +34,14 @@ const CIVILITE_LABEL: Record<(typeof CIVILITE)[keyof typeof CIVILITE], string> =
 
 const schema = z.object({ civilite: z.enum(CIVILITE, ERROR) });
 
-function CiviliteForm({ onValueChange }: { onValueChange?: (value: string) => void } = {}) {
+const DESCRIPTION = "Telle qu'elle figure sur votre pièce d'identité.";
+
+interface CiviliteFormProps {
+  description?: string;
+  onValueChange?: (value: string) => void;
+}
+
+function CiviliteForm({ description, onValueChange }: CiviliteFormProps = {}) {
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     mode: "onBlur",
@@ -47,6 +54,7 @@ function CiviliteForm({ onValueChange }: { onValueChange?: (value: string) => vo
         name="civilite"
         control={form.control}
         label="Civilité"
+        description={description}
         options={CIVILITE_LABEL}
         onValueChange={onValueChange}
       />
@@ -114,6 +122,26 @@ describe("FormRadioGroup", () => {
     expect(getGroup().getAttribute("aria-describedby")).toBe(screen.getByText(ERROR).id);
     expect(screen.getByText(ERROR).id).toBe("civilite-error");
     expect(getRadio("Madame").getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("affiche l'aide sous la légende et la relie au groupe", () => {
+    render(<CiviliteForm description={DESCRIPTION} />);
+
+    const description = screen.getByText(DESCRIPTION);
+    expect(description.id).toBe("civilite-description");
+    expect(description.previousElementSibling?.tagName).toBe("LEGEND");
+    expect(getGroup().getAttribute("aria-describedby")).toBe("civilite-description");
+  });
+
+  it("garde l'aide quand le groupe est en erreur", async () => {
+    render(<CiviliteForm description={DESCRIPTION} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Valider" }));
+    });
+
+    expect(screen.getByText(DESCRIPTION)).toBeDefined();
+    expect(getGroup().getAttribute("aria-describedby")).toBe("civilite-description civilite-error");
   });
 
   it("ne quitte le champ qu'à la sortie du groupe", async () => {

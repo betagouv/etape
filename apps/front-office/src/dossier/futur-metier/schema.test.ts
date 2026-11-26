@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { ENTRY_MODE } from "../domain/entry-mode";
-import { findSectionFields, FUTUR_METIER_TEXT_MAX_LENGTH, futurMetierSchema } from "./schema";
+import { OUI_NON } from "../domain/oui-non";
+import { TYPE_DEMARCHE } from "./domain/demarche";
+import { FUTUR_METIER_TEXT_MAX_LENGTH, futurMetierSchema } from "./schema";
 
 function findMessages(data: Record<string, unknown>, field: string): string[] {
   const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
@@ -17,14 +19,21 @@ const EMPTY_FORM = {
   quotidienMetier: "",
   conditionsEmploi: "",
   debouches: "",
+  precisionTypeDemarche: "",
+  apportDemarche: "",
+  piecesJustificatives: [],
+  hasCurrentDemarche: true,
+  currentDemarcheId: null,
+  demarches: [],
 };
 
-/** Les trois zones de texte remplies : il ne manque que le métier visé. */
+/** Les trois zones de texte remplies et la question sur les démarches répondue : il ne manque que le métier visé. */
 const SEARCH_FORM = {
   ...EMPTY_FORM,
   quotidienMetier: "Pétrir, façonner et cuire le pain, tôt le matin.",
   conditionsEmploi: "Surtout des CDI, en boulangerie artisanale.",
   debouches: "De nombreuses offres non pourvues dans ma région.",
+  demarcheDecouverte: OUI_NON.NON,
 };
 
 const MANUAL_FORM = {
@@ -85,12 +94,13 @@ describe("futurMetierSchema, zones de texte", () => {
     ]);
   });
 
-  it("signale le métier manquant au même envoi que les zones de texte vides", () => {
+  it("signale le métier manquant au même envoi que les zones de texte vides et la question sans réponse", () => {
     const issues = futurMetierSchema.safeParse(EMPTY_FORM).error?.issues ?? [];
 
     expect(issues.map(({ path }) => path.join(".")).sort()).toEqual([
       "conditionsEmploi",
       "debouches",
+      "demarcheDecouverte",
       "metierVise",
       "quotidienMetier",
     ]);
@@ -143,16 +153,107 @@ describe("futurMetierSchema, code ROME", () => {
   });
 });
 
-describe("findSectionFields", () => {
-  it("exige le métier choisi en recherche, puis les trois zones de texte", () => {
-    expect(findSectionFields(ENTRY_MODE.SEARCH)).toEqual({
-      "metier-vise": ["metierVise", "quotidienMetier", "conditionsEmploi", "debouches"],
-    });
+describe("futurMetierSchema, démarches de découverte", () => {
+  it("exige la réponse à la question sur les démarches", () => {
+    expect(findMessages(EMPTY_FORM, "demarcheDecouverte")).toEqual([
+      "Veuillez indiquer si vous avez entrepris des démarches pour découvrir ce métier.",
+    ]);
   });
 
-  it("exige l'intitulé en saisie manuelle, pas le code ROME ni la spécialisation", () => {
-    expect(findSectionFields(ENTRY_MODE.MANUAL)).toEqual({
-      "metier-vise": ["intituleMetierVise", "quotidienMetier", "conditionsEmploi", "debouches"],
+  it("accepte « oui » comme « non »", () => {
+    for (const demarcheDecouverte of Object.values(OUI_NON)) {
+      expect(findMessages({ ...EMPTY_FORM, demarcheDecouverte }, "demarcheDecouverte")).toEqual([]);
+    }
+  });
+});
+
+describe("futurMetierSchema, démarche en cours de saisie", () => {
+  /** Le reste du volet est rempli : seules les erreurs de la démarche restent. */
+  const OPEN_DEMARCHE_FORM = { ...MANUAL_FORM, demarcheDecouverte: OUI_NON.OUI };
+
+  function findPaths(data: Record<string, unknown>): string[] {
+    const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
+    return issues.map(({ path }) => path.join("."));
+  }
+
+  it("n'exige rien de la démarche après un « non »", () => {
+    expect(futurMetierSchema.safeParse(MANUAL_FORM).success).toBe(true);
+  });
+
+  it("n'exige rien de la démarche en cours quand sa carte de saisie est fermée", () => {
+    const data = { ...OPEN_DEMARCHE_FORM, hasCurrentDemarche: false };
+    expect(futurMetierSchema.safeParse(data).success).toBe(true);
+  });
+
+  it("garde les démarches validées telles quelles", () => {
+    const demarche = {
+      id: "a",
+      typeDemarche: TYPE_DEMARCHE.SALON,
+      precisionTypeDemarche: "",
+      apportDemarche: "J’ai rencontré trois artisans.",
+      piecesJustificatives: [],
+    };
+    const result = futurMetierSchema.safeParse({
+      ...OPEN_DEMARCHE_FORM,
+      hasCurrentDemarche: false,
+      demarches: [demarche],
     });
+    expect(result.data?.demarches).toEqual([demarche]);
+  });
+
+  it("exige le type et l'apport après un « oui », pas la précision", () => {
+    expect(findPaths(OPEN_DEMARCHE_FORM)).toEqual(["typeDemarche", "apportDemarche"]);
+    expect(findMessages(OPEN_DEMARCHE_FORM, "typeDemarche")).toEqual([
+      "Veuillez choisir le type de démarche.",
+    ]);
+    expect(findMessages(OPEN_DEMARCHE_FORM, "apportDemarche")).toEqual([
+      "Veuillez indiquer ce que la démarche vous a apporté.",
+    ]);
+  });
+
+  it("exige la précision pour « Autre », espaces seuls refusés", () => {
+    const data = {
+      ...OPEN_DEMARCHE_FORM,
+      typeDemarche: TYPE_DEMARCHE.AUTRE,
+      precisionTypeDemarche: "  ",
+      apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+    };
+
+    expect(findPaths(data)).toEqual(["precisionTypeDemarche"]);
+    expect(findMessages(data, "precisionTypeDemarche")).toEqual([
+      "Veuillez préciser le type de démarche.",
+    ]);
+  });
+
+  it("accepte une démarche complète, sans précision pour un type de la liste", () => {
+    const result = futurMetierSchema.safeParse({
+      ...OPEN_DEMARCHE_FORM,
+      typeDemarche: TYPE_DEMARCHE.IMMERSION,
+      apportDemarche: "J’ai vérifié que je tenais ce rythme.",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("refuse un type absent de la liste", () => {
+    expect(findPaths({ ...OPEN_DEMARCHE_FORM, typeDemarche: "stage" })).toContain("typeDemarche");
+  });
+
+  it("signale le type manquant au même envoi qu'un apport trop long", () => {
+    const data = {
+      ...OPEN_DEMARCHE_FORM,
+      apportDemarche: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+    };
+    expect(findPaths(data).sort()).toEqual(["apportDemarche", "typeDemarche"]);
+  });
+
+  it("refuse un apport au-delà de la limite", () => {
+    const data = {
+      ...OPEN_DEMARCHE_FORM,
+      typeDemarche: TYPE_DEMARCHE.SALON,
+      apportDemarche: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+    };
+    expect(findMessages(data, "apportDemarche")).toEqual([
+      `Votre texte ne doit pas dépasser ${FUTUR_METIER_TEXT_MAX_LENGTH} caractères.`,
+    ]);
   });
 });

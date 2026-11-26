@@ -47,7 +47,7 @@ function SelectionCard({ title, details, source, changeButton, className }: Sele
   return (
     <Card data-slot="selection-card" variant="secondary" className={className}>
       <div className="flex items-center justify-between gap-4">
-        <CardTitle asChild>
+        <CardTitle variant="summary" asChild>
           <h4>{title}</h4>
         </CardTitle>
         <Button

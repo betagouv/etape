@@ -35,6 +35,24 @@ export function listFilledFields<TName extends string>(
   });
 }
 
+/**
+ * Les champs demandés, remplis et contrôlés d'un volet, à partir des champs de ses sections.
+ * Sans champ facultatif contrôlé, les champs contrôlés sont les champs demandés.
+ */
+export function buildRequiredFields<TSection extends string, TName extends string>(
+  values: Partial<Record<NoInfer<TName>, unknown>>,
+  sectionFields: Record<TSection, readonly TName[]>,
+  sectionValidatedFields: Record<TSection, readonly TName[]> = sectionFields,
+): RequiredFields<TSection, TName> {
+  const allFields = Object.values<readonly TName[]>(sectionFields).flat();
+  return {
+    sectionFields,
+    allFields,
+    filledFields: listFilledFields(values, allFields),
+    sectionValidatedFields,
+  };
+}
+
 /** Nombre de champs demandés parmi les champs remplis. */
 function countFilled(filledFields: readonly string[], fields: readonly string[]): number {
   return fields.filter((name) => filledFields.includes(name)).length;

@@ -1,22 +1,17 @@
-import { listFilledFields, type RequiredFields } from "../../domain/volet-progress";
+import { buildRequiredFields, type RequiredFields } from "../../domain/volet-progress";
 import {
-  findSectionFields,
-  findSectionValidatedFields,
   type FuturMetierFieldName,
   type FuturMetierFormData,
   type FuturMetierSection,
 } from "../schema";
+import { findSectionFields, findSectionValidatedFields } from "./section-fields";
 
-/** Ne change qu'avec le mode de saisie, ou le passage d'un champ de vide à rempli. */
+/**
+ * Ne change qu'avec le mode de saisie, la réponse sur les démarches, le type de démarche,
+ * l'ouverture de la carte de saisie, ou le passage d'un champ de vide à rempli.
+ */
 export function findRequiredFields(
   values: FuturMetierFormData,
 ): RequiredFields<FuturMetierSection, FuturMetierFieldName> {
-  const sectionFields = findSectionFields(values.metierViseEntryMode);
-  const allFields = Object.values(sectionFields).flat();
-  return {
-    sectionFields,
-    allFields,
-    filledFields: listFilledFields(values, allFields),
-    sectionValidatedFields: findSectionValidatedFields(values.metierViseEntryMode),
-  };
+  return buildRequiredFields(values, findSectionFields(values), findSectionValidatedFields(values));
 }

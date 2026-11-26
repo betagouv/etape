@@ -14,6 +14,7 @@ import { VoletNotice } from "../components/volet-notice";
 import type { VoletNoticeContent } from "../domain/volets";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
+import { Demarches } from "./components/demarches";
 import { MetierViseField } from "./components/metier-vise-field";
 import {
   FUTUR_METIER_FIELD,
@@ -90,6 +91,8 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             description="Nombre d’offres d’emploi, offres non pourvues, candidats par offre…"
             maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
           />
+
+          <Demarches form={form} />
         </FormSection>
       </form>
     </>

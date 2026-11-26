@@ -45,6 +45,7 @@
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
   --surface-warm: #f4f2ed; /* extension ETAPE : en-tête du dossier, volet survolé ou actif de la barre latérale (taupe-200) */
+  --surface-page: #f9faf9; /* extension ETAPE : fond de page du dossier et du profil du front-office (teal-50) */
 
   /* Actions */
   --primary: #134e4a; /* base/primary (teal-900) */
@@ -128,6 +129,7 @@
   --popover: #262626;
   --popover-foreground: #fafafa;
   --surface-warm: #171717; /* neutral-900 */
+  --surface-page: #0a0a0a; /* comme base/background, faute de maquette sombre */
 
   /* Actions */
   --primary: #e5e5e5; /* base/primary */
@@ -261,6 +263,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-surface-warm: var(--surface-warm);
+  --color-surface-page: var(--surface-page);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
