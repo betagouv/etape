@@ -9,12 +9,12 @@ const classSet = (element: Element | null | undefined): Set<string> =>
   new Set(element?.className.split(" "));
 
 describe("FormSectionTitle", () => {
-  it("garde un h3 de 18 px sans hauteur de ligne par défaut", () => {
+  it("garde par défaut un h3 de 18 px, sur des lignes de 24 px, la hauteur de l'en-tête", () => {
     const { container } = render(<FormSectionTitle>Identité</FormSectionTitle>);
 
     const title = container.firstElementChild;
     expect(title?.tagName).toBe("H3");
-    expect(classSet(title)).toEqual(new Set(["font-semibold", "text-lg", "leading-none"]));
+    expect(classSet(title)).toEqual(new Set(["font-semibold", "text-lg", "leading-6"]));
   });
 
   it("prend le niveau de son enfant et la taille sm", () => {
