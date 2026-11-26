@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefCallback, type RefObject } from "react";
+import { useRef, useState, type RefCallback, type RefObject } from "react";
 import {
   useWatch,
   type FieldPathByValue,
@@ -35,6 +35,7 @@ import {
 import { isOui, OUI_NON, type OuiNon } from "../domain/oui-non";
 import type { PieceJustificative } from "../domain/piece-justificative";
 import { useButtonRegistry } from "./use-button-registry";
+import { useFocusAfterRender } from "./use-focus-after-render";
 import {
   useDemarcheRemoval,
   type DemarcheRemovalItem,
@@ -144,17 +145,12 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
   const [blockedDemarcheId, setBlockedDemarcheId] = useState<string | null>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const editButtons = useButtonRegistry();
-  const pendingFocus = useRef<(() => void) | null>(null);
+  // Les cartes et les boutons se remplacent : le focus suit, une fois le remplaçant affiché.
+  const focusAfterRender = useFocusAfterRender();
 
   const editedIndex = demarches.findIndex(({ id }) => id === currentDemarcheId);
   const isEditing = editedIndex >= 0;
   const currentDemarcheIndex = isEditing ? editedIndex : demarches.length;
-
-  // Les cartes et les boutons se remplacent : le focus suit, une fois le remplaçant affiché.
-  useEffect(() => {
-    pendingFocus.current?.();
-    pendingFocus.current = null;
-  });
 
   const focusAddButton = (): void => addButtonRef.current?.focus();
   const focusTypeField = (): void => form.setFocus(fields.typeDemarche);
@@ -186,7 +182,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
 
   /** Referme la carte de saisie sur des champs vides, puis place le focus. */
   const closeCurrentDemarche = (focus: () => void): void => {
-    pendingFocus.current = focus;
+    focusAfterRender(focus);
     binding.setHasCurrentDemarche(false);
     resetCurrentDemarche();
   };
@@ -259,7 +255,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
 
   const addDemarche = (): void => {
     if (!canAddDemarche(demarches.length)) return;
-    pendingFocus.current = focusTypeField;
+    focusAfterRender(focusTypeField);
     binding.setHasCurrentDemarche(true);
     setHighlighted(true);
     announce("");
@@ -272,7 +268,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
       announce(EDIT_BLOCKED_MESSAGE);
       return;
     }
-    pendingFocus.current = focusTypeField;
+    focusAfterRender(focusTypeField);
     binding.setCurrentDemarche(createCurrentDemarche(demarche), demarche.id);
     binding.setHasCurrentDemarche(true);
     announce("");
