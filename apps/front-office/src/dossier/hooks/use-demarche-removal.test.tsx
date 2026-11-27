@@ -45,6 +45,7 @@ describe("useDemarcheRemoval", () => {
     expect(result.current.removal).toEqual({
       items: [{ demarche: FORUM, index: 1 }],
       isAnswerNon: false,
+      isCurrentDemarcheRemoved: false,
     });
   });
 
@@ -80,8 +81,9 @@ describe("useDemarcheRemoval", () => {
   it("montre toutes les démarches pour un « non », et rend le focus à la question s'il est abandonné", () => {
     const { result, actions } = renderRemoval();
 
-    act(() => result.current.requestAllRemoval());
+    act(() => result.current.requestAllRemoval(false));
     expect(result.current.removal?.isAnswerNon).toBe(true);
+    expect(result.current.removal?.isCurrentDemarcheRemoved).toBe(false);
     expect(result.current.removal?.items.map(({ index }) => index)).toEqual([0, 1]);
 
     act(() => result.current.cancelRemoval());
@@ -90,9 +92,17 @@ describe("useDemarcheRemoval", () => {
     expect(actions.removeAllDemarches).not.toHaveBeenCalled();
   });
 
+  it("retient qu'un « non » emporte aussi une saisie commencée, pour que la fenêtre le dise", () => {
+    const { result } = renderRemoval();
+
+    act(() => result.current.requestAllRemoval(true));
+
+    expect(result.current.removal?.isCurrentDemarcheRemoved).toBe(true);
+  });
+
   it("supprime toutes les démarches quand le « non » est confirmé", () => {
     const { result, actions } = renderRemoval();
-    act(() => result.current.requestAllRemoval());
+    act(() => result.current.requestAllRemoval(false));
 
     act(() => result.current.confirmRemoval());
 

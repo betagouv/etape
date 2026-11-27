@@ -26,6 +26,7 @@ import {
   FUTUR_METIER_FIELD,
   FUTUR_METIER_FIELD_LABEL,
   FUTUR_METIER_SECTION,
+  REQUIRED_CONTACT_EMPLOYEURS_FIELDS,
   type FuturMetierFormData,
 } from "./schema";
 
@@ -135,7 +136,7 @@ export function FuturMetierForm({ formId, notice, onSubmitValid }: FuturMetierFo
             options={OUI_NON_LABEL}
             // Après « non », les entreprises ne sont plus demandées : leur erreur ne doit pas rester au résumé.
             onValueChange={(value) => {
-              if (!isOui(value)) form.clearErrors(FUTUR_METIER_FIELD.ENTREPRISES_CONTACTEES);
+              if (!isOui(value)) form.clearErrors([...REQUIRED_CONTACT_EMPLOYEURS_FIELDS]);
             }}
           />
 

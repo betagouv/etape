@@ -31,7 +31,7 @@ function Removal({ onCancel, onConfirm, onCloseFocus = () => undefined }: Remova
       }}
       confirm={{
         label: "Supprimer le document",
-        isDestructive: true,
+        variant: "destructive",
         onClick: () => {
           onConfirm?.();
           setOpen(false);
