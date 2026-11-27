@@ -52,6 +52,20 @@ describe("requireFilled", () => {
     ).toEqual([]);
   });
 
+  it("signale un champ imbriqué par son chemin découpé, comme zod l'attend", () => {
+    const paths: string[][] = [];
+    const ctx: IssueContext = { addIssue: ({ path }) => paths.push(path) };
+    const names = ["currentDemarche.typeDemarche", "currentDemarche.apportDemarche"] as const;
+    const messages = {
+      "currentDemarche.typeDemarche": "Type manquant.",
+      "currentDemarche.apportDemarche": "Apport manquant.",
+    };
+
+    requireFilled(ctx, { currentDemarche: { apportDemarche: "Un début." } }, names, messages);
+
+    expect(paths).toEqual([["currentDemarche", "typeDemarche"]]);
+  });
+
   it("ne regarde que les champs demandés", () => {
     expect(collectIssues({ employeur: null, adresse: "" }, ["adresse"])).toEqual([
       "adresse : Veuillez saisir l’adresse de votre employeur.",

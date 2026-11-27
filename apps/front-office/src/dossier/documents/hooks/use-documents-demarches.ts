@@ -64,14 +64,12 @@ export function useDocumentsDemarches<
     // Sans cela, « Valider » remettrait dans la démarche les pièces de sa saisie ; celles que la
     // saisie a gagnées sans être validées y restent.
     if (values.currentDemarcheId !== demarcheId) return;
-    const { typeDemarche, precisionTypeDemarche, apportDemarche, piecesJustificatives } = values;
+    const { currentDemarche } = values;
     binding.setCurrentDemarche(
       {
-        typeDemarche,
-        precisionTypeDemarche,
-        apportDemarche,
+        ...currentDemarche,
         piecesJustificatives: applyPiecesChange(
-          piecesJustificatives,
+          currentDemarche.piecesJustificatives,
           demarche.piecesJustificatives,
           pieces,
         ),

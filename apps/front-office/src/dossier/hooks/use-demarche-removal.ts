@@ -14,6 +14,8 @@ export interface DemarcheRemoval<TType extends string = string> {
   items: readonly DemarcheRemovalItem<TType>[];
   /** Vrai quand la suppression répond à un « non » : confirmée, la réponse devient « non ». */
   isAnswerNon: boolean;
+  /** Vrai quand ce « non » emporte aussi une saisie commencée : la fenêtre le dit. */
+  isCurrentDemarcheRemoved: boolean;
 }
 
 /**
@@ -35,8 +37,8 @@ export interface UseDemarcheRemovalResult<TType extends string = string> {
   /** La corbeille d'une démarche validée : elle reprend le focus quand sa suppression est abandonnée. */
   registerRemoveButton: (demarcheId: string) => RefCallback<HTMLButtonElement>;
   requestRemoval: (demarche: Demarche<TType>) => void;
-  /** Toutes les démarches validées, pour un « non » qui les emporterait. */
-  requestAllRemoval: () => void;
+  /** Toutes les démarches validées, pour un « non » qui les emporterait, avec ou sans saisie commencée. */
+  requestAllRemoval: (isCurrentDemarcheRemoved: boolean) => void;
   cancelRemoval: () => void;
   confirmRemoval: () => void;
   /** À la fermeture de la fenêtre : le focus va là où la suppression, ou son abandon, l'a prévu. */
@@ -60,14 +62,19 @@ export function useDemarcheRemoval<TType extends string>(
     // Par son `id` : le formulaire rend des copies, pas les objets qu'on lui a confiés.
     const index = demarches.findIndex(({ id }) => id === demarche.id);
     if (index < 0) return;
-    setRemoval({ items: [{ demarche, index }], isAnswerNon: false });
+    setRemoval({
+      items: [{ demarche, index }],
+      isAnswerNon: false,
+      isCurrentDemarcheRemoved: false,
+    });
     setRemovalOpen(true);
   };
 
-  const requestAllRemoval = (): void => {
+  const requestAllRemoval = (isCurrentDemarcheRemoved: boolean): void => {
     setRemoval({
       items: demarches.map((demarche, index) => ({ demarche, index })),
       isAnswerNon: true,
+      isCurrentDemarcheRemoved,
     });
     setRemovalOpen(true);
   };

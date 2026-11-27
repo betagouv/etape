@@ -1,5 +1,5 @@
 import { selectPlural, type PluralForms } from "@/lib/plural";
-import type { FieldErrors } from "./field-error-announcement";
+import { findFieldError, type FieldErrors } from "./field-error-announcement";
 
 /** Une erreur du résumé : le champ fautif, par son `id`, et son message. */
 export interface VoletError {
@@ -15,9 +15,10 @@ export function listVoletErrors(
   validatedFields: readonly string[],
   errors: FieldErrors,
 ): VoletError[] {
-  return validatedFields
-    .filter((name) => errors[name] !== undefined)
-    .map((fieldId) => ({ fieldId, message: errors[fieldId]?.message ?? "" }));
+  return validatedFields.flatMap((fieldId) => {
+    const error = findFieldError(errors, fieldId);
+    return error === undefined ? [] : [{ fieldId, message: error.message ?? "" }];
+  });
 }
 
 const ERROR_NOUNS: PluralForms<string> = {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   canAddDemarche,
   canCancelDemarche,
+  createCurrentDemarche,
   createDemarche,
   DEMARCHE_FIELDS,
   EMPTY_CURRENT_DEMARCHE,
@@ -21,6 +22,8 @@ import {
   formatRemovalTitle,
   formatRemoveLabel,
   isDemarcheFilled,
+  isDemarcheStarted,
+  isPrecisionRequired,
   MAX_DEMARCHES_MESSAGE,
   NOMBRE_MAX_DEMARCHES,
   removeDemarche,
@@ -54,6 +57,17 @@ const IMMERSION: CurrentDemarche<TypeDemarche> = {
   piecesJustificatives: [],
 };
 
+describe("isPrecisionRequired", () => {
+  it("est vrai pour « Autre »", () => {
+    expect(isPrecisionRequired(TYPE_DEMARCHE.AUTRE)).toBe(true);
+  });
+
+  it("est faux pour un type de la liste, et tant qu'aucun type n'est choisi", () => {
+    expect(isPrecisionRequired(TYPE_DEMARCHE.SALON)).toBe(false);
+    expect(isPrecisionRequired(undefined)).toBe(false);
+  });
+});
+
 describe("findDemarcheFields", () => {
   it("exige le type et l'apport tant qu'aucun type n'est choisi", () => {
     expect(findDemarcheFields(undefined)).toEqual(["typeDemarche", "apportDemarche"]);
@@ -71,7 +85,7 @@ describe("findDemarcheFields", () => {
 
 describe("findOpenDemarcheFields", () => {
   /** La carte de saisie est ouverte, aucun type n'est choisi. */
-  const OPEN = { hasCurrentDemarche: true };
+  const OPEN = { currentDemarche: {}, hasCurrentDemarche: true };
 
   it("n'exige rien tant que la question n'a pas de réponse", () => {
     expect(findOpenDemarcheFields(undefined, OPEN)).toEqual([]);
@@ -79,22 +93,35 @@ describe("findOpenDemarcheFields", () => {
 
   it("n'exige rien après un « non », même si un type reste saisi", () => {
     expect(
-      findOpenDemarcheFields(OUI_NON.NON, { ...OPEN, typeDemarche: TYPE_DEMARCHE.AUTRE }),
+      findOpenDemarcheFields(OUI_NON.NON, {
+        ...OPEN,
+        currentDemarche: { typeDemarche: TYPE_DEMARCHE.AUTRE },
+      }),
     ).toEqual([]);
   });
 
-  it("exige le type et l'apport après un « oui », carte de saisie ouverte", () => {
-    expect(findOpenDemarcheFields(OUI_NON.OUI, OPEN)).toEqual(["typeDemarche", "apportDemarche"]);
+  it("exige le type et l'apport après un « oui », carte de saisie ouverte, par leur chemin dans le formulaire", () => {
+    expect(findOpenDemarcheFields(OUI_NON.OUI, OPEN)).toEqual([
+      "currentDemarche.typeDemarche",
+      "currentDemarche.apportDemarche",
+    ]);
   });
 
   it("exige aussi la précision pour « Autre »", () => {
     expect(
-      findOpenDemarcheFields(OUI_NON.OUI, { ...OPEN, typeDemarche: TYPE_DEMARCHE.AUTRE }),
-    ).toEqual(DEMARCHE_FIELDS);
+      findOpenDemarcheFields(OUI_NON.OUI, {
+        ...OPEN,
+        currentDemarche: { typeDemarche: TYPE_DEMARCHE.AUTRE },
+      }),
+    ).toEqual([
+      "currentDemarche.typeDemarche",
+      "currentDemarche.precisionTypeDemarche",
+      "currentDemarche.apportDemarche",
+    ]);
   });
 
   it("n'exige plus rien une fois la carte de saisie fermée", () => {
-    expect(findOpenDemarcheFields(OUI_NON.OUI, { hasCurrentDemarche: false })).toEqual([]);
+    expect(findOpenDemarcheFields(OUI_NON.OUI, { ...OPEN, hasCurrentDemarche: false })).toEqual([]);
   });
 });
 
@@ -137,6 +164,36 @@ describe("isDemarcheFilled", () => {
 
     expect(isDemarcheFilled(autre)).toBe(false);
     expect(isDemarcheFilled({ ...autre, precisionTypeDemarche: "Stage" })).toBe(true);
+  });
+});
+
+describe("isDemarcheStarted", () => {
+  it("est faux pour une saisie vide, espaces compris", () => {
+    expect(isDemarcheStarted(EMPTY_CURRENT_DEMARCHE)).toBe(false);
+    expect(isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, apportDemarche: "  " })).toBe(false);
+  });
+
+  it("est vrai dès qu'un champ est rempli ou qu'un justificatif est déposé", () => {
+    const piece = { id: "p", fichier: new File([], "attestation.pdf"), dateDepot: new Date(0) };
+
+    expect(
+      isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, typeDemarche: TYPE_DEMARCHE.SALON }),
+    ).toBe(true);
+    expect(isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, apportDemarche: "Un début." })).toBe(
+      true,
+    );
+    expect(isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, piecesJustificatives: [piece] })).toBe(
+      true,
+    );
+  });
+});
+
+describe("createCurrentDemarche", () => {
+  it("rouvre une démarche validée en saisie, sans son `id`", () => {
+    const demarche = { ...IMMERSION, id: "a", typeDemarche: TYPE_DEMARCHE.IMMERSION };
+
+    expect(createCurrentDemarche(demarche)).toEqual(IMMERSION);
+    expect(createCurrentDemarche(demarche)).not.toHaveProperty("id");
   });
 });
 
@@ -262,15 +319,24 @@ describe("suppression d'une démarche", () => {
 
   it("parle d'une démarche dans la fenêtre ouverte par la corbeille", () => {
     expect(formatRemovalTitle(1)).toBe("Supprimer votre démarche");
-    expect(formatRemovalMessage(1)).toBe(
+    expect(formatRemovalMessage(1, false)).toBe(
       "En cliquant sur «\u00a0Supprimer\u00a0», la démarche suivante et ses justificatifs seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».",
     );
   });
 
   it("parle de toutes les démarches dans la fenêtre ouverte par un « non »", () => {
     expect(formatRemovalTitle(3)).toBe("Supprimer vos démarches");
-    expect(formatRemovalMessage(3)).toContain("les démarches suivantes et leurs justificatifs");
+    expect(formatRemovalMessage(3, false)).toContain(
+      "les démarches suivantes et leurs justificatifs",
+    );
     expect(formatAllRemovedAnnouncement(3)).toBe("Vos démarches ont été supprimées.");
     expect(formatAllRemovedAnnouncement(1)).toBe("Votre démarche a été supprimée.");
+  });
+
+  it("ajoute la saisie commencée au message quand un « non » l'emporte aussi", () => {
+    const sentence = "La démarche en cours de saisie et ses justificatifs seront aussi supprimés.";
+
+    expect(formatRemovalMessage(2, true)).toBe(`${formatRemovalMessage(2, false)} ${sentence}`);
+    expect(formatRemovalMessage(2, false)).not.toContain(sentence);
   });
 });

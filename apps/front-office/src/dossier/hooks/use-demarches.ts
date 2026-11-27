@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefCallback, type RefObject } from "react";
+import { useRef, useState, type RefCallback, type RefObject } from "react";
 import {
   useWatch,
   type FieldPathByValue,
@@ -12,6 +12,7 @@ import { formatOptionId } from "@etape/ui/lib/option-id";
 import {
   canAddDemarche,
   canCancelDemarche,
+  createCurrentDemarche,
   createDemarche,
   DEMARCHE_FIELDS,
   EDIT_BLOCKED_MESSAGE,
@@ -24,6 +25,7 @@ import {
   formatEditCancelAnnouncement,
   formatRemovalAnnouncement,
   isDemarcheFilled,
+  isDemarcheStarted,
   removeDemarche,
   replaceDemarche,
   type CurrentDemarche,
@@ -33,6 +35,7 @@ import {
 import { isOui, OUI_NON, type OuiNon } from "../domain/oui-non";
 import type { PieceJustificative } from "../domain/piece-justificative";
 import { useButtonRegistry } from "./use-button-registry";
+import { useFocusAfterRender } from "./use-focus-after-render";
 import {
   useDemarcheRemoval,
   type DemarcheRemovalItem,
@@ -69,43 +72,52 @@ export interface DemarchesBinding<TFieldValues extends FieldValues, TType extend
   setHasCurrentDemarche: (hasCurrentDemarche: boolean) => void;
 }
 
-/** Ce que renvoie `useDemarches` : les démarches validées, l'état de la saisie, la fenêtre de suppression et les actions de l'écran. */
-export interface UseDemarchesResult<TType extends string = string> extends Omit<
-  UseDemarcheRemovalResult<TType>,
-  "requestAllRemoval"
-> {
-  /** Vrai après un « oui » à la question du volet : les démarches s'affichent. */
-  isAnswerOui: boolean;
-  demarches: readonly Demarche<TType>[];
+/** La carte de saisie d'une démarche : son état et ses actions. */
+export interface CurrentDemarcheState {
   /** Vrai tant que la carte de saisie est ouverte. */
-  hasCurrentDemarche: boolean;
+  isOpen: boolean;
   /** La démarche validée que la saisie modifie ; `null` pour une nouvelle démarche. */
-  currentDemarcheId: string | null;
+  demarcheId: string | null;
   /** Le rang de la démarche en cours de saisie : celui de la démarche modifiée, ou le suivant. */
-  currentDemarcheIndex: number;
+  index: number;
   /** Faux tant qu'un champ exigé de la saisie est vide : le bouton de validation est grisé. */
-  isCurrentDemarcheFilled: boolean;
-  /** Faux quand le nombre maximal de démarches est atteint. */
-  canAdd: boolean;
+  isFilled: boolean;
   /** Vrai pour une saisie qu'on peut abandonner : une modification, ou une démarche de plus (maquette 13). */
   canCancel: boolean;
   /** Vrai quand la carte de saisie vient de s'ouvrir, tant que le focus ne l'a pas quittée. */
   isHighlighted: boolean;
+  validate: () => Promise<void>;
+  cancel: () => void;
+  removeHighlight: () => void;
+}
+
+/** Les démarches validées d'un volet, et les boutons qui en ajoutent ou en modifient une. */
+export interface DemarcheListState<TType extends string = string> {
+  demarches: readonly Demarche<TType>[];
+  /** Faux quand le nombre maximal de démarches est atteint. */
+  canAdd: boolean;
   /** La démarche validée qu'on a voulu modifier pendant une autre saisie : sa carte dit pourquoi rien ne se passe. */
   blockedDemarcheId: string | null;
-  /** Pour la région `role="status"` de l'écran. */
-  announcement: string;
   /** Le bouton d'ajout : il prend le focus quand la carte d'une nouvelle saisie se referme. */
   addButtonRef: RefObject<HTMLButtonElement | null>;
   /** Le bouton « Modifier » d'une démarche validée : il reprend le focus quand sa modification se referme. */
   registerEditButton: (demarcheId: string) => RefCallback<HTMLButtonElement>;
+  add: () => void;
+  edit: (demarche: Demarche<TType>) => void;
+}
+
+/** Ce que renvoie `useDemarches` : la réponse à la question du volet, l'annonce, la carte de saisie, les démarches validées et la fenêtre de suppression. */
+export interface UseDemarchesResult<TType extends string = string> {
+  /** Vrai après un « oui » à la question du volet : les démarches s'affichent. */
+  isAnswerOui: boolean;
   /** Après la réponse à la question : un « non » qui emporterait des démarches validées demande confirmation. */
   changeAnswer: (answer: OuiNon) => void;
-  validateDemarche: () => Promise<void>;
-  addDemarche: () => void;
-  editDemarche: (demarche: Demarche<TType>) => void;
-  cancelDemarche: () => void;
-  removeHighlight: () => void;
+  /** Pour la région `role="status"` de l'écran. */
+  announcement: string;
+  currentDemarche: CurrentDemarcheState;
+  list: DemarcheListState<TType>;
+  /** La fenêtre qui confirme une suppression ; un « non » l'ouvre par `changeAnswer`. */
+  removalDialog: Omit<UseDemarcheRemovalResult<TType>, "requestAllRemoval">;
 }
 
 /**
@@ -133,23 +145,21 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     compute: (values: TFieldValues) => values.currentDemarcheId,
   });
   // Calculé dans l'abonnement : la carte n'est pas re-rendue à chaque frappe.
-  const isCurrentDemarcheFilled = useWatch({ control, compute: isDemarcheFilled });
+  const isCurrentDemarcheFilled = useWatch({
+    control,
+    compute: (values: TFieldValues) => isDemarcheFilled(values.currentDemarche),
+  });
   const { message: announcement, announce } = useAnnouncement();
   const [isHighlighted, setHighlighted] = useState(false);
   const [blockedDemarcheId, setBlockedDemarcheId] = useState<string | null>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const editButtons = useButtonRegistry();
-  const pendingFocus = useRef<(() => void) | null>(null);
+  // Les cartes et les boutons se remplacent : le focus suit, une fois le remplaçant affiché.
+  const focusAfterRender = useFocusAfterRender();
 
   const editedIndex = demarches.findIndex(({ id }) => id === currentDemarcheId);
   const isEditing = editedIndex >= 0;
   const currentDemarcheIndex = isEditing ? editedIndex : demarches.length;
-
-  // Les cartes et les boutons se remplacent : le focus suit, une fois le remplaçant affiché.
-  useEffect(() => {
-    pendingFocus.current?.();
-    pendingFocus.current = null;
-  });
 
   const focusAddButton = (): void => addButtonRef.current?.focus();
   const focusTypeField = (): void => form.setFocus(fields.typeDemarche);
@@ -181,7 +191,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
 
   /** Referme la carte de saisie sur des champs vides, puis place le focus. */
   const closeCurrentDemarche = (focus: () => void): void => {
-    pendingFocus.current = focus;
+    focusAfterRender(focus);
     binding.setHasCurrentDemarche(false);
     resetCurrentDemarche();
   };
@@ -215,7 +225,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     return () => document.getElementById(formatOptionId(fields.answer, OUI_NON.NON))?.focus();
   };
 
-  const { requestAllRemoval, ...removal } = useDemarcheRemoval(demarches, {
+  const { requestAllRemoval, ...removalDialog } = useDemarcheRemoval(demarches, {
     removeDemarche: removeOneDemarche,
     removeAllDemarches,
     focusAnswer: () => form.setFocus(fields.answer),
@@ -225,7 +235,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     const isValid = await form.trigger(DEMARCHE_FIELDS.map((name) => fields[name]));
     if (!isValid) {
       // Le bouton grisé reste cliquable : il mène au premier champ à remplir, erreur affichée.
-      const invalidField = findDemarcheFields(form.getValues().typeDemarche).find(
+      const invalidField = findDemarcheFields(form.getValues().currentDemarche.typeDemarche).find(
         (name) => form.getFieldState(fields[name]).invalid,
       );
       if (invalidField) form.setFocus(fields[invalidField]);
@@ -233,7 +243,10 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     }
 
     const values = form.getValues();
-    const demarche = createDemarche(values.currentDemarcheId ?? crypto.randomUUID(), values);
+    const demarche = createDemarche(
+      values.currentDemarcheId ?? crypto.randomUUID(),
+      values.currentDemarche,
+    );
     if (demarche === undefined) return;
 
     if (values.currentDemarcheId === null) {
@@ -251,7 +264,7 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
 
   const addDemarche = (): void => {
     if (!canAddDemarche(demarches.length)) return;
-    pendingFocus.current = focusTypeField;
+    focusAfterRender(focusTypeField);
     binding.setHasCurrentDemarche(true);
     setHighlighted(true);
     announce("");
@@ -264,8 +277,8 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
       announce(EDIT_BLOCKED_MESSAGE);
       return;
     }
-    pendingFocus.current = focusTypeField;
-    binding.setCurrentDemarche(demarche, demarche.id);
+    focusAfterRender(focusTypeField);
+    binding.setCurrentDemarche(createCurrentDemarche(demarche), demarche.id);
     binding.setHasCurrentDemarche(true);
     announce("");
   };
@@ -289,29 +302,36 @@ export function useDemarches<TFieldValues extends DemarchesValues<TType>, TType 
     }
     // Le « non » emporterait les démarches validées : la réponse reste « oui » jusqu'à la confirmation.
     binding.setAnswer(OUI_NON.OUI);
-    requestAllRemoval();
+    // Une modification porte sur une démarche que la fenêtre liste déjà : seule une nouvelle saisie s'y ajoute.
+    requestAllRemoval(
+      currentDemarcheId === null && isDemarcheStarted(form.getValues().currentDemarche),
+    );
   };
 
   return {
-    ...removal,
     isAnswerOui: isOui(answer),
-    demarches,
-    hasCurrentDemarche,
-    currentDemarcheId,
-    currentDemarcheIndex,
-    isCurrentDemarcheFilled,
-    canAdd: canAddDemarche(demarches.length),
-    canCancel: canCancelDemarche(demarches.length),
-    isHighlighted,
-    blockedDemarcheId,
-    announcement,
-    addButtonRef,
-    registerEditButton: editButtons.register,
     changeAnswer,
-    validateDemarche,
-    addDemarche,
-    editDemarche,
-    cancelDemarche,
-    removeHighlight: () => setHighlighted(false),
+    announcement,
+    currentDemarche: {
+      isOpen: hasCurrentDemarche,
+      demarcheId: currentDemarcheId,
+      index: currentDemarcheIndex,
+      isFilled: isCurrentDemarcheFilled,
+      canCancel: canCancelDemarche(demarches.length),
+      isHighlighted,
+      validate: validateDemarche,
+      cancel: cancelDemarche,
+      removeHighlight: () => setHighlighted(false),
+    },
+    list: {
+      demarches,
+      canAdd: canAddDemarche(demarches.length),
+      blockedDemarcheId,
+      addButtonRef,
+      registerEditButton: editButtons.register,
+      add: addDemarche,
+      edit: editDemarche,
+    },
+    removalDialog,
   };
 }

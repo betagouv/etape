@@ -30,10 +30,7 @@ export function createDemarchesConstructionBinding(
     setDemarches: (demarches) => form.setValue(PROJET_FIELD.DEMARCHES, demarches),
     setCurrentDemarche: (current, demarcheId) => {
       form.setValue(PROJET_FIELD.CURRENT_DEMARCHE_ID, demarcheId);
-      form.setValue(PROJET_FIELD.TYPE_DEMARCHE, current.typeDemarche);
-      form.setValue(PROJET_FIELD.PRECISION_TYPE_DEMARCHE, current.precisionTypeDemarche);
-      form.setValue(PROJET_FIELD.APPORT_DEMARCHE, current.apportDemarche);
-      form.setValue(PROJET_FIELD.PIECES_JUSTIFICATIVES, current.piecesJustificatives);
+      form.setValue(PROJET_FIELD.CURRENT_DEMARCHE, current);
     },
     setHasCurrentDemarche: (hasCurrentDemarche) =>
       form.setValue(PROJET_FIELD.HAS_CURRENT_DEMARCHE, hasCurrentDemarche),

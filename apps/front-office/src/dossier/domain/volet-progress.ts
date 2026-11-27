@@ -1,4 +1,5 @@
-import type { FieldErrors } from "./field-error-announcement";
+import { readFieldPath } from "@/lib/field-path";
+import { findFieldError, type FieldErrors } from "./field-error-announcement";
 import type { SectionProgress, VoletProgress } from "./statut-volet";
 
 /** Les champs qu'un volet demande au vu des réponses en cours, et ceux d'entre eux qui sont remplis. */
@@ -17,15 +18,18 @@ export function listValidatedFields<TName extends string>({
   return Object.values<readonly TName[]>(sectionValidatedFields).flat();
 }
 
-/** Les champs qui ont une valeur : ne change qu'au passage de vide à rempli, pas à chaque frappe. */
+/**
+ * Les champs qui ont une valeur : ne change qu'au passage de vide à rempli, pas à chaque frappe.
+ * Un champ se nomme par son chemin dans `values` : `currentDemarche.typeDemarche`.
+ */
 export function listFilledFields<TName extends string>(
-  values: Partial<Record<TName, unknown>>,
+  values: object,
   fields: readonly TName[],
 ): TName[] {
   // Une chaîne, un objet (l'employeur choisi), un tableau (les pièces d'un document) ou `null` ;
   // une chaîne d'espaces est vide, comme pour le schéma, et un tableau sans élément aussi.
   return fields.filter((name) => {
-    const value = values[name];
+    const value = readFieldPath(values, name);
     if (value === undefined || value === null) return false;
     if (typeof value === "string") return value.trim() !== "";
     if (Array.isArray(value)) return value.length > 0;
@@ -38,7 +42,7 @@ export function listFilledFields<TName extends string>(
  * Sans champ facultatif contrôlé, les champs contrôlés sont les champs demandés.
  */
 export function buildRequiredFields<TSection extends string, TName extends string>(
-  values: Partial<Record<NoInfer<TName>, unknown>>,
+  values: object,
   sectionFields: Record<TSection, readonly TName[]>,
   sectionValidatedFields: Record<TSection, readonly TName[]> = sectionFields,
 ): RequiredFields<TSection, TName> {
@@ -58,7 +62,7 @@ function countFilled(filledFields: readonly string[], fields: readonly string[])
 
 /** Nombre de champs qui portent une erreur. */
 function countInvalid(errors: FieldErrors, fields: readonly string[]): number {
-  return fields.filter((name) => errors[name] !== undefined).length;
+  return fields.filter((name) => findFieldError(errors, name) !== undefined).length;
 }
 
 /**
