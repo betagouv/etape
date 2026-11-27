@@ -13,8 +13,8 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
       data-slot="field-set"
       className={cn(
         "flex flex-col gap-6",
-        // Groupe radio : 8 px, comme entre libellé, contrôle et aide d'un `Field` (kit, formulaire du front-office).
-        "has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-2",
+        // Groupe radio ou de cases : 8 px, comme entre libellé, contrôle et aide d'un `Field` (kit, formulaire du front-office).
+        "has-[>[data-slot=checkbox-group]]:gap-2 has-[>[data-slot=radio-group]]:gap-2",
         className,
       )}
       {...props}

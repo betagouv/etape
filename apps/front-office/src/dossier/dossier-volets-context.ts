@@ -3,6 +3,7 @@ import { createContext } from "react";
 import type { UseDocumentsFormResult } from "./documents/hooks/use-documents-form";
 import type { VoletProgress } from "./domain/statut-volet";
 import type { VoletId } from "./domain/volet-id";
+import type { UseFormationFormResult } from "./formation/hooks/use-formation-form";
 import type { UseFuturMetierFormResult } from "./futur-metier/hooks/use-futur-metier-form";
 import type { UseInformationsFormResult } from "./informations/hooks/use-informations-form";
 import type { UseProjetFormResult } from "./projet/hooks/use-projet-form";
@@ -14,6 +15,7 @@ export interface DossierVolets {
   situationProfessionnelle: UseSituationProfessionnelleFormResult;
   futurMetier: UseFuturMetierFormResult;
   projet: UseProjetFormResult;
+  formation: UseFormationFormResult;
   documents: UseDocumentsFormResult;
   voletProgress: Partial<Record<VoletId, VoletProgress>>;
 }

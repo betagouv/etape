@@ -8,6 +8,7 @@ import { STATUT_DOSSIER } from "../domain/statut-dossier";
 import { VOLET_ID } from "../domain/volet-id";
 import { VOLETS_DOSSIER } from "../domain/volets-dossier";
 import { DossierVoletsContext } from "../dossier-volets-context";
+import { useFormationForm } from "../formation/hooks/use-formation-form";
 import { useFuturMetierForm } from "../futur-metier/hooks/use-futur-metier-form";
 import { useInformationsForm } from "../informations/hooks/use-informations-form";
 import { useProjetForm } from "../projet/hooks/use-projet-form";
@@ -20,12 +21,14 @@ export function DossierScreen() {
   const situationProfessionnelle = useSituationProfessionnelleForm();
   const futurMetier = useFuturMetierForm();
   const projet = useProjetForm();
+  const formation = useFormationForm();
   const documents = useDocumentsForm();
   const voletProgress = {
     [VOLET_ID.INFORMATIONS]: informations.progress,
     [VOLET_ID.SITUATION_PROFESSIONNELLE]: situationProfessionnelle.progress,
     [VOLET_ID.FUTUR_METIER]: futurMetier.progress,
     [VOLET_ID.PROJET]: projet.progress,
+    [VOLET_ID.FORMATION]: formation.progress,
     [VOLET_ID.DOCUMENTS]: documents.progress,
   };
   const { completed } = computeDossierProgress(Object.values(voletProgress));
@@ -37,6 +40,7 @@ export function DossierScreen() {
         situationProfessionnelle,
         futurMetier,
         projet,
+        formation,
         documents,
         voletProgress,
       }}

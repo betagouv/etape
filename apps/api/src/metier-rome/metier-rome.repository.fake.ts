@@ -30,6 +30,7 @@ export class FakeMetierRomeRepository implements MetierRomeRepository {
 
   async searchAppellationsRome(
     words: string[],
+    filter: { isObsolete: boolean },
     limit: number,
   ): Promise<AppellationRomeSearchResult> {
     const searchedWords = words.map(normalizeForSearch);
@@ -38,7 +39,7 @@ export class FakeMetierRomeRepository implements MetierRomeRepository {
     const found = [...this.appellations]
       .flatMap(([code, { libelle, codeMetier, isObsolete }]) => {
         const metier = this.metiers.get(codeMetier);
-        if (isObsolete || !metier) return [];
+        if (isObsolete !== filter.isObsolete || !metier) return [];
 
         return [
           {
