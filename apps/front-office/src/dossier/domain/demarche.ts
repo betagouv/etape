@@ -1,42 +1,14 @@
 import { selectPlural, type PluralForms } from "@/lib/plural";
+import { isOui, type OuiNon } from "./oui-non";
 import {
   FORMATS_PIECE_JUSTIFICATIVE_LABEL,
   TAILLE_MAX_PIECE_MO,
   type PieceJustificative,
-} from "../../domain/piece-justificative";
-import { isOui, type OuiNon } from "../../domain/oui-non";
-import { listFilledFields } from "../../domain/volet-progress";
+} from "./piece-justificative";
+import { listFilledFields } from "./volet-progress";
 
-/** Les types de démarche proposés, dans l'ordre de la liste (transmise le 2026-11-18). */
-export const TYPE_DEMARCHE = {
-  IMMERSION: "immersion",
-  RENCONTRE_PROFESSIONNEL: "rencontre-professionnel",
-  ENQUETE_METIER: "enquete-metier",
-  SALON: "salon",
-  PORTES_OUVERTES: "portes-ouvertes",
-  ATELIER_INFORMATION: "atelier-information",
-  BENEVOLAT: "benevolat",
-  RECHERCHES_DOCUMENTAIRES: "recherches-documentaires",
-  AUTRE: "autre",
-} as const;
-
-/** Un type de démarche, parmi ceux de `TYPE_DEMARCHE`. */
-export type TypeDemarche = (typeof TYPE_DEMARCHE)[keyof typeof TYPE_DEMARCHE];
-
-/** Libellé de chaque type de démarche. */
-export const TYPE_DEMARCHE_LABEL: Record<TypeDemarche, string> = {
-  [TYPE_DEMARCHE.IMMERSION]: "Immersion en entreprise (stage d’observation, PMSMP)",
-  [TYPE_DEMARCHE.RENCONTRE_PROFESSIONNEL]: "Rencontre ou entretien avec un professionnel du métier",
-  [TYPE_DEMARCHE.ENQUETE_METIER]: "Enquête métier (questions posées à plusieurs professionnels)",
-  [TYPE_DEMARCHE.SALON]: "Salon, forum ou job dating",
-  [TYPE_DEMARCHE.PORTES_OUVERTES]: "Journée portes ouvertes d’un organisme",
-  [TYPE_DEMARCHE.ATELIER_INFORMATION]:
-    "Atelier ou réunion d’information (France Travail, APEC, CIO…)",
-  [TYPE_DEMARCHE.BENEVOLAT]: "Bénévolat ou activité exercée en dehors du travail",
-  [TYPE_DEMARCHE.RECHERCHES_DOCUMENTAIRES]:
-    "Recherches documentaires (fiches métiers, vidéos, sites spécialisés)",
-  [TYPE_DEMARCHE.AUTRE]: "Autre",
-};
+/** Le type « Autre », dernier de la liste de chaque volet : il se précise en texte libre. */
+export const TYPE_DEMARCHE_AUTRE = "autre";
 
 /** L'aide du dépôt des justificatifs d'une démarche (maquette 10, formats et taille transmis le 2026-11-18). */
 export const PIECES_DEMARCHE_DESCRIPTION = `Attestation, compte-rendu ou tout autre document qui atteste cette démarche. Vous les retrouverez aussi dans «\u00a0Mes documents\u00a0». Formats acceptés : ${FORMATS_PIECE_JUSTIFICATIVE_LABEL}, ${TAILLE_MAX_PIECE_MO} Mo maximum par fichier.`;
@@ -51,67 +23,80 @@ export const DEMARCHE_FIELDS: readonly DemarcheFieldName[] = [
   "apportDemarche",
 ];
 
+/** Libellés des champs de la démarche en cours de saisie, repris par ceux de chaque volet. */
+export const DEMARCHE_FIELD_LABEL: Record<DemarcheFieldName | "piecesJustificatives", string> = {
+  typeDemarche: "Type de démarche",
+  precisionTypeDemarche: "Précisez le type de démarche",
+  apportDemarche: "Ce que la démarche vous a apporté",
+  piecesJustificatives: "Justificatifs",
+};
+
 const PRECISION_FIELD: DemarcheFieldName = "precisionTypeDemarche";
 
 /** Vrai pour le type qui se précise en texte libre : « Autre » (maquettes 10 et 11). */
-export function isPrecisionRequired(typeDemarche: TypeDemarche | undefined): boolean {
-  return typeDemarche === TYPE_DEMARCHE.AUTRE;
+export function isPrecisionRequired(typeDemarche: string | undefined): boolean {
+  return typeDemarche === TYPE_DEMARCHE_AUTRE;
 }
 
 /** Les champs qu'exige la démarche en cours : la précision n'est demandée que pour « Autre » (maquettes 10 et 11). */
-export function findDemarcheFields(
-  typeDemarche: TypeDemarche | undefined,
-): readonly DemarcheFieldName[] {
+export function findDemarcheFields(typeDemarche: string | undefined): readonly DemarcheFieldName[] {
   if (isPrecisionRequired(typeDemarche)) return DEMARCHE_FIELDS;
   return DEMARCHE_FIELDS.filter((name) => name !== PRECISION_FIELD);
 }
 
-/** Ce qui décide des champs de la démarche en cours de saisie. */
-export interface OpenDemarcheAnswers {
-  /** Absente tant que la question n'a pas de réponse. */
-  demarcheDecouverte?: OuiNon;
-  typeDemarche?: TypeDemarche;
+/** Ce qui, avec la réponse à la question du volet, décide des champs de la démarche en cours de saisie. */
+export interface OpenDemarche {
+  typeDemarche?: string;
   /** Vrai tant que la carte de saisie d'une démarche est ouverte. */
   hasCurrentDemarche: boolean;
 }
 
 /**
  * Les champs de la démarche en cours de saisie ne sont demandés qu'après un « oui », et tant que
- * sa carte est ouverte : une démarche validée ne compte plus (maquettes 09, 10 et 12).
+ * sa carte est ouverte : une démarche validée ne compte plus (maquettes 09, 10 et 12). `answer`
+ * est absente tant que la question n'a pas de réponse.
  */
-export function findOpenDemarcheFields({
-  demarcheDecouverte,
-  typeDemarche,
-  hasCurrentDemarche,
-}: OpenDemarcheAnswers): readonly DemarcheFieldName[] {
-  return isOui(demarcheDecouverte) && hasCurrentDemarche ? findDemarcheFields(typeDemarche) : [];
+export function findOpenDemarcheFields(
+  answer: OuiNon | undefined,
+  { typeDemarche, hasCurrentDemarche }: OpenDemarche,
+): readonly DemarcheFieldName[] {
+  return isOui(answer) && hasCurrentDemarche ? findDemarcheFields(typeDemarche) : [];
 }
 
-/** Le nombre de démarches qu'un dossier peut porter (décision du 2026-11-20, à revoir). */
+/** Le nombre de démarches qu'un volet peut porter (décision du 2026-11-20, à revoir). */
 export const NOMBRE_MAX_DEMARCHES = 20;
 
 /** Sous le bouton d'ajout, quand le maximum est atteint. */
 export const MAX_DEMARCHES_MESSAGE = `Vous pouvez déclarer ${NOMBRE_MAX_DEMARCHES} démarches au maximum.`;
 
-/** La démarche en cours de saisie, telle que le formulaire la porte. */
-export interface CurrentDemarche {
-  typeDemarche?: TypeDemarche;
+/** La démarche en cours de saisie, telle que le formulaire la porte ; `TType` est un type de la liste du volet. */
+export interface CurrentDemarche<TType extends string = string> {
+  typeDemarche?: TType;
   precisionTypeDemarche: string;
   apportDemarche: string;
   piecesJustificatives: PieceJustificative[];
 }
 
 /** La saisie telle qu'elle s'ouvre pour une nouvelle démarche, et telle qu'elle se referme : sans type, vide. */
-export const EMPTY_CURRENT_DEMARCHE: CurrentDemarche = {
+export const EMPTY_CURRENT_DEMARCHE: CurrentDemarche<never> = {
   precisionTypeDemarche: "",
   apportDemarche: "",
   piecesJustificatives: [],
 };
 
 /** Une démarche validée. */
-export interface Demarche extends CurrentDemarche {
+export interface Demarche<TType extends string = string> extends CurrentDemarche<TType> {
   id: string;
-  typeDemarche: TypeDemarche;
+  typeDemarche: TType;
+}
+
+/** Ce que le formulaire d'un volet porte pour ses démarches, en plus de la réponse à sa question. */
+export interface DemarchesValues<TType extends string = string> extends CurrentDemarche<TType> {
+  /** Vrai tant que la carte de saisie est ouverte : elle se referme sur chaque démarche validée. */
+  hasCurrentDemarche: boolean;
+  /** La démarche validée que la saisie modifie ; `null` pour une nouvelle démarche. */
+  currentDemarcheId: string | null;
+  demarches: Demarche<TType>[];
 }
 
 /** « Démarche 1 » : le titre de la carte, d'après le rang de la démarche dans la liste. */
@@ -119,14 +104,14 @@ export function formatDemarcheLabel(index: number): string {
   return `Démarche ${index + 1}`;
 }
 
+type DemarcheIntituleFieldName = "typeDemarche" | "precisionTypeDemarche";
+
 /** Ce qui nomme une démarche validée : le libellé de son type, ou sa précision pour « Autre » (maquette 12). */
-export function findDemarcheIntitule({
-  typeDemarche,
-  precisionTypeDemarche,
-}: Pick<Demarche, "typeDemarche" | "precisionTypeDemarche">): string {
-  return isPrecisionRequired(typeDemarche)
-    ? precisionTypeDemarche
-    : TYPE_DEMARCHE_LABEL[typeDemarche];
+export function findDemarcheIntitule<TType extends string>(
+  { typeDemarche, precisionTypeDemarche }: Pick<Demarche<TType>, DemarcheIntituleFieldName>,
+  typeLabels: Record<TType, string>,
+): string {
+  return isPrecisionRequired(typeDemarche) ? precisionTypeDemarche : typeLabels[typeDemarche];
 }
 
 /** Vrai quand tous les champs exigés de la démarche en cours sont remplis : le bouton de validation n'est plus grisé. */
@@ -146,7 +131,10 @@ export function isDemarcheStarted(current: CurrentDemarche): boolean {
  * La démarche validée à partir de la saisie en cours ; rien tant qu'aucun type n'est choisi.
  * La précision ne se garde que pour « Autre » : celle d'un type quitté ne suit pas.
  */
-export function createDemarche(id: string, current: CurrentDemarche): Demarche | undefined {
+export function createDemarche<TType extends string>(
+  id: string,
+  current: CurrentDemarche<TType>,
+): Demarche<TType> | undefined {
   const { typeDemarche, precisionTypeDemarche, apportDemarche, piecesJustificatives } = current;
   if (typeDemarche === undefined) return undefined;
   return {
@@ -158,7 +146,7 @@ export function createDemarche(id: string, current: CurrentDemarche): Demarche |
   };
 }
 
-/** Vrai tant que le dossier peut recevoir une démarche de plus. */
+/** Vrai tant que le volet peut recevoir une démarche de plus. */
 export function canAddDemarche(demarcheCount: number): boolean {
   return demarcheCount < NOMBRE_MAX_DEMARCHES;
 }
@@ -188,7 +176,10 @@ export function formatEditLabel(index: number): string {
 }
 
 /** La liste où la démarche modifiée a pris la place de celle qui porte son `id`. */
-export function replaceDemarche(demarches: readonly Demarche[], demarche: Demarche): Demarche[] {
+export function replaceDemarche<TType extends string>(
+  demarches: readonly Demarche<TType>[],
+  demarche: Demarche<TType>,
+): Demarche<TType>[] {
   return demarches.map((current) => (current.id === demarche.id ? demarche : current));
 }
 
@@ -242,7 +233,10 @@ export function formatRemoveLabel(index: number): string {
 }
 
 /** La liste sans la démarche qui porte cet `id` : les suivantes remontent d'un rang. */
-export function removeDemarche(demarches: readonly Demarche[], demarcheId: string): Demarche[] {
+export function removeDemarche<TType extends string>(
+  demarches: readonly Demarche<TType>[],
+  demarcheId: string,
+): Demarche<TType>[] {
   return demarches.filter(({ id }) => id !== demarcheId);
 }
 

@@ -1,36 +1,131 @@
 // @vitest-environment jsdom
+import { zodResolver } from "@hookform/resolvers/zod";
 import { act, cleanup, renderHook } from "@testing-library/react";
+import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
+import { z } from "zod";
 
-import { OUI_NON } from "../../domain/oui-non";
-import { NOMBRE_MAX_DEMARCHES, TYPE_DEMARCHE, type Demarche } from "../domain/demarche";
-import type { FuturMetierFormData } from "../schema";
-import { useDemarches, type UseDemarchesResult } from "./use-demarches";
-import { useFuturMetierForm, type UseFuturMetierFormResult } from "./use-futur-metier-form";
+import {
+  currentDemarcheSchema,
+  DEMARCHE_REQUIRED_MESSAGES,
+  demarcheSchema,
+} from "../demarche-schema";
+import {
+  findOpenDemarcheFields,
+  NOMBRE_MAX_DEMARCHES,
+  TYPE_DEMARCHE_AUTRE,
+  type Demarche,
+} from "../domain/demarche";
+import { OUI_NON } from "../domain/oui-non";
+import { requireFilled } from "../domain/require-filled";
+import { VOLET_FORM_OPTIONS } from "../volet-form-options";
+import { useDemarches, type DemarchesFieldNames, type UseDemarchesResult } from "./use-demarches";
 
 afterEach(cleanup);
 
-type Result = UseFuturMetierFormResult & UseDemarchesResult;
+/** La liste des types d'un volet, réduite à ce que le hook distingue. */
+const TYPE_DEMARCHE = {
+  IMMERSION: "immersion",
+  SALON: "salon",
+  AUTRE: TYPE_DEMARCHE_AUTRE,
+} as const;
 
-/** Le formulaire du volet et ses démarches, « oui » répondu et saisie en cours remplie de `values`. */
-function renderDemarches(values: Partial<FuturMetierFormData> = {}): { current: Result } {
-  const { result } = renderHook(() => {
-    const volet = useFuturMetierForm();
-    return { ...volet, ...useDemarches(volet.form) };
+type TypeDemarche = (typeof TYPE_DEMARCHE)[keyof typeof TYPE_DEMARCHE];
+
+const AUTRE_CHAMP_MESSAGE = "Veuillez remplir l’autre champ.";
+
+/** Le formulaire d'un volet réduit à sa question, ses démarches et un autre champ exigé. */
+const schema = z
+  .object({
+    answer: z.enum(OUI_NON).optional(),
+    autreChamp: z.string(),
+    typeDemarche: z.enum(TYPE_DEMARCHE).optional(),
+    ...currentDemarcheSchema.shape,
+    demarches: z.array(demarcheSchema.extend({ typeDemarche: z.enum(TYPE_DEMARCHE) })),
+  })
+  .superRefine((data, ctx) => {
+    requireFilled(ctx, data, ["autreChamp"], { autreChamp: AUTRE_CHAMP_MESSAGE });
+    requireFilled(ctx, data, findOpenDemarcheFields(data.answer, data), DEMARCHE_REQUIRED_MESSAGES);
   });
+
+type FormData = z.infer<typeof schema>;
+
+const FIELD = {
+  ANSWER: "answer",
+  TYPE_DEMARCHE: "typeDemarche",
+  PRECISION_TYPE_DEMARCHE: "precisionTypeDemarche",
+  APPORT_DEMARCHE: "apportDemarche",
+  PIECES_JUSTIFICATIVES: "piecesJustificatives",
+  HAS_CURRENT_DEMARCHE: "hasCurrentDemarche",
+  CURRENT_DEMARCHE_ID: "currentDemarcheId",
+  DEMARCHES: "demarches",
+} as const satisfies Record<string, keyof FormData>;
+
+const FIELDS: DemarchesFieldNames<FormData, TypeDemarche> = {
+  answer: FIELD.ANSWER,
+  typeDemarche: FIELD.TYPE_DEMARCHE,
+  precisionTypeDemarche: FIELD.PRECISION_TYPE_DEMARCHE,
+  apportDemarche: FIELD.APPORT_DEMARCHE,
+  piecesJustificatives: FIELD.PIECES_JUSTIFICATIVES,
+};
+
+interface Result extends UseDemarchesResult<TypeDemarche> {
+  form: UseFormReturn<FormData>;
+  errors: FieldErrors<FormData>;
+}
+
+/** Le formulaire et ses démarches, reliés comme le fait un volet. */
+function useVoletDemarches(): Result {
+  const form = useForm<FormData>({
+    ...VOLET_FORM_OPTIONS,
+    resolver: zodResolver(schema),
+    defaultValues: {
+      answer: undefined,
+      autreChamp: "",
+      typeDemarche: undefined,
+      precisionTypeDemarche: "",
+      apportDemarche: "",
+      piecesJustificatives: [],
+      hasCurrentDemarche: true,
+      currentDemarcheId: null,
+      demarches: [],
+    },
+  });
+  const demarches = useDemarches(form, {
+    fields: FIELDS,
+    readAnswer: (values) => values.answer,
+    setAnswer: (answer, options) => form.setValue(FIELD.ANSWER, answer, options),
+    setDemarches: (nextDemarches) => form.setValue(FIELD.DEMARCHES, nextDemarches),
+    setCurrentDemarche: (current, demarcheId) => {
+      form.setValue(FIELD.CURRENT_DEMARCHE_ID, demarcheId);
+      form.setValue(FIELD.TYPE_DEMARCHE, current.typeDemarche);
+      form.setValue(FIELD.PRECISION_TYPE_DEMARCHE, current.precisionTypeDemarche);
+      form.setValue(FIELD.APPORT_DEMARCHE, current.apportDemarche);
+      form.setValue(FIELD.PIECES_JUSTIFICATIVES, current.piecesJustificatives);
+    },
+    setHasCurrentDemarche: (hasCurrentDemarche) =>
+      form.setValue(FIELD.HAS_CURRENT_DEMARCHE, hasCurrentDemarche),
+  });
+  // Lues au rendu, comme le fait un volet : react-hook-form ne tient à jour que ce qui est lu.
+  return { form, errors: form.formState.errors, ...demarches };
+}
+
+/** « Oui » répondu et saisie en cours remplie de `values`. */
+function renderDemarches(values: Partial<FormData> = {}): { current: Result } {
+  const { result } = renderHook(() => useVoletDemarches());
   act(() => {
     const { form } = result.current;
-    form.reset({ ...form.getValues(), demarcheDecouverte: OUI_NON.OUI, ...values });
+    form.reset({ ...form.getValues(), answer: OUI_NON.OUI, ...values });
   });
   return result;
 }
 
-const IMMERSION: Partial<FuturMetierFormData> = {
+const IMMERSION: Partial<FormData> = {
   typeDemarche: TYPE_DEMARCHE.IMMERSION,
   apportDemarche: "J’ai vérifié que je tenais ce rythme.",
 };
 
-function createDemarches(count: number): Demarche[] {
+function createDemarches(count: number): Demarche<TypeDemarche>[] {
   return Array.from({ length: count }, (_, index) => ({
     id: String(index),
     typeDemarche: TYPE_DEMARCHE.SALON,
@@ -54,13 +149,13 @@ describe("useDemarches", () => {
 
     await act(() => result.current.validateDemarche());
 
-    const { errors } = result.current.form.formState;
+    const { errors } = result.current;
     expect(errors.precisionTypeDemarche?.message).toBe("Veuillez préciser le type de démarche.");
     expect(errors.apportDemarche?.message).toBe(
       "Veuillez indiquer ce que la démarche vous a apporté.",
     );
     // Les autres champs du volet, vides eux aussi, ne sont pas signalés par ce bouton.
-    expect(errors.quotidienMetier).toBeUndefined();
+    expect(errors.autreChamp).toBeUndefined();
     expect(result.current.demarches).toEqual([]);
     expect(result.current.hasCurrentDemarche).toBe(true);
   });
@@ -86,19 +181,6 @@ describe("useDemarches", () => {
     });
   });
 
-  it("ne compte plus les champs de la démarche une fois validée, et les recompte à la suivante (maquettes 12 et 13)", async () => {
-    const result = renderDemarches(IMMERSION);
-    const countFields = (): number => result.current.progress.requiredFieldCount;
-    const openCount = countFields();
-
-    await act(() => result.current.validateDemarche());
-    expect(countFields()).toBe(openCount - 2);
-
-    act(() => result.current.addDemarche());
-    expect(result.current.hasCurrentDemarche).toBe(true);
-    expect(countFields()).toBe(openCount);
-  });
-
   it("fait ressortir la carte d'une démarche de plus, jusqu'à ce que le focus la quitte", async () => {
     const result = renderDemarches(IMMERSION);
     expect(result.current.isHighlighted).toBe(false);
@@ -117,9 +199,9 @@ describe("useDemarches", () => {
     const result = renderDemarches(IMMERSION);
     await act(() => result.current.validateDemarche());
     act(() => result.current.addDemarche());
-    act(() => result.current.form.setValue("typeDemarche", TYPE_DEMARCHE.AUTRE));
+    act(() => result.current.form.setValue(FIELD.TYPE_DEMARCHE, TYPE_DEMARCHE.AUTRE));
     await act(() => result.current.validateDemarche());
-    expect(result.current.form.formState.errors.apportDemarche).toBeDefined();
+    expect(result.current.errors.apportDemarche).toBeDefined();
 
     act(() => result.current.cancelDemarche());
 
@@ -127,8 +209,8 @@ describe("useDemarches", () => {
     expect(result.current.hasCurrentDemarche).toBe(false);
     expect(result.current.isHighlighted).toBe(false);
     expect(result.current.announcement).toBe("Saisie de la démarche 2 annulée.");
-    expect(result.current.form.getValues("typeDemarche")).toBeUndefined();
-    expect(result.current.form.formState.errors.apportDemarche).toBeUndefined();
+    expect(result.current.form.getValues(FIELD.TYPE_DEMARCHE)).toBeUndefined();
+    expect(result.current.errors.apportDemarche).toBeUndefined();
   });
 
   it("rouvre une démarche validée en saisie, préremplie, à son rang", () => {
@@ -152,7 +234,7 @@ describe("useDemarches", () => {
     const [salon, autre] = createDemarches(2);
     const result = renderDemarches({ demarches: [salon, autre], hasCurrentDemarche: false });
     act(() => result.current.editDemarche(salon));
-    act(() => result.current.form.setValue("apportDemarche", "J’en ai rencontré cinq."));
+    act(() => result.current.form.setValue(FIELD.APPORT_DEMARCHE, "J’en ai rencontré cinq."));
 
     await act(() => result.current.validateDemarche());
 
@@ -163,14 +245,14 @@ describe("useDemarches", () => {
     expect(result.current.hasCurrentDemarche).toBe(false);
     expect(result.current.currentDemarcheId).toBeNull();
     expect(result.current.announcement).toBe("Démarche 1 modifiée.");
-    expect(result.current.form.getValues("apportDemarche")).toBe("");
+    expect(result.current.form.getValues(FIELD.APPORT_DEMARCHE)).toBe("");
   });
 
   it("annule une modification : la démarche reste telle qu'elle était", () => {
     const demarches = createDemarches(2);
     const result = renderDemarches({ demarches, hasCurrentDemarche: false });
     act(() => result.current.editDemarche(demarches[1]));
-    act(() => result.current.form.setValue("apportDemarche", "Autre chose."));
+    act(() => result.current.form.setValue(FIELD.APPORT_DEMARCHE, "Autre chose."));
 
     act(() => result.current.cancelDemarche());
 
@@ -192,7 +274,7 @@ describe("useDemarches", () => {
       "Validez ou annulez la démarche en cours avant de modifier celle-ci.",
     );
     // La saisie en cours n'a pas bougé.
-    expect(result.current.form.getValues("typeDemarche")).toBe(TYPE_DEMARCHE.IMMERSION);
+    expect(result.current.form.getValues(FIELD.TYPE_DEMARCHE)).toBe(TYPE_DEMARCHE.IMMERSION);
 
     act(() => result.current.cancelDemarche());
     expect(result.current.blockedDemarcheId).toBeNull();
@@ -253,16 +335,13 @@ describe("useDemarches", () => {
 
     expect(result.current.demarches).toEqual([]);
     expect(result.current.hasCurrentDemarche).toBe(true);
-    expect(result.current.form.getValues("typeDemarche")).toBe(TYPE_DEMARCHE.IMMERSION);
+    expect(result.current.form.getValues(FIELD.TYPE_DEMARCHE)).toBe(TYPE_DEMARCHE.IMMERSION);
   });
 
   /** Le formulaire reçoit la réponse, puis le hook en est prévenu, comme le fait `FormRadioGroup`. */
-  function answer(
-    result: { current: Result },
-    value: FuturMetierFormData["demarcheDecouverte"],
-  ): void {
+  function answer(result: { current: Result }, value: NonNullable<FormData["answer"]>): void {
     act(() => {
-      result.current.form.setValue("demarcheDecouverte", value);
+      result.current.form.setValue(FIELD.ANSWER, value);
       result.current.changeAnswer(value);
     });
   }
@@ -273,7 +352,7 @@ describe("useDemarches", () => {
 
     answer(result, OUI_NON.NON);
 
-    expect(result.current.form.getValues("demarcheDecouverte")).toBe(OUI_NON.OUI);
+    expect(result.current.form.getValues(FIELD.ANSWER)).toBe(OUI_NON.OUI);
     expect(result.current.isRemovalOpen).toBe(true);
     expect(result.current.removal).toEqual({
       items: [
@@ -286,7 +365,7 @@ describe("useDemarches", () => {
 
     act(() => result.current.cancelRemoval());
     expect(result.current.isRemovalOpen).toBe(false);
-    expect(result.current.form.getValues("demarcheDecouverte")).toBe(OUI_NON.OUI);
+    expect(result.current.form.getValues(FIELD.ANSWER)).toBe(OUI_NON.OUI);
     expect(result.current.demarches).toEqual(demarches);
   });
 
@@ -327,7 +406,7 @@ describe("useDemarches", () => {
     act(() => result.current.confirmRemoval());
 
     expect(result.current.form.getValues()).toMatchObject({
-      demarcheDecouverte: OUI_NON.NON,
+      answer: OUI_NON.NON,
       demarches: [],
       currentDemarcheId: null,
       hasCurrentDemarche: true,
@@ -345,7 +424,7 @@ describe("useDemarches", () => {
 
     expect(result.current.isRemovalOpen).toBe(false);
     expect(result.current.form.getValues()).toMatchObject({
-      demarcheDecouverte: OUI_NON.NON,
+      answer: OUI_NON.NON,
       typeDemarche: TYPE_DEMARCHE.IMMERSION,
     });
   });

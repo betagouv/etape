@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ENTRY_MODE } from "../../domain/entry-mode";
 import { OUI_NON } from "../../domain/oui-non";
-import { TYPE_DEMARCHE } from "../domain/demarche";
+import { TYPE_DEMARCHE } from "../domain/type-demarche";
 import { FUTUR_METIER_FIELD, FUTUR_METIER_SECTION, type FuturMetierFormData } from "../schema";
 import { useFuturMetierForm, type UseFuturMetierFormResult } from "./use-futur-metier-form";
 

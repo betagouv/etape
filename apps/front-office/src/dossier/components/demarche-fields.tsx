@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from "react";
-import { Controller, useWatch, type Control } from "react-hook-form";
+import { Controller, useWatch, type Control, type FieldValues } from "react-hook-form";
 
 import { Card, CardDescription, CardTitle } from "@etape/ui/components/card";
 import { FormField } from "@etape/ui/components/form-field";
@@ -7,49 +7,53 @@ import { FormSelect } from "@etape/ui/components/form-select";
 import { Input } from "@etape/ui/components/input";
 import { useFocusLeave } from "@etape/ui/hooks/use-focus-leave";
 
-import { CharacterCountField } from "../../components/character-count-field";
-import { PiecesJustificativesField } from "../../components/pieces-justificatives-field";
 import {
+  DEMARCHE_FIELD_LABEL,
   isPrecisionRequired,
   PIECES_DEMARCHE_DESCRIPTION,
-  TYPE_DEMARCHE_LABEL,
 } from "../domain/demarche";
-import {
-  FUTUR_METIER_FIELD,
-  FUTUR_METIER_FIELD_LABEL,
-  FUTUR_METIER_TEXT_MAX_LENGTH,
-  type FuturMetierFormData,
-} from "../schema";
+import { LONGUEUR_MAX_TEXTE } from "../domain/longueur-max-texte";
+import type { DemarchesFieldNames } from "../hooks/use-demarches";
+import { CharacterCountField } from "./character-count-field";
+import { PiecesJustificativesField } from "./pieces-justificatives-field";
 
-/** Ce que reçoit `DemarcheFields` : le contrôle du formulaire, le titre de la carte, sa surbrillance et ses boutons. */
-export interface DemarcheFieldsProps {
-  control: Control<FuturMetierFormData>;
-  title: string;
-  /** Vrai quand la carte vient de s'ouvrir : elle ressort, jusqu'à ce que le focus la quitte (maquette 13). */
-  isHighlighted: boolean;
+/** La surbrillance de la carte qui vient de s'ouvrir, jusqu'à ce que le focus la quitte (maquette 13). */
+export interface DemarcheFieldsHighlight {
+  isActive: boolean;
   onFocusLeave: () => void;
+}
+
+/** Ce que reçoit `DemarcheFields` : le formulaire du volet et ses champs, les types proposés, le titre de la carte, sa surbrillance et ses boutons. */
+export interface DemarcheFieldsProps<TFieldValues extends FieldValues, TType extends string> {
+  control: Control<TFieldValues>;
+  fields: DemarchesFieldNames<TFieldValues, TType>;
+  /** Le libellé de chaque type de la liste du volet, dans l'ordre d'affichage. */
+  typeLabels: Record<TType, string>;
+  title: string;
+  highlight: DemarcheFieldsHighlight;
   /** Les boutons du bas de la carte : `FormCardActions`. */
   children: ReactNode;
 }
 
 /** La démarche en cours de saisie : son type, précisé pour « Autre », ce qu'elle a apporté et ses justificatifs. */
-export function DemarcheFields({
+export function DemarcheFields<TFieldValues extends FieldValues, TType extends string>({
   control,
+  fields,
+  typeLabels,
   title,
-  isHighlighted,
-  onFocusLeave,
+  highlight,
   children,
-}: DemarcheFieldsProps) {
-  const focusLeave = useFocusLeave(onFocusLeave);
+}: DemarcheFieldsProps<TFieldValues, TType>) {
+  const focusLeave = useFocusLeave(highlight.onFocusLeave);
   const titleId = useId();
-  const typeDemarche = useWatch({ control, name: FUTUR_METIER_FIELD.TYPE_DEMARCHE });
+  const typeDemarche = useWatch({ control, name: fields.typeDemarche });
 
   return (
     <Card
       variant="form"
       role="group"
       aria-labelledby={titleId}
-      data-highlighted={isHighlighted}
+      data-highlighted={highlight.isActive}
       {...focusLeave}
     >
       <div className="flex flex-col gap-2">
@@ -63,40 +67,40 @@ export function DemarcheFields({
 
       <div className="flex flex-col gap-5">
         <FormSelect
-          name={FUTUR_METIER_FIELD.TYPE_DEMARCHE}
+          name={fields.typeDemarche}
           control={control}
-          label={FUTUR_METIER_FIELD_LABEL.typeDemarche}
+          label={DEMARCHE_FIELD_LABEL.typeDemarche}
           required
-          options={TYPE_DEMARCHE_LABEL}
+          options={typeLabels}
         />
 
         {isPrecisionRequired(typeDemarche) && (
           <FormField
-            name={FUTUR_METIER_FIELD.PRECISION_TYPE_DEMARCHE}
+            name={fields.precisionTypeDemarche}
             control={control}
-            label={FUTUR_METIER_FIELD_LABEL.precisionTypeDemarche}
+            label={DEMARCHE_FIELD_LABEL.precisionTypeDemarche}
             required
             render={({ field, attributes }) => <Input {...field} {...attributes} />}
           />
         )}
 
         <CharacterCountField
-          name={FUTUR_METIER_FIELD.APPORT_DEMARCHE}
+          name={fields.apportDemarche}
           control={control}
-          label={FUTUR_METIER_FIELD_LABEL.apportDemarche}
+          label={DEMARCHE_FIELD_LABEL.apportDemarche}
           required
           description="Ce que vous avez appris sur vous ou sur votre projet."
-          maxLength={FUTUR_METIER_TEXT_MAX_LENGTH}
+          maxLength={LONGUEUR_MAX_TEXTE}
         />
 
         <Controller
-          name={FUTUR_METIER_FIELD.PIECES_JUSTIFICATIVES}
+          name={fields.piecesJustificatives}
           control={control}
           render={({ field }) => (
             <PiecesJustificativesField
               pieces={field.value}
               onChange={field.onChange}
-              title={FUTUR_METIER_FIELD_LABEL.piecesJustificatives}
+              title={DEMARCHE_FIELD_LABEL.piecesJustificatives}
               description={PIECES_DEMARCHE_DESCRIPTION}
             />
           )}

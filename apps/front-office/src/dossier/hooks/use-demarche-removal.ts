@@ -3,14 +3,14 @@ import { useRef, useState, type RefCallback } from "react";
 import type { Demarche } from "../domain/demarche";
 
 /** Une démarche que la fenêtre de confirmation montre, et son rang. */
-export interface DemarcheRemovalItem {
-  demarche: Demarche;
+export interface DemarcheRemovalItem<TType extends string = string> {
+  demarche: Demarche<TType>;
   index: number;
 }
 
 /** La suppression qui attend sa confirmation : une démarche par sa corbeille, ou toutes après un « non ». */
-export interface DemarcheRemoval {
-  items: readonly DemarcheRemovalItem[];
+export interface DemarcheRemoval<TType extends string = string> {
+  items: readonly DemarcheRemovalItem<TType>[];
   /** Vrai quand la suppression répond à un « non » : confirmée, la réponse devient « non ». */
   isAnswerNon: boolean;
   /** Vrai quand ce « non » emporte aussi une saisie commencée : la fenêtre le dit. */
@@ -21,21 +21,21 @@ export interface DemarcheRemoval {
  * Ce que la fenêtre demande à qui porte les démarches. Chaque suppression rend de quoi placer
  * le focus : la fenêtre le retient tant qu'elle est là, il se place à sa fermeture.
  */
-export interface DemarcheRemovalActions {
-  removeDemarche: (item: DemarcheRemovalItem) => () => void;
+export interface DemarcheRemovalActions<TType extends string = string> {
+  removeDemarche: (item: DemarcheRemovalItem<TType>) => () => void;
   removeAllDemarches: (demarcheCount: number) => () => void;
   /** Le focus revient à la question quand un « non » est abandonné. */
   focusAnswer: () => void;
 }
 
 /** Ce que renvoie `useDemarcheRemoval` : l'état de la fenêtre de confirmation et ses issues. */
-export interface UseDemarcheRemovalResult {
+export interface UseDemarcheRemovalResult<TType extends string = string> {
   /** La suppression à confirmer ; gardée après la fermeture de la fenêtre, le temps qu'elle disparaisse. */
-  removal: DemarcheRemoval | null;
+  removal: DemarcheRemoval<TType> | null;
   isRemovalOpen: boolean;
   /** La corbeille d'une démarche validée : elle reprend le focus quand sa suppression est abandonnée. */
   registerRemoveButton: (demarcheId: string) => RefCallback<HTMLButtonElement>;
-  requestRemoval: (demarche: Demarche) => void;
+  requestRemoval: (demarche: Demarche<TType>) => void;
   /** Toutes les démarches validées, pour un « non » qui les emporterait, avec ou sans saisie commencée. */
   requestAllRemoval: (isCurrentDemarcheRemoved: boolean) => void;
   cancelRemoval: () => void;
@@ -48,16 +48,16 @@ export interface UseDemarcheRemovalResult {
  * La confirmation d'une suppression de démarches : ce que la fenêtre montre, son ouverture,
  * et où va le focus quand elle se ferme. Ce qui change dans le formulaire reste à l'appelant.
  */
-export function useDemarcheRemoval(
-  demarches: readonly Demarche[],
-  { removeDemarche, removeAllDemarches, focusAnswer }: DemarcheRemovalActions,
-): UseDemarcheRemovalResult {
-  const [removal, setRemoval] = useState<DemarcheRemoval | null>(null);
+export function useDemarcheRemoval<TType extends string>(
+  demarches: readonly Demarche<TType>[],
+  { removeDemarche, removeAllDemarches, focusAnswer }: DemarcheRemovalActions<TType>,
+): UseDemarcheRemovalResult<TType> {
+  const [removal, setRemoval] = useState<DemarcheRemoval<TType> | null>(null);
   const [isRemovalOpen, setRemovalOpen] = useState(false);
   const removeButtons = useRef(new Map<string, HTMLButtonElement>());
   const focusOnClose = useRef<(() => void) | null>(null);
 
-  const requestRemoval = (demarche: Demarche): void => {
+  const requestRemoval = (demarche: Demarche<TType>): void => {
     // Par son `id` : le formulaire rend des copies, pas les objets qu'on lui a confiés.
     const index = demarches.findIndex(({ id }) => id === demarche.id);
     if (index < 0) return;

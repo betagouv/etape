@@ -9,6 +9,7 @@ import { VOLETS_DOSSIER } from "../domain/volets-dossier";
 import { DossierVoletsContext } from "../dossier-volets-context";
 import { useFuturMetierForm } from "../futur-metier/hooks/use-futur-metier-form";
 import { useInformationsForm } from "../informations/hooks/use-informations-form";
+import { useProjetForm } from "../projet/hooks/use-projet-form";
 import { useSituationProfessionnelleForm } from "../situation-professionnelle/hooks/use-situation-professionnelle-form";
 import { DossierHeader } from "./dossier-header";
 
@@ -17,16 +18,18 @@ export function DossierScreen() {
   const informations = useInformationsForm();
   const situationProfessionnelle = useSituationProfessionnelleForm();
   const futurMetier = useFuturMetierForm();
+  const projet = useProjetForm();
   const voletProgress = {
     [VOLET_ID.INFORMATIONS]: informations.progress,
     [VOLET_ID.SITUATION_PROFESSIONNELLE]: situationProfessionnelle.progress,
     [VOLET_ID.FUTUR_METIER]: futurMetier.progress,
+    [VOLET_ID.PROJET]: projet.progress,
   };
   const { completed } = computeDossierProgress(Object.values(voletProgress));
 
   return (
     <DossierVoletsContext
-      value={{ informations, situationProfessionnelle, futurMetier, voletProgress }}
+      value={{ informations, situationProfessionnelle, futurMetier, projet, voletProgress }}
     >
       <Surface surface="page" className="flex-1">
         {/* Numéro, horodatage : en attendant l'API. */}

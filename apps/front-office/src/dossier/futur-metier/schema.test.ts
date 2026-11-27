@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { ENTRY_MODE } from "../domain/entry-mode";
 import { OUI_NON } from "../domain/oui-non";
-import { TYPE_DEMARCHE } from "./domain/demarche";
-import { FUTUR_METIER_TEXT_MAX_LENGTH, futurMetierSchema } from "./schema";
+import { LONGUEUR_MAX_TEXTE } from "../domain/longueur-max-texte";
+import { TYPE_DEMARCHE } from "./domain/type-demarche";
+import { futurMetierSchema } from "./schema";
 
 function findMessages(data: Record<string, unknown>, field: string): string[] {
   const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
@@ -115,13 +116,13 @@ describe("futurMetierSchema, zones de texte", () => {
   });
 
   it("accepte une zone de texte à la limite, espaces autour compris", () => {
-    const atLimit = "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH);
+    const atLimit = "x".repeat(LONGUEUR_MAX_TEXTE);
     expect(findMessages({ ...SEARCH_FORM, debouches: atLimit }, "debouches")).toEqual([]);
     expect(findMessages({ ...SEARCH_FORM, debouches: ` ${atLimit}\n` }, "debouches")).toEqual([]);
   });
 
   it("refuse une zone de texte qui dépasse la limite, même venue d'ailleurs que la saisie", () => {
-    const overLimit = "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1);
+    const overLimit = "x".repeat(LONGUEUR_MAX_TEXTE + 1);
     for (const field of ["quotidienMetier", "conditionsEmploi", "debouches"]) {
       expect(findMessages({ ...SEARCH_FORM, [field]: overLimit }, field)).toEqual([
         "Votre texte ne doit pas dépasser 1000 caractères.",
@@ -249,7 +250,7 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
   it("signale le type manquant au même envoi qu'un apport trop long", () => {
     const data = {
       ...OPEN_DEMARCHE_FORM,
-      apportDemarche: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+      apportDemarche: "x".repeat(LONGUEUR_MAX_TEXTE + 1),
     };
     expect(findPaths(data).sort()).toEqual(["apportDemarche", "typeDemarche"]);
   });
@@ -258,10 +259,10 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
     const data = {
       ...OPEN_DEMARCHE_FORM,
       typeDemarche: TYPE_DEMARCHE.SALON,
-      apportDemarche: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+      apportDemarche: "x".repeat(LONGUEUR_MAX_TEXTE + 1),
     };
     expect(findMessages(data, "apportDemarche")).toEqual([
-      `Votre texte ne doit pas dépasser ${FUTUR_METIER_TEXT_MAX_LENGTH} caractères.`,
+      `Votre texte ne doit pas dépasser ${LONGUEUR_MAX_TEXTE} caractères.`,
     ]);
   });
 });
@@ -279,7 +280,7 @@ describe("futurMetierSchema, perspectives d'emploi", () => {
   });
 
   it("ne limite pas la longueur de la zone de recherche d'emploi", () => {
-    const zoneRechercheEmploi = "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1);
+    const zoneRechercheEmploi = "x".repeat(LONGUEUR_MAX_TEXTE + 1);
     expect(futurMetierSchema.safeParse({ ...MANUAL_FORM, zoneRechercheEmploi }).success).toBe(true);
   });
 
@@ -325,10 +326,10 @@ describe("futurMetierSchema, perspectives d'emploi", () => {
   it("refuse des entreprises contactées au-delà de la limite", () => {
     const data = {
       ...CONTACT_FORM,
-      entreprisesContactees: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+      entreprisesContactees: "x".repeat(LONGUEUR_MAX_TEXTE + 1),
     };
     expect(findMessages(data, "entreprisesContactees")).toEqual([
-      `Votre texte ne doit pas dépasser ${FUTUR_METIER_TEXT_MAX_LENGTH} caractères.`,
+      `Votre texte ne doit pas dépasser ${LONGUEUR_MAX_TEXTE} caractères.`,
     ]);
   });
 
@@ -336,7 +337,7 @@ describe("futurMetierSchema, perspectives d'emploi", () => {
     const data = {
       ...SEARCH_FORM,
       contactEmployeurs: OUI_NON.OUI,
-      entreprisesContactees: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+      entreprisesContactees: "x".repeat(LONGUEUR_MAX_TEXTE + 1),
     };
     const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
     expect(issues.map(({ path }) => path.join(".")).sort()).toEqual([

@@ -2,15 +2,17 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { TYPE_DEMARCHE, type Demarche } from "../domain/demarche";
+import type { Demarche } from "../domain/demarche";
 import { useDemarcheRemoval, type DemarcheRemovalActions } from "./use-demarche-removal";
 
 afterEach(cleanup);
 
+const TYPE_SALON = "salon";
+
 function createDemarche(id: string): Demarche {
   return {
     id,
-    typeDemarche: TYPE_DEMARCHE.SALON,
+    typeDemarche: TYPE_SALON,
     precisionTypeDemarche: "",
     apportDemarche: "J’ai rencontré trois artisans.",
     piecesJustificatives: [],
