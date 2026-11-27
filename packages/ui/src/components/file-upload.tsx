@@ -6,6 +6,7 @@ import { CircleAlertIcon, FileDownIcon, UploadIcon, XIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@etape/ui/components/alert";
 import { Button } from "@etape/ui/components/button";
+import { FieldRequiredContent } from "@etape/ui/components/field";
 import { FileUploadContext, useFileUpload } from "@etape/ui/hooks/use-file-upload";
 import { hasDraggedFiles } from "@etape/ui/lib/dragged-files";
 import { keepFocus } from "@etape/ui/lib/keep-focus";
@@ -36,6 +37,9 @@ const fileUploadVariants = cva("group/file-upload flex flex-col gap-3 rounded-xl
     variant: "card",
   },
 });
+
+/** Les apparences du dépôt de fichiers, pour un champ qui la reçoit en prop. */
+type FileUploadVariant = NonNullable<VariantProps<typeof fileUploadVariants>["variant"]>;
 
 /** Ce que reçoit `FileUpload` : son apparence, les formats proposés au choix et la suite d'un ajout. */
 interface FileUploadProps
@@ -114,7 +118,13 @@ function FileUploadHeading({ className, ...props }: React.ComponentProps<"div">)
   );
 }
 
-function FileUploadTitle({ className, ...props }: React.ComponentProps<"p">) {
+/** Le titre du dépôt ; `required` ajoute l'étoile d'un document obligatoire. */
+function FileUploadTitle({
+  className,
+  required = false,
+  children,
+  ...props
+}: React.ComponentProps<"p"> & { required?: boolean }) {
   const { titleId } = useFileUpload();
   return (
     <p
@@ -122,7 +132,9 @@ function FileUploadTitle({ className, ...props }: React.ComponentProps<"p">) {
       data-slot="file-upload-title"
       className={cn("text-foreground text-sm leading-5 font-semibold", className)}
       {...props}
-    />
+    >
+      {required ? <FieldRequiredContent>{children}</FieldRequiredContent> : children}
+    </p>
   );
 }
 
@@ -321,4 +333,5 @@ export type {
   FileUploadLineProps,
   FileUploadProps,
   FileUploadTriggerProps,
+  FileUploadVariant,
 };

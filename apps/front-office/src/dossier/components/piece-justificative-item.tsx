@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { DownloadIcon, EyeIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@etape/ui/components/button";
@@ -16,10 +17,16 @@ export interface PieceJustificativeItemProps {
   piece: PieceJustificative;
   /** Sans retrait, la ligne ne propose que l'ouverture, ou le téléchargement, du fichier. */
   onRemove?: (piece: PieceJustificative) => void;
+  /** Pour rendre le focus à la corbeille quand la suppression est annulée. */
+  removeRef?: Ref<HTMLButtonElement>;
 }
 
 /** La ligne d'une pièce déposée : son nom, ses détails, son ouverture ou son téléchargement et, au besoin, son retrait. */
-export function PieceJustificativeItem({ piece, onRemove }: PieceJustificativeItemProps) {
+export function PieceJustificativeItem({
+  piece,
+  onRemove,
+  removeRef,
+}: PieceJustificativeItemProps) {
   const { name } = piece.fichier;
 
   return (
@@ -48,6 +55,7 @@ export function PieceJustificativeItem({ piece, onRemove }: PieceJustificativeIt
       )}
       {onRemove && (
         <Button
+          ref={removeRef}
           type="button"
           variant="outline"
           size="icon-sm"

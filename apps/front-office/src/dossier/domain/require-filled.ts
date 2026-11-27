@@ -7,7 +7,8 @@ export interface IssueContext {
 
 /**
  * Signale chaque champ exigé resté vide, avec son message, dans l'ordre donné. « Vide » a le
- * même sens que pour les compteurs du volet : absent, `null` ou texte fait d'espaces.
+ * même sens que pour les compteurs du volet : absent, `null`, texte fait d'espaces ou liste
+ * sans élément.
  */
 export function requireFilled<TName extends string>(
   ctx: IssueContext,

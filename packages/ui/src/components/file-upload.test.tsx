@@ -208,6 +208,16 @@ describe("FileUpload", () => {
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 
+  it("marque d'une étoile le titre d'un document obligatoire, lu « (obligatoire) »", () => {
+    render(
+      <FileUpload variant="card" onFilesAdd={() => undefined}>
+        <FileUploadTitle required>Programme de la formation</FileUploadTitle>
+      </FileUpload>,
+    );
+
+    expect(screen.getByRole("group").textContent).toBe("Programme de la formation⁠* (obligatoire)");
+  });
+
   it("cite un fichier sans action, hors d'un dépôt", () => {
     render(
       <FileUploadList aria-label="Fichiers de la démarche">

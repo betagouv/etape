@@ -21,7 +21,17 @@ import { requireFilled } from "../domain/require-filled";
 import { VOLET_FORM_OPTIONS } from "../volet-form-options";
 import { useDemarches, type DemarchesFieldNames, type UseDemarchesResult } from "./use-demarches";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  document.body.replaceChildren();
+});
+
+/** Un bouton dans la page, pour suivre le focus. */
+function appendButton(): HTMLButtonElement {
+  const button = document.createElement("button");
+  document.body.append(button);
+  return button;
+}
 
 /** La liste des types d'un volet, réduite à ce que le hook distingue. */
 const TYPE_DEMARCHE = {
@@ -262,6 +272,18 @@ describe("useDemarches", () => {
     expect(result.current.announcement).toBe("Modification de la démarche 2 annulée.");
   });
 
+  it("rend le focus au bouton « Modifier » quand une modification est annulée", () => {
+    const demarches = createDemarches(2);
+    const result = renderDemarches({ demarches, hasCurrentDemarche: false });
+    const editButton = appendButton();
+    act(() => result.current.registerEditButton(demarches[1].id)(editButton));
+    act(() => result.current.editDemarche(demarches[1]));
+
+    act(() => result.current.cancelDemarche());
+
+    expect(document.activeElement).toBe(editButton);
+  });
+
   it("ne rouvre pas une démarche tant qu'une autre saisie est ouverte, et dit quoi faire d'abord", () => {
     const [salon] = createDemarches(1);
     const result = renderDemarches({ demarches: [salon], ...IMMERSION });
@@ -311,6 +333,30 @@ describe("useDemarches", () => {
     expect(result.current.isRemovalOpen).toBe(false);
     expect(result.current.hasCurrentDemarche).toBe(false);
     expect(result.current.announcement).toBe("Démarche 2 supprimée.");
+  });
+
+  it("donne le focus à la démarche qui prend la place de la supprimée, sinon au bouton d'ajout", () => {
+    const [salon, autre, derniere] = createDemarches(3);
+    const result = renderDemarches({
+      demarches: [salon, autre, derniere],
+      hasCurrentDemarche: false,
+    });
+    const editDerniere = appendButton();
+    const addButton = appendButton();
+    act(() => {
+      result.current.registerEditButton(derniere.id)(editDerniere);
+      result.current.addButtonRef.current = addButton;
+    });
+
+    act(() => result.current.requestRemoval(autre));
+    act(() => result.current.confirmRemoval());
+    act(() => result.current.restoreFocusAfterRemoval());
+    expect(document.activeElement).toBe(editDerniere);
+
+    act(() => result.current.requestRemoval(derniere));
+    act(() => result.current.confirmRemoval());
+    act(() => result.current.restoreFocusAfterRemoval());
+    expect(document.activeElement).toBe(addButton);
   });
 
   it("rouvre la saisie de la première démarche quand la dernière est supprimée", () => {

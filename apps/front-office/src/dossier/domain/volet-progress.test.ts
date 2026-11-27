@@ -4,7 +4,6 @@ import {
   buildRequiredFields,
   computeSectionProgress,
   computeVoletProgress,
-  describeVoletStatut,
   listFilledFields,
   listValidatedFields,
   type RequiredFields,
@@ -24,6 +23,15 @@ describe("listFilledFields", () => {
     expect(
       listFilledFields({ denomination: "   ", siret: " 1 " }, ["denomination", "siret"]),
     ).toEqual(["siret"]);
+  });
+
+  it("compte un tableau comme rempli dès son premier élément", () => {
+    expect(
+      listFilledFields({ programmeFormation: [], devisFormation: [{ id: "devis" }] }, [
+        "programmeFormation",
+        "devisFormation",
+      ]),
+    ).toEqual(["devisFormation"]);
   });
 
   it("compte l'employeur choisi comme rempli, pas l'absence d'employeur", () => {
@@ -179,34 +187,5 @@ describe("computeSectionProgress", () => {
     expect(
       computeSectionProgress(MANUAL_METIER_VISE, "metier-vise", { codeRome: { message: "x" } }),
     ).toEqual({ remainingFieldCount: 0, errorCount: 1 });
-  });
-});
-
-describe("describeVoletStatut", () => {
-  const requiredFields = createRequiredFields(
-    { identite: ["civilite", "cleNir"], contact: ["telephone"] },
-    ["civilite", "cleNir"],
-  );
-
-  it("annonce les erreurs des champs contrôlés et les champs qui restent", () => {
-    expect(
-      describeVoletStatut("Mes informations", requiredFields, { cleNir: { message: "x" } }),
-    ).toBe("Mes informations : 1 erreur à corriger et 1 champ restant.");
-  });
-
-  it("annonce un volet complet quand tout est rempli sans erreur", () => {
-    expect(
-      describeVoletStatut(
-        "Mes informations",
-        { ...requiredFields, filledFields: requiredFields.allFields },
-        {},
-      ),
-    ).toBe("Mes informations : complet.");
-  });
-
-  it("n'annonce pas complet un volet rempli dont un champ facultatif est en erreur", () => {
-    expect(
-      describeVoletStatut("Mon futur métier", MANUAL_METIER_VISE, { codeRome: { message: "x" } }),
-    ).toBe("Mon futur métier : 1 erreur à corriger.");
   });
 });

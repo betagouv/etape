@@ -1,3 +1,5 @@
+import { FORMATS_PIECE_JUSTIFICATIVE_LABEL, TAILLE_MAX_PIECE_MO } from "./piece-justificative";
+import { PROGRESS_UNIT } from "./statut-volet";
 import type { VoletDefinition, VoletNoticeContent } from "./volets";
 import { VOLET_ID, type VoletId } from "./volet-id";
 
@@ -54,6 +56,18 @@ export const VOLETS_DOSSIER: VoletDefinition[] = [
     notice: RELECTURE_CEP_NOTICE,
   },
   {
+    id: VOLET_ID.DOCUMENTS,
+    label: "Mes documents",
+    title: "Mes documents",
+    description:
+      "Déposez les pièces justificatives de votre dossier. Les fichiers ajoutés depuis Mon futur métier, Mon projet et Ma formation apparaissent aussi ici.",
+    notice: {
+      title: "Vous pouvez compléter vos documents jusqu’à la signature du dossier.",
+      description: `Formats acceptés : ${FORMATS_PIECE_JUSTIFICATIVE_LABEL}. Taille maximale : ${TAILLE_MAX_PIECE_MO} Mo par fichier. Un document de plusieurs pages peut être déposé en plusieurs fichiers.`,
+    },
+    progressUnit: PROGRESS_UNIT.DOCUMENT,
+  },
+  {
     id: VOLET_ID.CEP,
     label: "Mon CEP",
     title: "Mon Conseiller en Évolution Professionnelle",
@@ -65,8 +79,6 @@ export const VOLETS_DOSSIER: VoletDefinition[] = [
         "Cette étape est essentielle dans la complétude de votre dossier de démission-reconversion. Attention, la demande de validation de votre projet sera envoyée à l’adresse mail saisie ci-dessous, veillez à ne pas faire d’erreur.",
     },
   },
-  // Sans maquette : ni description ni contenu.
-  { id: VOLET_ID.DOCUMENTS, label: "Mes documents", title: "Mes documents" },
 ];
 
 /** Le libellé d'un volet du dossier, tel qu'il s'affiche dans le menu : « Mes informations ». */

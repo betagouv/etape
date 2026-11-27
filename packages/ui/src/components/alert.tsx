@@ -16,7 +16,7 @@ import { cn } from "@etape/ui/lib/utils";
  *   perdrait le contraste de 4,5:1.
  */
 const alertVariants = cva(
-  "relative grid w-full grid-cols-[0_1fr] items-start gap-y-0.5 rounded-lg border px-2.5 py-2 text-sm has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] has-[>svg]:gap-x-2 [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
+  "relative grid w-full grid-cols-[0_1fr] items-start gap-y-0.5 rounded-lg border px-2.5 py-2 text-sm has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] has-[>svg]:gap-x-2 sm:has-[>[data-placement=end]]:items-center sm:has-[>[data-placement=end]]:grid-cols-[calc(var(--spacing)*4)_1fr_auto] sm:[&:has(>[data-slot=alert-description])>[data-placement=end]]:row-[1/span_2] [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current sm:[&:has(>[data-placement=end])>svg]:translate-y-0",
   {
     variants: {
       variant: {
@@ -70,12 +70,34 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
   );
 }
 
-/** Les boutons sous le texte, alignés sur le bord gauche de l'alerte et à 8 px du texte, comme dans le kit. */
-function AlertActions({ className, ...props }: React.ComponentProps<"div">) {
+const alertActionsVariants = cva("col-span-full mt-1.5 flex flex-wrap items-center gap-2", {
+  variants: {
+    placement: {
+      /** Sous le texte, alignés sur le bord gauche de l'alerte et à 8 px du texte, comme dans le kit. */
+      below: "",
+      /**
+       * À droite du texte, centrés sur le titre et sa description ; sous le texte quand la place
+       * manque (maquette FRONT-OFFICE, « Mes documents », écran 05). Suppose l'icône de l'alerte.
+       */
+      end: "sm:col-span-1 sm:col-start-3 sm:row-start-1 sm:mt-0 sm:self-center",
+    },
+  },
+  defaultVariants: {
+    placement: "below",
+  },
+});
+
+/** Les boutons de l'alerte : sous le texte (`below`, le kit) ou à sa droite (`end`). */
+function AlertActions({
+  className,
+  placement = "below",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof alertActionsVariants>) {
   return (
     <div
       data-slot="alert-actions"
-      className={cn("col-span-full mt-1.5 flex flex-wrap items-center gap-2", className)}
+      data-placement={placement}
+      className={cn(alertActionsVariants({ placement }), className)}
       {...props}
     />
   );
