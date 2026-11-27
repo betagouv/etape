@@ -8,7 +8,7 @@ import { FormCardActions } from "@etape/ui/components/form-card-actions";
 import { FormRadioGroup } from "@etape/ui/components/form-radio-group";
 import { StatusRegion } from "@etape/ui/components/status-region";
 
-import { OUI_NON, OUI_NON_LABEL } from "../../domain/oui-non";
+import { isOui, OUI_NON_LABEL } from "../../domain/oui-non";
 import {
   formatDemarcheLabel,
   MAX_DEMARCHES_MESSAGE,
@@ -95,7 +95,7 @@ export function Demarches({ form }: DemarchesProps) {
         onValueChange={changeAnswer}
       />
 
-      {demarcheDecouverte === OUI_NON.OUI && (
+      {isOui(demarcheDecouverte) && (
         <>
           {demarches.map((demarche, index) =>
             demarche.id === currentDemarcheId ? (

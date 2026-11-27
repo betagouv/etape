@@ -1,7 +1,8 @@
 import type { EntryMode } from "../../domain/entry-mode";
-import { OUI_NON, type OuiNon } from "../../domain/oui-non";
+import { findFieldsAfterOui, type OuiNon } from "../../domain/oui-non";
 import {
   EMPLOYEUR_FIELDS,
+  REQUIRED_DEMISSION_FIELDS,
   SITUATION_PROFESSIONNELLE_SECTION,
   type SituationProfessionnelleFieldName,
   type SituationProfessionnelleSection,
@@ -15,7 +16,9 @@ export function findSectionFields(
   return {
     // 2 champs en recherche, 5 en saisie manuelle (maquettes 01 et 07).
     [SITUATION_PROFESSIONNELLE_SECTION.EMPLOI]: [...EMPLOYEUR_FIELDS[mode], "intitulePoste"],
-    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]:
-      demission === OUI_NON.OUI ? ["demission", "dateDemission"] : ["demission"],
+    [SITUATION_PROFESSIONNELLE_SECTION.DEMISSION]: [
+      "demission",
+      ...findFieldsAfterOui(demission, REQUIRED_DEMISSION_FIELDS),
+    ],
   };
 }

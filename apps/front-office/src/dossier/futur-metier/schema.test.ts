@@ -25,15 +25,20 @@ const EMPTY_FORM = {
   hasCurrentDemarche: true,
   currentDemarcheId: null,
   demarches: [],
+  zoneRechercheEmploi: "",
+  entreprisesContactees: "",
 };
 
-/** Les trois zones de texte remplies et la question sur les démarches répondue : il ne manque que le métier visé. */
+/** Tout est rempli ou répondu, sauf le métier visé. */
 const SEARCH_FORM = {
   ...EMPTY_FORM,
   quotidienMetier: "Pétrir, façonner et cuire le pain, tôt le matin.",
   conditionsEmploi: "Surtout des CDI, en boulangerie artisanale.",
   debouches: "De nombreuses offres non pourvues dans ma région.",
   demarcheDecouverte: OUI_NON.NON,
+  zoneRechercheEmploi: "Bordeaux et ses environs",
+  demenagement: OUI_NON.NON,
+  contactEmployeurs: OUI_NON.NON,
 };
 
 const MANUAL_FORM = {
@@ -94,15 +99,18 @@ describe("futurMetierSchema, zones de texte", () => {
     ]);
   });
 
-  it("signale le métier manquant au même envoi que les zones de texte vides et la question sans réponse", () => {
+  it("signale le métier manquant au même envoi que les champs vides et les questions sans réponse", () => {
     const issues = futurMetierSchema.safeParse(EMPTY_FORM).error?.issues ?? [];
 
     expect(issues.map(({ path }) => path.join(".")).sort()).toEqual([
       "conditionsEmploi",
+      "contactEmployeurs",
       "debouches",
       "demarcheDecouverte",
+      "demenagement",
       "metierVise",
       "quotidienMetier",
+      "zoneRechercheEmploi",
     ]);
   });
 
@@ -254,6 +262,86 @@ describe("futurMetierSchema, démarche en cours de saisie", () => {
     };
     expect(findMessages(data, "apportDemarche")).toEqual([
       `Votre texte ne doit pas dépasser ${FUTUR_METIER_TEXT_MAX_LENGTH} caractères.`,
+    ]);
+  });
+});
+
+describe("futurMetierSchema, perspectives d'emploi", () => {
+  /** Le reste du volet est rempli : seules les erreurs des perspectives d'emploi restent. */
+  const CONTACT_FORM = { ...MANUAL_FORM, contactEmployeurs: OUI_NON.OUI };
+
+  it("exige la zone de recherche d'emploi, espaces seuls refusés", () => {
+    for (const zoneRechercheEmploi of ["", "  "]) {
+      expect(findMessages({ ...MANUAL_FORM, zoneRechercheEmploi }, "zoneRechercheEmploi")).toEqual([
+        "Veuillez indiquer la zone où vous chercherez un emploi.",
+      ]);
+    }
+  });
+
+  it("ne limite pas la longueur de la zone de recherche d'emploi", () => {
+    const zoneRechercheEmploi = "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1);
+    expect(futurMetierSchema.safeParse({ ...MANUAL_FORM, zoneRechercheEmploi }).success).toBe(true);
+  });
+
+  it("exige les réponses sur le déménagement et les contacts avec des employeurs", () => {
+    expect(findMessages(EMPTY_FORM, "demenagement")).toEqual([
+      "Veuillez indiquer si vous envisagez de déménager.",
+    ]);
+    expect(findMessages(EMPTY_FORM, "contactEmployeurs")).toEqual([
+      "Veuillez indiquer si vous avez déjà des contacts avec des employeurs.",
+    ]);
+  });
+
+  it("accepte « oui » comme « non » aux deux questions", () => {
+    for (const answer of Object.values(OUI_NON)) {
+      expect(findMessages({ ...EMPTY_FORM, demenagement: answer }, "demenagement")).toEqual([]);
+      expect(
+        findMessages({ ...EMPTY_FORM, contactEmployeurs: answer }, "contactEmployeurs"),
+      ).toEqual([]);
+    }
+  });
+
+  it("n'exige pas les entreprises contactées après un « non »", () => {
+    expect(futurMetierSchema.safeParse(MANUAL_FORM).success).toBe(true);
+  });
+
+  it("exige les entreprises contactées après un « oui », espaces seuls refusés", () => {
+    for (const entreprisesContactees of ["", " \n "]) {
+      const data = { ...CONTACT_FORM, entreprisesContactees };
+      expect(
+        futurMetierSchema.safeParse(data).error?.issues.map(({ path }) => path.join(".")),
+      ).toEqual(["entreprisesContactees"]);
+      expect(findMessages(data, "entreprisesContactees")).toEqual([
+        "Veuillez indiquer les entreprises contactées ou rencontrées.",
+      ]);
+    }
+  });
+
+  it("accepte les entreprises contactées remplies après un « oui »", () => {
+    const data = { ...CONTACT_FORM, entreprisesContactees: "Studio Okami, rencontré au salon." };
+    expect(futurMetierSchema.safeParse(data).success).toBe(true);
+  });
+
+  it("refuse des entreprises contactées au-delà de la limite", () => {
+    const data = {
+      ...CONTACT_FORM,
+      entreprisesContactees: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+    };
+    expect(findMessages(data, "entreprisesContactees")).toEqual([
+      `Votre texte ne doit pas dépasser ${FUTUR_METIER_TEXT_MAX_LENGTH} caractères.`,
+    ]);
+  });
+
+  it("signale le métier manquant au même envoi que des entreprises contactées trop longues", () => {
+    const data = {
+      ...SEARCH_FORM,
+      contactEmployeurs: OUI_NON.OUI,
+      entreprisesContactees: "x".repeat(FUTUR_METIER_TEXT_MAX_LENGTH + 1),
+    };
+    const issues = futurMetierSchema.safeParse(data).error?.issues ?? [];
+    expect(issues.map(({ path }) => path.join(".")).sort()).toEqual([
+      "entreprisesContactees",
+      "metierVise",
     ]);
   });
 });

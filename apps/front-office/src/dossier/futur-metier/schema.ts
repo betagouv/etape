@@ -2,9 +2,9 @@ import { AppellationRomeSchema } from "@etape/api-contract";
 import { z } from "zod";
 
 import { ENTRY_MODE, type EntryMode } from "../domain/entry-mode";
-import { OUI_NON } from "../domain/oui-non";
+import { findFieldsAfterOui, OUI_NON } from "../domain/oui-non";
 import { requireFilled } from "../domain/require-filled";
-import { findDemarcheFields, TYPE_DEMARCHE } from "./domain/demarche";
+import { findOpenDemarcheFields, TYPE_DEMARCHE } from "./domain/demarche";
 import { formatCodeRome } from "./domain/format-code-rome";
 
 const CODE_ROME_PATTERN = /^[A-Z]\d{4}$/;
@@ -21,6 +21,7 @@ const REQUIRED_MESSAGES = {
   typeDemarche: "Veuillez choisir le type de démarche.",
   precisionTypeDemarche: "Veuillez préciser le type de démarche.",
   apportDemarche: "Veuillez indiquer ce que la démarche vous a apporté.",
+  entreprisesContactees: "Veuillez indiquer les entreprises contactées ou rencontrées.",
 } as const;
 
 type RequiredFieldName = keyof typeof REQUIRED_MESSAGES;
@@ -30,6 +31,11 @@ export const REQUIRED_METIER_VISE_FIELDS: Record<EntryMode, readonly RequiredFie
   [ENTRY_MODE.SEARCH]: ["metierVise"],
   [ENTRY_MODE.MANUAL]: ["intituleMetierVise"],
 };
+
+/** Exigé après un « oui » à la question sur les contacts avec des employeurs (maquette 16). */
+export const REQUIRED_CONTACT_EMPLOYEURS_FIELDS: readonly RequiredFieldName[] = [
+  "entreprisesContactees",
+];
 
 const pieceJustificativeSchema = z.object({
   id: z.string(),
@@ -83,11 +89,26 @@ const baseFuturMetierSchema = z.object({
       piecesJustificatives: z.array(pieceJustificativeSchema),
     }),
   ),
+  zoneRechercheEmploi: z
+    .string()
+    .trim()
+    .min(1, "Veuillez indiquer la zone où vous chercherez un emploi."),
+  demenagement: z.enum(OUI_NON, "Veuillez indiquer si vous envisagez de déménager."),
+  contactEmployeurs: z.enum(
+    OUI_NON,
+    "Veuillez indiquer si vous avez déjà des contacts avec des employeurs.",
+  ),
+  // Exigées seulement après un « oui » aux contacts avec des employeurs.
+  entreprisesContactees: z
+    .string()
+    .trim()
+    .max(FUTUR_METIER_TEXT_MAX_LENGTH, TEXT_MAX_LENGTH_MESSAGE),
 });
 
 /**
  * Les champs que lit le contrôle par mode : il ne s'exécute que s'ils ont le bon type.
- * L'apport n'y garde que son type : trop long, il couperait sinon le contrôle des autres champs.
+ * L'apport et les entreprises contactées n'y gardent que leur type : trop longs, ils couperaient
+ * sinon le contrôle des autres champs.
  */
 const refinedFieldsSchema = baseFuturMetierSchema
   .pick({
@@ -99,16 +120,23 @@ const refinedFieldsSchema = baseFuturMetierSchema
     precisionTypeDemarche: true,
     hasCurrentDemarche: true,
   })
-  .extend({ apportDemarche: z.string() });
+  .extend({ apportDemarche: z.string(), entreprisesContactees: z.string() });
 
 /**
- * Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours, et ceux de
- * la démarche en cours de saisie après un « oui », sont exigés.
+ * Le schéma du formulaire « Mon futur métier » ; seuls les champs du mode en cours, ceux de
+ * la démarche en cours de saisie après un « oui », et les entreprises contactées après un « oui »
+ * aux contacts avec des employeurs, sont exigés.
  */
 export const futurMetierSchema = baseFuturMetierSchema.superRefine(
   (data, ctx) => {
-    if (data.demarcheDecouverte === OUI_NON.OUI && data.hasCurrentDemarche)
-      requireFilled(ctx, data, findDemarcheFields(data.typeDemarche), REQUIRED_MESSAGES);
+    requireFilled(ctx, data, findOpenDemarcheFields(data), REQUIRED_MESSAGES);
+
+    requireFilled(
+      ctx,
+      data,
+      findFieldsAfterOui(data.contactEmployeurs, REQUIRED_CONTACT_EMPLOYEURS_FIELDS),
+      REQUIRED_MESSAGES,
+    );
 
     requireFilled(
       ctx,
@@ -158,6 +186,10 @@ export const FUTUR_METIER_FIELD = {
   HAS_CURRENT_DEMARCHE: "hasCurrentDemarche",
   CURRENT_DEMARCHE_ID: "currentDemarcheId",
   DEMARCHES: "demarches",
+  ZONE_RECHERCHE_EMPLOI: "zoneRechercheEmploi",
+  DEMENAGEMENT: "demenagement",
+  CONTACT_EMPLOYEURS: "contactEmployeurs",
+  ENTREPRISES_CONTACTEES: "entreprisesContactees",
 } as const satisfies Record<string, FuturMetierFieldName>;
 
 /** Libellés des champs saisis, partagés par le formulaire et l'annonce de leurs erreurs. */
@@ -180,11 +212,17 @@ export const FUTUR_METIER_FIELD_LABEL: Record<
   precisionTypeDemarche: "Précisez le type de démarche",
   apportDemarche: "Ce que la démarche vous a apporté",
   piecesJustificatives: "Justificatifs",
+  zoneRechercheEmploi: "Dans quelle zone géographique chercherez-vous un emploi ?",
+  demenagement: "Envisagez-vous de déménager pour trouver un emploi ?",
+  contactEmployeurs: "Avez-vous déjà des contacts avec des employeurs ?",
+  entreprisesContactees:
+    "Veuillez indiquer ci-dessous les entreprises contactées ou rencontrées au cours de vos recherches",
 };
 
 /** Les sections du volet qui portent un compteur. */
 export const FUTUR_METIER_SECTION = {
   METIER_VISE: "metier-vise",
+  PERSPECTIVES_EMPLOI: "perspectives-emploi",
 } as const;
 
 /** Une section du volet, parmi celles de `FUTUR_METIER_SECTION`. */

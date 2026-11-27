@@ -6,6 +6,7 @@ import { TYPE_DEMARCHE } from "./demarche";
 import { FUTUR_METIER_SECTION, type FuturMetierFormData } from "../schema";
 import { findRequiredFields } from "./required-fields";
 
+/** Les perspectives d'emploi sont remplies, sans contact avec des employeurs. */
 const values: FuturMetierFormData = {
   metierViseEntryMode: ENTRY_MODE.SEARCH,
   metierVise: null,
@@ -22,10 +23,17 @@ const values: FuturMetierFormData = {
   hasCurrentDemarche: true,
   currentDemarcheId: null,
   demarches: [],
+  zoneRechercheEmploi: "Bordeaux et ses environs",
+  demenagement: OUI_NON.NON,
+  contactEmployeurs: OUI_NON.NON,
+  entreprisesContactees: "",
 };
 
 /** Exigés quel que soit le mode de saisie : les trois zones de texte, puis la question sur les démarches. */
 const COMMON_FIELDS = ["quotidienMetier", "conditionsEmploi", "debouches", "demarcheDecouverte"];
+
+/** Exigés dans les perspectives d'emploi, sans contact avec des employeurs ; tous remplis dans `values`. */
+const PERSPECTIVES_EMPLOI_FIELDS = ["zoneRechercheEmploi", "demenagement", "contactEmployeurs"];
 
 /** La question sur les démarches est répondue dans `values`. */
 const ANSWERED_FIELDS = ["demarcheDecouverte"];
@@ -37,8 +45,12 @@ describe("findRequiredFields", () => {
       "metierVise",
       ...COMMON_FIELDS,
     ]);
-    expect(required.allFields).toEqual(["metierVise", ...COMMON_FIELDS]);
-    expect(required.filledFields).toEqual(ANSWERED_FIELDS);
+    expect(required.allFields).toEqual([
+      "metierVise",
+      ...COMMON_FIELDS,
+      ...PERSPECTIVES_EMPLOI_FIELDS,
+    ]);
+    expect(required.filledFields).toEqual([...ANSWERED_FIELDS, ...PERSPECTIVES_EMPLOI_FIELDS]);
     expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
       "metierVise",
       ...COMMON_FIELDS,
@@ -48,7 +60,7 @@ describe("findRequiredFields", () => {
   it("n'exige ni ne contrôle la spécialisation, même remplie", () => {
     const required = findRequiredFields({ ...values, specialisation: "pâtisserie" });
     expect(required.allFields).not.toContain("specialisation");
-    expect(required.filledFields).toEqual(ANSWERED_FIELDS);
+    expect(required.filledFields).toEqual([...ANSWERED_FIELDS, ...PERSPECTIVES_EMPLOI_FIELDS]);
     expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).not.toContain(
       "specialisation",
     );
@@ -56,15 +68,19 @@ describe("findRequiredFields", () => {
 
   it("compte une zone de texte remplie", () => {
     const required = findRequiredFields({ ...values, debouches: "De nombreuses offres." });
-    expect(required.filledFields).toEqual(["debouches", ...ANSWERED_FIELDS]);
+    expect(required.filledFields).toEqual([
+      "debouches",
+      ...ANSWERED_FIELDS,
+      ...PERSPECTIVES_EMPLOI_FIELDS,
+    ]);
   });
 
   it("exige et contrôle le type et l'apport de la démarche après un « oui »", () => {
     const required = findRequiredFields({ ...values, demarcheDecouverte: OUI_NON.OUI });
     const expected = ["metierVise", ...COMMON_FIELDS, "typeDemarche", "apportDemarche"];
-    expect(required.allFields).toEqual(expected);
+    expect(required.sectionFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual(expected);
     expect(required.sectionValidatedFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual(expected);
-    expect(required.filledFields).toEqual(ANSWERED_FIELDS);
+    expect(required.filledFields).toEqual([...ANSWERED_FIELDS, ...PERSPECTIVES_EMPLOI_FIELDS]);
   });
 
   it("n'exige plus rien de la démarche une fois sa carte de saisie fermée (maquette 12)", () => {
@@ -73,7 +89,10 @@ describe("findRequiredFields", () => {
       demarcheDecouverte: OUI_NON.OUI,
       hasCurrentDemarche: false,
     });
-    expect(required.allFields).toEqual(["metierVise", ...COMMON_FIELDS]);
+    expect(required.sectionFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
+      "metierVise",
+      ...COMMON_FIELDS,
+    ]);
   });
 
   it("exige la précision pour « Autre », et compte les champs de la démarche remplis", () => {
@@ -83,7 +102,7 @@ describe("findRequiredFields", () => {
       typeDemarche: TYPE_DEMARCHE.AUTRE,
       precisionTypeDemarche: "Stage chez un artisan",
     });
-    expect(required.allFields.slice(-3)).toEqual([
+    expect(required.sectionFields[FUTUR_METIER_SECTION.METIER_VISE].slice(-3)).toEqual([
       "typeDemarche",
       "precisionTypeDemarche",
       "apportDemarche",
@@ -92,6 +111,7 @@ describe("findRequiredFields", () => {
       ...ANSWERED_FIELDS,
       "typeDemarche",
       "precisionTypeDemarche",
+      ...PERSPECTIVES_EMPLOI_FIELDS,
     ]);
   });
 
@@ -102,8 +122,15 @@ describe("findRequiredFields", () => {
       intituleMetierVise: "Boulanger",
       codeRome: "D1102",
     });
-    expect(required.allFields).toEqual(["intituleMetierVise", ...COMMON_FIELDS]);
-    expect(required.filledFields).toEqual(["intituleMetierVise", ...ANSWERED_FIELDS]);
+    expect(required.sectionFields[FUTUR_METIER_SECTION.METIER_VISE]).toEqual([
+      "intituleMetierVise",
+      ...COMMON_FIELDS,
+    ]);
+    expect(required.filledFields).toEqual([
+      "intituleMetierVise",
+      ...ANSWERED_FIELDS,
+      ...PERSPECTIVES_EMPLOI_FIELDS,
+    ]);
   });
 
   it("contrôle le code ROME en saisie manuelle, entre l'intitulé et les zones de texte comme sur la page", () => {
@@ -116,5 +143,23 @@ describe("findRequiredFields", () => {
       "codeRome",
       ...COMMON_FIELDS,
     ]);
+  });
+
+  it("exige les entreprises contactées après un « oui » aux contacts, à la fin de la page", () => {
+    const required = findRequiredFields({ ...values, contactEmployeurs: OUI_NON.OUI });
+    expect(required.allFields.at(-1)).toBe("entreprisesContactees");
+    expect(required.filledFields).not.toContain("entreprisesContactees");
+
+    const filled = findRequiredFields({
+      ...values,
+      contactEmployeurs: OUI_NON.OUI,
+      entreprisesContactees: "Studio Okami",
+    });
+    expect(filled.filledFields.at(-1)).toBe("entreprisesContactees");
+  });
+
+  it("ne compte pas une zone de recherche d'emploi faite d'espaces", () => {
+    const required = findRequiredFields({ ...values, zoneRechercheEmploi: "  " });
+    expect(required.filledFields).not.toContain("zoneRechercheEmploi");
   });
 });

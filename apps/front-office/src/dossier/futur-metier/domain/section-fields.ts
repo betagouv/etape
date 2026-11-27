@@ -1,13 +1,14 @@
 import type { EntryMode } from "../../domain/entry-mode";
-import { OUI_NON, type OuiNon } from "../../domain/oui-non";
+import { findFieldsAfterOui, type OuiNon } from "../../domain/oui-non";
 import {
   FUTUR_METIER_SECTION,
   METIER_VISE_FIELDS,
+  REQUIRED_CONTACT_EMPLOYEURS_FIELDS,
   REQUIRED_METIER_VISE_FIELDS,
   type FuturMetierFieldName,
   type FuturMetierSection,
 } from "../schema";
-import { findDemarcheFields, type TypeDemarche } from "./demarche";
+import { findOpenDemarcheFields, type TypeDemarche } from "./demarche";
 
 /** Exigés quel que soit le mode de saisie du métier visé, dans l'ordre de la page ; la spécialisation est facultative. */
 const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
@@ -17,7 +18,17 @@ const ALWAYS_REQUIRED_FIELDS: readonly FuturMetierFieldName[] = [
   "demarcheDecouverte",
 ];
 
-/** Ce qui décide des champs de la section : le mode de saisie du métier, et où en sont les démarches. */
+/** Exigés dans « Vos perspectives d'emploi », dans l'ordre de la page (maquette 16). */
+const PERSPECTIVES_EMPLOI_FIELDS: readonly FuturMetierFieldName[] = [
+  "zoneRechercheEmploi",
+  "demenagement",
+  "contactEmployeurs",
+];
+
+/**
+ * Ce qui décide des champs des sections : le mode de saisie du métier, où en sont les démarches,
+ * et la réponse sur les contacts avec des employeurs.
+ */
 export interface SectionFieldsAnswers {
   metierViseEntryMode: EntryMode;
   /** Absente tant que la question n'a pas de réponse. */
@@ -25,26 +36,24 @@ export interface SectionFieldsAnswers {
   typeDemarche?: TypeDemarche;
   /** Vrai tant que la carte de saisie d'une démarche est ouverte. */
   hasCurrentDemarche: boolean;
+  /** Absente tant que la question n'a pas de réponse. */
+  contactEmployeurs?: OuiNon;
 }
 
-/**
- * Les champs de la démarche en cours de saisie ne sont demandés qu'après un « oui », et tant que
- * sa carte est ouverte : une démarche validée ne compte plus (maquettes 09, 10 et 12).
- */
-function findOpenDemarcheFields({
-  demarcheDecouverte,
-  typeDemarche,
-  hasCurrentDemarche,
+/** Les entreprises contactées ne sont demandées qu'après un « oui » aux contacts (maquette 16). */
+function findPerspectivesEmploiFields({
+  contactEmployeurs,
 }: SectionFieldsAnswers): readonly FuturMetierFieldName[] {
-  return demarcheDecouverte === OUI_NON.OUI && hasCurrentDemarche
-    ? findDemarcheFields(typeDemarche)
-    : [];
+  return [
+    ...PERSPECTIVES_EMPLOI_FIELDS,
+    ...findFieldsAfterOui(contactEmployeurs, REQUIRED_CONTACT_EMPLOYEURS_FIELDS),
+  ];
 }
 
 /**
  * Un champ pour le métier visé, en recherche comme en saisie manuelle, puis les trois zones de
  * texte, la question sur les démarches et, après un « oui », la démarche en cours de saisie
- * (maquettes 01, 07, 09 et 10).
+ * (maquettes 01, 07, 09 et 10) ; enfin, les perspectives d'emploi (maquette 16).
  */
 export function findSectionFields(
   answers: SectionFieldsAnswers,
@@ -55,6 +64,7 @@ export function findSectionFields(
       ...ALWAYS_REQUIRED_FIELDS,
       ...findOpenDemarcheFields(answers),
     ],
+    [FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI]: findPerspectivesEmploiFields(answers),
   };
 }
 
@@ -68,5 +78,6 @@ export function findSectionValidatedFields(
       ...ALWAYS_REQUIRED_FIELDS,
       ...findOpenDemarcheFields(answers),
     ],
+    [FUTUR_METIER_SECTION.PERSPECTIVES_EMPLOI]: findPerspectivesEmploiFields(answers),
   };
 }

@@ -15,11 +15,12 @@ import { SectionCounter } from "../components/section-counter";
 import { VoletErrorsAlert } from "../components/volet-errors-alert";
 import { DateField } from "../components/date-field";
 import { useDossierVolets } from "../hooks/use-dossier-volets";
-import { OUI_NON, OUI_NON_LABEL } from "../domain/oui-non";
+import { isOui, OUI_NON_LABEL } from "../domain/oui-non";
 import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { EmployeurField } from "./components/employeur-field";
 import { computeDateDemissionCalendar } from "./domain/date-demission";
 import {
+  REQUIRED_DEMISSION_FIELDS,
   SITUATION_PROFESSIONNELLE_FIELD,
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   SITUATION_PROFESSIONNELLE_SECTION,
@@ -90,12 +91,11 @@ export function SituationProfessionnelleForm({
             options={OUI_NON_LABEL}
             // Après « non », la date n'est plus demandée : son erreur ne doit pas rester au résumé.
             onValueChange={(value) => {
-              if (value === OUI_NON.NON)
-                form.clearErrors(SITUATION_PROFESSIONNELLE_FIELD.DATE_DEMISSION);
+              if (!isOui(value)) form.clearErrors([...REQUIRED_DEMISSION_FIELDS]);
             }}
           />
 
-          {demission === OUI_NON.OUI && (
+          {isOui(demission) && (
             <div className="grid gap-5 sm:grid-cols-2">
               <Controller
                 name={SITUATION_PROFESSIONNELLE_FIELD.DATE_DEMISSION}

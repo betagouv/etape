@@ -20,6 +20,9 @@ const MANUAL_ANSWERS: SectionFieldsAnswers = {
   metierViseEntryMode: ENTRY_MODE.MANUAL,
 };
 
+/** Les perspectives d'emploi, sans réponse sur les contacts avec des employeurs. */
+const PERSPECTIVES_EMPLOI_FIELDS = ["zoneRechercheEmploi", "demenagement", "contactEmployeurs"];
+
 describe("findSectionFields", () => {
   it("exige le métier choisi en recherche, puis les trois zones de texte et la question sur les démarches", () => {
     expect(findSectionFields(ANSWERS)).toEqual({
@@ -30,6 +33,7 @@ describe("findSectionFields", () => {
         "debouches",
         "demarcheDecouverte",
       ],
+      "perspectives-emploi": PERSPECTIVES_EMPLOI_FIELDS,
     });
   });
 
@@ -42,7 +46,25 @@ describe("findSectionFields", () => {
         "debouches",
         "demarcheDecouverte",
       ],
+      "perspectives-emploi": PERSPECTIVES_EMPLOI_FIELDS,
     });
+  });
+
+  it("ajoute les entreprises contactées après un « oui » aux contacts, pas après un « non »", () => {
+    const oui = findSectionFields({ ...ANSWERS, contactEmployeurs: OUI_NON.OUI });
+    const non = findSectionFields({ ...ANSWERS, contactEmployeurs: OUI_NON.NON });
+
+    expect(oui["perspectives-emploi"]).toEqual([
+      ...PERSPECTIVES_EMPLOI_FIELDS,
+      "entreprisesContactees",
+    ]);
+    expect(non["perspectives-emploi"]).toEqual(PERSPECTIVES_EMPLOI_FIELDS);
+  });
+
+  it("garde les perspectives d'emploi hors de la section du métier", () => {
+    const fields = findSectionFields({ ...ANSWERS, contactEmployeurs: OUI_NON.OUI });
+    expect(fields["metier-vise"]).not.toContain("zoneRechercheEmploi");
+    expect(fields["metier-vise"]).not.toContain("entreprisesContactees");
   });
 
   it("ajoute le type et l'apport de la démarche après un « oui » (maquette 10)", () => {
@@ -115,5 +137,13 @@ describe("findSectionValidatedFields", () => {
       hasCurrentDemarche: false,
     });
     expect(fields["metier-vise"]).not.toContain("typeDemarche");
+  });
+
+  it("contrôle les entreprises contactées après un « oui » aux contacts seulement", () => {
+    const oui = findSectionValidatedFields({ ...ANSWERS, contactEmployeurs: OUI_NON.OUI });
+    const non = findSectionValidatedFields({ ...ANSWERS, contactEmployeurs: OUI_NON.NON });
+
+    expect(oui["perspectives-emploi"]).toContain("entreprisesContactees");
+    expect(non["perspectives-emploi"]).not.toContain("entreprisesContactees");
   });
 });

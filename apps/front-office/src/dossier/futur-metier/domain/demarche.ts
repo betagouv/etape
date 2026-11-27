@@ -4,6 +4,7 @@ import {
   TAILLE_MAX_PIECE_MO,
   type PieceJustificative,
 } from "../../domain/piece-justificative";
+import { isOui, type OuiNon } from "../../domain/oui-non";
 import { listFilledFields } from "../../domain/volet-progress";
 
 /** Les types de démarche proposés, dans l'ordre de la liste (transmise le 2026-11-18). */
@@ -63,6 +64,27 @@ export function findDemarcheFields(
 ): readonly DemarcheFieldName[] {
   if (isPrecisionRequired(typeDemarche)) return DEMARCHE_FIELDS;
   return DEMARCHE_FIELDS.filter((name) => name !== PRECISION_FIELD);
+}
+
+/** Ce qui décide des champs de la démarche en cours de saisie. */
+export interface OpenDemarcheAnswers {
+  /** Absente tant que la question n'a pas de réponse. */
+  demarcheDecouverte?: OuiNon;
+  typeDemarche?: TypeDemarche;
+  /** Vrai tant que la carte de saisie d'une démarche est ouverte. */
+  hasCurrentDemarche: boolean;
+}
+
+/**
+ * Les champs de la démarche en cours de saisie ne sont demandés qu'après un « oui », et tant que
+ * sa carte est ouverte : une démarche validée ne compte plus (maquettes 09, 10 et 12).
+ */
+export function findOpenDemarcheFields({
+  demarcheDecouverte,
+  typeDemarche,
+  hasCurrentDemarche,
+}: OpenDemarcheAnswers): readonly DemarcheFieldName[] {
+  return isOui(demarcheDecouverte) && hasCurrentDemarche ? findDemarcheFields(typeDemarche) : [];
 }
 
 /** Le nombre de démarches qu'un dossier peut porter (décision du 2026-11-20, à revoir). */

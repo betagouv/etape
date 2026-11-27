@@ -2,7 +2,7 @@ import { EtablissementSchema } from "@etape/api-contract";
 import { z } from "zod";
 
 import { ENTRY_MODE, type EntryMode } from "../domain/entry-mode";
-import { OUI_NON } from "../domain/oui-non";
+import { isOui, OUI_NON } from "../domain/oui-non";
 import { requireFilled } from "../domain/require-filled";
 import { isDateDemissionInFuture } from "./domain/date-demission";
 
@@ -24,8 +24,8 @@ const REQUIRED_EMPLOYEUR_FIELDS: Record<EntryMode, readonly RequiredFieldName[]>
   [ENTRY_MODE.MANUAL]: ["denomination", "secteurActivite", "adresse"],
 };
 
-/** Exigé après un « oui » à la question sur la démission. */
-const REQUIRED_DEMISSION_FIELDS: readonly RequiredFieldName[] = ["dateDemission"];
+/** Exigé après un « oui » à la question sur la démission (maquette 10). */
+export const REQUIRED_DEMISSION_FIELDS: readonly RequiredFieldName[] = ["dateDemission"];
 
 const baseSituationProfessionnelleSchema = z.object({
   employeurEntryMode: z.enum(ENTRY_MODE),
@@ -53,7 +53,7 @@ const refinedFieldsSchema = baseSituationProfessionnelleSchema.pick({
 /** Le schéma du formulaire « Ma situation professionnelle » ; seuls les champs du mode en cours sont exigés. */
 export const situationProfessionnelleSchema = baseSituationProfessionnelleSchema.superRefine(
   (data, ctx) => {
-    if (data.demission === OUI_NON.OUI) {
+    if (isOui(data.demission)) {
       requireFilled(ctx, data, REQUIRED_DEMISSION_FIELDS, REQUIRED_MESSAGES);
       if (isDateDemissionInFuture(data.dateDemission, new Date())) {
         ctx.addIssue({
