@@ -20,6 +20,7 @@ import { useErrorsAlert } from "../hooks/use-errors-alert";
 import { EmployeurField } from "./components/employeur-field";
 import { computeDateDemissionCalendar } from "./domain/date-demission";
 import {
+  REQUIRED_DEMISSION_FIELDS,
   SITUATION_PROFESSIONNELLE_FIELD,
   SITUATION_PROFESSIONNELLE_FIELD_LABEL,
   SITUATION_PROFESSIONNELLE_SECTION,
@@ -90,7 +91,7 @@ export function SituationProfessionnelleForm({
             options={OUI_NON_LABEL}
             // Après « non », la date n'est plus demandée : son erreur ne doit pas rester au résumé.
             onValueChange={(value) => {
-              if (!isOui(value)) form.clearErrors(SITUATION_PROFESSIONNELLE_FIELD.DATE_DEMISSION);
+              if (!isOui(value)) form.clearErrors([...REQUIRED_DEMISSION_FIELDS]);
             }}
           />
 
