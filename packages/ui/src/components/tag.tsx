@@ -53,6 +53,9 @@ const tagVariants = cva(
   },
 );
 
+/** Les statuts d'une étiquette, pour les tables qui associent un état à son apparence. */
+export type TagStatus = NonNullable<VariantProps<typeof tagVariants>["status"]>;
+
 function Tag({
   className,
   status = "neutral",

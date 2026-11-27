@@ -2,6 +2,7 @@ import { Outlet } from "@tanstack/react-router";
 
 import { Surface } from "@etape/ui/components/surface";
 
+import { useDocumentsForm } from "../documents/hooks/use-documents-form";
 import { computeDossierProgress } from "../domain/progress";
 import { STATUT_DOSSIER } from "../domain/statut-dossier";
 import { VOLET_ID } from "../domain/volet-id";
@@ -19,17 +20,26 @@ export function DossierScreen() {
   const situationProfessionnelle = useSituationProfessionnelleForm();
   const futurMetier = useFuturMetierForm();
   const projet = useProjetForm();
+  const documents = useDocumentsForm();
   const voletProgress = {
     [VOLET_ID.INFORMATIONS]: informations.progress,
     [VOLET_ID.SITUATION_PROFESSIONNELLE]: situationProfessionnelle.progress,
     [VOLET_ID.FUTUR_METIER]: futurMetier.progress,
     [VOLET_ID.PROJET]: projet.progress,
+    [VOLET_ID.DOCUMENTS]: documents.progress,
   };
   const { completed } = computeDossierProgress(Object.values(voletProgress));
 
   return (
     <DossierVoletsContext
-      value={{ informations, situationProfessionnelle, futurMetier, projet, voletProgress }}
+      value={{
+        informations,
+        situationProfessionnelle,
+        futurMetier,
+        projet,
+        documents,
+        voletProgress,
+      }}
     >
       <Surface surface="page" className="flex-1">
         {/* Numéro, horodatage : en attendant l'API. */}

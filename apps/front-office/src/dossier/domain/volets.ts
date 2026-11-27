@@ -1,4 +1,4 @@
-import type { VoletProgress } from "./statut-volet";
+import type { ProgressUnit, VoletProgress } from "./statut-volet";
 import { VOLET_ID, type VoletId } from "./volet-id";
 
 /** Encart d'information en tête du volet ; `contactEmail` s'affiche en lien à la fin de la description. */
@@ -14,6 +14,8 @@ export interface VoletDefinition {
   title: string;
   description?: string;
   notice?: VoletNoticeContent;
+  /** Ce que compte son statut ; des champs par défaut. */
+  progressUnit?: ProgressUnit;
 }
 
 export interface Volet extends VoletDefinition, VoletProgress {}

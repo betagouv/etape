@@ -1,6 +1,9 @@
-import { useRef, useState, type RefObject } from "react";
+import { useRef, useState, type RefCallback, type RefObject } from "react";
+import { flushSync } from "react-dom";
 
 import { useAnnouncement } from "@etape/ui/hooks/use-announcement";
+
+import { joinAnnouncements } from "@/lib/join-announcements";
 
 import {
   checkFichiers,
@@ -9,13 +12,14 @@ import {
   type PieceJustificative,
   type RejectedFichier,
 } from "../domain/piece-justificative";
+import { useButtonRegistry } from "./use-button-registry";
 
 /** Un refus affiché : son `id` sert à le retrouver quand on ferme son message. */
 export interface DisplayedRejection extends RejectedFichier {
   id: string;
 }
 
-/** Ce que renvoie `usePiecesJustificatives` : les refus à afficher, l'annonce et les actions de l'écran. */
+/** Ce que renvoie `usePiecesJustificatives` : les refus à afficher, l'annonce, la suppression en attente et les actions de l'écran. */
 export interface UsePiecesJustificativesResult {
   /** Les fichiers refusés au dernier ajout, tant que leur message n'est pas fermé. */
   rejections: readonly DisplayedRejection[];
@@ -23,21 +27,34 @@ export interface UsePiecesJustificativesResult {
   announcement: string;
   /** Le bouton d'ajout : il reprend le focus quand un fichier ou un message disparaît. */
   triggerRef: RefObject<HTMLButtonElement | null>;
+  /** La pièce dont la suppression attend confirmation ; `null` sinon. */
+  pendingRemovalId: string | null;
+  /** « Annuler » de la confirmation : il prend le focus à son ouverture. */
+  cancelRemovalRef: RefObject<HTMLButtonElement | null>;
+  /** La référence de la corbeille d'une pièce : elle reprend le focus quand on annule. */
+  registerRemoveButton: (id: string) => RefCallback<HTMLButtonElement>;
   addFichiers: (fichiers: File[]) => void;
-  removePiece: (piece: PieceJustificative) => void;
+  askRemoval: (piece: PieceJustificative) => void;
+  cancelRemoval: () => void;
+  confirmRemoval: () => void;
   dismissRejection: (id: string) => void;
 }
 
 /**
- * Le dépôt de pièces justificatives d'un champ : contrôle des fichiers ajoutés, refus à afficher
- * et annonces. Les pièces elles-mêmes vivent dans le formulaire.
+ * Le dépôt de pièces justificatives d'un champ : contrôle des fichiers ajoutés, refus à afficher,
+ * confirmation des suppressions et annonces. Les pièces elles-mêmes vivent dans le formulaire.
+ * `describeChange` ajoute à l'annonce ce que le changement fait ailleurs (le statut du volet).
  */
 export function usePiecesJustificatives(
   pieces: readonly PieceJustificative[],
   onChange: (pieces: PieceJustificative[]) => void,
+  describeChange?: (pieces: readonly PieceJustificative[]) => string,
 ): UsePiecesJustificativesResult {
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const cancelRemovalRef = useRef<HTMLButtonElement>(null);
+  const removeButtons = useButtonRegistry();
   const [rejections, setRejections] = useState<readonly DisplayedRejection[]>([]);
+  const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const { message: announcement, announce } = useAnnouncement();
 
   const addFichiers = (fichiers: File[]): void => {
@@ -45,20 +62,39 @@ export function usePiecesJustificatives(
     if (fichiers.length === 0) return;
     const checked = checkFichiers(fichiers);
     const dateDepot = new Date();
+    let change = "";
     if (checked.accepted.length > 0) {
-      onChange([
+      const next = [
         ...pieces,
         ...checked.accepted.map((fichier) => ({ id: crypto.randomUUID(), fichier, dateDepot })),
-      ]);
+      ];
+      change = describeChange?.(next) ?? "";
+      onChange(next);
     }
     // Les refus d'un ajout remplacent ceux du précédent : ils ne concernent plus ce qu'on vient de faire.
     setRejections(checked.rejected.map((item) => ({ ...item, id: crypto.randomUUID() })));
-    announce(formatAddAnnouncement(checked));
+    announce(joinAnnouncements(formatAddAnnouncement(checked), change));
   };
 
-  const removePiece = (piece: PieceJustificative): void => {
-    onChange(pieces.filter(({ id }) => id !== piece.id));
-    announce(formatRemoveAnnouncement(piece.fichier.name));
+  const askRemoval = (piece: PieceJustificative): void => {
+    flushSync(() => setPendingRemovalId(piece.id));
+    cancelRemovalRef.current?.focus();
+  };
+
+  const cancelRemoval = (): void => {
+    const id = pendingRemovalId;
+    flushSync(() => setPendingRemovalId(null));
+    if (id !== null) removeButtons.focus(id);
+  };
+
+  const confirmRemoval = (): void => {
+    const piece = pieces.find(({ id }) => id === pendingRemovalId);
+    setPendingRemovalId(null);
+    if (!piece) return;
+    const next = pieces.filter(({ id }) => id !== piece.id);
+    const change = describeChange?.(next) ?? "";
+    onChange(next);
+    announce(joinAnnouncements(formatRemoveAnnouncement(piece.fichier.name), change));
     // La ligne disparaît avec son bouton : sans cela, le focus retombe sur la page.
     triggerRef.current?.focus();
   };
@@ -68,5 +104,17 @@ export function usePiecesJustificatives(
     triggerRef.current?.focus();
   };
 
-  return { rejections, announcement, triggerRef, addFichiers, removePiece, dismissRejection };
+  return {
+    rejections,
+    announcement,
+    triggerRef,
+    pendingRemovalId,
+    cancelRemovalRef,
+    registerRemoveButton: removeButtons.register,
+    addFichiers,
+    askRemoval,
+    cancelRemoval,
+    confirmRemoval,
+    dismissRejection,
+  };
 }

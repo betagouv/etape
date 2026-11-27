@@ -1,9 +1,5 @@
 import type { FieldErrors } from "./field-error-announcement";
-import {
-  formatStatutVoletAnnouncement,
-  type SectionProgress,
-  type VoletProgress,
-} from "./statut-volet";
+import type { SectionProgress, VoletProgress } from "./statut-volet";
 
 /** Les champs qu'un volet demande au vu des réponses en cours, et ceux d'entre eux qui sont remplis. */
 export interface RequiredFields<TSection extends string = string, TName extends string = string> {
@@ -26,12 +22,14 @@ export function listFilledFields<TName extends string>(
   values: Partial<Record<TName, unknown>>,
   fields: readonly TName[],
 ): TName[] {
-  // Une chaîne, un objet (l'employeur choisi) ou `null` ; une chaîne d'espaces est vide, comme pour le schéma.
+  // Une chaîne, un objet (l'employeur choisi), un tableau (les pièces d'un document) ou `null` ;
+  // une chaîne d'espaces est vide, comme pour le schéma, et un tableau sans élément aussi.
   return fields.filter((name) => {
     const value = values[name];
-    return (
-      value !== undefined && value !== null && (typeof value !== "string" || value.trim() !== "")
-    );
+    if (value === undefined || value === null) return false;
+    if (typeof value === "string") return value.trim() !== "";
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
   });
 }
 
@@ -92,13 +90,4 @@ export function computeSectionProgress<TSection extends string>(
     remainingFieldCount: fields.length - countFilled(filledFields, fields),
     errorCount: countInvalid(errors, sectionValidatedFields[section]),
   };
-}
-
-/** Le statut d'un volet tel qu'il s'annonce : « Mes informations : 1 erreur à corriger et 4 champs restants. » */
-export function describeVoletStatut(
-  voletLabel: string,
-  requiredFields: RequiredFields,
-  errors: FieldErrors,
-): string {
-  return formatStatutVoletAnnouncement(voletLabel, computeVoletProgress(requiredFields, errors));
 }

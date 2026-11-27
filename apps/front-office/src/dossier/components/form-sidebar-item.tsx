@@ -32,7 +32,7 @@ export function FormSidebarItem({ volet }: FormSidebarItemProps) {
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-foreground text-base">{volet.label}</span>
           {hasProgress(volet) &&
-            listStatutVoletLines(volet).map((line) => (
+            listStatutVoletLines(volet, volet.progressUnit).map((line) => (
               <StatutVoletLabel key={line.statut} line={line} />
             ))}
         </span>

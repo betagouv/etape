@@ -1,10 +1,10 @@
-import { useId, type ComponentProps } from "react";
+import { useId } from "react";
 
 import { HOME_PATH } from "@etape/session";
 import { Button } from "@etape/ui/components/button";
 import { Container } from "@etape/ui/components/container";
 import { Progress } from "@etape/ui/components/progress";
-import { Tag } from "@etape/ui/components/tag";
+import { Tag, type TagStatus } from "@etape/ui/components/tag";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftIcon, CheckIcon, ClockIcon, FolderOpenIcon, type LucideIcon } from "lucide-react";
 
@@ -18,7 +18,7 @@ import { STATUT_DOSSIER, type StatutDossier } from "../domain/statut-dossier";
 
 interface StatutTag {
   label: string;
-  status: NonNullable<ComponentProps<typeof Tag>["status"]>;
+  status: TagStatus;
   Icon: LucideIcon;
 }
 

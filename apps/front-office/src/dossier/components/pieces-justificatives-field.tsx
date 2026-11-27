@@ -1,3 +1,8 @@
+import { useId } from "react";
+import { CircleAlertIcon, CircleCheckIcon, type LucideIcon } from "lucide-react";
+
+import { Alert, AlertActions, AlertTitle } from "@etape/ui/components/alert";
+import { Button } from "@etape/ui/components/button";
 import {
   FileUpload,
   FileUploadDescription,
@@ -7,45 +12,142 @@ import {
   FileUploadList,
   FileUploadTitle,
   FileUploadTrigger,
+  type FileUploadVariant,
 } from "@etape/ui/components/file-upload";
 import { StatusRegion } from "@etape/ui/components/status-region";
+import { Tag, type TagStatus } from "@etape/ui/components/tag";
 
-import { ACCEPT_PIECE_JUSTIFICATIVE, type PieceJustificative } from "../domain/piece-justificative";
+import {
+  ACCEPT_PIECE_JUSTIFICATIVE,
+  formatRemovalQuestion,
+  type PieceJustificative,
+} from "../domain/piece-justificative";
+import { getStatutDocument, STATUT_DOCUMENT, type StatutDocument } from "../domain/statut-document";
+import { FACULTATIF_LABEL } from "../domain/statut-volet";
 import { usePiecesJustificatives } from "../hooks/use-pieces-justificatives";
 import { PieceJustificativeItem } from "./piece-justificative-item";
 
-/** Ce que reçoit `PiecesJustificativesField` : les pièces du champ, leur mise à jour, son titre et son aide. */
+interface StatutDocumentUi {
+  label: string;
+  status: TagStatus;
+  Icon?: LucideIcon;
+}
+
+const STATUT_DOCUMENT_UI: Record<StatutDocument, StatutDocumentUi> = {
+  [STATUT_DOCUMENT.A_DEPOSER]: { label: "À déposer", status: "warning" },
+  [STATUT_DOCUMENT.DEPOSE]: { label: "Déposé", status: "success", Icon: CircleCheckIcon },
+  [STATUT_DOCUMENT.FACULTATIF]: { label: FACULTATIF_LABEL, status: "neutral" },
+};
+
+const HAS_STATUT: Record<FileUploadVariant, boolean> = {
+  card: true,
+  plain: false,
+};
+
+const DEFAULT_DROP_LABEL = "Relâchez pour ajouter vos fichiers";
+
+/** Les textes du champ : son titre, son aide et, au besoin, l'invitation à relâcher les fichiers. */
+export interface PiecesJustificativesLabels {
+  title: string;
+  description: string;
+  /** « Relâchez pour ajouter vos fichiers au calendrier de la formation. » */
+  dropLabel?: string;
+}
+
+/** Ce que reçoit `PiecesJustificativesField` : les pièces du champ, leur mise à jour, ses textes et son apparence. */
 export interface PiecesJustificativesFieldProps {
   pieces: readonly PieceJustificative[];
   onChange: (pieces: PieceJustificative[]) => void;
-  title: string;
-  description: string;
+  labels: PiecesJustificativesLabels;
+  /** `card` : un document demandé, avec l'étiquette de son statut (« Mes documents »). */
+  variant?: FileUploadVariant;
+  isRequired?: boolean;
+  /** Ce que l'ajout ou le retrait change ailleurs, annoncé à la suite : le statut du volet. */
+  describeChange?: (pieces: readonly PieceJustificative[]) => string;
 }
 
-/** Les pièces justificatives d'un champ de volet : dépôt, liste, fichiers refusés. */
+/** Les pièces justificatives d'un champ de volet : dépôt, liste, suppression confirmée, fichiers refusés. */
 export function PiecesJustificativesField({
   pieces,
   onChange,
-  title,
-  description,
+  labels,
+  variant = "plain",
+  isRequired = false,
+  describeChange,
 }: PiecesJustificativesFieldProps) {
-  const { rejections, announcement, triggerRef, addFichiers, removePiece, dismissRejection } =
-    usePiecesJustificatives(pieces, onChange);
+  const removalTitleId = useId();
+  const {
+    rejections,
+    announcement,
+    triggerRef,
+    pendingRemovalId,
+    cancelRemovalRef,
+    registerRemoveButton,
+    addFichiers,
+    askRemoval,
+    cancelRemoval,
+    confirmRemoval,
+    dismissRejection,
+  } = usePiecesJustificatives(pieces, onChange, describeChange);
+  const statut = STATUT_DOCUMENT_UI[getStatutDocument(isRequired, pieces.length)];
 
   return (
-    <FileUpload variant="plain" accept={ACCEPT_PIECE_JUSTIFICATIVE} onFilesAdd={addFichiers}>
+    <FileUpload variant={variant} accept={ACCEPT_PIECE_JUSTIFICATIVE} onFilesAdd={addFichiers}>
       <FileUploadHeader>
         <FileUploadHeading>
-          <FileUploadTitle>{title}</FileUploadTitle>
-          <FileUploadDescription>{description}</FileUploadDescription>
+          <FileUploadTitle required={isRequired}>{labels.title}</FileUploadTitle>
+          <FileUploadDescription>{labels.description}</FileUploadDescription>
         </FileUploadHeading>
+        {HAS_STATUT[variant] && (
+          <Tag status={statut.status} size="sm">
+            {statut.Icon && <statut.Icon aria-hidden="true" />}
+            {statut.label}
+          </Tag>
+        )}
       </FileUploadHeader>
 
       {pieces.length > 0 && (
         <FileUploadList aria-label="Fichiers déposés">
-          {pieces.map((piece) => (
-            <PieceJustificativeItem key={piece.id} piece={piece} onRemove={removePiece} />
-          ))}
+          {pieces.map((piece) =>
+            piece.id === pendingRemovalId ? (
+              <li key={piece.id}>
+                <Alert variant="destructive-subdued">
+                  <CircleAlertIcon aria-hidden="true" />
+                  <AlertTitle id={removalTitleId} className="wrap-anywhere">
+                    {formatRemovalQuestion(piece.fichier.name)}
+                  </AlertTitle>
+                  <AlertActions placement="end">
+                    <Button
+                      ref={cancelRemovalRef}
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      aria-describedby={removalTitleId}
+                      onClick={cancelRemoval}
+                    >
+                      Annuler
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      aria-describedby={removalTitleId}
+                      onClick={confirmRemoval}
+                    >
+                      Supprimer
+                    </Button>
+                  </AlertActions>
+                </Alert>
+              </li>
+            ) : (
+              <PieceJustificativeItem
+                key={piece.id}
+                piece={piece}
+                onRemove={askRemoval}
+                removeRef={registerRemoveButton(piece.id)}
+              />
+            ),
+          )}
         </FileUploadList>
       )}
 
@@ -64,7 +166,7 @@ export function PiecesJustificativesField({
         ref={triggerRef}
         label="Ajouter un fichier"
         hint="ou glissez vos fichiers ici"
-        dropLabel="Relâchez pour ajouter vos fichiers"
+        dropLabel={labels.dropLabel ?? DEFAULT_DROP_LABEL}
       />
       <StatusRegion message={announcement} />
     </FileUpload>
