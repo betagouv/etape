@@ -2,6 +2,7 @@ import type { UseFormReturn } from "react-hook-form";
 
 import {
   useDemarches,
+  type DemarchesBinding,
   type DemarchesFieldNames,
   type UseDemarchesResult,
 } from "../../hooks/use-demarches";
@@ -17,11 +18,11 @@ export const DEMARCHES_DECOUVERTE_FIELDS: DemarchesFieldNames<FuturMetierFormDat
   piecesJustificatives: FUTUR_METIER_FIELD.PIECES_JUSTIFICATIVES,
 };
 
-/** Les démarches de découverte du métier : `useDemarches`, relié au formulaire « Mon futur métier ». */
-export function useDemarchesDecouverte(
+/** Comment les démarches lisent et écrivent le formulaire « Mon futur métier », pour `useDemarches` et « Mes documents ». */
+export function createDemarchesDecouverteBinding(
   form: UseFormReturn<FuturMetierFormData>,
-): UseDemarchesResult<TypeDemarche> {
-  return useDemarches(form, {
+): DemarchesBinding<FuturMetierFormData, TypeDemarche> {
+  return {
     fields: DEMARCHES_DECOUVERTE_FIELDS,
     readAnswer: (values) => values.demarcheDecouverte,
     setAnswer: (answer, options) =>
@@ -36,5 +37,12 @@ export function useDemarchesDecouverte(
     },
     setHasCurrentDemarche: (hasCurrentDemarche) =>
       form.setValue(FUTUR_METIER_FIELD.HAS_CURRENT_DEMARCHE, hasCurrentDemarche),
-  });
+  };
+}
+
+/** Les démarches de découverte du métier : `useDemarches`, relié au formulaire « Mon futur métier ». */
+export function useDemarchesDecouverte(
+  form: UseFormReturn<FuturMetierFormData>,
+): UseDemarchesResult<TypeDemarche> {
+  return useDemarches(form, createDemarchesDecouverteBinding(form));
 }

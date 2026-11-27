@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { CircleAlertIcon, CircleCheckIcon, type LucideIcon } from "lucide-react";
 
-import { Alert, AlertActions, AlertTitle } from "@etape/ui/components/alert";
+import { Alert, AlertActions, AlertDescription, AlertTitle } from "@etape/ui/components/alert";
 import { Button } from "@etape/ui/components/button";
 import {
   FileUpload,
@@ -16,6 +16,7 @@ import {
 } from "@etape/ui/components/file-upload";
 import { StatusRegion } from "@etape/ui/components/status-region";
 import { Tag, type TagStatus } from "@etape/ui/components/tag";
+import { joinIds } from "@etape/ui/lib/join-ids";
 
 import {
   ACCEPT_PIECE_JUSTIFICATIVE,
@@ -46,12 +47,14 @@ const HAS_STATUT: Record<FileUploadVariant, boolean> = {
 
 const DEFAULT_DROP_LABEL = "Relâchez pour ajouter vos fichiers";
 
-/** Les textes du champ : son titre, son aide et, au besoin, l'invitation à relâcher les fichiers. */
+/** Les textes du champ : son titre, son aide et, au besoin, l'invitation à relâcher les fichiers et la suite de la confirmation. */
 export interface PiecesJustificativesLabels {
   title: string;
   description: string;
   /** « Relâchez pour ajouter vos fichiers au calendrier de la formation. » */
   dropLabel?: string;
+  /** Sous « Supprimer x.pdf ? », quand la pièce vit aussi ailleurs (`formatRemovalNotice`). */
+  removalNotice?: string;
 }
 
 /** Ce que reçoit `PiecesJustificativesField` : les pièces du champ, leur mise à jour, ses textes et son apparence. */
@@ -76,6 +79,8 @@ export function PiecesJustificativesField({
   describeChange,
 }: PiecesJustificativesFieldProps) {
   const removalTitleId = useId();
+  const removalNoticeId = useId();
+  const removalDescribedBy = joinIds([removalTitleId, labels.removalNotice && removalNoticeId]);
   const {
     rejections,
     announcement,
@@ -116,13 +121,16 @@ export function PiecesJustificativesField({
                   <AlertTitle id={removalTitleId} className="wrap-anywhere">
                     {formatRemovalQuestion(piece.fichier.name)}
                   </AlertTitle>
+                  {labels.removalNotice && (
+                    <AlertDescription id={removalNoticeId}>{labels.removalNotice}</AlertDescription>
+                  )}
                   <AlertActions placement="end">
                     <Button
                       ref={cancelRemovalRef}
                       type="button"
                       variant="secondary"
                       size="sm"
-                      aria-describedby={removalTitleId}
+                      aria-describedby={removalDescribedBy}
                       onClick={cancelRemoval}
                     >
                       Annuler
@@ -131,7 +139,7 @@ export function PiecesJustificativesField({
                       type="button"
                       variant="destructive"
                       size="sm"
-                      aria-describedby={removalTitleId}
+                      aria-describedby={removalDescribedBy}
                       onClick={confirmRemoval}
                     >
                       Supprimer

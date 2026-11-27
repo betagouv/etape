@@ -2,11 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   ACCEPT_PIECE_JUSTIFICATIVE,
+  applyPiecesChange,
   canPreviewFichier,
   checkFichiers,
   findFormatFichier,
   formatAddAnnouncement,
   formatPieceDetails,
+  formatRemovalNotice,
+  formatRemovalQuestion,
   formatRemoveAnnouncement,
   formatSize,
   FORMATS_PIECE_JUSTIFICATIVE_LABEL,
@@ -158,6 +161,15 @@ describe("annonces", () => {
   });
 });
 
+describe("confirmation de suppression", () => {
+  it("demande s'il faut supprimer le fichier, puis dit quel autre volet le perd aussi", () => {
+    expect(formatRemovalQuestion("a.pdf")).toBe("Supprimer a.pdf\u00a0?");
+    expect(formatRemovalNotice("Mon futur métier")).toBe(
+      "Il sera aussi retiré de «\u00a0Mon futur métier\u00a0».",
+    );
+  });
+});
+
 describe("canPreviewFichier", () => {
   it("ouvre dans un onglet les PDF et les images, sans regarder la casse", () => {
     expect(["a.pdf", "a.JPG", "a.jpeg", "a.png"].map(canPreviewFichier)).toEqual([
@@ -175,5 +187,23 @@ describe("canPreviewFichier", () => {
       false,
       false,
     ]);
+  });
+});
+
+describe("applyPiecesChange", () => {
+  const a = createPiece("a.pdf", MO);
+  const b = createPiece("b.pdf", MO);
+  const saisie = createPiece("saisie.pdf", MO);
+
+  it("ajoute les pièces gagnées et garde celles qui n'étaient que dans la liste", () => {
+    expect(applyPiecesChange([saisie], [], [a])).toEqual([saisie, a]);
+  });
+
+  it("retire les pièces perdues, sans toucher aux autres", () => {
+    expect(applyPiecesChange([a, saisie, b], [a, b], [b])).toEqual([saisie, b]);
+  });
+
+  it("n'ajoute pas deux fois une pièce que la liste a déjà", () => {
+    expect(applyPiecesChange([a], [], [a])).toEqual([a]);
   });
 });

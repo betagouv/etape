@@ -7,12 +7,13 @@ describe("getStatutDocument", () => {
     expect(getStatutDocument(true, 0)).toBe(STATUT_DOCUMENT.A_DEPOSER);
   });
 
-  it("dit « facultatif » un document facultatif sans pièce", () => {
-    expect(getStatutDocument(false, 0)).toBe(STATUT_DOCUMENT.FACULTATIF);
+  it("dit « déposé » un document obligatoire dès sa première pièce", () => {
+    expect(getStatutDocument(true, 1)).toBe(STATUT_DOCUMENT.DEPOSE);
+    expect(getStatutDocument(true, 2)).toBe(STATUT_DOCUMENT.DEPOSE);
   });
 
-  it("dit « déposé » un document qui a au moins une pièce, obligatoire ou non", () => {
-    expect(getStatutDocument(true, 1)).toBe(STATUT_DOCUMENT.DEPOSE);
-    expect(getStatutDocument(false, 2)).toBe(STATUT_DOCUMENT.DEPOSE);
+  it("dit « facultatif » un document facultatif, avec ou sans pièce", () => {
+    expect(getStatutDocument(false, 0)).toBe(STATUT_DOCUMENT.FACULTATIF);
+    expect(getStatutDocument(false, 2)).toBe(STATUT_DOCUMENT.FACULTATIF);
   });
 });

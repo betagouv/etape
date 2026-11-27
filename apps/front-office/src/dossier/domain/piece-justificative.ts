@@ -165,7 +165,28 @@ export function formatRemoveAnnouncement(name: string): string {
   return `${name} retiré.`;
 }
 
+/**
+ * Reporte sur `pieces` le changement d'une autre liste qui partage ses pièces, de `before` à
+ * `after` : les pièces retirées en sortent, les ajoutées y entrent, les autres restent.
+ */
+export function applyPiecesChange(
+  pieces: readonly PieceJustificative[],
+  before: readonly PieceJustificative[],
+  after: readonly PieceJustificative[],
+): PieceJustificative[] {
+  const beforeIds = new Set(before.map(({ id }) => id));
+  const afterIds = new Set(after.map(({ id }) => id));
+  const kept = pieces.filter(({ id }) => !beforeIds.has(id) || afterIds.has(id));
+  const keptIds = new Set(kept.map(({ id }) => id));
+  return [...kept, ...after.filter(({ id }) => !beforeIds.has(id) && !keptIds.has(id))];
+}
+
 /** La question qui remplace la ligne d'une pièce avant sa suppression : « Supprimer x.pdf ? ». */
 export function formatRemovalQuestion(name: string): string {
   return `Supprimer ${name}\u00a0?`;
+}
+
+/** Sous la question, quand la pièce vit aussi dans un autre volet : « Il sera aussi retiré de « Mon projet ». » */
+export function formatRemovalNotice(voletLabel: string): string {
+  return `Il sera aussi retiré de «\u00a0${voletLabel}\u00a0».`;
 }

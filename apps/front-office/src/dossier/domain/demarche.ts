@@ -10,6 +10,10 @@ import { listFilledFields } from "./volet-progress";
 /** Le type « Autre », dernier de la liste de chaque volet : il se précise en texte libre. */
 export const TYPE_DEMARCHE_AUTRE = "autre";
 
+/** Ce qui justifie une démarche « Autre », dans les deux volets (ticket 216). */
+export const PIECES_AUTRE_DESCRIPTION =
+  "Tout document qui atteste cette démarche : attestation, compte-rendu, synthèse, etc.";
+
 /** L'aide du dépôt des justificatifs d'une démarche (maquette 10, formats et taille transmis le 2026-11-18). */
 export const PIECES_DEMARCHE_DESCRIPTION = `Attestation, compte-rendu ou tout autre document qui atteste cette démarche. Vous les retrouverez aussi dans «\u00a0Mes documents\u00a0». Formats acceptés : ${FORMATS_PIECE_JUSTIFICATIVE_LABEL}, ${TAILLE_MAX_PIECE_MO} Mo maximum par fichier.`;
 
