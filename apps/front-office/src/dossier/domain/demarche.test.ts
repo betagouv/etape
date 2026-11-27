@@ -21,6 +21,8 @@ import {
   formatRemovalTitle,
   formatRemoveLabel,
   isDemarcheFilled,
+  isDemarcheStarted,
+  isPrecisionRequired,
   MAX_DEMARCHES_MESSAGE,
   NOMBRE_MAX_DEMARCHES,
   removeDemarche,
@@ -53,6 +55,17 @@ const IMMERSION: CurrentDemarche<TypeDemarche> = {
   apportDemarche: "J’ai vérifié que je tenais ce rythme.",
   piecesJustificatives: [],
 };
+
+describe("isPrecisionRequired", () => {
+  it("est vrai pour « Autre »", () => {
+    expect(isPrecisionRequired(TYPE_DEMARCHE.AUTRE)).toBe(true);
+  });
+
+  it("est faux pour un type de la liste, et tant qu'aucun type n'est choisi", () => {
+    expect(isPrecisionRequired(TYPE_DEMARCHE.SALON)).toBe(false);
+    expect(isPrecisionRequired(undefined)).toBe(false);
+  });
+});
 
 describe("findDemarcheFields", () => {
   it("exige le type et l'apport tant qu'aucun type n'est choisi", () => {
@@ -137,6 +150,27 @@ describe("isDemarcheFilled", () => {
 
     expect(isDemarcheFilled(autre)).toBe(false);
     expect(isDemarcheFilled({ ...autre, precisionTypeDemarche: "Stage" })).toBe(true);
+  });
+});
+
+describe("isDemarcheStarted", () => {
+  it("est faux pour une saisie vide, espaces compris", () => {
+    expect(isDemarcheStarted(EMPTY_CURRENT_DEMARCHE)).toBe(false);
+    expect(isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, apportDemarche: "  " })).toBe(false);
+  });
+
+  it("est vrai dès qu'un champ est rempli ou qu'un justificatif est déposé", () => {
+    const piece = { id: "p", fichier: new File([], "attestation.pdf"), dateDepot: new Date(0) };
+
+    expect(
+      isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, typeDemarche: TYPE_DEMARCHE.SALON }),
+    ).toBe(true);
+    expect(isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, apportDemarche: "Un début." })).toBe(
+      true,
+    );
+    expect(isDemarcheStarted({ ...EMPTY_CURRENT_DEMARCHE, piecesJustificatives: [piece] })).toBe(
+      true,
+    );
   });
 });
 
@@ -262,15 +296,24 @@ describe("suppression d'une démarche", () => {
 
   it("parle d'une démarche dans la fenêtre ouverte par la corbeille", () => {
     expect(formatRemovalTitle(1)).toBe("Supprimer votre démarche");
-    expect(formatRemovalMessage(1)).toBe(
+    expect(formatRemovalMessage(1, false)).toBe(
       "En cliquant sur «\u00a0Supprimer\u00a0», la démarche suivante et ses justificatifs seront supprimés de votre dossier, y compris dans «\u00a0Mes documents\u00a0».",
     );
   });
 
   it("parle de toutes les démarches dans la fenêtre ouverte par un « non »", () => {
     expect(formatRemovalTitle(3)).toBe("Supprimer vos démarches");
-    expect(formatRemovalMessage(3)).toContain("les démarches suivantes et leurs justificatifs");
+    expect(formatRemovalMessage(3, false)).toContain(
+      "les démarches suivantes et leurs justificatifs",
+    );
     expect(formatAllRemovedAnnouncement(3)).toBe("Vos démarches ont été supprimées.");
     expect(formatAllRemovedAnnouncement(1)).toBe("Votre démarche a été supprimée.");
+  });
+
+  it("ajoute la saisie commencée au message quand un « non » l'emporte aussi", () => {
+    const sentence = "La démarche en cours de saisie et ses justificatifs seront aussi supprimés.";
+
+    expect(formatRemovalMessage(2, true)).toBe(`${formatRemovalMessage(2, false)} ${sentence}`);
+    expect(formatRemovalMessage(2, false)).not.toContain(sentence);
   });
 });
